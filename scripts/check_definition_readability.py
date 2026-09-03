@@ -1,0 +1,945 @@
+"""Verify author review and artifact identity before website synchronization."""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import html
+import json
+from pathlib import Path
+import re
+import sys
+
+
+AUDIT_NAME = "readability_audit.json"
+READER_REVIEW_NAME = "reader_comprehension_review.json"
+REPORT_NAME = "publish_readiness.json"
+IMPACT_NAME = "definition_change_impact.json"
+READER_COPY_NAME = "文案.md"
+PASS_STATUS = "FULL_TEXT_READABILITY_PASS"
+IMPACT_PASS_STATUS = "CHANGE_IMPACT_PASS"
+READER_REVIEW_PASS_STATUS = "READER_COMPREHENSION_PASS"
+AUDIT_SCHEMA_VERSION = 5
+IMPACT_SCHEMA_VERSION = 2
+READER_REVIEW_SCHEMA_VERSION = 1
+REQUIRED_ARTIFACTS = (
+    "note",
+    "public_r",
+    "analysis_db",
+    "analysis_codebook",
+)
+REQUIRED_SCOPES = (
+    ("title_summary", "标题、摘要导读与全文开场"),
+    ("definition_logic", "定义关系、共同背景、问卷变化与逐项判定"),
+    ("criteria", "全部变量的 Criteria 与跳题、补零、缺失边界"),
+    ("insight_card", "小book提示的实际语义"),
+    ("references", "文献逐条支持边界"),
+    ("public_r_comments", "公开 R 的大框架、局部说明与零基础读者理解链"),
+    (
+        "labels_charts",
+        "定义表、标签、Easy.label、mapping、codebook、定义卡与图表文字",
+    ),
+    ("full_note_flow", "按最终顺序从头到尾完整通读"),
+)
+REQUIRED_IMPACT_SURFACES = (
+    ("title_summary", "标题与摘要"),
+    ("source_questions", "问卷原题"),
+    ("definition_table", "定义表与变量顺序"),
+    ("criteria", "全部 Criteria"),
+    ("insight_card", "小book提示"),
+    ("public_r", "公开 R"),
+    ("mapping_codebook", "mapping 与 codebook"),
+    ("cards_charts_attachments", "定义卡、图表与附件"),
+)
+
+
+def fail(message: str) -> None:
+    raise ValueError(message)
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest().upper()
+
+
+def write_json(path: Path, payload: dict) -> None:
+    path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def relative_artifact(formal_dir: Path, value: str, role: str) -> dict:
+    path = Path(value)
+    if not path.is_absolute():
+        path = formal_dir / path
+    resolved = path.resolve()
+    try:
+        relative = resolved.relative_to(formal_dir.resolve())
+    except ValueError:
+        fail(f"{role} must be inside the formal topic directory")
+    if not resolved.is_file():
+        fail(f"{role} does not exist: {resolved}")
+    return {
+        "path": relative.as_posix(),
+        "sha256": sha256_file(resolved),
+    }
+
+
+def initialize_impact(
+    process_dir: Path,
+    topic_id: str,
+    overwrite: bool = False,
+) -> dict:
+    process_dir = process_dir.resolve()
+    process_dir.mkdir(parents=True, exist_ok=True)
+    impact_path = process_dir / IMPACT_NAME
+    if impact_path.exists() and not overwrite:
+        fail(f"{IMPACT_NAME} already exists; use --overwrite for a new change")
+    payload = {
+        "schema_version": IMPACT_SCHEMA_VERSION,
+        "topic_id": topic_id.zfill(3),
+        "status": "DRAFT",
+        "reviewed_at": "",
+        "reviewer": "",
+        "change_summary": "",
+        "changed_dimensions": [],
+        "question_groups": [],
+        "question_groups_not_applicable_reason": "",
+        "surfaces": [
+            {
+                "name": name,
+                "label": label,
+                "result": "pending",
+                "evidence": "",
+            }
+            for name, label in REQUIRED_IMPACT_SURFACES
+        ],
+        "unresolved_issues": [],
+    }
+    write_json(impact_path, payload)
+    for stale_name in (AUDIT_NAME, REPORT_NAME):
+        stale_path = process_dir / stale_name
+        if stale_path.exists():
+            stale_path.unlink()
+    return {
+        "ok": True,
+        "status": "CHANGE_IMPACT_DRAFT_CREATED",
+        "impact": str(impact_path),
+    }
+
+
+def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
+    formal_dir = formal_dir.resolve()
+    process_dir = process_dir.resolve()
+    impact_path = process_dir / IMPACT_NAME
+    if not impact_path.is_file():
+        fail(
+            f"{IMPACT_NAME} does not exist; initialize and complete the change "
+            "impact checklist before formal generation"
+        )
+    with impact_path.open("r", encoding="utf-8-sig") as handle:
+        impact = json.load(handle)
+    expected_topic = topic_id.zfill(3)
+    if impact.get("schema_version") != IMPACT_SCHEMA_VERSION:
+        fail(
+            "definition change impact schema_version must be "
+            f"{IMPACT_SCHEMA_VERSION}"
+        )
+    if str(impact.get("topic_id", "")).zfill(3) != expected_topic:
+        fail(f"definition change impact topic_id must be {expected_topic}")
+    if impact.get("status") != IMPACT_PASS_STATUS:
+        fail(f"definition change impact status must be {IMPACT_PASS_STATUS}")
+    reviewed_at = validate_iso_datetime(impact.get("reviewed_at"))
+    reviewer = nonempty_text(impact.get("reviewer"), "impact reviewer", 3)
+    change_summary = nonempty_text(
+        impact.get("change_summary"), "change_summary", 20
+    )
+    dimensions = impact.get("changed_dimensions")
+    if not isinstance(dimensions, list) or not dimensions:
+        fail("changed_dimensions must be a non-empty list")
+    if any(not isinstance(item, str) or not item.strip() for item in dimensions):
+        fail("every changed_dimensions item must be non-empty text")
+
+    copy_path = formal_dir / READER_COPY_NAME
+    if not copy_path.is_file():
+        fail(f"{READER_COPY_NAME} does not exist in the formal topic directory")
+    copy_text = copy_path.read_text(encoding="utf-8-sig")
+    for heading in (
+        "## 摘要导读",
+        "## Criteria",
+        "## 小book提示",
+        "## 参考资料说明",
+    ):
+        if heading not in copy_text:
+            fail(f"reader copy is missing required heading: {heading}")
+
+    groups = impact.get("question_groups")
+    if not isinstance(groups, list):
+        fail("question_groups must be a list")
+    if not groups:
+        nonempty_text(
+            impact.get("question_groups_not_applicable_reason"),
+            "question_groups_not_applicable_reason",
+            20,
+        )
+    seen_groups: set[tuple[str, tuple[str, ...]]] = set()
+    for index, group in enumerate(groups, start=1):
+        if not isinstance(group, dict):
+            fail(f"question group {index} must be an object")
+        name = nonempty_text(group.get("name"), f"question group {index} name", 2)
+        periods = group.get("periods")
+        if not isinstance(periods, list) or not periods:
+            fail(f"question group {index} periods must be a non-empty list")
+        normalized_periods = tuple(str(item).strip() for item in periods)
+        if any(not item for item in normalized_periods):
+            fail(f"question group {index} periods contain empty values")
+        key = (name, normalized_periods)
+        if key in seen_groups:
+            fail(f"duplicate question group: {name} / {normalized_periods}")
+        seen_groups.add(key)
+        nonempty_text(group.get("respondent"), f"question group {index} respondent", 2)
+        nonempty_text(
+            group.get("official_source"), f"question group {index} official_source", 8
+        )
+        nonempty_text(
+            group.get("definition_use"), f"question group {index} definition_use", 8
+        )
+        nonempty_text(
+            group.get("draft_location"), f"question group {index} draft_location", 4
+        )
+        mode = group.get("question_mode")
+        if mode not in ("verified_quote", "plain_paraphrase"):
+            fail(
+                f"question group {index} question_mode must be verified_quote "
+                "or plain_paraphrase"
+            )
+        question_text = nonempty_text(
+            group.get("question_text"), f"question group {index} question_text", 8
+        )
+        if question_text not in copy_text:
+            fail(
+                f"question group {index} text is not present in {READER_COPY_NAME}: "
+                f"{name}"
+            )
+        if mode == "plain_paraphrase":
+            nonempty_text(
+                group.get("paraphrase_reason"),
+                f"question group {index} paraphrase_reason",
+                12,
+            )
+        if group.get("result") != "pass":
+            fail(f"question group {index} result must be pass")
+
+    surfaces = impact.get("surfaces")
+    if not isinstance(surfaces, list):
+        fail("impact surfaces must be a list")
+    surface_names = [item.get("name") for item in surfaces if isinstance(item, dict)]
+    required_names = [name for name, _ in REQUIRED_IMPACT_SURFACES]
+    if len(surface_names) != len(set(surface_names)) or set(surface_names) != set(
+        required_names
+    ):
+        fail("impact surfaces do not match the required change surfaces")
+    for item in surfaces:
+        name = item["name"]
+        if item.get("result") != "pass":
+            fail(f"impact surface {name} result must be pass")
+        nonempty_text(item.get("evidence"), f"impact surface {name} evidence", 20)
+    unresolved = impact.get("unresolved_issues")
+    if not isinstance(unresolved, list):
+        fail("impact unresolved_issues must be a list")
+    if unresolved:
+        fail("impact unresolved_issues must be empty before formal generation")
+    return {
+        "path": IMPACT_NAME,
+        "sha256": sha256_file(impact_path),
+        "reviewed_at": reviewed_at,
+        "reviewer": reviewer,
+        "change_summary": change_summary,
+        "changed_dimensions": [item.strip() for item in dimensions],
+        "question_group_count": len(groups),
+        "reader_copy": {
+            "path": READER_COPY_NAME,
+            "sha256": sha256_file(copy_path),
+        },
+    }
+
+
+def normalized_visible_text(text: str) -> str:
+    text = re.sub(r"(?is)<style\b.*?</style>", " ", text)
+    text = re.sub(r"(?is)<script\b.*?</script>", " ", text)
+    text = re.sub(r"(?s)<[^>]+>", " ", text)
+    text = html.unescape(text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def reader_review_block_sources(note_text: str) -> list[dict[str, str]]:
+    summary_start = note_text.find("## 摘要导读")
+    summary_end_candidates = [
+        position
+        for marker in (
+            '<div class="raw-source-structure"',
+            '<!-- summary-insight-card:start -->',
+            '<div class="raw-source-link"',
+            "## 定义",
+        )
+        if (position := note_text.find(marker, summary_start + 1)) >= 0
+    ]
+    summary_end = min(summary_end_candidates) if summary_end_candidates else len(note_text)
+    blocks = [
+        {
+            "name": "summary_opening",
+            "label": "摘要导读首段",
+            "review_text": note_text[summary_start:summary_end],
+        }
+    ]
+    period_matches = list(re.finditer(
+        r'(?s)<section\s+class="raw-source-period"[^>]*data-label="([^"]+)"[^>]*>(.*?)</section>',
+        note_text,
+    ))
+    seen: set[str] = set()
+    for match in period_matches:
+        clean_label = html.unescape(match.group(1)).strip()
+        if clean_label and clean_label not in seen:
+            blocks.append(
+                {
+                    "name": f"period:{clean_label}",
+                    "label": f"时期：{clean_label}",
+                    "review_text": match.group(2),
+                }
+            )
+            seen.add(clean_label)
+    if not period_matches and 'data-raw-source-structure="true"' in note_text:
+        source_match = re.search(
+            r'(?s)<div\s+class="raw-source-structure".*?</div>', note_text
+        )
+        blocks.append({
+            "name": "source_structure",
+            "label": "原始问卷与来源说明",
+            "review_text": source_match.group(0) if source_match else note_text,
+        })
+    if 'data-summary-insight-card="true"' in note_text:
+        insight_match = re.search(
+            r'(?s)<!-- summary-insight-card:start -->(.*?)<!-- summary-insight-card:end -->',
+            note_text,
+        )
+        blocks.append({
+            "name": "insight_card",
+            "label": "小book提示",
+            "review_text": insight_match.group(1) if insight_match else note_text,
+        })
+    if 'class="raw-source-link"' in note_text:
+        source_entry_match = re.search(
+            r'(?s)<div\s+class="raw-source-link".*?</div>', note_text
+        )
+        blocks.append({
+            "name": "source_entry",
+            "label": "dbCodeBook 来源入口",
+            "review_text": source_entry_match.group(0) if source_entry_match else note_text,
+        })
+    definition_matches = list(re.finditer(
+        r'<td\s+class="plain-cell">\s*([^<]+?)\s*</td>', note_text
+    ))
+    for index, match in enumerate(definition_matches):
+        clean_variable = html.unescape(match.group(1)).strip()
+        if clean_variable and clean_variable not in seen:
+            end = (
+                definition_matches[index + 1].start()
+                if index + 1 < len(definition_matches)
+                else note_text.find("## 定义的组分概览", match.end())
+            )
+            if end < 0:
+                end = len(note_text)
+            blocks.append(
+                {
+                    "name": f"definition:{clean_variable}",
+                    "label": f"定义变量：{clean_variable}",
+                    "review_text": note_text[match.start():end],
+                }
+            )
+            seen.add(clean_variable)
+    blocks.append({
+        "name": "full_note_flow",
+        "label": "全文衔接",
+        "review_text": note_text,
+    })
+    return blocks
+
+
+def reader_review_blocks(note_text: str) -> list[dict[str, str]]:
+    return [
+        {"name": block["name"], "label": block["label"]}
+        for block in reader_review_block_sources(note_text)
+    ]
+
+
+def initialize_reader_review(
+    formal_dir: Path,
+    process_dir: Path,
+    topic_id: str,
+    note: str,
+    overwrite: bool = False,
+) -> dict:
+    formal_dir = formal_dir.resolve()
+    process_dir = process_dir.resolve()
+    process_dir.mkdir(parents=True, exist_ok=True)
+    audit_path = process_dir / AUDIT_NAME
+    if not audit_path.is_file():
+        fail(f"{AUDIT_NAME} does not exist; the author review must be completed first")
+    with audit_path.open("r", encoding="utf-8-sig") as handle:
+        audit = json.load(handle)
+    if audit.get("schema_version") != AUDIT_SCHEMA_VERSION:
+        fail(
+            f"author review schema_version must be {AUDIT_SCHEMA_VERSION}; "
+            "initialize a new author review first"
+        )
+    if audit.get("status") != PASS_STATUS:
+        fail(f"author review status must be {PASS_STATUS} before reader review")
+
+    note_artifact = relative_artifact(formal_dir, note, "note")
+    audited_note = audit.get("artifacts", {}).get("note", {})
+    if audited_note != note_artifact:
+        fail("author review and reader review must bind the same final note")
+
+    review_path = process_dir / READER_REVIEW_NAME
+    if review_path.exists() and not overwrite:
+        fail(f"{READER_REVIEW_NAME} already exists; use --overwrite for a new review")
+    note_path = formal_dir / note_artifact["path"]
+    note_text = note_path.read_text(encoding="utf-8-sig")
+    payload = {
+        "schema_version": READER_REVIEW_SCHEMA_VERSION,
+        "topic_id": topic_id.zfill(3),
+        "status": "DRAFT",
+        "reviewed_at": "",
+        "reviewer": "",
+        "reader_only_confirmation": "",
+        "note": note_artifact,
+        "blocks": [
+            {
+                **block,
+                "result": "pending",
+                "original_excerpt": "",
+                "plain_paraphrase": "",
+                "who_when_what": "",
+                "possible_confusion": "",
+                "resolution": "",
+            }
+            for block in reader_review_blocks(note_text)
+        ],
+        "unresolved_issues": [],
+    }
+    write_json(review_path, payload)
+    readiness_path = process_dir / REPORT_NAME
+    if readiness_path.exists():
+        readiness_path.unlink()
+    return {
+        "ok": True,
+        "status": "READER_REVIEW_DRAFT_CREATED",
+        "review": str(review_path),
+        "block_count": len(payload["blocks"]),
+    }
+
+
+def validate_reader_review(
+    formal_dir: Path,
+    process_dir: Path,
+    topic_id: str,
+    note_artifact: dict,
+    author_reviewer: str,
+) -> dict:
+    review_path = process_dir / READER_REVIEW_NAME
+    if not review_path.is_file():
+        fail(f"{READER_REVIEW_NAME} does not exist; ordinary-reader review is required")
+    with review_path.open("r", encoding="utf-8-sig") as handle:
+        review = json.load(handle)
+    if review.get("schema_version") != READER_REVIEW_SCHEMA_VERSION:
+        fail(
+            f"reader review schema_version must be {READER_REVIEW_SCHEMA_VERSION}"
+        )
+    expected_topic = topic_id.zfill(3)
+    if str(review.get("topic_id", "")).zfill(3) != expected_topic:
+        fail(f"reader review topic_id must be {expected_topic}")
+    if review.get("status") != READER_REVIEW_PASS_STATUS:
+        fail(f"reader review status must be {READER_REVIEW_PASS_STATUS}")
+    reviewed_at = validate_iso_datetime(review.get("reviewed_at"))
+    reviewer = nonempty_text(review.get("reviewer"), "reader reviewer", 3)
+    if reviewer.casefold() == author_reviewer.casefold():
+        fail("ordinary-reader reviewer must differ from the author reviewer")
+    confirmation = nonempty_text(
+        review.get("reader_only_confirmation"),
+        "reader_only_confirmation",
+        30,
+    )
+    if review.get("note") != note_artifact:
+        fail("reader review is stale because the final note changed")
+
+    note_path = formal_dir / note_artifact["path"]
+    note_text = note_path.read_text(encoding="utf-8-sig")
+    visible_note = normalized_visible_text(note_text)
+    block_sources = reader_review_block_sources(note_text)
+    expected_blocks = [
+        {"name": block["name"], "label": block["label"]}
+        for block in block_sources
+    ]
+    source_by_name = {
+        block["name"]: normalized_visible_text(block["review_text"])
+        for block in block_sources
+    }
+    expected_names = [item["name"] for item in expected_blocks]
+    blocks = review.get("blocks")
+    if not isinstance(blocks, list):
+        fail("reader review blocks must be a list")
+    names = [item.get("name") for item in blocks if isinstance(item, dict)]
+    if names != expected_names:
+        fail(
+            "reader review blocks must match the final visible note in order; "
+            f"expected={expected_names}, actual={names}"
+        )
+    for block in blocks:
+        name = block["name"]
+        if block.get("result") != "pass":
+            fail(f"reader review block {name} result must be pass")
+        excerpt = nonempty_text(
+            block.get("original_excerpt"), f"{name}.original_excerpt", 8
+        )
+        normalized_excerpt = normalized_visible_text(excerpt)
+        if normalized_excerpt not in visible_note:
+            fail(f"reader review block {name} excerpt is not in the final note")
+        if normalized_excerpt not in source_by_name[name]:
+            fail(f"reader review block {name} excerpt comes from a different block")
+        paraphrase = nonempty_text(
+            block.get("plain_paraphrase"), f"{name}.plain_paraphrase", 20
+        )
+        if normalized_visible_text(paraphrase) == normalized_visible_text(excerpt):
+            fail(f"reader review block {name} paraphrase cannot copy the excerpt")
+        nonempty_text(block.get("who_when_what"), f"{name}.who_when_what", 16)
+        nonempty_text(
+            block.get("possible_confusion"), f"{name}.possible_confusion", 12
+        )
+        nonempty_text(block.get("resolution"), f"{name}.resolution", 12)
+    unresolved = review.get("unresolved_issues")
+    if not isinstance(unresolved, list):
+        fail("reader review unresolved_issues must be a list")
+    if unresolved:
+        fail("reader review unresolved_issues must be empty before publication")
+    return {
+        "path": READER_REVIEW_NAME,
+        "sha256": sha256_file(review_path),
+        "reviewed_at": reviewed_at,
+        "reviewer": reviewer,
+        "confirmation": confirmation,
+        "block_count": len(blocks),
+    }
+
+
+def initialize_audit(
+    formal_dir: Path,
+    process_dir: Path,
+    topic_id: str,
+    artifact_paths: dict[str, str],
+    overwrite: bool = False,
+) -> dict:
+    formal_dir = formal_dir.resolve()
+    process_dir = process_dir.resolve()
+    if not formal_dir.is_dir():
+        fail(f"formal directory does not exist: {formal_dir}")
+    process_dir.mkdir(parents=True, exist_ok=True)
+    audit_path = process_dir / AUDIT_NAME
+    if audit_path.exists() and not overwrite:
+        fail(f"{AUDIT_NAME} already exists; use --overwrite after a new regeneration")
+
+    change_impact = validate_impact(formal_dir, process_dir, topic_id)
+
+    artifacts = {
+        role: relative_artifact(formal_dir, artifact_paths[role], role)
+        for role in REQUIRED_ARTIFACTS
+    }
+    payload = {
+        "schema_version": AUDIT_SCHEMA_VERSION,
+        "topic_id": topic_id.zfill(3),
+        "status": "DRAFT",
+        "audited_at": "",
+        "reviewer": "",
+        "full_read_confirmation": "",
+        "artifacts": artifacts,
+        "change_impact": {
+            "path": change_impact["path"],
+            "sha256": change_impact["sha256"],
+        },
+        "reader_copy": change_impact["reader_copy"],
+        "scopes": [
+            {
+                "name": name,
+                "label": label,
+                "result": "pending",
+                "evidence": "",
+                "findings": [],
+                **({"code_walkthrough": []} if name == "public_r_comments" else {}),
+            }
+            for name, label in REQUIRED_SCOPES
+        ],
+        "unresolved_issues": [],
+    }
+    write_json(audit_path, payload)
+    reader_review_path = process_dir / READER_REVIEW_NAME
+    if reader_review_path.exists():
+        reader_review_path.unlink()
+    readiness_path = process_dir / REPORT_NAME
+    if readiness_path.exists():
+        readiness_path.unlink()
+    return {
+        "ok": True,
+        "status": "DRAFT_CREATED",
+        "audit": str(audit_path),
+        "artifacts": artifacts,
+        "change_impact": change_impact,
+    }
+
+
+def nonempty_text(value: object, field: str, minimum: int = 1) -> str:
+    if not isinstance(value, str) or len(value.strip()) < minimum:
+        fail(f"{field} must contain at least {minimum} characters")
+    return value.strip()
+
+
+def validate_iso_datetime(value: object) -> str:
+    text = nonempty_text(value, "audited_at")
+    try:
+        datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError as error:
+        fail(f"audited_at must be ISO 8601: {error}")
+    return text
+
+
+def validate_audit(
+    formal_dir: Path,
+    process_dir: Path,
+    topic_id: str,
+    report_path: Path | None = None,
+    write_report: bool = True,
+) -> dict:
+    formal_dir = formal_dir.resolve()
+    process_dir = process_dir.resolve()
+    audit_path = process_dir / AUDIT_NAME
+    with audit_path.open("r", encoding="utf-8-sig") as handle:
+        audit = json.load(handle)
+
+    expected_topic = topic_id.zfill(3)
+    if audit.get("schema_version") != AUDIT_SCHEMA_VERSION:
+        fail(
+            f"readability audit schema_version must be {AUDIT_SCHEMA_VERSION}; "
+            "initialize a new audit for the current workflow"
+        )
+    if str(audit.get("topic_id", "")).zfill(3) != expected_topic:
+        fail(f"readability audit topic_id must be {expected_topic}")
+    if audit.get("status") != PASS_STATUS:
+        fail(f"readability audit status must be {PASS_STATUS}")
+    audited_at = validate_iso_datetime(audit.get("audited_at"))
+    reviewer = nonempty_text(audit.get("reviewer"), "reviewer", 3)
+    confirmation = nonempty_text(
+        audit.get("full_read_confirmation"), "full_read_confirmation", 20
+    )
+
+    current_impact = validate_impact(formal_dir, process_dir, expected_topic)
+    recorded_impact = audit.get("change_impact")
+    if not isinstance(recorded_impact, dict):
+        fail("readability audit change_impact is missing")
+    if recorded_impact.get("path") != current_impact["path"]:
+        fail("readability audit change_impact path differs from the current checklist")
+    if str(recorded_impact.get("sha256", "")).upper() != current_impact["sha256"]:
+        fail(
+            "readability audit is stale because definition_change_impact.json changed"
+        )
+    recorded_copy = audit.get("reader_copy")
+    if not isinstance(recorded_copy, dict):
+        fail("readability audit reader_copy is missing")
+    if recorded_copy.get("path") != current_impact["reader_copy"]["path"]:
+        fail("readability audit reader_copy path differs from the current copy")
+    if str(recorded_copy.get("sha256", "")).upper() != current_impact[
+        "reader_copy"
+    ]["sha256"]:
+        fail(
+            f"readability audit is stale because {READER_COPY_NAME} changed"
+        )
+
+    artifacts = audit.get("artifacts")
+    if not isinstance(artifacts, dict):
+        fail("artifacts must be an object")
+    current_hashes: dict[str, dict] = {}
+    for role in REQUIRED_ARTIFACTS:
+        item = artifacts.get(role)
+        if not isinstance(item, dict):
+            fail(f"artifacts.{role} is missing")
+        relative = nonempty_text(item.get("path"), f"artifacts.{role}.path")
+        expected_hash = nonempty_text(
+            item.get("sha256"), f"artifacts.{role}.sha256", 64
+        ).upper()
+        path = (formal_dir / relative).resolve()
+        try:
+            path.relative_to(formal_dir)
+        except ValueError:
+            fail(f"artifacts.{role}.path leaves the formal directory")
+        if not path.is_file():
+            fail(f"audited artifact is missing: {path}")
+        current_hash = sha256_file(path)
+        if current_hash != expected_hash:
+            fail(
+                f"readability audit is stale because {role} changed; "
+                "create a new DRAFT audit and read the final version again"
+            )
+        current_hashes[role] = {"path": relative, "sha256": current_hash}
+
+    scopes = audit.get("scopes")
+    if not isinstance(scopes, list):
+        fail("scopes must be a list")
+    scope_names = [item.get("name") for item in scopes if isinstance(item, dict)]
+    required_names = [name for name, _ in REQUIRED_SCOPES]
+    if len(scope_names) != len(set(scope_names)):
+        fail("scopes contain duplicate names")
+    if set(scope_names) != set(required_names):
+        missing = sorted(set(required_names) - set(scope_names))
+        unexpected = sorted(set(scope_names) - set(required_names))
+        fail(f"readability scopes mismatch; missing={missing}, unexpected={unexpected}")
+
+    finding_count = 0
+    for item in scopes:
+        if not isinstance(item, dict):
+            fail("every readability scope must be an object")
+        name = item["name"]
+        if item.get("result") != "pass":
+            fail(f"scope {name} result must be pass")
+        nonempty_text(item.get("evidence"), f"scope {name} evidence", 20)
+        findings = item.get("findings")
+        if not isinstance(findings, list):
+            fail(f"scope {name} findings must be a list")
+        for index, finding in enumerate(findings, start=1):
+            if not isinstance(finding, dict):
+                fail(f"scope {name} finding {index} must be an object")
+            nonempty_text(finding.get("location"), f"{name} finding {index} location")
+            nonempty_text(finding.get("problem"), f"{name} finding {index} problem")
+            nonempty_text(
+                finding.get("resolution"), f"{name} finding {index} resolution"
+            )
+            finding_count += 1
+
+        if (
+            name == "public_r_comments"
+            and "public_r" in current_impact["changed_dimensions"]
+        ):
+            walkthrough = item.get("code_walkthrough")
+            if not isinstance(walkthrough, list) or not walkthrough:
+                fail(
+                    "public R code walkthrough is required when public_r changed; "
+                    "comments-only review cannot pass"
+                )
+            for index, block in enumerate(walkthrough, start=1):
+                if not isinstance(block, dict):
+                    fail(f"public R code walkthrough block {index} must be an object")
+                for field in (
+                    "location",
+                    "input",
+                    "action",
+                    "output",
+                    "plain_paraphrase",
+                ):
+                    nonempty_text(
+                        block.get(field),
+                        f"public R code walkthrough block {index} {field}",
+                        5,
+                    )
+                if block.get("result") != "pass":
+                    fail(
+                        f"public R code walkthrough block {index} result must be pass"
+                    )
+
+    unresolved = audit.get("unresolved_issues")
+    if not isinstance(unresolved, list):
+        fail("unresolved_issues must be a list")
+    if unresolved:
+        fail("unresolved_issues must be empty before publication")
+
+    reader_review = validate_reader_review(
+        formal_dir,
+        process_dir,
+        expected_topic,
+        current_hashes["note"],
+        reviewer,
+    )
+
+    result = {
+        "ok": True,
+        "status": "PUBLISH_READY",
+        "topic_id": expected_topic,
+        "audited_at": audited_at,
+        "reviewer": reviewer,
+        "full_read_confirmation": confirmation,
+        "scope_count": len(scopes),
+        "finding_count": finding_count,
+        "audit": str(audit_path),
+        "audit_sha256": sha256_file(audit_path),
+        "artifacts": current_hashes,
+        "change_impact": current_impact,
+        "reader_review": reader_review,
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if write_report:
+        if report_path is None:
+            report_path = process_dir / REPORT_NAME
+        else:
+            report_path = report_path.resolve()
+        write_json(report_path, result)
+        result["report"] = str(report_path)
+    return result
+
+
+def verify_existing_readiness(
+    formal_dir: Path,
+    process_dir: Path,
+    topic_id: str,
+) -> dict:
+    process_dir = process_dir.resolve()
+    report_path = process_dir / REPORT_NAME
+    if not report_path.is_file():
+        fail(
+            f"{REPORT_NAME} does not exist; publication cannot begin without a "
+            "current PUBLISH_READY report"
+        )
+    with report_path.open("r", encoding="utf-8-sig") as handle:
+        recorded = json.load(handle)
+    current = validate_audit(
+        formal_dir,
+        process_dir,
+        topic_id,
+        write_report=False,
+    )
+    if recorded.get("status") != "PUBLISH_READY":
+        fail("publish readiness status must be PUBLISH_READY")
+    comparisons = (
+        ("topic_id", recorded.get("topic_id"), current.get("topic_id")),
+        ("audit_sha256", recorded.get("audit_sha256"), current.get("audit_sha256")),
+        ("artifacts", recorded.get("artifacts"), current.get("artifacts")),
+        (
+            "change_impact",
+            recorded.get("change_impact"),
+            current.get("change_impact"),
+        ),
+        (
+            "reader_review",
+            recorded.get("reader_review"),
+            current.get("reader_review"),
+        ),
+    )
+    for label, old_value, current_value in comparisons:
+        if old_value != current_value:
+            fail(
+                f"{REPORT_NAME} is stale because {label} differs from the "
+                "current reviewed version"
+            )
+    return {
+        "ok": True,
+        "status": "PUBLISH_READY_VERIFIED",
+        "topic_id": current["topic_id"],
+        "report": str(report_path),
+        "report_sha256": sha256_file(report_path),
+        "artifacts": current["artifacts"],
+        "change_impact": current["change_impact"],
+        "reader_review": current["reader_review"],
+        "verified_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def add_common_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--formal-dir", required=True, type=Path)
+    parser.add_argument("--process-dir", required=True, type=Path)
+    parser.add_argument("--topic-id", required=True)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Initialize or verify the full-text readability publication gate."
+    )
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    impact_parser = subparsers.add_parser("init-impact")
+    impact_parser.add_argument("--process-dir", required=True, type=Path)
+    impact_parser.add_argument("--topic-id", required=True)
+    impact_parser.add_argument("--overwrite", action="store_true")
+
+    init_parser = subparsers.add_parser("init")
+    add_common_arguments(init_parser)
+    init_parser.add_argument("--note", required=True)
+    init_parser.add_argument("--r-script", required=True)
+    init_parser.add_argument("--analysis-db", required=True)
+    init_parser.add_argument("--analysis-codebook", required=True)
+    init_parser.add_argument("--overwrite", action="store_true")
+
+    reader_parser = subparsers.add_parser("init-reader")
+    add_common_arguments(reader_parser)
+    reader_parser.add_argument("--note", required=True)
+    reader_parser.add_argument("--overwrite", action="store_true")
+
+    check_parser = subparsers.add_parser("check")
+    add_common_arguments(check_parser)
+    check_parser.add_argument("--report", type=Path)
+
+    verify_parser = subparsers.add_parser("verify-ready")
+    add_common_arguments(verify_parser)
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    try:
+        if args.command == "init-impact":
+            result = initialize_impact(
+                args.process_dir,
+                args.topic_id,
+                overwrite=args.overwrite,
+            )
+        elif args.command == "init":
+            result = initialize_audit(
+                args.formal_dir,
+                args.process_dir,
+                args.topic_id,
+                {
+                    "note": args.note,
+                    "public_r": args.r_script,
+                    "analysis_db": args.analysis_db,
+                    "analysis_codebook": args.analysis_codebook,
+                },
+                overwrite=args.overwrite,
+            )
+        elif args.command == "init-reader":
+            result = initialize_reader_review(
+                args.formal_dir,
+                args.process_dir,
+                args.topic_id,
+                args.note,
+                overwrite=args.overwrite,
+            )
+        elif args.command == "check":
+            result = validate_audit(
+                args.formal_dir,
+                args.process_dir,
+                args.topic_id,
+                report_path=args.report,
+            )
+        else:
+            result = verify_existing_readiness(
+                args.formal_dir,
+                args.process_dir,
+                args.topic_id,
+            )
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        print(f"READABILITY_GATE_FAIL: {error}", file=sys.stderr)
+        return 1
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
