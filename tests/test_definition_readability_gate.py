@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import importlib.util
+import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 
 
@@ -116,7 +120,7 @@ def complete_reader_review(
     review_path = process / checker.READER_REVIEW_NAME
     review = checker.json.loads(review_path.read_text(encoding="utf-8"))
     note_path = formal / review["note"]["path"]
-    note_text = note_path.read_text(encoding="utf-8")
+    note_text = note_path.read_text(encoding="utf-8-sig")
     sources = {
         item["name"]: checker.normalized_visible_text(item["review_text"])
         for item in checker.reader_review_block_sources(note_text)
@@ -155,6 +159,32 @@ def expect_failure(action, contains: str) -> None:
         raise AssertionError(f"Expected failure containing: {contains}")
 
 
+def sync_command(formal: Path, process: Path, *, ok: bool = True) -> subprocess.CompletedProcess[str]:
+    result = subprocess.run(
+        [sys.executable, str(CHECKER_PATH), "verify-ready", "--formal-dir", str(formal),
+         "--process-dir", str(process), "--topic-id", "025", "--start-sync",
+         "--database", "CHARLS", "--topic-name", "家庭支持",
+         "--post-id", "221", "--base-url", "http://localhost:8000"],
+        capture_output=True, text=True, encoding="utf-8",
+        env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
+    )
+    assert (result.returncode == 0) == ok, result.stderr or result.stdout
+    return result
+
+
+def prepare_sync_command(formal: Path, process: Path) -> subprocess.CompletedProcess[str]:
+    result = subprocess.run(
+        [sys.executable, str(CHECKER_PATH), "verify-ready", "--formal-dir", str(formal),
+         "--process-dir", str(process), "--topic-id", "025",
+         "--database", "CHARLS", "--topic-name", "家庭支持",
+         "--post-id", "221", "--base-url", "http://localhost:8000"],
+        capture_output=True, text=True, encoding="utf-8",
+        env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+    return result
+
+
 def main() -> int:
     checker = load_checker()
     with tempfile.TemporaryDirectory(prefix="readability_gate_") as tmp:
@@ -176,7 +206,11 @@ def main() -> int:
                 if role == "note"
                 else f"fixture for {role}\n"
             )
-            (formal / name).write_text(content, encoding="utf-8")
+            if role == "note":
+                content += "\U0001f4d6\n"
+                (formal / name).write_text(content, encoding="utf-8-sig", newline="\r\n")
+            else:
+                (formal / name).write_text(content, encoding="utf-8")
 
         complete_impact(checker, formal, process)
         checker.initialize_audit(formal, process, "025", files)
@@ -192,6 +226,101 @@ def main() -> int:
         assert result["finding_count"] == 1
         verified = checker.verify_existing_readiness(formal, process, "025")
         assert verified["status"] == "PUBLISH_READY_VERIFIED"
+        upload = verified["upload"]
+        expected_body = (formal / files["note"]).read_text(encoding="utf-8-sig")
+        assert upload["note"] == str((formal / files["note"]).resolve())
+        assert upload["body_check"]["length_utf16"] == len(expected_body) + 1
+        assert upload["body_check"]["head"] == expected_body[:160]
+        assert upload["body_check"]["tail"] == expected_body[-150:]
+        assert "\r" not in upload["body_check"]["head"]
+        assert [item["role"] for item in upload["attachments"]] == ["analysis_db", "analysis_codebook"]
+        assert all(Path(item["path"]).is_absolute() for item in upload["attachments"])
+        assert not (process / "execution_report.json").exists()
+
+        missing_browser_target = subprocess.run(
+            [sys.executable, str(CHECKER_PATH), "verify-ready",
+             "--formal-dir", str(formal), "--process-dir", str(process),
+             "--topic-id", "025", "--start-sync",
+             "--database", "CHARLS", "--topic-name", "家庭支持"],
+            capture_output=True, text=True, encoding="utf-8",
+            env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
+        )
+        assert missing_browser_target.returncode != 0
+        assert "--post-id and --base-url" in missing_browser_target.stderr
+        assert not (process / "execution_report.json").exists()
+
+        unchanged = {name: (formal / name).read_bytes() for name in files.values()}
+        readiness_bytes = (process / checker.REPORT_NAME).read_bytes()
+        prepared = json.loads(prepare_sync_command(formal, process).stdout)
+        prepared_action = prepared["browser_action"]
+        assert "preload_script" in prepared_action
+        assert "run_script" not in prepared_action
+        assert not (process / "execution_report.json").exists()
+
+        started = json.loads(sync_command(formal, process).stdout)
+        assert "upload" not in started
+        browser_action = started["browser_action"]
+        assert "preload_script" not in browser_action
+        assert "run_script" in browser_action
+        assert browser_action["preload_sha256"] == prepared_action["preload_sha256"]
+        assert browser_action["existing_tab_match"] == [
+            "http://localhost:8000/nodes/post/221/",
+            "http://localhost:8000/nodes/edit/221/",
+        ]
+        assert browser_action["payload"]["expected_title_parts"] == [
+            "025", "CHARLS", "家庭支持"
+        ]
+        assert browser_action["payload"]["note"] == upload["note"]
+        assert browser_action["payload"]["body_check"] == upload["body_check"]
+        assert browser_action["payload"]["dispatch_limit_ms"] == 60000
+        assert [item["name"] for item in browser_action["payload"]["attachments"]] == [
+            "analysis_db.xlsx", "analysis_codebook.xlsx"
+        ]
+        preload_script = prepared_action["preload_script"]
+        assert 'chooser.setFiles([filePath])' in preload_script
+        assert 'for (const attachment of payload.attachments)' in preload_script
+        assert 'const titleDeadline = Date.now() + 5000' in preload_script
+        assert 'payload.expected_title_parts.every(part => titleValue.includes(part))' in preload_script
+        assert 'button[title="删除"]' in preload_script
+        assert 'body.length !== payload.body_check.length_utf16' in preload_script
+        assert 'JSON.stringify(actualNames) !== JSON.stringify(expectedNames)' in preload_script
+        assert 'getByRole("button", { name: "更新文章" })' in preload_script
+        assert 'timings.open_edit_ms' in preload_script
+        assert 'timings.identity_check_ms' in preload_script
+        assert 'timings.body_import_ms' in preload_script
+        assert 'timings.attachments_ms' in preload_script
+        assert 'timings.submit_and_return_ms' in preload_script
+        assert 'dispatchLatencyMs > payload.dispatch_limit_ms' in preload_script
+        assert 'dispatch_latency_ms: dispatchLatencyMs' in preload_script
+        assert 'sync_elapsed_to_browser_return_ms' in preload_script
+        assert 'quality_checks' in preload_script
+        run_script = browser_action["run_script"]
+        assert 'await syncDbCodeBookPost(tab, dbCodeBookSyncPayload)' in run_script
+        assert len(run_script) < len(preload_script) // 2
+        assert browser_action["payload"]["sync_started_at"] == started["execution"]["started_at"]
+        assert "setInputFiles" not in preload_script
+        expect_failure(
+            lambda: checker.build_cua_sync_action(
+                upload, "localhost:8000", "221", "CHARLS", "025", "家庭支持"
+            ),
+            "absolute http or https URL",
+        )
+        expect_failure(
+            lambda: checker.build_cua_sync_action(
+                upload, "http://localhost:8000", "0", "CHARLS", "025", "家庭支持"
+            ),
+            "positive integer",
+        )
+        report_path = process / "execution_report.json"
+        execution = json.loads(report_path.read_text(encoding="utf-8"))
+        assert execution["status"] == "running"
+        assert execution["stages"][0]["stage_id"] == "website_sync"
+        assert started["execution"]["started_at"] == execution["stages"][0]["started_at"]
+        repeated = json.loads(sync_command(formal, process).stdout)
+        assert repeated["execution"] == started["execution"]
+        assert len(json.loads(report_path.read_text(encoding="utf-8"))["stages"]) == 1
+        assert {name: (formal / name).read_bytes() for name in files.values()} == unchanged
+        assert (process / checker.REPORT_NAME).read_bytes() == readiness_bytes
 
         (formal / files["note"]).write_text(
             "## 摘要导读\n"
@@ -207,6 +336,10 @@ def main() -> int:
             lambda: checker.verify_existing_readiness(formal, process, "025"),
             "audit is stale",
         )
+        report_bytes_before_failed_preflight = report_path.read_bytes()
+        failed = sync_command(formal, process, ok=False)
+        assert "audit is stale" in failed.stderr
+        assert report_path.read_bytes() == report_bytes_before_failed_preflight
 
         checker.initialize_audit(formal, process, "025", files, overwrite=True)
         complete_audit(checker, audit_path)
@@ -261,6 +394,27 @@ def main() -> int:
 
         complete_reader_review(checker, formal, process)
         reader_path = process / checker.READER_REVIEW_NAME
+        original_reader = reader_path.read_bytes()
+        (formal / files["analysis_db"]).write_bytes(b"changed data fixture")
+        result = checker.initialize_audit(
+            formal, process, "025", files, overwrite=True, preserve_reader=True
+        )
+        assert result["reader_review_preserved"]
+        assert reader_path.read_bytes() == original_reader
+        assert not (process / checker.REPORT_NAME).exists()
+        complete_audit(checker, audit_path)
+        checker.validate_audit(formal, process, "025")
+
+        note_path = formal / files["note"]
+        original_note = note_path.read_bytes()
+        note_path.write_bytes(original_note + b"\nchanged reader text\n")
+        expect_failure(
+            lambda: checker.initialize_audit(
+                formal, process, "025", files, overwrite=True, preserve_reader=True
+            ),
+            "final note changed",
+        )
+        note_path.write_bytes(original_note)
         reader = checker.json.loads(reader_path.read_text(encoding="utf-8"))
         reader["blocks"] = reader["blocks"][:-1]
         checker.write_json(reader_path, reader)

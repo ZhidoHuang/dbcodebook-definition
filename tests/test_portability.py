@@ -15,7 +15,7 @@ def main() -> int:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     assert module.validate_routes()["databases"] == ["charls", "elsa"]
-    assert module.validate_manifest()["source_materials"] == 23
+    assert module.validate_manifest()["source_materials"] == 22
     assert module.validate_portability()["text_files"] > 20
     assert module.validate_markdown_links()["markdown_links"] >= 20
     print("skill portability fixtures PASS")

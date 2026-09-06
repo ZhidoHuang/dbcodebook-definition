@@ -366,18 +366,49 @@ summary_question_detail_part <- function(text) {
   list(type = "question_detail", value = as.character(text))
 }
 
-summary_questionnaire_line <- function(question_id, question, details = character()) {
-  details <- as.character(details)
-  parts <- list(
+summary_questionnaire_option <- function(text, jump = "") {
+  if (length(text) != 1 || is.na(text) || !nzchar(trimws(text)) ||
+      length(jump) != 1 || is.na(jump)) {
+    stop("每个选项必须包含一条完整选项文本和可选的原始跳转说明。")
+  }
+  if (grepl("→|->|=>", text, perl = TRUE)) {
+    stop("选项中的跳转须单独放入 jump，避免跳题说明被着色为选项。")
+  }
+  list(type = "question_detail", value = text, role = "option",
+       position = "options", jump = jump)
+}
+
+summary_questionnaire_line <- function(question_id, question, details = character(),
+                                       before = character(), condition = character(),
+                                       options = list(),
+                                       after = character()) {
+  if (!is.list(options) || any(!vapply(options, function(option) {
+    is.list(option) && identical(option$role, "option") &&
+      identical(option$position, "options") && identical(option$type, "question_detail")
+  }, logical(1)))) {
+    stop("options 中每个选项须使用 summary_questionnaire_option()。")
+  }
+  programs <- function(values, position) {
+    lapply(as.character(values), function(value) {
+      list(type = "question_detail", value = value, role = "instruction",
+           position = position)
+    })
+  }
+  if (length(condition) > 1 || anyNA(condition) ||
+      (length(condition) == 1 && !nzchar(trimws(condition)))) {
+    stop("condition 只能包含一条非空的题目进入条件。")
+  }
+  condition_part <- if (length(condition) == 1) {
+    list(list(type = "question_condition", value = as.character(condition)))
+  } else {
+    list()
+  }
+  parts <- c(programs(before, "before"), list(
     summary_strong_part(question_id),
     " ",
     summary_question_part(question, quote = FALSE)
-  )
-  if (length(details) > 0) {
-    for (detail in details) {
-      parts <- c(parts, list(summary_question_detail_part(detail)))
-    }
-  }
+  ), condition_part, lapply(as.character(details), summary_question_detail_part),
+  options, programs(after, "after"))
   list(parts = parts, questionnaire = TRUE)
 }
 
@@ -435,11 +466,39 @@ summary_definition_block <- function(title, lines) {
   )
 }
 
-summary_render_question_detail <- function(value) {
+summary_render_question_detail <- function(value, role = NULL, position = NULL, jump = "") {
   value <- as.character(value)
-  base_style <- paste0(
-    "display:block;padding-left:1.4em;text-indent:0;font-size:0.8em;"
-  )
+  line_style <- "display:block;padding-left:1.4em;text-indent:0;"
+  option_style <- "font-size:0.8em;color:#888888;"
+  instruction_style <- "font-size:0.72em;"
+  if (!is.null(role)) {
+    if (role == "instruction" && position %in% c("before", "after")) {
+      style <- if (position == "before") {
+        "display:block;text-indent:0;font-size:0.72em;margin:0 0 0.35em;"
+      } else paste0(line_style, instruction_style)
+      return(paste0(
+        '<span class="summary-question-detail" data-summary-question-detail="true" ',
+        'data-summary-question-detail-role="instruction" data-summary-question-position="',
+        position, '" style="', style, '">',
+        summary_render_inline_code(value), '</span>'
+      ))
+    }
+    if (role != "option" || !identical(position, "options")) {
+      stop("问卷说明的角色与位置不匹配。")
+    }
+    mixed <- nzchar(jump)
+    return(paste0(
+      '<span class="summary-question-detail" data-summary-question-detail="true" ',
+      'data-summary-question-detail-role="', if (mixed) 'mixed' else 'option',
+      '" data-summary-question-position="options" style="', line_style, '">',
+      '<span data-summary-question-option="true" style="', option_style, '">',
+      summary_render_inline_code(value), '</span>',
+      if (mixed) paste0(' <span data-summary-question-instruction="true" ',
+                        'style="', instruction_style, '">',
+                        summary_render_inline_code(jump), '</span>') else '',
+      '</span>'
+    ))
+  }
   is_option <- grepl(
     "^\\s*(?:\\[[^]]+\\]|-?[0-9]+(?:\\.[0-9]+)?)(?:\\s|$)",
     value,
@@ -448,7 +507,8 @@ summary_render_question_detail <- function(value) {
   if (!is_option) {
     return(paste0(
       '<span class="summary-question-detail" data-summary-question-detail="true" ',
-      'data-summary-question-detail-role="instruction" style="', base_style,
+      'data-summary-question-detail-role="instruction" style="', line_style,
+      instruction_style,
       '">', summary_render_inline_code(value), '</span>'
     ))
   }
@@ -459,18 +519,18 @@ summary_render_question_detail <- function(value) {
     instruction_text <- trimws(substr(value, arrow[[1]], nchar(value)))
     return(paste0(
       '<span class="summary-question-detail" data-summary-question-detail="true" ',
-      'data-summary-question-detail-role="mixed" style="', base_style, '">',
-      '<span data-summary-question-option="true" style="color:#888888;">',
+      'data-summary-question-detail-role="mixed" style="', line_style, '">',
+      '<span data-summary-question-option="true" style="', option_style, '">',
       summary_render_inline_code(option_text), '</span> ',
-      '<span data-summary-question-instruction="true">',
+      '<span data-summary-question-instruction="true" style="', instruction_style, '">',
       summary_render_inline_code(instruction_text), '</span></span>'
     ))
   }
 
   paste0(
     '<span class="summary-question-detail" data-summary-question-detail="true" ',
-    'data-summary-question-detail-role="option" style="', base_style,
-    'color:#888888;">', summary_render_inline_code(value), '</span>'
+    'data-summary-question-detail-role="option" style="', line_style,
+    option_style, '">', summary_render_inline_code(value), '</span>'
   )
 }
 
@@ -503,6 +563,14 @@ summary_render_parts <- function(parts, theme_color) {
       quote <- if (is.null(part$quote)) TRUE else isTRUE(part$quote)
       return(summary_question_span(part$value, theme_color, quote = quote))
     }
+    if (identical(part$type, "question_condition")) {
+      return(paste0(
+        '<span class="summary-question-condition" ',
+        'data-summary-question-condition="true" ',
+        'style="font-size:0.72em;">（',
+        summary_render_inline_code(part$value), '）</span>'
+      ))
+    }
     if (identical(part$type, "period_question")) {
       return(paste0(
         '“<span class="summary-period-question" ',
@@ -517,7 +585,10 @@ summary_render_parts <- function(parts, theme_color) {
       ))
     }
     if (identical(part$type, "question_detail")) {
-      return(summary_render_question_detail(part$value))
+      return(summary_render_question_detail(
+        part$value, part$role, part$position,
+        if (is.null(part$jump)) "" else part$jump
+      ))
     }
     stop("未知的摘要语义片段类型：", part$type)
   }, character(1))
@@ -743,6 +814,10 @@ render_summary_selection_paragraph <- function(selection, theme_color) {
         '</section>'
       )
     }, character(1))
+    if (anyDuplicated(vapply(groups, function(group) as.character(group$period), character(1))) ||
+        anyDuplicated(vapply(groups, function(group) as.character(group$label), character(1)))) {
+      stop("时期标识和标签须各自唯一，不能让不同问卷时期共用同一标识。")
+    }
     footer <- if (is.null(selection$footer)) "" else {
       render_selection_lines(selection$footer)
     }

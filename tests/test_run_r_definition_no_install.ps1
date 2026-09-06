@@ -95,11 +95,14 @@ cat("RUN_OK\n")
     [System.Text.UTF8Encoding]::new($false)
   )
 
+  $configPath = Join-Path $tempDir "config.json"
+  @{ schema_version = 1; executables = @{ rscript = $Rscript } } |
+    ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $configPath -Encoding UTF8
   $preflightOutput = & $runner `
     -WorkDir $tempDir `
     -Script "fixture.R" `
     -LogPrefix "fixture" `
-    -Rscript $Rscript `
+    -Config $configPath `
     -PreflightOnly 2>&1 | Out-String
   if ($LASTEXITCODE -ne 0) {
     throw "Runner preflight fixture failed with exit code $LASTEXITCODE."
@@ -110,6 +113,17 @@ cat("RUN_OK\n")
   if (Get-ChildItem -LiteralPath $tempDir -Filter "fixture_run_*.log" -File) {
     throw "Preflight-only mode created a formal-run log."
   }
+
+  $badConfig = Join-Path $tempDir "bad-config.json"
+  @{ schema_version = 1; executables = @{ rscript = "missing-Rscript.exe" } } |
+    ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $badConfig -Encoding UTF8
+  $invalidConfigBlocked = $false
+  try {
+    & $runner -WorkDir $tempDir -Script "fixture.R" -LogPrefix "fixture" -Config $badConfig -PreflightOnly *> $null
+  } catch {
+    $invalidConfigBlocked = $_.Exception.Message -match "Rscript does not exist"
+  }
+  if (-not $invalidConfigBlocked) { throw "Invalid configured executable was silently replaced." }
 
   & $runner -WorkDir $tempDir -Script "fixture.R" -LogPrefix "fixture" -Rscript $Rscript
   if ($LASTEXITCODE -ne 0) {

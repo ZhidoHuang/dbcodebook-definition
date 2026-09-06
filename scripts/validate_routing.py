@@ -60,8 +60,11 @@ def validate_routes() -> dict:
     for database, values in databases.items():
         if not isinstance(values, dict):
             raise ValueError(f"database route must be an object: {database}")
-        for field in ("workflow", "profile", "source_materials"):
+        for field in ("workflow", "profile"):
             relative_target(values.get(field), f"databases.{database}.{field}")
+        source_materials = values.get("source_materials")
+        if source_materials is not None:
+            relative_target(source_materials, f"databases.{database}.source_materials")
     return {"common_rules": len(common), "databases": sorted(databases)}
 
 

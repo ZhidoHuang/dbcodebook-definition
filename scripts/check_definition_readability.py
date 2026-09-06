@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import re
 import sys
+from urllib.parse import urlsplit
 
 
 AUDIT_NAME = "readability_audit.json"
@@ -542,6 +543,7 @@ def initialize_audit(
     topic_id: str,
     artifact_paths: dict[str, str],
     overwrite: bool = False,
+    preserve_reader: bool = False,
 ) -> dict:
     formal_dir = formal_dir.resolve()
     process_dir = process_dir.resolve()
@@ -558,6 +560,16 @@ def initialize_audit(
         role: relative_artifact(formal_dir, artifact_paths[role], role)
         for role in REQUIRED_ARTIFACTS
     }
+    if preserve_reader:
+        if not audit_path.is_file():
+            fail("preserving a reader review requires an existing author audit")
+        previous = json.loads(audit_path.read_text(encoding="utf-8-sig"))
+        if previous.get("status") != PASS_STATUS:
+            fail("preserving a reader review requires a passed author audit")
+        validate_reader_review(
+            formal_dir, process_dir, topic_id, artifacts["note"],
+            previous.get("reviewer", ""),
+        )
     payload = {
         "schema_version": AUDIT_SCHEMA_VERSION,
         "topic_id": topic_id.zfill(3),
@@ -586,7 +598,7 @@ def initialize_audit(
     }
     write_json(audit_path, payload)
     reader_review_path = process_dir / READER_REVIEW_NAME
-    if reader_review_path.exists():
+    if reader_review_path.exists() and not preserve_reader:
         reader_review_path.unlink()
     readiness_path = process_dir / REPORT_NAME
     if readiness_path.exists():
@@ -597,6 +609,7 @@ def initialize_audit(
         "audit": str(audit_path),
         "artifacts": artifacts,
         "change_impact": change_impact,
+        "reader_review_preserved": preserve_reader,
     }
 
 
@@ -839,6 +852,22 @@ def verify_existing_readiness(
                 f"{REPORT_NAME} is stale because {label} differs from the "
                 "current reviewed version"
             )
+    note_path = (formal_dir / current["artifacts"]["note"]["path"]).resolve()
+    note_text = note_path.read_text(encoding="utf-8-sig")
+    upload = {
+        "note": str(note_path),
+        "body_check": {
+            "newline": "LF",
+            "length_utf16": len(note_text.encode("utf-16-le")) // 2,
+            "head": note_text[:160],
+            "tail": note_text[-150:],
+        },
+        "attachments": [
+            {"role": role, "path": str((formal_dir / current["artifacts"][role]["path"]).resolve())}
+            for role in ("analysis_db", "analysis_codebook")
+        ],
+        "attachment_location": "侧栏文档",
+    }
     return {
         "ok": True,
         "status": "PUBLISH_READY_VERIFIED",
@@ -849,7 +878,186 @@ def verify_existing_readiness(
         "change_impact": current["change_impact"],
         "reader_review": current["reader_review"],
         "verified_at": datetime.now(timezone.utc).isoformat(),
+        "upload": upload,
     }
+
+
+def build_cua_sync_action(
+    upload: dict,
+    base_url: str,
+    post_id: str,
+    database: str,
+    topic_id: str,
+    topic_name: str,
+    sync_started_at: str | None = None,
+    include_preload: bool = True,
+) -> dict:
+    base_url = base_url.strip().rstrip("/")
+    parsed = urlsplit(base_url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        fail("--base-url must be an absolute http or https URL")
+    post_id = post_id.strip()
+    if not re.fullmatch(r"[1-9][0-9]*", post_id):
+        fail("--post-id must be a positive integer")
+
+    attachments = [
+        {"role": item["role"], "path": item["path"], "name": Path(item["path"]).name}
+        for item in upload["attachments"]
+    ]
+    payload = {
+        "post_id": post_id,
+        "post_url": f"{base_url}/nodes/post/{post_id}/",
+        "edit_url": f"{base_url}/nodes/edit/{post_id}/",
+        "success_url_pattern": f"**/nodes/post/{post_id}/**",
+        "expected_title_parts": [topic_id.zfill(3), database, topic_name],
+        "note": upload["note"],
+        "body_check": upload["body_check"],
+        "attachments": attachments,
+        "sync_started_at": sync_started_at,
+        "dispatch_limit_ms": 60000,
+    }
+    payload_json = json.dumps(payload, ensure_ascii=False)
+    preload_script = rf'''async function chooseVisibleFile(tab, selector, filePath) {{
+  const chooserPromise = tab.playwright.waitForEvent("filechooser");
+  await tab.playwright.locator(selector).click();
+  const chooser = await chooserPromise;
+  await chooser.setFiles([filePath]);
+}}
+async function syncDbCodeBookPost(tab, payload) {{
+  const startedAt = Date.now();
+  const syncStartedAt = payload.sync_started_at
+    ? Date.parse(payload.sync_started_at)
+    : null;
+  if (payload.sync_started_at && Number.isNaN(syncStartedAt)) {{
+    throw new Error("网站同步开始时间无效；未操作网站");
+  }}
+  const dispatchLatencyMs = syncStartedAt === null
+    ? null
+    : startedAt - syncStartedAt;
+  if (dispatchLatencyMs !== null &&
+      dispatchLatencyMs > payload.dispatch_limit_ms) {{
+    throw new Error(
+      `网站同步启动后 ${{dispatchLatencyMs}} 毫秒仍未执行固定程序；未操作网站`
+    );
+  }}
+  const timings = {{}};
+  let submissionStarted = false;
+  try {{
+    let stepStarted = Date.now();
+    await tab.goto(payload.edit_url);
+    await tab.playwright.waitForLoadState("domcontentloaded");
+    const currentUrl = await tab.playwright.evaluate(() => location.href);
+    if (currentUrl !== payload.edit_url) {{
+      throw new Error(`未进入指定编辑页：${{currentUrl}}`);
+    }}
+    timings.open_edit_ms = Date.now() - stepStarted;
+
+    stepStarted = Date.now();
+    const title = tab.playwright.locator("#title");
+    await title.waitFor({{ state: "visible" }});
+    let titleValue = "";
+    const titleDeadline = Date.now() + 5000;
+    while (Date.now() < titleDeadline) {{
+      titleValue = await title.evaluate(el => el.value);
+      if (payload.expected_title_parts.every(part => titleValue.includes(part))) break;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }}
+    for (const part of payload.expected_title_parts) {{
+      if (!titleValue.includes(part)) {{
+        throw new Error(`文章身份不符，标题缺少：${{part}}`);
+      }}
+    }}
+    timings.identity_check_ms = Date.now() - stepStarted;
+
+    stepStarted = Date.now();
+    const editor = tab.playwright.locator("#editor");
+    await tab.playwright.getByRole("button", {{ name: "清空内容" }}).click();
+    const emptyLength = await editor.evaluate(el => el.value.length);
+    if (emptyLength !== 0) throw new Error("清空正文后编辑器仍非空");
+    await chooseVisibleFile(tab, "#content-import-input", payload.note);
+
+    const body = await editor.evaluate(el => ({{
+      length: el.value.length,
+      head: el.value.slice(0, 160),
+      tail: el.value.slice(-150)
+    }}));
+    if (body.length !== payload.body_check.length_utf16 ||
+        body.head !== payload.body_check.head ||
+        body.tail !== payload.body_check.tail) {{
+      throw new Error("导入正文与发布入口核对值不一致");
+    }}
+    timings.body_import_ms = Date.now() - stepStarted;
+
+    stepStarted = Date.now();
+    const sidebar = tab.playwright.locator("#documents-sidebar-list");
+    let deleteButtons = sidebar.locator('button[title="删除"]');
+    while (await deleteButtons.count()) {{
+      await deleteButtons.last().click();
+      deleteButtons = sidebar.locator('button[title="删除"]');
+    }}
+    for (const attachment of payload.attachments) {{
+      await chooseVisibleFile(tab, "#documents-sidebar-input", attachment.path);
+    }}
+    const sidebarText = await sidebar.innerText();
+    const actualNames = sidebarText.split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(line => /\.(xlsx|xls|csv|docx?|txt|pdf)$/i.test(line));
+    const expectedNames = payload.attachments.map(item => item.name);
+    if (JSON.stringify(actualNames) !== JSON.stringify(expectedNames)) {{
+      throw new Error(`侧栏附件顺序不符：${{actualNames.join(", ")}}`);
+    }}
+    timings.attachments_ms = Date.now() - stepStarted;
+
+    stepStarted = Date.now();
+    const returned = tab.playwright.waitForURL(
+      payload.success_url_pattern, {{ timeout: 30000 }}
+    );
+    submissionStarted = true;
+    await tab.playwright.getByRole("button", {{ name: "更新文章" }}).click();
+    await returned;
+    timings.submit_and_return_ms = Date.now() - stepStarted;
+    const finishedAt = Date.now();
+    return {{
+      ok: true,
+      status: "ARTICLE_PAGE_RETURNED",
+      post_url: payload.post_url,
+      browser_elapsed_ms: finishedAt - startedAt,
+      dispatch_latency_ms: dispatchLatencyMs,
+      sync_elapsed_to_browser_return_ms: syncStartedAt !== null
+        ? finishedAt - syncStartedAt
+        : null,
+      timing_breakdown_ms: timings,
+      quality_checks: {{
+        edit_url_verified: true,
+        title_verified: true,
+        body_verified: true,
+        attachment_order_verified: true,
+        article_page_returned: true
+      }},
+      body_length_utf16: body.length,
+      attachments: actualNames
+    }};
+  }} catch (error) {{
+    if (!submissionStarted) {{
+      try {{ await tab.goto(payload.edit_url); }} catch {{}}
+    }}
+    throw error;
+  }}
+}}'''
+    action = {
+        "existing_tab_match": [payload["post_url"], payload["edit_url"]],
+        "payload": payload,
+        "preload_sha256": hashlib.sha256(
+            preload_script.encode("utf-8")
+        ).hexdigest(),
+    }
+    if include_preload:
+        action["preload_script"] = preload_script
+    if sync_started_at is not None:
+        action["run_script"] = rf'''var dbCodeBookSyncPayload = {payload_json};
+var dbCodeBookSyncResult = await syncDbCodeBookPost(tab, dbCodeBookSyncPayload);
+nodeRepl.write(JSON.stringify(dbCodeBookSyncResult));'''
+    return action
 
 
 def add_common_arguments(parser: argparse.ArgumentParser) -> None:
@@ -876,6 +1084,7 @@ def parse_args() -> argparse.Namespace:
     init_parser.add_argument("--analysis-db", required=True)
     init_parser.add_argument("--analysis-codebook", required=True)
     init_parser.add_argument("--overwrite", action="store_true")
+    init_parser.add_argument("--preserve-reader", action="store_true")
 
     reader_parser = subparsers.add_parser("init-reader")
     add_common_arguments(reader_parser)
@@ -888,12 +1097,28 @@ def parse_args() -> argparse.Namespace:
 
     verify_parser = subparsers.add_parser("verify-ready")
     add_common_arguments(verify_parser)
+    verify_parser.add_argument("--start-sync", action="store_true")
+    verify_parser.add_argument("--database")
+    verify_parser.add_argument("--topic-name")
+    verify_parser.add_argument("--post-id")
+    verify_parser.add_argument("--base-url")
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+    sync = None
+    sync_requested = args.command == "verify-ready" and args.start_sync
+    browser_target_requested = args.command == "verify-ready" and any(
+        (args.database, args.topic_name, args.post_id, args.base_url)
+    )
     try:
+        if browser_target_requested:
+            if not all((args.database, args.topic_name, args.post_id, args.base_url)):
+                fail(
+                    "browser sync preparation requires --database, --topic-name, "
+                    "--post-id and --base-url"
+                )
         if args.command == "init-impact":
             result = initialize_impact(
                 args.process_dir,
@@ -912,6 +1137,7 @@ def main() -> int:
                     "analysis_codebook": args.analysis_codebook,
                 },
                 overwrite=args.overwrite,
+                preserve_reader=args.preserve_reader,
             )
         elif args.command == "init-reader":
             result = initialize_reader_review(
@@ -934,7 +1160,47 @@ def main() -> int:
                 args.process_dir,
                 args.topic_id,
             )
+            if browser_target_requested:
+                prepared_action = build_cua_sync_action(
+                    result["upload"], args.base_url, args.post_id, args.database,
+                    args.topic_id, args.topic_name,
+                )
+                if sync_requested:
+                    import execution_report
+
+                    sync = execution_report.begin_website_sync(
+                        args.process_dir, args.database, args.topic_id,
+                        args.topic_name,
+                    )
+                    browser_action = build_cua_sync_action(
+                        result["upload"], args.base_url, args.post_id,
+                        args.database, args.topic_id, args.topic_name,
+                        sync["started_at"], include_preload=False,
+                    )
+                    result = {"ok": True, "status": result["status"],
+                              "topic_id": result["topic_id"],
+                              "browser_action": browser_action,
+                              "execution": sync}
+                else:
+                    result = {"ok": True, "status": result["status"],
+                              "topic_id": result["topic_id"],
+                              "browser_action": prepared_action}
     except (OSError, ValueError, json.JSONDecodeError) as error:
+        if sync:
+            execution_report.command_issue(argparse.Namespace(
+                process_dir=str(args.process_dir), stage_id="website_sync",
+                kind="abnormal", description=str(error),
+                impact="发布前检查未通过，没有开始网站写入。",
+                resolution="修正对应成果或审核记录后再执行同步。", status="open",
+            ))
+            execution_report.command_stage_finish(argparse.Namespace(
+                process_dir=str(args.process_dir), stage_id="website_sync",
+                status="failed", summary=["发布前检查未通过；未操作网站。"], output=[],
+            ))
+            execution_report.command_finish(argparse.Namespace(
+                process_dir=str(args.process_dir), status="stopped",
+                summary=["网站未更新；发布前检查失败，原因已记录。"],
+            ))
         print(f"READABILITY_GATE_FAIL: {error}", file=sys.stderr)
         return 1
     print(json.dumps(result, ensure_ascii=False, indent=2))

@@ -8,6 +8,7 @@ analysis workbook columns, codebook variables, and final log status.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import csv
 import fnmatch
 import html
@@ -253,6 +254,95 @@ def read_xlsx_rows(path: Path) -> list[list[object]]:
             values[idx] = value
         rows.append(values)
     return rows
+
+
+def check_identity_values(
+    raw_path: Path,
+    raw_header: list[str],
+    analysis_rows: list[list[object]],
+    analysis_header: list[str],
+    results: list[dict],
+) -> None:
+    identity_candidates = [
+        "ID",
+        "id",
+        "year",
+        "householdid",
+        "respondent_id",
+        "communityid",
+        "idauniq",
+    ]
+    identity_columns = [
+        name
+        for name in identity_candidates
+        if name in raw_header and name in analysis_header
+    ]
+    if not identity_columns:
+        ok(results, "analysis identity values", "no shared identity columns")
+        return
+
+    raw_indexes = [raw_header.index(name) for name in identity_columns]
+    analysis_indexes = [analysis_header.index(name) for name in identity_columns]
+
+    def identity(row: list[object], indexes: list[int]) -> tuple[str, ...]:
+        return tuple(
+            "" if index >= len(row) or row[index] is None else str(row[index])
+            for index in indexes
+        )
+
+    raw_identities: Counter[tuple[str, ...]] = Counter()
+    with raw_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.reader(handle)
+        next(reader, None)
+        for raw_row in reader:
+            raw_identities[identity(raw_row, raw_indexes)] += 1
+
+    remaining = raw_identities.copy()
+    mismatches: list[dict] = []
+    for row_number, analysis_row in enumerate(analysis_rows[1:], start=2):
+        analysis_identity = identity(analysis_row, analysis_indexes)
+        if remaining[analysis_identity] > 0:
+            remaining[analysis_identity] -= 1
+            continue
+
+        detail: dict[str, object] = {
+            "row": row_number,
+            "analysis_identity": dict(zip(identity_columns, analysis_identity)),
+            "reason": "identity combination is absent from raw data",
+        }
+        for raw_identity in raw_identities:
+            differences = [
+                index
+                for index, (raw_value, analysis_value) in enumerate(
+                    zip(raw_identity, analysis_identity)
+                )
+                if raw_value != analysis_value
+            ]
+            if len(differences) == 1:
+                index = differences[0]
+                detail.update({
+                    "column": identity_columns[index],
+                    "raw": raw_identity[index],
+                    "analysis": analysis_identity[index],
+                })
+                break
+        mismatches.append(detail)
+        if len(mismatches) >= 20:
+            break
+
+    if mismatches:
+        fail(results, "analysis identity values", mismatches)
+    else:
+        ok(
+            results,
+            "analysis identity values",
+            {
+                "columns": identity_columns,
+                "raw_rows": sum(raw_identities.values()),
+                "analysis_rows": len(analysis_rows) - 1,
+                "relation": "analysis identity combinations occur in raw data",
+            },
+        )
 
 
 def check_forbidden_files(formal_dir: Path, results: list[dict], max_md: int) -> None:
@@ -622,13 +712,21 @@ def check_public_code_outline(
             'colClasses = c(householdid = "character", id = "character")'
             in source_public
         )
+        person_data_read = (
+            'colClasses = c(id = "character")' in source_public
+        )
         community_data_read = (
             'colClasses = c(communityid = "character")' in source_public
         )
-        if not (simple_data_read or household_data_read or community_data_read):
+        if not (
+            simple_data_read
+            or person_data_read
+            or household_data_read
+            or community_data_read
+        ):
             structural_issues.append(
                 "CHARLS public R must use the simple read, except that "
-                "household/community identity columns may be preserved as character"
+                "person/household/community identity columns may be preserved as character"
             )
         if re.search(r"(?m)^names\((?:data|dt)\)\s*\[[^\]]+\]\s*<-", source_public):
             structural_issues.append(
@@ -1361,6 +1459,16 @@ def main() -> int:
             ok(results, "analysis_db columns", header)
         ok(results, "analysis_db dimensions", {"rows": len(rows) - 1, "cols": len(header)})
 
+        raw_data_path = formal_dir / "raw_data.csv"
+        if raw_data_path.exists():
+            check_identity_values(
+                raw_data_path,
+                read_csv_header(raw_data_path),
+                rows,
+                header,
+                results,
+            )
+
         forbidden_found = sorted(forbid_vars.intersection(set(header)))
         if forbidden_found:
             fail(results, "forbidden vars in analysis_db", forbidden_found)
@@ -1389,7 +1497,6 @@ def main() -> int:
             results,
             args.db,
         )
-
     check_required_user_text(formal_dir, required_user_text, results)
     check_criteria_evolution(formal_dir, criteria_evolution_text, results)
     check_forbidden_formal_content(formal_dir, forbid_vars, results)

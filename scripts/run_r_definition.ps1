@@ -1,3 +1,4 @@
+#requires -Version 7.0
 param(
   [Parameter(Mandatory = $true)]
   [string]$WorkDir,
@@ -11,6 +12,8 @@ param(
   [string]$Rscript = "",
 
   [string]$Python = "",
+
+  [string]$Config = "",
 
   [string]$Database = "",
 
@@ -29,6 +32,30 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+$skillRoot = Split-Path -Parent $PSScriptRoot
+if ([string]::IsNullOrWhiteSpace($Config)) {
+  $Config = $env:DBCODEBOOK_DEFINITION_CONFIG
+  if ([string]::IsNullOrWhiteSpace($Config)) {
+    $candidate = Join-Path $skillRoot "config.local.json"
+    if (Test-Path -LiteralPath $candidate) { $Config = $candidate }
+  }
+}
+if (-not [string]::IsNullOrWhiteSpace($Config)) {
+  $configPath = (Resolve-Path -LiteralPath $Config -ErrorAction Stop).Path
+  $settings = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
+  if ($settings.schema_version -ne 1) { throw "Configuration schema_version must be 1." }
+  foreach ($name in @("rscript", "python")) {
+    $configured = [string]$settings.executables.$name
+    if ([string]::IsNullOrWhiteSpace((Get-Variable -Name $name -ValueOnly)) -and $configured) {
+      $configured = [Environment]::ExpandEnvironmentVariables($configured)
+      if (-not [System.IO.Path]::IsPathRooted($configured)) {
+        $configured = Join-Path (Split-Path -Parent $configPath) $configured
+      }
+      Set-Variable -Name $name -Value $configured
+    }
+  }
+}
 
 # Codex may expose the Linux locale name C.UTF-8. Windows R cannot use that
 # locale and may rewrite Chinese punctuation as <U+....>. Let R select the
@@ -109,6 +136,10 @@ $scriptPath = if ([System.IO.Path]::IsPathRooted($Script)) {
   Join-Path $resolvedWorkDir $Script
 }
 $resolvedScript = Resolve-RequiredPath -Path $scriptPath -Kind "R script"
+$scriptRelative = [System.IO.Path]::GetRelativePath($resolvedWorkDir, $resolvedScript)
+if ($scriptRelative -eq ".." -or $scriptRelative.StartsWith(".." + [System.IO.Path]::DirectorySeparatorChar) -or [System.IO.Path]::IsPathRooted($scriptRelative)) {
+  throw "R script must be inside WorkDir; run the current formal source, not a scratch copy."
+}
 $resolvedRscript = Resolve-Executable -Configured $Rscript -Candidates @("Rscript") -Kind "Rscript"
 $env:DBCODEBOOK_DEFINITION_SKILL_ROOT = Split-Path -Parent $PSScriptRoot
 
@@ -184,12 +215,15 @@ if ($isCharls) {
   $hasHouseholdDataRead = $publicSource.Contains(
     'colClasses = c(householdid = "character", id = "character")'
   )
+  $hasPersonDataRead = $publicSource.Contains(
+    'colClasses = c(id = "character")'
+  )
   $hasCommunityDataRead = $publicSource.Contains(
     'colClasses = c(communityid = "character")'
   )
-  if (-not ($hasSimpleDataRead -or $hasHouseholdDataRead -or $hasCommunityDataRead)) {
+  if (-not ($hasSimpleDataRead -or $hasPersonDataRead -or $hasHouseholdDataRead -or $hasCommunityDataRead)) {
     $publicIssues.Add(
-      'CHARLS public R must use the simple read, except that household/community identity columns may be preserved as character.'
+      'CHARLS public R must use the simple read, except that person/household/community identity columns may be preserved as character.'
     )
   }
   if ($publicSource -match '(?m)^names\((?:data|dt)\)\s*\[[^\]]+\]\s*<-') {

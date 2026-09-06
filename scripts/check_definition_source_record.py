@@ -476,8 +476,10 @@ def validate_questionnaire_path_closure(
     source_groups: object,
     approved_names: object,
     definition_plan: object,
+    *,
+    require_observed: bool = True,
 ) -> dict:
-    """Require every questionnaire-backed definition path to reach a stated result."""
+    """Check planned paths; require measured closure outside pre-download selection."""
 
     if not isinstance(exploration_log, list) or not exploration_log:
         fail("schema v7 exploration_log must not be empty")
@@ -585,6 +587,7 @@ def validate_questionnaire_path_closure(
         if not isinstance(branches, list) or not branches:
             fail(f"{field}.branches must not be empty")
         path_ids: set[str] = set()
+        observations_pending = False
         for branch_index, branch in enumerate(branches, start=1):
             branch_field = f"{field}.branches[{branch_index}]"
             if not isinstance(branch, dict):
@@ -621,25 +624,32 @@ def validate_questionnaire_path_closure(
                     f"source groups: {unknown_raw}"
                 )
             observed_count = branch.get("observed_count")
-            if (
+            if (require_observed or observed_count is not None) and (
                 isinstance(observed_count, bool)
                 or not isinstance(observed_count, int)
                 or observed_count < 0
             ):
                 fail(f"{branch_field}.observed_count must be a non-negative integer")
             unexplained_count = branch.get("unexplained_count")
-            if isinstance(unexplained_count, bool) or not isinstance(
+            observations_pending |= observed_count is None or unexplained_count is None
+            if (require_observed or unexplained_count is not None) and (
+                isinstance(unexplained_count, bool) or not isinstance(
                 unexplained_count, int
+                )
             ):
                 fail(f"{branch_field}.unexplained_count must be an integer")
-            if unexplained_count != 0:
+            if unexplained_count is not None and unexplained_count != 0:
                 fail(f"{branch_field}.unexplained_count must be 0")
             branch_count += 1
 
-        if item.get("all_observed_paths_mapped") is not True:
-            fail(f"{field}.all_observed_paths_mapped must be true")
-        if item.get("structural_missing_explained") is not True:
-            fail(f"{field}.structural_missing_explained must be true")
+        for flag in ("all_observed_paths_mapped", "structural_missing_explained"):
+            value = item.get(flag)
+            if require_observed and value is not True:
+                fail(f"{field}.{flag} must be true")
+            if not require_observed and value is not None and not isinstance(value, bool):
+                fail(f"{field}.{flag} must be a boolean or null")
+            if not require_observed and observations_pending and value is True:
+                fail(f"{field}.{flag} cannot be true while observations are pending")
         evidence_steps = item.get("evidence_steps")
         if not isinstance(evidence_steps, list) or not evidence_steps:
             fail(f"{field}.evidence_steps must not be empty")
@@ -743,6 +753,7 @@ def validate_download_selection(
             groups,
             record.get("approved_analysis_vars"),
             record.get("definition_plan"),
+            require_observed=False,
         )
     if schema_version in {2, 3, 4, 5, 6, 7}:
         decisions = record.get("candidate_decisions")

@@ -149,10 +149,28 @@ summary_questionnaire_fixture <- render_summary_selection_paragraph(
     summary_questionnaire_line(
       "ED001",
       "过去一个月是否看过门诊？",
-      c("1 是 → 跳至 `ED004`", "2 否", "如果 ED001 = 2，跳过后续门诊题。")
+      options = list(
+        summary_questionnaire_option("1 是", "→ 跳至 `ED004`"),
+        summary_questionnaire_option("2 否")
+      ),
+      after = "如果 ED001 = 2，跳过后续门诊题。"
     ),
     summary_definition_block("门诊定义处理", c("没有门诊时费用记为 0。"))
   )),
+  "#A33842"
+)
+question_layout_fixture <- render_summary_selection_paragraph(
+  list(groups = list(list(period = "wave1", label = "Wave 1", lines = list(
+    summary_questionnaire_line(
+      "Q001", "您当前是否在工作？",
+      condition = "上题回答为 1 的受访者回答本题。",
+      options = list(
+        summary_questionnaire_option("A 是", "→ 跳至 `Q003`"),
+        summary_questionnaire_option("B 否")
+      ),
+      after = "本题回答后，继续 Q002。"
+    )
+  )))),
   "#A33842"
 )
 definition_end_position <- match("DEFINITION_END", note_order_fixture)
@@ -361,12 +379,12 @@ checks <- list(
         '过去一个月是否看过门诊？</span>',
         '<span class="summary-question-detail" data-summary-question-detail="true" ',
         'data-summary-question-detail-role="mixed".*',
-        'data-summary-question-option="true" style="color:#888888;">1 是</span> ',
-        '<span data-summary-question-instruction="true">',
+        'data-summary-question-option="true" style="font-size:0.8em;color:#888888;">1 是</span> ',
+        '<span data-summary-question-instruction="true" style="font-size:0.72em;">',
         '→ 跳至 <code>ED004</code></span></span>.*',
         'data-summary-question-detail-role="option".*color:#888888;.*>2 否</span>.*',
-        'data-summary-question-detail-role="instruction" style="display:block;',
-        'padding-left:1.4em;text-indent:0;font-size:0.8em;">',
+        'data-summary-question-detail-role="instruction" data-summary-question-position="after" style="display:block;',
+        'padding-left:1.4em;text-indent:0;font-size:0.72em;">',
         '如果 ED001 = 2，跳过后续门诊题。</span>'
       ),
       summary_questionnaire_fixture,
@@ -375,9 +393,64 @@ checks <- list(
     TRUE
   ),
   expect_identical(
-    "question instructions inherit the default text color",
+    "legacy question details remain supported with an entry condition",
+    {
+      legacy <- render_summary_selection_paragraph(
+        list(lines = list(summary_questionnaire_line(
+          "FA001", "完整原始题干",
+          c("1 是 → 跳至 FB001（询问开始工作的年龄，不参与本主题定义）", "2 否"),
+          before = "原问卷规定的进入条件"
+        ))),
+        "#A33842"
+      )
+      grepl('position="before" style="[^"]*font-size:0.72em;[^"]*">[^<]*进入条件.*>FA001</strong>.*完整原始题干.*font-size:0.8em;color:#888888;.*1 是</span>.*font-size:0.72em;.*跳至 FB001（询问开始工作的年龄，不参与本主题定义）.*2 否',
+            legacy, perl = TRUE)
+    },
+    TRUE
+  ),
+  expect_error_contains(
+    "structured options cannot be an untyped program string",
+    summary_questionnaire_line("Q001", "问题", options = list("条件 → Q002")),
+    "summary_questionnaire_option"
+  ),
+  expect_error_contains(
+    "option cannot hide an unsplit jump in its label",
+    summary_questionnaire_option("A Yes -> QB"),
+    "跳转须单独放入 jump"
+  ),
+  expect_identical(
+    "question condition follows the stem while options and exit follow it",
+    grepl('>Q001</strong>.*您当前是否在工作？</span><span class="summary-question-condition".*font-size:0.72em;.*（上题回答为 1 的受访者回答本题。）</span>.*position="options".*font-size:0.8em;color:#888888;.*A 是.*font-size:0.72em;.*Q003.*position="after"',
+          question_layout_fixture, perl = TRUE),
+    TRUE
+  ),
+  expect_identical(
+    "option and jump use independent absolute relative sizes",
     grepl(
-      'data-summary-question-detail-role="instruction"[^>]*color:',
+      'data-summary-question-position="options"[^>]*font-size:.*data-summary-question-option|data-summary-question-option="true"[^>]*>.*data-summary-question-instruction="true" style="font-size:0.9em;"',
+      question_layout_fixture,
+      perl = TRUE
+    ),
+    FALSE
+  ),
+  expect_identical(
+    "question conditions inherit the default text color",
+    grepl(
+      'summary-question-condition[^>]*color:|data-summary-question-position="before"[^>]*color:',
+      paste(question_layout_fixture, legacy),
+      perl = TRUE
+    ),
+    FALSE
+  ),
+  expect_error_contains(
+    "question condition is one readable statement",
+    summary_questionnaire_line("Q001", "问题", condition = c("条件一", "条件二")),
+    "condition 只能包含一条"
+  ),
+  expect_identical(
+    "question instructions after the stem inherit the default text color",
+    grepl(
+      'data-summary-question-detail-role="instruction" data-summary-question-position="after"[^>]*color:',
       summary_questionnaire_fixture,
       perl = TRUE
     ),
@@ -452,7 +525,7 @@ checks <- list(
   )
 )
 
-report <- list(ok = TRUE, checks = checks)
+report <- list(ok = TRUE, checks = checks, questionnaire_html = question_layout_fixture)
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 1 && nzchar(args[1])) {
   write_json(report, args[1], pretty = TRUE, auto_unbox = TRUE)

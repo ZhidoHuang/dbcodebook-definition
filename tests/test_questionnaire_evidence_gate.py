@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 
@@ -186,6 +187,92 @@ def main() -> int:
             definition_plan,
         )
         assert path_result == {"variable_periods": 2, "branches": 2}
+
+        pending = copy.deepcopy(record)
+        for path in pending["questionnaire_path_closure"]:
+            path["branches"][0]["observed_count"] = None
+            path["branches"][0]["unexplained_count"] = None
+            path["all_observed_paths_mapped"] = None
+            path["structural_missing_explained"] = None
+        assert checker.validate_questionnaire_path_closure(
+            pending, exploration_log, source_groups, approved_names,
+            definition_plan, require_observed=False,
+        ) == path_result
+        expect_path_failure(
+            checker, pending, exploration_log, source_groups, approved_names,
+            definition_plan, "observed_count must be a non-negative integer",
+        )
+
+        # Exercise the real download entrypoint without replacing its validators.
+        download_record = copy.deepcopy(pending)
+        download_record.update({
+            "schema_version": 7, "topic_id": "001", "status": "READY",
+            "human_record": "exploration.md", "source_groups": source_groups,
+            "approved_analysis_vars": approved_names, "definition_plan": definition_plan,
+            "exploration_log": [{**exploration_log[0], "human_step_id": "S001"}],
+            "alias_families": [],
+            "candidate_decisions": [{"selected_raw": ["fa002_p", "fa003_p"]}],
+            "evidence_reviews": [{
+                "source_type": "official_questionnaire", "title": "Questionnaire",
+                "locator": "FA002", "reviewed_at": "2026-09-04",
+                "supports": "Question and routes", "does_not_support": "Observed counts",
+                "decision_effect": "Plan the source list", "evidence_steps": [1],
+            }],
+        })
+        record_path = Path(tmp) / "record.json"
+        selection_path = Path(tmp) / "selection.txt"
+        (Path(tmp) / "exploration.md").write_text("### S001\nReviewed question.\n", encoding="utf-8")
+        record_path.write_text(json.dumps(download_record), encoding="utf-8")
+        selection_path.write_text("fa002_p\nfa003_p\n", encoding="utf-8")
+        assert checker.validate_download_selection(record_path, selection_path, "001")["ok"]
+
+        for flag in ("all_observed_paths_mapped", "structural_missing_explained"):
+            for missing_field in ("observed_count", "unexplained_count"):
+                premature = copy.deepcopy(download_record)
+                path = premature["questionnaire_path_closure"][0]
+                path["branches"][0].update(observed_count=10, unexplained_count=0)
+                path["branches"][0][missing_field] = None
+                path[flag] = True
+                record_path.write_text(json.dumps(premature), encoding="utf-8")
+                try:
+                    checker.validate_download_selection(record_path, selection_path, "001")
+                except ValueError as error:
+                    assert "cannot be true while observations are pending" in str(error)
+                else:
+                    raise AssertionError("Unobserved paths were marked as measured and closed")
+
+        # Deferring observations must not weaken source, period or route checks.
+        mutations = [
+            ("source", "outside the relevant source groups"),
+            ("period", "does not match all questionnaire-backed"),
+            ("route", "route must not be empty"),
+            ("count", "observed_count must be a non-negative integer"),
+        ]
+        for mutation, message in mutations:
+            invalid = copy.deepcopy(download_record)
+            path = invalid["questionnaire_path_closure"][0]
+            if mutation == "source":
+                path["branches"][0]["required_raw_variables"] = ["not_selected"]
+            elif mutation == "period":
+                invalid["questionnaire_path_closure"].pop()
+            elif mutation == "route":
+                path["branches"][0]["route"] = []
+            else:
+                path["branches"][0]["observed_count"] = -1
+            record_path.write_text(json.dumps(invalid), encoding="utf-8")
+            try:
+                checker.validate_download_selection(record_path, selection_path, "001")
+            except ValueError as error:
+                assert message in str(error), str(error)
+            else:
+                raise AssertionError(f"Pre-download failed to reject {mutation}")
+
+        unmapped = copy.deepcopy(record)
+        unmapped["questionnaire_path_closure"][0]["all_observed_paths_mapped"] = False
+        expect_path_failure(
+            checker, unmapped, exploration_log, source_groups, approved_names,
+            definition_plan, "all_observed_paths_mapped must be true",
+        )
 
         missing_path = copy.deepcopy(record)
         missing_path["questionnaire_path_closure"].pop()
