@@ -90,6 +90,7 @@ Only creation, remake, or source-changing work needs this whole path:
 ## Boundaries
 
 - Promotional SVG, rich text, covers, Xiaohongshu assets, and other campaign materials belong to their dedicated skills. Definition facts may feed those tasks only after validation.
+- Database-level user-facing colors live in [database-themes.json](references/database-themes.json). Definition renderers and downstream promotional skills read this shared identity file instead of maintaining another copy.
 - Do not turn a topic-specific decision into a common rule.
 - Do not silently borrow another database's profile. Configure a workflow, profile, source-material route, and identity rules before formal work on a new database.
 - Do not treat the example configuration as a user's actual configuration.

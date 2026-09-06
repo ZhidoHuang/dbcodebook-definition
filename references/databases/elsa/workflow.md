@@ -112,7 +112,7 @@
 - 正式 R 只补 ELSA 必需背景：`Variable (File)` 身份、Wave、文件族、官方负值编码和本主题实际跨 Wave 变化。
 - mapping 必须追溯到完整 `Variable (File)`；内部证据和 QA 不得丢失 File。
 - 正式分类变量默认保留规范化英文或 ASCII 标签；只有 YES/NO 二分类默认使用 `1/0`。频率、等级和状态等多分类不为排序便利擅自改成数值等级。
-- 用户可见主题色从 `数据库主题参数.json` 的 ELSA 配置读取，不逐主题手填。
+- 用户可见主题色从 [database-themes.json](../../database-themes.json) 的 ELSA 配置读取，不逐主题手填。
 - detail 或组分概览的周期列显式命名为 `Wave 1`、`Wave 2`……，再交给生成器。
 - 用户材料只写研究对象、变量语义、来源或 Wave 变化及分析影响，不写 transaction、recover、检查器或内部执行史。
 

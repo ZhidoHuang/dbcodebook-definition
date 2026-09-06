@@ -54,6 +54,12 @@ def validate_routes() -> dict:
     for index, value in enumerate(common):
         relative_target(value, f"common_rules[{index}]")
 
+    theme_path = relative_target(routing.get("database_themes"), "database_themes")
+    theme_payload = load_json(theme_path)
+    themes = theme_payload.get("databases")
+    if theme_payload.get("version") != 1 or not isinstance(themes, dict):
+        raise ValueError("database theme configuration is invalid")
+
     databases = routing.get("databases")
     if not isinstance(databases, dict) or not databases:
         raise ValueError("database-routing databases must not be empty")
@@ -65,7 +71,17 @@ def validate_routes() -> dict:
         source_materials = values.get("source_materials")
         if source_materials is not None:
             relative_target(source_materials, f"databases.{database}.source_materials")
-    return {"common_rules": len(common), "databases": sorted(databases)}
+        theme = themes.get(database.upper())
+        if not isinstance(theme, dict):
+            raise ValueError(f"database theme is missing: {database}")
+        primary = theme.get("primary")
+        if not isinstance(primary, str) or not re.fullmatch(r"#[0-9A-Fa-f]{6}", primary):
+            raise ValueError(f"database primary color is invalid: {database}")
+    return {
+        "common_rules": len(common),
+        "databases": sorted(databases),
+        "database_themes": sorted(themes),
+    }
 
 
 def validate_manifest() -> dict:

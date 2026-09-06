@@ -14,7 +14,9 @@ def main() -> int:
         raise RuntimeError("Unable to load validate_routing.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    assert module.validate_routes()["databases"] == ["charls", "elsa"]
+    routes = module.validate_routes()
+    assert routes["databases"] == ["charls", "elsa"]
+    assert routes["database_themes"] == ["CHARLS", "ELSA"]
     assert module.validate_manifest()["source_materials"] == 22
     assert module.validate_portability()["text_files"] > 20
     assert module.validate_markdown_links()["markdown_links"] >= 20
