@@ -689,25 +689,12 @@ def check_public_code_outline(
                     "raw_data.csv contains duplicate columns; assign unique aliases "
                     f"in dbCodeBook before download: {', '.join(duplicate_header)}"
                 )
-        simple_codebook_read = any(
-            value in source_public
-            for value in (
-                'name_z <- read.csv("raw_codebook.csv")',
-                'name_z <- read.csv("raw_codebook.csv", fileEncoding = "UTF-8-BOM")',
-            )
-        )
+        simple_codebook_read = 'name_z <- read.csv("raw_codebook.csv")' in source_public
         if not simple_codebook_read:
             structural_issues.append(
-                "CHARLS public R must use the simple read, optionally "
-                "declaring the website UTF-8 BOM"
+                "CHARLS public R must read raw_codebook.csv without extra options"
             )
-        simple_data_read = any(
-            value in source_public
-            for value in (
-                'dt <- read.csv("raw_data.csv")',
-                'dt <- read.csv("raw_data.csv", fileEncoding = "UTF-8-BOM")',
-            )
-        )
+        simple_data_read = 'dt <- read.csv("raw_data.csv")' in source_public
         household_data_read = (
             'colClasses = c(householdid = "character", id = "character")'
             in source_public
@@ -742,15 +729,15 @@ def check_public_code_outline(
             structural_issues.append(
                 "CHARLS public raw reads must not add encoding or column-name options"
             )
-        file_encodings = re.findall(
+        if re.search(
             r'read\.csv\(\s*["\']raw_(?:data|codebook)\.csv["\'][^)]*?'
-            r'fileEncoding\s*=\s*["\']([^"\']+)["\']',
+            r'(?:fileEncoding|na\.strings)\s*=',
             source_public,
             flags=re.I | re.S,
-        )
-        if any(value != "UTF-8-BOM" for value in file_encodings):
+        ):
             structural_issues.append(
-                "CHARLS public raw reads may only declare the website UTF-8 BOM encoding"
+                "CHARLS public raw reads must not add fileEncoding or na.strings; "
+                "use the shared empty-string step after reading"
             )
 
     if re.search(r"(?m)^raw_row_count\s*<-\s*nrow\(data\)\s*$", source_public):

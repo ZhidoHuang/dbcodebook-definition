@@ -199,19 +199,13 @@ if ($isCharls) {
       )
     }
   }
-  $hasSimpleCodebookRead = (
-    $publicSource.Contains('name_z <- read.csv("raw_codebook.csv")') -or
-    $publicSource.Contains('name_z <- read.csv("raw_codebook.csv", fileEncoding = "UTF-8-BOM")')
-  )
+  $hasSimpleCodebookRead = $publicSource.Contains('name_z <- read.csv("raw_codebook.csv")')
   if (-not $hasSimpleCodebookRead) {
     $publicIssues.Add(
-      'CHARLS public R must use the simple read, optionally declaring the website UTF-8 BOM.'
+      'CHARLS public R must read raw_codebook.csv without extra options.'
     )
   }
-  $hasSimpleDataRead = (
-    $publicSource.Contains('dt <- read.csv("raw_data.csv")') -or
-    $publicSource.Contains('dt <- read.csv("raw_data.csv", fileEncoding = "UTF-8-BOM")')
-  )
+  $hasSimpleDataRead = $publicSource.Contains('dt <- read.csv("raw_data.csv")')
   $hasHouseholdDataRead = $publicSource.Contains(
     'colClasses = c(householdid = "character", id = "character")'
   )
@@ -234,15 +228,10 @@ if ($isCharls) {
   if ($publicSource -match 'read\.csv\(\s*["'']raw_(?:data|codebook)\.csv["''][^)]*(?:(?<!file)encoding|col\.names)\s*=') {
     $publicIssues.Add('CHARLS public raw reads must not add encoding or column-name options.')
   }
-  $fileEncodingMatches = [regex]::Matches(
-    $publicSource,
-    '(?is)read\.csv\(\s*["'']raw_(?:data|codebook)\.csv["''][^)]*?fileEncoding\s*=\s*["'']([^"'']+)["'']'
-  )
-  foreach ($fileEncodingMatch in $fileEncodingMatches) {
-    if ($fileEncodingMatch.Groups[1].Value -ne 'UTF-8-BOM') {
-      $publicIssues.Add('CHARLS public raw reads may only declare the website UTF-8 BOM encoding.')
-      break
-    }
+  if ($publicSource -match '(?is)read\.csv\(\s*["'']raw_(?:data|codebook)\.csv["''][^)]*?(?:fileEncoding|na\.strings)\s*=') {
+    $publicIssues.Add(
+      'CHARLS public raw reads must not add fileEncoding or na.strings; use the shared empty-string step after reading.'
+    )
   }
 }
 

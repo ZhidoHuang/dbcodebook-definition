@@ -41,6 +41,11 @@ Only after both preflight checks pass, run the measured command below and execut
 & $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --start-sync --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl
 ```
 
+When the existing article also needs a new title, add the same
+`--website-title $WebsiteTitle` to both commands. The fixed browser program
+verifies the existing article identity first and changes the title in the same
+single submission as the body and sidebar attachments.
+
 The command rechecks the current readiness first and starts or resumes `website_sync` only after every local check passes. A finished previous run is archived by the report script. It returns the fixed payload, the helper hash, report identity, sync start time, and a short `browser_action.run_script`; it does not repeat the preloaded helper or a duplicate top-level upload payload. A failed preflight does not start or alter a website timer.
 
 Confirm that `browser_action.preload_sha256` matches the preflight output, then run `browser_action.run_script` unchanged in the very next CUA call. Do not insert a binding call after timing starts, parse the script through another shell, rediscover browser methods, split it into manual steps, or substitute another upload implementation. The preloaded helper refuses to write if it was not dispatched within 60 seconds of the measured stage starting. It opens the exact edit page, verifies article identity before writing, imports the body once, uploads the two sidebar attachments one at a time in the declared order, checks body and attachment order, and submits once. Its result includes dispatch latency, total browser time, elapsed time since the website stage began, five step timings, and five explicit quality checks. If it fails before submission it reloads the same edit page to discard unsaved form changes and stops without retrying.

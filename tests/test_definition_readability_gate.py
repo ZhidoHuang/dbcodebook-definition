@@ -163,7 +163,8 @@ def sync_command(formal: Path, process: Path, *, ok: bool = True) -> subprocess.
     result = subprocess.run(
         [sys.executable, str(CHECKER_PATH), "verify-ready", "--formal-dir", str(formal),
          "--process-dir", str(process), "--topic-id", "025", "--start-sync",
-         "--database", "CHARLS", "--topic-name", "家庭支持",
+         "--database", "charls", "--topic-name", "家庭支持",
+         "--website-title", "025 CHARLS — 家庭支持（Family Support）",
          "--post-id", "221", "--base-url", "http://localhost:8000"],
         capture_output=True, text=True, encoding="utf-8",
         env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
@@ -176,7 +177,8 @@ def prepare_sync_command(formal: Path, process: Path) -> subprocess.CompletedPro
     result = subprocess.run(
         [sys.executable, str(CHECKER_PATH), "verify-ready", "--formal-dir", str(formal),
          "--process-dir", str(process), "--topic-id", "025",
-         "--database", "CHARLS", "--topic-name", "家庭支持",
+         "--database", "charls", "--topic-name", "家庭支持",
+         "--website-title", "025 CHARLS — 家庭支持（Family Support）",
          "--post-id", "221", "--base-url", "http://localhost:8000"],
         capture_output=True, text=True, encoding="utf-8",
         env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
@@ -268,8 +270,12 @@ def main() -> int:
             "http://localhost:8000/nodes/edit/221/",
         ]
         assert browser_action["payload"]["expected_title_parts"] == [
-            "025", "CHARLS", "家庭支持"
+            "025", "charls", "家庭支持"
         ]
+        assert browser_action["payload"]["identity_title_parts"] == ["025", "charls"]
+        assert browser_action["payload"]["desired_title"] == (
+            "025 CHARLS — 家庭支持（Family Support）"
+        )
         assert browser_action["payload"]["note"] == upload["note"]
         assert browser_action["payload"]["body_check"] == upload["body_check"]
         assert browser_action["payload"]["dispatch_limit_ms"] == 60000
@@ -280,13 +286,15 @@ def main() -> int:
         assert 'chooser.setFiles([filePath])' in preload_script
         assert 'for (const attachment of payload.attachments)' in preload_script
         assert 'const titleDeadline = Date.now() + 5000' in preload_script
-        assert 'payload.expected_title_parts.every(part => titleValue.includes(part))' in preload_script
+        assert 'titleValue.toLocaleLowerCase().includes(String(part).toLocaleLowerCase())' in preload_script
+        assert 'await title.fill(payload.desired_title)' in preload_script
         assert 'button[title="删除"]' in preload_script
         assert 'body.length !== payload.body_check.length_utf16' in preload_script
         assert 'JSON.stringify(actualNames) !== JSON.stringify(expectedNames)' in preload_script
         assert 'getByRole("button", { name: "更新文章" })' in preload_script
         assert 'timings.open_edit_ms' in preload_script
         assert 'timings.identity_check_ms' in preload_script
+        assert 'timings.title_update_ms' in preload_script
         assert 'timings.body_import_ms' in preload_script
         assert 'timings.attachments_ms' in preload_script
         assert 'timings.submit_and_return_ms' in preload_script
@@ -310,6 +318,13 @@ def main() -> int:
                 upload, "http://localhost:8000", "0", "CHARLS", "025", "家庭支持"
             ),
             "positive integer",
+        )
+        expect_failure(
+            lambda: checker.build_cua_sync_action(
+                upload, "http://localhost:8000", "221", "CHARLS", "025", "家庭支持",
+                "025 CHARLS — Other Topic",
+            ),
+            "must contain the topic id, database and topic name",
         )
         report_path = process / "execution_report.json"
         execution = json.loads(report_path.read_text(encoding="utf-8"))

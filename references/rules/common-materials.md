@@ -107,7 +107,7 @@ data <- dt
 data[data == ""] <- NA
 ```
 
-- 正式公开 R 直接使用 `read.csv("raw_data.csv")` 和 `read.csv("raw_codebook.csv")`，不追加 `fileEncoding`、`encoding`、`col.names` 或 `check.names = FALSE`。
+- 正式公开 R 直接使用 `read.csv("raw_data.csv")` 和 `read.csv("raw_codebook.csv")`。若 `id`、`householdid` 或 `communityid` 的实际值含前导 0，可只为这些身份列追加 `colClasses = c(... = "character")`，并在读取前用一句注释说明目的；不追加 `fileEncoding`、`encoding`、`na.strings`、`col.names` 或 `check.names = FALSE`。
 - 不用 `names(dt)[1] <- "ID"`、`names(name_z)[1] <- "Easy.label"` 或按列位置重命名修补导出问题。来源别名必须已经按第 1.2 节在下载前确定，并由正式 raw 和 codebook 原样带入。
 - 读取区只读取数据、统一空字符串和必要基础类型。`raw_row_count`、完整性断言和覆盖统计放到后台 QA；不使用 `raw_vars <- name_z$newname` 绕行取得数据列。
 - 读取区一级标题统一写为 `# ----------- 2 读取数据 -----------`。不在标题后追加“本次 dbCodeBook 导出”“网页导出”或其它来源说明；确有必要时，在标题下用普通注释说明来源。

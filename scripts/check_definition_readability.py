@@ -889,6 +889,7 @@ def build_cua_sync_action(
     database: str,
     topic_id: str,
     topic_name: str,
+    website_title: str | None = None,
     sync_started_at: str | None = None,
     include_preload: bool = True,
 ) -> dict:
@@ -904,12 +905,28 @@ def build_cua_sync_action(
         {"role": item["role"], "path": item["path"], "name": Path(item["path"]).name}
         for item in upload["attachments"]
     ]
+    expected_title_parts = [topic_id.zfill(3), database, topic_name]
+    website_title = website_title.strip() if website_title else None
+    if website_title:
+        folded_title = website_title.casefold()
+        missing_parts = [
+            part for part in expected_title_parts if part.casefold() not in folded_title
+        ]
+        if missing_parts:
+            fail(
+                "--website-title must contain the topic id, database and topic name; "
+                f"missing: {', '.join(missing_parts)}"
+            )
     payload = {
         "post_id": post_id,
         "post_url": f"{base_url}/nodes/post/{post_id}/",
         "edit_url": f"{base_url}/nodes/edit/{post_id}/",
         "success_url_pattern": f"**/nodes/post/{post_id}/**",
-        "expected_title_parts": [topic_id.zfill(3), database, topic_name],
+        "identity_title_parts": (
+            [topic_id.zfill(3), database] if website_title else expected_title_parts
+        ),
+        "expected_title_parts": expected_title_parts,
+        "desired_title": website_title,
         "note": upload["note"],
         "body_check": upload["body_check"],
         "attachments": attachments,
@@ -959,15 +976,32 @@ async function syncDbCodeBookPost(tab, payload) {{
     const titleDeadline = Date.now() + 5000;
     while (Date.now() < titleDeadline) {{
       titleValue = await title.evaluate(el => el.value);
-      if (payload.expected_title_parts.every(part => titleValue.includes(part))) break;
+      if (payload.identity_title_parts.every(
+        part => titleValue.toLocaleLowerCase().includes(String(part).toLocaleLowerCase())
+      )) break;
       await new Promise(resolve => setTimeout(resolve, 100));
     }}
-    for (const part of payload.expected_title_parts) {{
-      if (!titleValue.includes(part)) {{
+    for (const part of payload.identity_title_parts) {{
+      if (!titleValue.toLocaleLowerCase().includes(String(part).toLocaleLowerCase())) {{
         throw new Error(`文章身份不符，标题缺少：${{part}}`);
       }}
     }}
     timings.identity_check_ms = Date.now() - stepStarted;
+
+    stepStarted = Date.now();
+    if (payload.desired_title && titleValue !== payload.desired_title) {{
+      await title.fill(payload.desired_title);
+      titleValue = await title.evaluate(el => el.value);
+      if (titleValue !== payload.desired_title) {{
+        throw new Error("文章标题未更新为指定值");
+      }}
+    }}
+    for (const part of payload.expected_title_parts) {{
+      if (!titleValue.toLocaleLowerCase().includes(String(part).toLocaleLowerCase())) {{
+        throw new Error(`最终标题缺少：${{part}}`);
+      }}
+    }}
+    timings.title_update_ms = Date.now() - stepStarted;
 
     stepStarted = Date.now();
     const editor = tab.playwright.locator("#editor");
@@ -1102,6 +1136,7 @@ def parse_args() -> argparse.Namespace:
     verify_parser.add_argument("--topic-name")
     verify_parser.add_argument("--post-id")
     verify_parser.add_argument("--base-url")
+    verify_parser.add_argument("--website-title")
     return parser.parse_args()
 
 
@@ -1163,7 +1198,7 @@ def main() -> int:
             if browser_target_requested:
                 prepared_action = build_cua_sync_action(
                     result["upload"], args.base_url, args.post_id, args.database,
-                    args.topic_id, args.topic_name,
+                    args.topic_id, args.topic_name, args.website_title,
                 )
                 if sync_requested:
                     import execution_report
@@ -1175,7 +1210,7 @@ def main() -> int:
                     browser_action = build_cua_sync_action(
                         result["upload"], args.base_url, args.post_id,
                         args.database, args.topic_id, args.topic_name,
-                        sync["started_at"], include_preload=False,
+                        args.website_title, sync["started_at"], include_preload=False,
                     )
                     result = {"ok": True, "status": result["status"],
                               "topic_id": result["topic_id"],
