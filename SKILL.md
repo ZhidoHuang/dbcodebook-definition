@@ -35,6 +35,8 @@ First run the readiness check without `--start-sync`. Then reuse the current tas
 
 Bind the matching tab as `tab`, confirm login and article identity, then run the returned `browser_action.preload_script` once. It only loads the fixed helper functions into the current CUA session and does not navigate, edit, upload, or submit.
 
+For a genuinely new article, open the site's new-article form in that same tab and verify it is blank. In both commands replace `--post-id $PostId` with `--create --website-title $WebsiteTitle --directory-tag $DirectoryTag`, using a directory tag verified on the website. The same helper sets the database and title, imports the body, uploads the two sidebar files in order, and submits once. It returns the actual newly assigned post URL; never create a placeholder article just to obtain an ID.
+
 Only after both preflight checks pass, run the measured command below and execute the returned CUA program immediately:
 
 ```powershell
@@ -63,6 +65,8 @@ Use the report's actual issue status: resolved problems require `completed_with_
 
 Keep one primary writer for the entire topic. Use internal read-only subagents for the required reviews; do not create separate visible task threads merely to divide stages. Reviewers report findings to the primary writer and never edit files, rerun the production workflow, operate the website, or create competing versions.
 
+Create a reviewer when its input is ready, not at the start of the topic. Retain its agent ID and use `send_input` for that topic's focused rechecks. Do not create another reviewer for a small correction. After the final affected review passes, close the agent with `close_agent`; an agent that has returned a result is still open until explicitly closed. Preserve its evidence and record its actual rounds using the report's `review-import` command. A later new topic gets its own scoped review context.
+
 Use the following current defaults when the host offers these models. If a named model is unavailable, preserve the role by choosing the strongest available flagship model for quality-first review, a balanced agentic model for ordinary execution, and an efficient model only for bounded mechanical work. Do not weaken a role merely to preserve an exact model name.
 
 | Role | Current default | Reasoning | Scope |
@@ -81,14 +85,18 @@ For a full topic run, the definition-logic reviewer is required after the source
 
 Schedule reviews at these dependency boundaries, not while their inputs are still changing. While a reviewer works, the primary writer may prepare a disjoint part of the deliverable, but must not rewrite the reviewer's inputs or repeat its review. Finish machine validation before final reading; use the change scope in the validation rules to decide which evidence needs renewal.
 
+Submit the complete source plan and evidence together. Ask the reviewer to collect all findings in one pass; the primary writer resolves the batch before requesting a focused recheck of the changed branches and their dependents. Preserve unaffected findings instead of restarting discovery or whole-topic review. If the same gap recurs, resolve its missing evidence before another review request. Do not start a production stage merely to fill review waiting time; start it when its prerequisites and actual work are ready.
+
+Before the first Public-R review, use the existing runner's `-PreflightOnly` mode to catch fixed-header, source, environment and syntax errors without producing outputs. Send the stable draft after fixing that batch. Do not send progress-only messages to a waiting reviewer; send the completed correction and affected scope together. The later production run still checks its actual inputs; do not insert another standalone preflight immediately before it.
+
 ## Complete Definition Workflow
 
 Only creation, remake, or source-changing work needs this whole path:
 
 1. Discover candidates in dbCodeBook; use local official materials before online research. Verify full original questions, options and real skip destinations for every period in the source evidence; present the reader-facing questionnaire using [common-materials.md, section 6.2](references/rules/common-materials.md).
 2. Settle topic breadth and each variable's source, population, unit, missing handling and questionnaire paths; run the definition-logic review in [validation.md](references/rules/validation.md).
-3. Download the full settled list when a source variable, period, file, identity or alias changes. Never rebuild raw from old packages. Inspect actual values before adding any cleaning.
-4. Write beginner-readable R using established helpers and the fixed header. Complete Public-R review, then run `scripts/run_r_definition.ps1` in PowerShell 7 with the actual formal/process directories. The configured runner already includes preflight; do not run it twice.
+3. Download the full settled list when a source variable, period, file, identity or alias changes. Never rebuild raw from old packages. If the download event times out, follow [download recovery](references/rules/write-boundaries.md#下载结果与找回) before another export. Inspect actual values before adding any cleaning.
+4. Write beginner-readable R using established helpers and the fixed header. Run the existing runner with `-PreflightOnly` before the first Public-R review, resolve its findings, then complete Public-R review. Run `scripts/run_r_definition.ps1` in PowerShell 7 with the actual formal/process directories to produce the outputs.
 5. Validate results, review the complete `文案.md`, and finish ordinary-reader review against stable final artifacts. `scripts/check_definition_readability.py check` binds the current evidence and outputs; correction scope is defined in [validation.md](references/rules/validation.md).
 6. When website sync is authorized, use the website-only commands and [write-boundaries.md](references/rules/write-boundaries.md). Stop at copy only for an explicit `只审核、不执行` request.
 

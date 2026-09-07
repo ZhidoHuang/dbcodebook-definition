@@ -177,4 +177,48 @@ with tempfile.TemporaryDirectory() as temp_dir:
     assert current["stages"][0] == original["stages"][0]
     assert current["stages"][1]["stage_id"] == "website_sync"
 
+with tempfile.TemporaryDirectory() as temp_dir:
+    root = Path(temp_dir)
+    log = root / "review.jsonl"
+    events = [
+        {"type": "session_meta", "payload": {"id": "agent-1", "timestamp": "2026-01-01T00:00:00+00:00",
+         "source": {"subagent": {"thread_spawn": {"parent_thread_id": "parent", "agent_nickname": "Reviewer"}}}}},
+        {"type": "turn_context", "payload": {"model": "fixture-model"}},
+        {"timestamp": "2026-01-01T00:00:00+00:00", "type": "event_msg", "payload": {"type": "task_started", "turn_id": "one"}},
+        {"timestamp": "2026-01-01T00:00:10+00:00", "type": "event_msg", "payload": {"type": "task_complete", "turn_id": "one"}},
+        {"timestamp": "2026-01-01T00:01:10+00:00", "type": "event_msg", "payload": {"type": "task_started", "turn_id": "two"}},
+        {"timestamp": "2026-01-01T00:01:15+00:00", "type": "event_msg", "payload": {"type": "task_complete", "turn_id": "two"}},
+    ]
+    log.write_text("\n".join(json.dumps(event) for event in events) + "\n", encoding="utf-8")
+    run("init", "--process-dir", temp_dir, "--database", "CHARLS", "--topic-id", "040",
+        "--topic-name", "review", "--task", "review fixture")
+    for _ in range(2):
+        imported = json.loads(run("review-import", "--process-dir", temp_dir,
+                                  "--log", str(log), "--role", "logic").stdout)
+        assert imported["registered_agents"] == 1
+        assert imported["turn_count"] == 2
+        assert imported["running_seconds"] == 15
+        assert imported["between_rounds_seconds"] == 60
+    assert "未登记关闭" in run("finish", "--process-dir", temp_dir,
+                             "--status", "completed", ok=False).stderr
+    run("review-import", "--process-dir", temp_dir, "--log", str(log), "--role", "logic", "--closed")
+    run("finish", "--process-dir", temp_dir, "--status", "completed")
+    run("review-import", "--process-dir", temp_dir, "--log", str(log), "--role", "logic", ok=False)
+    markdown = (root / "执行报告.md").read_text(encoding="utf-8")
+    assert "新建 0 个" in markdown and "15秒" in markdown and "1分0秒" in markdown
+    run("init", "--process-dir", temp_dir, "--database", "CHARLS", "--topic-id", "040",
+        "--topic-name", "review", "--task", "unfinished fixture")
+    log.write_text("\n".join(json.dumps(event) for event in events[:-1]) + "\n", encoding="utf-8")
+    assert "未结束轮次" in run("review-import", "--process-dir", temp_dir,
+                            "--log", str(log), "--role", "logic", "--closed", ok=False).stderr
+    unfinished = execution_report.read_review_log(log, "logic")
+    assert unfinished["unfinished_turns"] == 1 and unfinished["running_seconds"] == 10
+    log.write_text('{"type":"session_meta","payload":{"source":"cli","id":"parent"}}\n', encoding="utf-8")
+    try:
+        execution_report.read_review_log(log, "logic")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("parent log accepted as a reviewer")
+
 print("EXECUTION_REPORT_TEST_PASS")

@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -307,6 +308,63 @@ def main() -> int:
         assert len(run_script) < len(preload_script) // 2
         assert browser_action["payload"]["sync_started_at"] == started["execution"]["started_at"]
         assert "setInputFiles" not in preload_script
+        created = checker.build_cua_sync_action(
+            upload, "http://localhost:8000", "", "CHARLS", "025", "家庭支持",
+            "025 CHARLS 家庭支持", create=True, directory_tag="medical",
+        )
+        assert created["payload"]["post_id"] == ""
+        assert created["payload"]["post_url"] is None
+        assert created["existing_tab_match"] == ["http://localhost:8000/nodes/edit/"]
+        assert created["payload"]["directory_tag"] == "medical"
+        assert created["preload_sha256"] == prepared_action["preload_sha256"]
+        assert 'if (blank.title || blank.body || blank.attachments)' in preload_script
+        assert 'name: /发布文章/' in preload_script
+        assert 'state: "domcontentloaded"' in preload_script
+        assert 'timeoutMs: 30000' in preload_script
+        assert 'post_url: postUrl' in preload_script
+        node = shutil.which("node")
+        if node:
+            category_code = preload_script.split("const categoryOptions =", 1)[1].split(
+                'await tab.playwright.locator("#tags-input")', 1
+            )[0]
+            category_test = r'''
+const assert = require("node:assert/strict");
+async function selectDatabase(database, options) {
+  const payload = { database };
+  let selected;
+  const tab = { playwright: {
+    evaluate: async () => options,
+    locator: () => ({ selectOption: async option => { selected = option.value; } })
+  } };
+  CATEGORY_CODE
+  return selected;
+}
+(async () => {
+  const options = [{label: "CHARLS", value: "1"}, {label: "KLoSA", value: "2"}];
+  assert.equal(await selectDatabase("CHARLS", options), "1");
+  assert.equal(await selectDatabase(" charls ", options), "1");
+  assert.equal(await selectDatabase("klosa", options), "2");
+  await assert.rejects(selectDatabase("ELSA", options));
+  await assert.rejects(selectDatabase("charls", [...options, options[0]]));
+})().catch(error => { console.error(error); process.exitCode = 1; });
+'''.replace("CATEGORY_CODE", "const categoryOptions =" + category_code)
+            subprocess.run([node, "-e", category_test], check=True)
+        else:
+            print("SKIP category JavaScript runtime fixture: Node.js unavailable")
+        expect_failure(
+            lambda: checker.build_cua_sync_action(
+                upload, "http://localhost:8000", "221", "CHARLS", "025", "家庭支持",
+                "025 CHARLS 家庭支持", create=True, directory_tag="medical",
+            ),
+            "cannot be combined",
+        )
+        expect_failure(
+            lambda: checker.build_cua_sync_action(
+                upload, "http://localhost:8000", "", "CHARLS", "025", "家庭支持",
+                "025 CHARLS 家庭支持", create=True,
+            ),
+            "requires --website-title and --directory-tag",
+        )
         expect_failure(
             lambda: checker.build_cua_sync_action(
                 upload, "localhost:8000", "221", "CHARLS", "025", "家庭支持"

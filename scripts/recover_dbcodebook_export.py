@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import io
 import json
 import shutil
 import sys
+import tempfile
+import time
 import zipfile
 from collections.abc import Iterable
 from pathlib import Path
@@ -206,29 +209,136 @@ def validate_codebook(out_dir: Path, expected_vars: list[str]) -> dict[str, obje
     return {"rows": len(aliases), "aliases": aliases}
 
 
+def inspect_archive(archive_path: Path, expected: list[str]) -> dict:
+    # Validate outside the destination so a bad download cannot replace good raw.
+    with tempfile.TemporaryDirectory(prefix="dbcodebook_check_") as temp:
+        staging = Path(temp)
+        names, members = install_archive(archive_path, staging)
+        return {
+            "zip_members": names,
+            "codebook": validate_codebook(staging, expected),
+            "data": validate_data_members(staging, members, expected),
+        }
+
+
+def download_snapshot(directory: Path) -> dict:
+    directory = directory.resolve(strict=True)
+    if not directory.is_dir():
+        raise ValueError("download directory is not a directory")
+    files = {}
+    for path in directory.glob("*.zip"):
+        if path.is_file():
+            stat = path.stat()
+            files[path.name] = [stat.st_size, stat.st_mtime_ns]
+    return {"directory": str(directory), "captured_at": time.time(), "files": files}
+
+
+def wait_for_download(directory: Path, baseline: dict, expected: list[str],
+                      timeout: float, poll_interval: float = 0.25) -> dict:
+    if str(directory.resolve(strict=True)) != baseline["directory"]:
+        raise ValueError("download directory differs from the saved snapshot")
+    if timeout < 0 or poll_interval <= 0:
+        raise ValueError("download wait must be nonnegative and polling must be positive")
+    started = time.monotonic()
+    previous = {}
+    checked = {}
+    rejected = {}
+    while True:
+        current = download_snapshot(directory)["files"]
+        candidates = {name: stat for name, stat in current.items()
+                      if baseline["files"].get(name) != stat}
+        valid = []
+        for name, stat in candidates.items():
+            if previous.get(name) != stat:
+                continue
+            key = (name, *stat)
+            if key not in checked:
+                try:
+                    with contextlib.redirect_stderr(io.StringIO()):
+                        report = inspect_archive(directory / name, expected)
+                    # A concurrent write invalidates this inspection.
+                    after = (directory / name).stat()
+                    if [after.st_size, after.st_mtime_ns] != stat:
+                        continue
+                    checked[key] = report
+                except (OSError, ValueError, zipfile.BadZipFile, csv.Error) as error:
+                    checked[key] = None
+                    rejected[name] = str(error)
+            if checked[key] is not None:
+                valid.append((name, checked[key]))
+        elapsed = round(time.monotonic() - started, 3)
+        if len(valid) > 1:
+            return {"ok": False, "status": "AMBIGUOUS_DOWNLOADS",
+                    "allow_new_export": False, "elapsed_seconds": elapsed,
+                    "candidates": [name for name, _ in valid]}
+        if valid:
+            name, report = valid[0]
+            return {"ok": True, "status": "DOWNLOAD_FILE_VERIFIED",
+                    "allow_new_export": False, "elapsed_seconds": elapsed,
+                    "archive_source": str((directory / name).resolve()), **report}
+        if time.monotonic() - started >= timeout:
+            return {"ok": False, "status": "CHECK_EXISTING_DOWNLOAD_RECORD",
+                    "allow_new_export": False, "elapsed_seconds": elapsed,
+                    "rejected": rejected,
+                    "message": "No verified new file. Check the existing paid record; do not export again."}
+        previous = candidates
+        time.sleep(min(poll_interval, max(0, timeout - (time.monotonic() - started))))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--archive", required=True, type=Path)
-    parser.add_argument("--database", required=True, choices=("charls", "elsa"))
-    parser.add_argument("--out", required=True, type=Path)
-    parser.add_argument("--expect-vars-file", required=True, type=Path)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--archive", type=Path)
+    source.add_argument("--snapshot-downloads", type=Path)
+    source.add_argument("--watch-downloads", type=Path)
+    parser.add_argument("--snapshot-file", type=Path)
+    parser.add_argument("--wait-seconds", type=float, default=20)
+    parser.add_argument("--database", type=str.lower, choices=("charls", "elsa"))
+    parser.add_argument("--out", type=Path)
+    parser.add_argument("--expect-vars-file", type=Path)
     parser.add_argument("--overwrite", action="store_true")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if (args.snapshot_downloads or args.watch_downloads) and not args.snapshot_file:
+        parser.error("snapshot and watch modes require --snapshot-file")
+    if not args.snapshot_downloads and not all((args.database, args.out, args.expect_vars_file)):
+        parser.error("install and watch modes require --database, --out and --expect-vars-file")
+    if args.wait_seconds < 0:
+        parser.error("--wait-seconds must be nonnegative")
+    return args
 
 
 def main() -> int:
     args = parse_args()
     try:
+        if args.snapshot_downloads:
+            snapshot = download_snapshot(args.snapshot_downloads)
+            args.snapshot_file.parent.mkdir(parents=True, exist_ok=True)
+            args.snapshot_file.write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
+            print(json.dumps({"ok": True, "snapshot_file": str(args.snapshot_file),
+                              "existing_zip_count": len(snapshot["files"])}))
+            return 0
         expected = read_expected_vars_file(args.expect_vars_file)
+        archive_path = args.archive
+        if args.watch_downloads:
+            baseline = json.loads(args.snapshot_file.read_text(encoding="utf-8"))
+            observation = wait_for_download(args.watch_downloads, baseline, expected, args.wait_seconds)
+            args.snapshot_file.with_name(args.snapshot_file.stem + "_result.json").write_text(
+                json.dumps(observation, ensure_ascii=False, indent=2), encoding="utf-8")
+            if not observation["ok"]:
+                print(json.dumps(observation, ensure_ascii=False))
+                return 1
+            archive_path = Path(observation["archive_source"])
+        validated = ({key: observation[key] for key in ("zip_members", "codebook", "data")}
+                     if args.watch_downloads else inspect_archive(archive_path, expected))
+        if archive_path.resolve() == (args.out / "bookapp_download.zip").resolve():
+            raise ValueError("archive must be outside the managed output files")
         prepare_output_dir(args.out, args.overwrite)
-        names, data_members = install_archive(args.archive, args.out)
+        install_archive(archive_path, args.out)
         report = {
             "ok": True,
             "database": args.database,
-            "archive_source": str(args.archive.resolve()),
-            "zip_members": names,
-            "codebook": validate_codebook(args.out, expected),
-            "data": validate_data_members(args.out, data_members, expected),
+            "archive_source": str(archive_path.resolve()),
+            **validated,
         }
         (args.out / MANAGED_REPORT).write_text(
             json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"

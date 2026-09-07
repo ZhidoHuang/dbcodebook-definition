@@ -94,6 +94,79 @@ def latest_stage(report: dict[str, Any], stage_id: str) -> dict[str, Any]:
     return matches[-1]
 
 
+def read_review_log(log_path: Path, role: str) -> dict[str, Any]:
+    """Read one explicitly selected agent log, never the whole session archive."""
+    meta = None
+    models = []
+    turns = {}
+    with log_path.open(encoding="utf-8-sig") as stream:
+        for line in stream:
+            event = json.loads(line)
+            payload = event.get("payload", {})
+            if event.get("type") == "session_meta" and meta is None:
+                meta = payload
+            elif event.get("type") == "turn_context":
+                model = payload.get("model")
+                if model and model not in models:
+                    models.append(model)
+            elif event.get("type") == "event_msg":
+                turn_id = payload.get("turn_id")
+                if not turn_id:
+                    continue
+                if payload.get("type") == "task_started":
+                    turns.setdefault(turn_id, {"turn_id": turn_id,
+                                              "started_at": event["timestamp"], "finished_at": None})
+                elif payload.get("type") == "task_complete" and turn_id in turns:
+                    turns[turn_id]["finished_at"] = event["timestamp"]
+    if not meta or not turns:
+        raise ValueError("selected log has no agent identity or review turns")
+    source = meta.get("source", {})
+    spawn = source.get("subagent", {}).get("thread_spawn", {}) if isinstance(source, dict) else {}
+    if not spawn:
+        raise ValueError("selected log is not a subagent log")
+    rounds = sorted(turns.values(), key=lambda item: parse_time(item["started_at"]))
+    prior_end = None
+    for item in rounds:
+        item["elapsed_seconds"] = (elapsed_seconds(item["started_at"], item["finished_at"])
+                                   if item["finished_at"] else None)
+        item["gap_before_seconds"] = (elapsed_seconds(prior_end, item["started_at"])
+                                      if prior_end else 0)
+        prior_end = item["finished_at"]
+    return {
+        "agent_id": meta["id"], "nickname": spawn.get("agent_nickname") or meta["id"],
+        "parent_thread_id": spawn["parent_thread_id"], "role": role,
+        "created_at": meta["timestamp"], "models": models, "log_path": str(log_path.resolve()),
+        "turn_count": len(rounds), "rounds": rounds,
+        "running_seconds": round(sum(item["elapsed_seconds"] or 0 for item in rounds), 3),
+        "between_rounds_seconds": round(sum(item["gap_before_seconds"] for item in rounds), 3),
+        "unfinished_turns": sum(item["finished_at"] is None for item in rounds),
+    }
+
+
+def command_review_import(args: argparse.Namespace) -> dict[str, Any]:
+    report_path, markdown_path = paths(args.process_dir)
+    report = load(report_path)
+    if report["status"] != "running":
+        raise SystemExit("任务报告已经结束；历史审核复盘应登记到当前复盘报告。")
+    review = read_review_log(args.log, args.role)
+    if args.closed and review["unfinished_turns"]:
+        raise SystemExit("审核日志仍有未结束轮次，不能登记为已关闭。")
+    reviews = report.setdefault("reviews", [])
+    prior = next((item for item in reviews if item["agent_id"] == review["agent_id"]), None)
+    review["closed"] = bool(args.closed or (prior and prior.get("closed")))
+    if review["unfinished_turns"]:
+        review["closed"] = False
+    review["created_during_run"] = parse_time(review["created_at"]) >= parse_time(report["started_at"])
+    if prior:
+        reviews[reviews.index(prior)] = review
+    else:
+        reviews.append(review)
+    save(report_path, markdown_path, report)
+    return {"ok": True, "agent_id": review["agent_id"], "registered_agents": len(reviews),
+            "turn_count": review["turn_count"], "running_seconds": review["running_seconds"],
+            "between_rounds_seconds": review["between_rounds_seconds"], "closed": review["closed"]}
+
+
 def render_markdown(report: dict[str, Any]) -> str:
     finished_at = report.get("finished_at")
     total = elapsed_seconds(report["started_at"], finished_at)
@@ -140,6 +213,21 @@ def render_markdown(report: dict[str, Any]) -> str:
                 )
             )
 
+    reviews = report.get("reviews", [])
+    if reviews:
+        lines.extend([
+            "", "## 子智能体审核", "",
+            f"已登记 {len(reviews)} 个独立会话，其中本次报告期间新建 {sum(r['created_during_run'] for r in reviews)} 个；"
+            f"共处理 {sum(r['turn_count'] for r in reviews)} 轮；未登记关闭 {sum(not r['closed'] for r in reviews)} 个。",
+            "运行时间来自子智能体日志，不是纯模型推理时间；轮次间隔包括主笔处理、讨论及其它工作，不能全部称为审核等待或主笔修改。历史复盘不计入本次任务总耗时。",
+            "", "| 角色 | 名称 | 轮次 | 已结束轮次运行时间 | 轮次间隔 | 收口 |",
+            "| --- | --- | ---: | ---: | ---: | --- |",
+        ])
+        for review in reviews:
+            lines.append(f"| {review['role']} | {review['nickname']} | {review['turn_count']} | "
+                         f"{duration_text(review['running_seconds'])} | "
+                         f"{duration_text(review['between_rounds_seconds'])} | "
+                         f"{'已关闭' if review['closed'] else '未登记关闭'} |")
     if report.get("summary"):
         lines.extend(["", "## 执行结果", "", *report["summary"]])
     lines.extend(["", "## Bug 与异常", ""])
@@ -292,6 +380,8 @@ def command_finish(args: argparse.Namespace) -> dict[str, Any]:
     if running:
         raise SystemExit("仍有执行中的环节：" + ", ".join(running))
     if args.status in ("completed", "completed_with_issues"):
+        if any(not review.get("closed") for review in report.get("reviews", [])):
+            raise SystemExit("仍有审核会话未登记关闭；先关闭不再需要的会话并更新记录。")
         if any(issue["status"] == "open" for issue in report["issues"]):
             raise SystemExit("仍有未解决的问题；不能标记完成。")
         latest = {stage["stage_id"]: stage for stage in report["stages"]}
@@ -400,6 +490,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     finish_parser.add_argument("--summary", action="append")
     finish_parser.set_defaults(func=command_finish)
+
+    review_parser = subparsers.add_parser("review-import")
+    review_parser.add_argument("--process-dir", required=True)
+    review_parser.add_argument("--log", required=True, type=Path)
+    review_parser.add_argument("--role", required=True)
+    review_parser.add_argument("--closed", action="store_true",
+                               help="Use only after the agent close tool succeeded.")
+    review_parser.set_defaults(func=command_review_import)
 
     return parser
 

@@ -394,7 +394,7 @@ if ($topicLeaf -match '^(\d{3})_') {
   $resolvedSourceChecker = Resolve-RequiredPath -Path $sourceCheckerPath -Kind "Definition source-record checker"
   $resolvedRawCodebook = Resolve-RequiredPath -Path $rawCodebook -Kind "raw_codebook.csv"
 
-  & $resolvedPython @pythonArguments $resolvedSourceChecker `
+  & $resolvedPython @pythonArguments -X utf8 $resolvedSourceChecker `
     --record $resolvedSourceRecord `
     --r-script $resolvedScript `
     --raw-codebook $resolvedRawCodebook `

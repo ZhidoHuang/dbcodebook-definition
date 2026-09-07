@@ -892,13 +892,19 @@ def build_cua_sync_action(
     website_title: str | None = None,
     sync_started_at: str | None = None,
     include_preload: bool = True,
+    create: bool = False,
+    directory_tag: str | None = None,
 ) -> dict:
     base_url = base_url.strip().rstrip("/")
     parsed = urlsplit(base_url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         fail("--base-url must be an absolute http or https URL")
-    post_id = post_id.strip()
-    if not re.fullmatch(r"[1-9][0-9]*", post_id):
+    post_id = (post_id or "").strip()
+    if create and post_id:
+        fail("--create cannot be combined with --post-id")
+    if create and not (website_title and directory_tag and directory_tag.strip()):
+        fail("--create requires --website-title and --directory-tag")
+    if not create and not re.fullmatch(r"[1-9][0-9]*", post_id):
         fail("--post-id must be a positive integer")
 
     attachments = [
@@ -918,10 +924,14 @@ def build_cua_sync_action(
                 f"missing: {', '.join(missing_parts)}"
             )
     payload = {
+        "create": create,
+        "database": database,
+        "directory_tag": directory_tag.strip() if directory_tag else None,
         "post_id": post_id,
-        "post_url": f"{base_url}/nodes/post/{post_id}/",
-        "edit_url": f"{base_url}/nodes/edit/{post_id}/",
-        "success_url_pattern": f"**/nodes/post/{post_id}/**",
+        "post_url": None if create else f"{base_url}/nodes/post/{post_id}/",
+        "post_url_prefix": f"{base_url}/nodes/post/",
+        "edit_url": f"{base_url}/nodes/edit/" if create else f"{base_url}/nodes/edit/{post_id}/",
+        "success_url_pattern": "**/nodes/post/*/" if create else f"**/nodes/post/{post_id}/**",
         "identity_title_parts": (
             [topic_id.zfill(3), database] if website_title else expected_title_parts
         ),
@@ -961,8 +971,8 @@ async function syncDbCodeBookPost(tab, payload) {{
   let submissionStarted = false;
   try {{
     let stepStarted = Date.now();
-    await tab.goto(payload.edit_url);
-    await tab.playwright.waitForLoadState("domcontentloaded");
+    if (await tab.url() !== payload.edit_url) await tab.goto(payload.edit_url);
+    await tab.playwright.waitForLoadState({{ state: "domcontentloaded" }});
     const currentUrl = await tab.playwright.evaluate(() => location.href);
     if (currentUrl !== payload.edit_url) {{
       throw new Error(`未进入指定编辑页：${{currentUrl}}`);
@@ -974,14 +984,24 @@ async function syncDbCodeBookPost(tab, payload) {{
     await title.waitFor({{ state: "visible" }});
     let titleValue = "";
     const titleDeadline = Date.now() + 5000;
-    while (Date.now() < titleDeadline) {{
+    while (!payload.create && Date.now() < titleDeadline) {{
       titleValue = await title.evaluate(el => el.value);
       if (payload.identity_title_parts.every(
         part => titleValue.toLocaleLowerCase().includes(String(part).toLocaleLowerCase())
       )) break;
       await new Promise(resolve => setTimeout(resolve, 100));
     }}
-    for (const part of payload.identity_title_parts) {{
+    if (payload.create) {{
+      const blank = await tab.playwright.evaluate(() => ({{
+        title: document.querySelector("#title").value,
+        body: document.querySelector("#editor").value,
+        attachments: document.querySelector("#documents-sidebar-list").innerText.trim()
+      }}));
+      if (blank.title || blank.body || blank.attachments) {{
+        throw new Error("新建表单不是空白；未覆盖现有草稿");
+      }}
+    }}
+    for (const part of payload.create ? [] : payload.identity_title_parts) {{
       if (!titleValue.toLocaleLowerCase().includes(String(part).toLocaleLowerCase())) {{
         throw new Error(`文章身份不符，标题缺少：${{part}}`);
       }}
@@ -1002,10 +1022,32 @@ async function syncDbCodeBookPost(tab, payload) {{
       }}
     }}
     timings.title_update_ms = Date.now() - stepStarted;
+    if (payload.create) {{
+      const categoryOptions = await tab.playwright.evaluate(() =>
+        Array.from(document.querySelector("#category").options, option => ({{
+          label: option.textContent.trim(), value: option.value
+        }}))
+      );
+      const matchingCategories = categoryOptions.filter(option =>
+        option.label.toLocaleLowerCase() === payload.database.trim().toLocaleLowerCase()
+      );
+      if (matchingCategories.length !== 1) throw new Error("未找到唯一匹配的数据库选项");
+      await tab.playwright.locator("#category").selectOption({{ value: matchingCategories[0].value }});
+      await tab.playwright.locator("#tags-input").fill(payload.directory_tag);
+      await tab.playwright.locator("#tags-input").press("Enter");
+      const metadata = await tab.playwright.evaluate(() => ({{
+        database: document.querySelector("#category").selectedOptions[0].textContent.trim(),
+        tags: document.querySelector("#tags-container").innerText
+      }}));
+      if (metadata.database.toLocaleLowerCase() !== payload.database.trim().toLocaleLowerCase() ||
+          !metadata.tags.includes(payload.directory_tag)) {{
+        throw new Error("数据库或目录标签未设置成功");
+      }}
+    }}
 
     stepStarted = Date.now();
     const editor = tab.playwright.locator("#editor");
-    await tab.playwright.getByRole("button", {{ name: "清空内容" }}).click();
+    if (!payload.create) await tab.playwright.getByRole("button", {{ name: "清空内容" }}).click();
     const emptyLength = await editor.evaluate(el => el.value.length);
     if (emptyLength !== 0) throw new Error("清空正文后编辑器仍非空");
     await chooseVisibleFile(tab, "#content-import-input", payload.note);
@@ -1044,17 +1086,26 @@ async function syncDbCodeBookPost(tab, payload) {{
 
     stepStarted = Date.now();
     const returned = tab.playwright.waitForURL(
-      payload.success_url_pattern, {{ timeout: 30000 }}
+      payload.success_url_pattern, {{ timeoutMs: 30000 }}
     );
     submissionStarted = true;
-    await tab.playwright.getByRole("button", {{ name: "更新文章" }}).click();
+    if (payload.create) {{
+      await tab.playwright.getByRole("button", {{ name: /发布文章/ }}).click();
+    }} else {{
+      await tab.playwright.getByRole("button", {{ name: "更新文章" }}).click();
+    }}
     await returned;
+    const postUrl = await tab.url();
+    const postSuffix = postUrl.slice(payload.post_url_prefix.length);
+    if (!postUrl.startsWith(payload.post_url_prefix) || !/^[1-9][0-9]*\/$/.test(postSuffix)) {{
+      throw new Error(`提交后未返回文章地址：${{postUrl}}`);
+    }}
     timings.submit_and_return_ms = Date.now() - stepStarted;
     const finishedAt = Date.now();
     return {{
       ok: true,
       status: "ARTICLE_PAGE_RETURNED",
-      post_url: payload.post_url,
+      post_url: postUrl,
       browser_elapsed_ms: finishedAt - startedAt,
       dispatch_latency_ms: dispatchLatencyMs,
       sync_elapsed_to_browser_return_ms: syncStartedAt !== null
@@ -1079,7 +1130,7 @@ async function syncDbCodeBookPost(tab, payload) {{
   }}
 }}'''
     action = {
-        "existing_tab_match": [payload["post_url"], payload["edit_url"]],
+        "existing_tab_match": [url for url in (payload["post_url"], payload["edit_url"]) if url],
         "payload": payload,
         "preload_sha256": hashlib.sha256(
             preload_script.encode("utf-8")
@@ -1135,6 +1186,8 @@ def parse_args() -> argparse.Namespace:
     verify_parser.add_argument("--database")
     verify_parser.add_argument("--topic-name")
     verify_parser.add_argument("--post-id")
+    verify_parser.add_argument("--create", action="store_true")
+    verify_parser.add_argument("--directory-tag")
     verify_parser.add_argument("--base-url")
     verify_parser.add_argument("--website-title")
     return parser.parse_args()
@@ -1145,11 +1198,11 @@ def main() -> int:
     sync = None
     sync_requested = args.command == "verify-ready" and args.start_sync
     browser_target_requested = args.command == "verify-ready" and any(
-        (args.database, args.topic_name, args.post_id, args.base_url)
+        (args.database, args.topic_name, args.post_id, args.base_url, args.create)
     )
     try:
         if browser_target_requested:
-            if not all((args.database, args.topic_name, args.post_id, args.base_url)):
+            if not all((args.database, args.topic_name, args.post_id or args.create, args.base_url)):
                 fail(
                     "browser sync preparation requires --database, --topic-name, "
                     "--post-id and --base-url"
@@ -1199,6 +1252,7 @@ def main() -> int:
                 prepared_action = build_cua_sync_action(
                     result["upload"], args.base_url, args.post_id, args.database,
                     args.topic_id, args.topic_name, args.website_title,
+                    create=args.create, directory_tag=args.directory_tag,
                 )
                 if sync_requested:
                     import execution_report
@@ -1211,6 +1265,7 @@ def main() -> int:
                         result["upload"], args.base_url, args.post_id,
                         args.database, args.topic_id, args.topic_name,
                         args.website_title, sync["started_at"], include_preload=False,
+                        create=args.create, directory_tag=args.directory_tag,
                     )
                     result = {"ok": True, "status": result["status"],
                               "topic_id": result["topic_id"],
