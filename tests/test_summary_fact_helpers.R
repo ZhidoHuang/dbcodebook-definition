@@ -301,6 +301,23 @@ checks <- list(
     ),
     "不得使用 inline code"
   ),
+  expect_error_contains(
+    "known source variable cannot use value markup",
+    validate_criteria_markup(criteria_item(criteria_value("da023")), c("da023", "fall_status")),
+    "变量名标成了数据取值"
+  ),
+  expect_error_contains(
+    "variable in a condition cannot use value markup",
+    validate_criteria_markup(criteria_item(criteria_value("fall_status = 0")), "fall_status"),
+    "变量名标成了数据取值"
+  ),
+  expect_identical(
+    "code variables and numeric or category values retain distinct markup",
+    validate_criteria_markup(criteria_item(paste0(
+      "`fall_status` = ", criteria_value("0"), "；`da023`回答", criteria_value("2 No")
+    )), c("fall_status", "da023")),
+    TRUE
+  ),
   expect_identical(
     "summary no longer renders the five-column table",
     any(grepl("| 定义变量 | 含义 | 组成 | 覆盖周期 | 对象 |",

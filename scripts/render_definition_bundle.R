@@ -80,7 +80,7 @@ criteria_item <- function(x) paste0(
 
 criteria_block <- function(...) paste(..., sep = "")
 
-validate_criteria_markup <- function(criteria) {
+validate_criteria_markup <- function(criteria, variable_names = character()) {
   criteria <- as.character(criteria)
   invalid_value_code <- grepl(
     "<code\\b[^>]*>[[:space:]]*\\[[^<]*\\][[:space:]]*</code>",
@@ -98,6 +98,14 @@ validate_criteria_markup <- function(criteria) {
       "请改用 criteria_value()：",
       paste(invalid_names, collapse = "、")
     )
+  }
+  value_markup <- unlist(regmatches(criteria, gregexpr("<u>\\[[^<>]*\\]</u>", criteria)))
+  value_text <- gsub("^<u>\\[|\\]</u>$", "", value_markup)
+  identifiers <- unlist(regmatches(value_text, gregexpr("[[:alpha:]_.][[:alnum:]_.]*", value_text)))
+  misplaced <- intersect(identifiers, variable_names)
+  if (length(misplaced)) {
+    stop("Criteria 将本主题变量名标成了数据取值；变量名请用成对反引号：",
+         paste(misplaced, collapse = "、"))
   }
   invisible(TRUE)
 }
@@ -184,7 +192,7 @@ render_definition_bundle <- function(
   stopifnot(identical(analysis_vars, analysis_codebook$Variable))
   stopifnot(all(analysis_vars %in% names(criteria)))
   stopifnot(all(nzchar(criteria[analysis_vars])))
-  validate_criteria_markup(criteria[analysis_vars])
+  validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars)))
 
   format_n <- function(x) {
     format(x, big.mark = ",", scientific = FALSE)
