@@ -221,4 +221,39 @@ with tempfile.TemporaryDirectory() as temp_dir:
     else:
         raise AssertionError("parent log accepted as a reviewer")
 
+with tempfile.TemporaryDirectory() as temp_dir:
+    from datetime import timedelta
+
+    run("init", "--process-dir", temp_dir, "--database", "CHARLS",
+        "--topic-id", "042", "--topic-name", "fixture", "--task", "timing")
+    path = Path(temp_dir) / "execution_report.json"
+    initial = json.loads(path.read_text(encoding="utf-8"))
+    earlier = execution_report.parse_time(initial["started_at"]) - timedelta(seconds=50)
+    run("start-amend", "--process-dir", temp_dir, "--started-at", earlier.isoformat(),
+        "--evidence", "fixture first tool timestamp")
+    amended = json.loads(path.read_text(encoding="utf-8"))
+    assert amended["start_amendments"][0]["previous_started_at"] == initial["started_at"]
+    before = path.read_bytes()
+    for value in (initial["started_at"], "2026-01-01T00:00:00"):
+        run("start-amend", "--process-dir", temp_dir, "--started-at", value,
+            "--evidence", "invalid correction", ok=False)
+        assert path.read_bytes() == before
+    run("stage-start", "--process-dir", temp_dir, "--stage-id", "website",
+        "--name", "website", "--role", "writer")
+    run("issue", "--process-dir", temp_dir, "--stage-id", "website", "--kind", "abnormal",
+        "--description", "click failed", "--status", "mitigated", ok=False)
+    run("issue", "--process-dir", temp_dir, "--stage-id", "website", "--kind", "abnormal",
+        "--description", "click failed", "--status", "mitigated",
+        "--resolution", "Keyboard activation returned the article; click cause unknown.")
+    run("stage-finish", "--process-dir", temp_dir, "--stage-id", "website",
+        "--status", "completed_with_issues")
+    run("finish", "--process-dir", temp_dir, "--status", "completed", ok=False)
+    result = json.loads(run("finish", "--process-dir", temp_dir,
+                            "--status", "completed_with_issues").stdout)
+    assert result["elapsed_seconds"] >= 50
+    markdown = (Path(temp_dir) / "执行报告.md").read_text(encoding="utf-8")
+    assert "未解决：1" in markdown and "根因待修复 1" in markdown
+    assert "fixture first tool timestamp" in markdown
+    assert "发现问题并解决" not in markdown
+
 print("EXECUTION_REPORT_TEST_PASS")

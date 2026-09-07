@@ -122,6 +122,19 @@ compose_definition_note_lines <- function(
   )
 }
 
+definition_period_counts <- function(data) {
+  counts <- data |>
+    dplyr::filter(!is.na(year)) |>
+    dplyr::group_by(year) |>
+    dplyr::summarise(
+      dplyr::across(dplyr::everything(), ~ sum(!is.na(.x))),
+      .groups = "drop"
+    )
+  tidyr::pivot_longer(
+    counts, cols = -year, names_to = "Variable", values_to = "Count"
+  )
+}
+
 render_definition_bundle <- function(
     data,
     db_data,
@@ -257,17 +270,8 @@ render_definition_bundle <- function(
     c("ID", "id", "householdid", "communityid"),
     names(detail_data)
   )
-  z <- detail_data[, setdiff(names(detail_data), identity_columns)]
-  counts <- sapply(setdiff(names(z), "year"), function(col) {
-    tapply(z[[col]], z$year, function(x) sum(!is.na(x)))
-  })
-  count_data <- as.data.frame(counts) %>%
-    mutate(year = rownames(.)) %>%
-    pivot_longer(
-      cols = -year,
-      names_to = "Variable",
-      values_to = "Count"
-    )
+  z <- detail_data[, setdiff(names(detail_data), identity_columns), drop = FALSE]
+  count_data <- definition_period_counts(z)
   wide_data <- pivot_wider(
     count_data,
     names_from = year,

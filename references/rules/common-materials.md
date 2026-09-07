@@ -80,6 +80,8 @@
 
 每个正式分析变量都必须通过 `add_mapping()` 登记全部参与定义的 raw 来源，并由 mapping 驱动 codebook 的 `original_vars`、`processed_vars` 与 `count`；不得直接手填绕过。CHARLS 保留完整模块来源身份，ELSA 保留完整 `Variable (File)` 身份。
 
+字典代码从 [可执行模板](../../templates/public-r-dictionary.R) 起步，替换已经确定的结果名、来源别名和标签。正式 runner 的预检复用输出检查器的字典与标题检查，在执行 R 前发现缺项；无需另写一套 mapping 或等生成后再检查。
+
 后台区包括 QA 汇总、批量标签扫描、哈希/覆盖核对、HTML/笔记生成和只服务展示的 helper。笔记公开代码默认截取到 `# 输出` 之前。
 
 ### 2.2 头部模板

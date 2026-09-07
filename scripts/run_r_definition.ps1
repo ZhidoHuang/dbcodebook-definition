@@ -408,6 +408,14 @@ if ($topicLeaf -match '^(\d{3})_') {
 $sourceWatch.Stop()
 $phaseSeconds["Source check"] = $sourceWatch.Elapsed.TotalSeconds
 
+if ($topicLeaf -match '^\d{3}_') {
+  & $resolvedPython @pythonArguments -X utf8 (Join-Path $PSScriptRoot 'check_definition_output.py') `
+    --public-r-script $resolvedScript
+  if ($LASTEXITCODE -ne 0) {
+    throw "Public R dictionary/outline preflight failed; R was not executed."
+  }
+}
+
 $scriptBytes = [System.IO.File]::ReadAllBytes($resolvedScript)
 if ($scriptBytes.Length -ge 3 -and $scriptBytes[0] -eq 0xEF -and $scriptBytes[1] -eq 0xBB -and $scriptBytes[2] -eq 0xBF) {
   throw "R script has a UTF-8 BOM. Rewrite it as UTF-8 without BOM before running: $resolvedScript"

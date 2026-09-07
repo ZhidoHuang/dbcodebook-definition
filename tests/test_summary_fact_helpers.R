@@ -525,6 +525,20 @@ checks <- list(
   )
 )
 
+for (periods in list(2011L, c(2011L, 2013L))) {
+  for (variables in list("value", c("value", "other"))) {
+    fixture <- data.frame(year = rep(periods, each = 3L),
+                          value = rep(c(1, NA, 0), length(periods)),
+                          other = NA_real_)[c("year", variables)]
+    counts <- definition_period_counts(fixture)
+    stopifnot(nrow(counts) == length(periods) * length(variables))
+    stopifnot(identical(sort(unique(counts$year)), periods))
+    stopifnot(all(counts$Count[counts$Variable == "value"] == 2L))
+    stopifnot(all(counts$Count[counts$Variable == "other"] == 0L))
+  }
+}
+cat("single/multiple period and variable count fixtures PASS\n")
+
 report <- list(ok = TRUE, checks = checks, questionnaire_html = question_layout_fixture)
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 1 && nzchar(args[1])) {

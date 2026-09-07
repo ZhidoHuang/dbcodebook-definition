@@ -26,7 +26,7 @@ RUN_STATUS = {
 STAGE_STATUS = {
     "running": "执行中",
     "completed": "正常完成",
-    "completed_with_issues": "发现问题并解决",
+    "completed_with_issues": "完成，期间发现问题",
     "failed": "异常停止",
     "skipped": "未执行",
 }
@@ -34,6 +34,7 @@ STAGE_STATUS = {
 ISSUE_STATUS = {
     "open": "未解决",
     "resolved": "已解决",
+    "mitigated": "本次交付已恢复，根因待修复",
 }
 
 STAGE_MODE = {"work": "工作", "wait": "等待", "rework": "返工"}
@@ -176,6 +177,7 @@ def render_markdown(report: dict[str, Any]) -> str:
     abnormal_count = sum(issue["kind"] == "abnormal" for issue in issues)
     wait_count = sum(issue["kind"] == "wait" for issue in issues)
     open_count = sum(issue["status"] == "open" for issue in issues)
+    pending_count = sum(issue["status"] == "mitigated" for issue in issues)
 
     lines = [
         f"# {report['database']} {report['topic_id']} {report['topic_name']}：执行报告",
@@ -185,7 +187,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- 开始：{report['started_at']}",
         f"- 结束：{finished_at or '尚未结束'}",
         f"- 总耗时：{duration_text(total)}（{total:.3f} 秒）",
-        f"- Bug：{bug_count} 个；异常：{abnormal_count} 个；等待：{wait_count} 个；未解决：{open_count} 个",
+        f"- Bug：{bug_count} 个；异常：{abnormal_count} 个；等待：{wait_count} 个；未解决：{open_count + pending_count} 个（仍阻断交付 {open_count} 个，已恢复但根因待修复 {pending_count} 个）",
         "",
         "## 环节耗时",
         "",
@@ -193,6 +195,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         "| --- | --- | --- | --- | --- | ---: | --- |",
     ]
 
+    for correction in report.get("start_amendments", []):
+        lines.insert(8, f"- 起始时间更正：{correction['previous_started_at']} → {correction['started_at']}；依据：{correction['evidence']}")
     if not stages:
         lines.append("| 尚未开始 | - | - | - | 未执行 | - | - |")
     else:
@@ -317,6 +321,26 @@ def command_stage_start(args: argparse.Namespace) -> dict[str, Any]:
     return {"ok": True, "stage_id": args.stage_id, "attempt": attempts}
 
 
+def command_start_amend(args: argparse.Namespace) -> dict[str, Any]:
+    report_path, markdown_path = paths(args.process_dir)
+    report = load(report_path)
+    value = parse_time(args.started_at)
+    if value.tzinfo is None or value > parse_time(report["started_at"]):
+        raise SystemExit("起始时间必须带时区，且只能依据记录补回更早的实际开始时间。")
+    if not args.evidence.strip():
+        raise SystemExit("必须提供原始计时依据，不能估算。")
+    report.setdefault("start_amendments", []).append({
+        "amended_at": iso(), "previous_started_at": report["started_at"],
+        "started_at": iso(value), "evidence": args.evidence,
+    })
+    report["started_at"] = iso(value)
+    for review in report.get("reviews", []):
+        review["created_during_run"] = parse_time(review["created_at"]) >= value
+    save(report_path, markdown_path, report)
+    return {"ok": True, "started_at": report["started_at"],
+            "elapsed_seconds": elapsed_seconds(report["started_at"], report.get("finished_at"))}
+
+
 def command_stage_finish(args: argparse.Namespace) -> dict[str, Any]:
     report_path, markdown_path = paths(args.process_dir)
     report = load(report_path)
@@ -336,6 +360,8 @@ def command_issue(args: argparse.Namespace) -> dict[str, Any]:
     report_path, markdown_path = paths(args.process_dir)
     report = load(report_path)
     latest_stage(report, args.stage_id)
+    if args.status == "mitigated" and not args.resolution.strip():
+        raise SystemExit("交付恢复必须说明验证结果和仍未修复的根因。")
     report["issues"].append({
         "recorded_at": iso(),
         "stage_id": args.stage_id,
@@ -356,6 +382,10 @@ def command_issue_amend(args: argparse.Namespace) -> dict[str, Any]:
     if index < 0 or index >= len(report["issues"]):
         raise SystemExit(f"问题编号超出范围：{args.issue_number}")
     issue = report["issues"][index]
+    if (args.status or issue["status"]) == "mitigated" and not (
+        args.resolution if args.resolution is not None else issue.get("resolution", "")
+    ).strip():
+        raise SystemExit("交付恢复必须说明验证结果和仍未修复的根因。")
     previous = {
         key: issue.get(key)
         for key in ("description", "impact", "resolution", "status")
@@ -440,6 +470,12 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--task", required=True)
     init_parser.set_defaults(func=command_init)
 
+    start_amend = subparsers.add_parser("start-amend")
+    start_amend.add_argument("--process-dir", required=True)
+    start_amend.add_argument("--started-at", required=True)
+    start_amend.add_argument("--evidence", required=True)
+    start_amend.set_defaults(func=command_start_amend)
+
     stage_start = subparsers.add_parser("stage-start")
     stage_start.add_argument("--process-dir", required=True)
     stage_start.add_argument("--stage-id", required=True)
@@ -468,7 +504,7 @@ def build_parser() -> argparse.ArgumentParser:
     issue_parser.add_argument("--description", required=True)
     issue_parser.add_argument("--impact", default="")
     issue_parser.add_argument("--resolution", default="")
-    issue_parser.add_argument("--status", required=True, choices=("open", "resolved"))
+    issue_parser.add_argument("--status", required=True, choices=tuple(ISSUE_STATUS))
     issue_parser.set_defaults(func=command_issue)
 
     amend_parser = subparsers.add_parser("issue-amend")
@@ -477,7 +513,7 @@ def build_parser() -> argparse.ArgumentParser:
     amend_parser.add_argument("--description")
     amend_parser.add_argument("--impact")
     amend_parser.add_argument("--resolution")
-    amend_parser.add_argument("--status", choices=("open", "resolved"))
+    amend_parser.add_argument("--status", choices=tuple(ISSUE_STATUS))
     amend_parser.add_argument("--note", required=True)
     amend_parser.set_defaults(func=command_issue_amend)
 

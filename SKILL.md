@@ -27,7 +27,7 @@ Work on one topic at a time and retain authorization already given. Pause only f
 
 Run from this skill root, using the configured Python executable and the current task's values for `$Formal`, `$Process`, `$Topic`, `$Database`, `$TopicName`, `$PostId`, and `$BaseUrl`. This is local preparation, not an uploader; it does not open a browser or submit anything.
 
-First run the readiness check without `--start-sync`. Then reuse the current task's matching in-app-browser tab and confirm that it still shows the expected article and the logged-in edit control. These checks happen before website timing begins.
+Record the first preparation action's actual timestamp for the end-to-end website total. First run the readiness check without `--start-sync`. Then reuse the current task's matching in-app-browser tab and confirm that it still shows the expected article and the logged-in edit control. These checks happen before fixed-submit timing begins, not outside the end-to-end total; use the existing report's `start-amend` command with timestamp evidence if report creation was later.
 
 ```powershell
 & $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl
@@ -42,6 +42,8 @@ Only after both preflight checks pass, run the measured command below and execut
 ```powershell
 & $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --start-sync --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl
 ```
+
+After local and browser preparation, close any `website_preparation` stage before `--start-sync`; do not manually create `website_sync`.
 
 When the existing article also needs a new title, add the same
 `--website-title $WebsiteTitle` to both commands. The fixed browser program

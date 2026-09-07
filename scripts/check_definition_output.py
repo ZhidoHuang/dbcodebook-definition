@@ -52,7 +52,10 @@ def parse_args() -> argparse.Namespace:
         default="charls",
         help="Database identity mode. Defaults to charls for backward compatibility.",
     )
-    parser.add_argument("--formal-dir", required=True, type=Path)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--formal-dir", type=Path)
+    mode.add_argument("--public-r-script", type=Path,
+                      help="Check dictionary and outline before executing R; no outputs are written.")
     parser.add_argument("--process-dir", type=Path)
     parser.add_argument("--expected-files", help="Comma-separated required file names.")
     parser.add_argument("--raw-vars", help="Comma-separated expected raw variables after database identity columns.")
@@ -81,7 +84,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--require-log-exit-code", action="store_true")
     parser.add_argument("--max-md", type=int, default=1)
     parser.add_argument("--report", type=Path, help="Optional QA report path.")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.public_r_script is not None:
+        output_options = {key: value for key, value in vars(args).items()
+                          if key not in {"formal_dir", "public_r_script", "db", "max_md"} and value}
+        if output_options or args.db != "charls" or args.max_md != 1:
+            parser.error("--public-r-script is a standalone preflight; do not combine it with output-check options")
+    return args
 
 
 def fail(results: list[dict], check: str, detail: object) -> None:
@@ -844,6 +853,11 @@ def check_public_code_outline(
     else:
         ok(results, "public R unused objects", {"assigned_objects": len(assigned_objects)})
 
+    check_public_dictionary(source_public, results)
+
+
+def check_public_dictionary(source_public: str, results: list[dict]) -> None:
+    note_public = source_public
     heading_pattern = re.compile(
         r"(?m)^#{1,3}\s+(?:(?:-{3,}|={3,})\s+)?(.+?)\s+"
         r"(?:-{3,}|={3,}|#{4})\s*$"
@@ -1354,6 +1368,16 @@ def check_forbidden_formal_content(formal_dir: Path, forbidden: set[str], result
 def main() -> int:
     args = parse_args()
     results: list[dict] = []
+    if args.public_r_script is not None:
+        source = args.public_r_script.read_text(encoding="utf-8-sig")
+        boundary = re.search(r"(?m)^# 输出\s*$", source)
+        if boundary is None:
+            fail(results, "public R outline boundary", "# 输出 not found")
+        else:
+            check_public_dictionary(source[:boundary.start()], results)
+        passed = all(item["ok"] for item in results)
+        print(json.dumps({"ok": passed, "checks": results}, ensure_ascii=False))
+        return 0 if passed else 1
     formal_dir = args.formal_dir
 
     if not formal_dir.exists():
