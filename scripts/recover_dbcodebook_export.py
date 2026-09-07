@@ -18,6 +18,7 @@ from pathlib import Path
 
 REQUIRED_ZIP_MEMBERS = {"raw_codebook.csv"}
 MANAGED_REPORT = "recover_dbcodebook_export_QA.json"
+PARTIAL_SUFFIXES = {".crdownload", ".part", ".download"}
 
 
 def fail(message: str, *, detail: object | None = None) -> None:
@@ -44,20 +45,28 @@ def read_expected_vars_file(path: Path) -> list[str]:
     )
 
 
-def prepare_output_dir(out_dir: Path, overwrite: bool) -> None:
-    out_dir.mkdir(parents=True, exist_ok=True)
-    managed = [
+def managed_output_paths(out_dir: Path) -> list[Path]:
+    return [
         out_dir / "bookapp_download.zip",
         out_dir / "raw_codebook.csv",
         out_dir / MANAGED_REPORT,
         *sorted(out_dir.glob("raw_data*.csv")),
     ]
-    existing = [path for path in managed if path.exists()]
+
+
+def check_output_replacement(out_dir: Path, overwrite: bool) -> list[Path]:
+    existing = [path for path in managed_output_paths(out_dir) if path.exists()]
     if existing and not overwrite:
         fail(
             "output files already exist; use --overwrite only for an intentional replacement",
             detail=[str(path) for path in existing],
         )
+    return existing
+
+
+def prepare_output_dir(out_dir: Path, overwrite: bool) -> None:
+    existing = check_output_replacement(out_dir, overwrite)
+    out_dir.mkdir(parents=True, exist_ok=True)
     for path in existing:
         path.unlink()
 
@@ -226,11 +235,40 @@ def download_snapshot(directory: Path) -> dict:
     if not directory.is_dir():
         raise ValueError("download directory is not a directory")
     files = {}
-    for path in directory.glob("*.zip"):
-        if path.is_file():
+    partial_files = {}
+    for path in directory.iterdir():
+        if path.suffix.lower() not in {".zip", *PARTIAL_SUFFIXES}:
+            continue
+        try:
+            if not path.is_file():
+                continue
             stat = path.stat()
-            files[path.name] = [stat.st_size, stat.st_mtime_ns]
-    return {"directory": str(directory), "captured_at": time.time(), "files": files}
+        except FileNotFoundError:
+            continue  # The browser may rename a completed partial file during the scan.
+        target = files if path.suffix.lower() == ".zip" else partial_files
+        target[path.name] = [stat.st_size, stat.st_mtime_ns]
+    return {"directory": str(directory), "captured_at": time.time(),
+            "files": files, "partial_files": partial_files}
+
+
+def prepare_download(args: argparse.Namespace) -> dict:
+    expected = read_expected_vars_file(args.expect_vars_file)
+    check_output_replacement(args.out, args.overwrite)
+    snapshot = download_snapshot(args.prepare_download)
+    snapshot["expected_vars"] = expected
+    args.snapshot_file.parent.mkdir(parents=True, exist_ok=True)
+    args.snapshot_file.write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
+    command = [sys.executable, "-X", "utf8", str(Path(__file__).resolve()),
+               "--watch-downloads", snapshot["directory"],
+               "--snapshot-file", str(args.snapshot_file.resolve()),
+               "--database", args.database, "--out", str(args.out.resolve()),
+               "--expect-vars-file", str(args.expect_vars_file.resolve()),
+               "--wait-seconds", str(args.wait_seconds)]
+    if args.overwrite:
+        command.append("--overwrite")
+    return {"ok": True, "next_action": "click_once_then_watch_files",
+            "snapshot_file": str(args.snapshot_file.resolve()),
+            "watch_command": "& " + " ".join("'" + arg.replace("'", "''") + "'" for arg in command)}
 
 
 def wait_for_download(directory: Path, baseline: dict, expected: list[str],
@@ -239,12 +277,17 @@ def wait_for_download(directory: Path, baseline: dict, expected: list[str],
         raise ValueError("download directory differs from the saved snapshot")
     if timeout < 0 or poll_interval <= 0:
         raise ValueError("download wait must be nonnegative and polling must be positive")
+    if "expected_vars" in baseline and baseline["expected_vars"] != expected:
+        raise ValueError("selection changed after download preparation")
     started = time.monotonic()
     previous = {}
     checked = {}
     rejected = {}
     while True:
-        current = download_snapshot(directory)["files"]
+        observed = download_snapshot(directory)
+        current = observed["files"]
+        partial = {name: stat for name, stat in observed["partial_files"].items()
+                   if baseline.get("partial_files", {}).get(name) != stat}
         candidates = {name: stat for name, stat in current.items()
                       if baseline["files"].get(name) != stat}
         valid = []
@@ -261,7 +304,10 @@ def wait_for_download(directory: Path, baseline: dict, expected: list[str],
                     if [after.st_size, after.st_mtime_ns] != stat:
                         continue
                     checked[key] = report
-                except (OSError, ValueError, zipfile.BadZipFile, csv.Error) as error:
+                except OSError as error:
+                    rejected[name] = str(error)
+                    continue  # A transient browser file lock can clear without changing size.
+                except (ValueError, zipfile.BadZipFile, csv.Error) as error:
                     checked[key] = None
                     rejected[name] = str(error)
             if checked[key] is not None:
@@ -269,15 +315,24 @@ def wait_for_download(directory: Path, baseline: dict, expected: list[str],
         elapsed = round(time.monotonic() - started, 3)
         if len(valid) > 1:
             return {"ok": False, "status": "AMBIGUOUS_DOWNLOADS",
+                    "next_action": "identify_download_file",
                     "allow_new_export": False, "elapsed_seconds": elapsed,
                     "candidates": [name for name, _ in valid]}
         if valid:
             name, report = valid[0]
             return {"ok": True, "status": "DOWNLOAD_FILE_VERIFIED",
+                    "next_action": "continue_definition",
                     "allow_new_export": False, "elapsed_seconds": elapsed,
                     "archive_source": str((directory / name).resolve()), **report}
         if time.monotonic() - started >= timeout:
+            if partial:
+                return {"ok": False, "status": "DOWNLOAD_FILE_INCOMPLETE",
+                        "next_action": "check_download_progress",
+                        "allow_new_export": False, "elapsed_seconds": elapsed,
+                        "partial_files": sorted(partial), "rejected": rejected,
+                        "message": "A new partial file exists. Check its progress before recovery or another export."}
             return {"ok": False, "status": "CHECK_EXISTING_DOWNLOAD_RECORD",
+                    "next_action": "check_existing_download_record",
                     "allow_new_export": False, "elapsed_seconds": elapsed,
                     "rejected": rejected,
                     "message": "No verified new file. Check the existing paid record; do not export again."}
@@ -289,6 +344,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--archive", type=Path)
+    source.add_argument("--prepare-download", type=Path)
     source.add_argument("--snapshot-downloads", type=Path)
     source.add_argument("--watch-downloads", type=Path)
     parser.add_argument("--snapshot-file", type=Path)
@@ -298,7 +354,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--expect-vars-file", type=Path)
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
-    if (args.snapshot_downloads or args.watch_downloads) and not args.snapshot_file:
+    if (args.prepare_download or args.snapshot_downloads or args.watch_downloads) and not args.snapshot_file:
         parser.error("snapshot and watch modes require --snapshot-file")
     if not args.snapshot_downloads and not all((args.database, args.out, args.expect_vars_file)):
         parser.error("install and watch modes require --database, --out and --expect-vars-file")
@@ -310,6 +366,9 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     try:
+        if args.prepare_download:
+            print(json.dumps(prepare_download(args), ensure_ascii=False))
+            return 0
         if args.snapshot_downloads:
             snapshot = download_snapshot(args.snapshot_downloads)
             args.snapshot_file.parent.mkdir(parents=True, exist_ok=True)
@@ -336,6 +395,9 @@ def main() -> int:
         install_archive(archive_path, args.out)
         report = {
             "ok": True,
+            "status": "DOWNLOAD_FILE_VERIFIED",
+            "next_action": "continue_definition",
+            "allow_new_export": False,
             "database": args.database,
             "archive_source": str(archive_path.resolve()),
             **validated,

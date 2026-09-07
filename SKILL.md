@@ -97,10 +97,22 @@ Only creation, remake, or source-changing work needs this whole path:
 
 1. Discover candidates in dbCodeBook; use local official materials before online research. Verify full original questions, options and real skip destinations for every period in the source evidence; present the reader-facing questionnaire using [common-materials.md, section 6.2](references/rules/common-materials.md).
 2. Settle topic breadth and each variable's source, population, unit, missing handling and questionnaire paths; run the definition-logic review in [validation.md](references/rules/validation.md).
-3. Download the full settled list when a source variable, period, file, identity or alias changes. Never rebuild raw from old packages. If the download event times out, follow [download recovery](references/rules/write-boundaries.md#下载结果与找回) before another export. Inspect actual values before adding any cleaning.
+3. Download the full settled list when a source variable, period, file, identity or alias changes. Never rebuild raw from old packages. Use [Download Commands](#download-commands) for every export or recovery, not only after an event timeout. Inspect actual values before adding any cleaning.
 4. Write beginner-readable R using established helpers and the fixed header. Run the existing runner with `-PreflightOnly` before the first Public-R review, resolve its findings, then complete Public-R review. Run `scripts/run_r_definition.ps1` in PowerShell 7 with the actual formal/process directories to produce the outputs.
 5. Validate results, review the complete `文案.md`, and finish ordinary-reader review against stable final artifacts. `scripts/check_definition_readability.py check` binds the current evidence and outputs; correction scope is defined in [validation.md](references/rules/validation.md).
 6. When website sync is authorized, use the website-only commands and [write-boundaries.md](references/rules/write-boundaries.md). Stop at copy only for an explicit `只审核、不执行` request.
+
+## Download Commands
+
+Read [download execution](references/rules/write-boundaries.md#下载结果与找回). Once the source list and the final download control are verified in the existing logged-in in-app-browser tab, prepare the local observer:
+
+Treat the variable-selection page's normal export as the primary download path. A test of recovery cannot substitute for a forward test of that normal export.
+
+```powershell
+& $Python -X utf8 scripts/recover_dbcodebook_export.py --prepare-download $Downloads --snapshot-file "$Process/download_before.json" --database $Database --out $Formal --expect-vars-file "$Process/download_selection.txt"
+```
+
+The command checks inputs and the output boundary before spending points, records the current files, and returns `watch_command`. Click the verified download control once, then immediately run that returned command. Keep the originating page unchanged until it returns; do not wait for a browser download event or operate another tab in between. Follow the returned `next_action`: a verified file continues the definition; an incomplete file needs a download-progress check; no matching file needs the existing download record checked. This helper never clicks, exports, or retries on its own. Use `--overwrite` only for an intentional replacement of existing formal raw.
 
 ## Boundaries
 
