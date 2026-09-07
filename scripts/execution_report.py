@@ -177,10 +177,20 @@ def read_review_log(log_path: Path, role: str) -> dict[str, Any]:
                 if not turn_id:
                     continue
                 if payload.get("type") == "task_started":
+                    started_epoch = payload.get("started_at")
+                    if (
+                        meta
+                        and isinstance(started_epoch, (int, float))
+                        and started_epoch < int(parse_time(meta["timestamp"]).timestamp())
+                    ):
+                        continue
                     turns.setdefault(turn_id, {"turn_id": turn_id,
                                               "started_at": event["timestamp"], "finished_at": None})
-                elif payload.get("type") == "task_complete" and turn_id in turns:
+                elif payload.get("type") in {"task_complete", "turn_aborted"} and turn_id in turns:
                     turns[turn_id]["finished_at"] = event["timestamp"]
+                    turns[turn_id]["outcome"] = (
+                        "completed" if payload.get("type") == "task_complete" else "aborted"
+                    )
     if not meta or not turns:
         raise ValueError("selected log has no agent identity or review turns")
     source = meta.get("source", {})

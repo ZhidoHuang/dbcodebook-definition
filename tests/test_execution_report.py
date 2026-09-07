@@ -204,10 +204,14 @@ with tempfile.TemporaryDirectory() as temp_dir:
         {"type": "session_meta", "payload": {"id": "agent-1", "timestamp": "2026-01-01T00:00:00+00:00",
          "source": {"subagent": {"thread_spawn": {"parent_thread_id": "parent", "agent_nickname": "Reviewer"}}}}},
         {"type": "turn_context", "payload": {"model": "fixture-model"}},
-        {"timestamp": "2026-01-01T00:00:00+00:00", "type": "event_msg", "payload": {"type": "task_started", "turn_id": "one"}},
+        {"timestamp": "2026-01-01T00:00:00+00:00", "type": "event_msg",
+         "payload": {"type": "task_started", "turn_id": "copied-parent",
+                     "started_at": 1767225540}},
+        {"timestamp": "2026-01-01T00:00:00+00:00", "type": "event_msg",
+         "payload": {"type": "task_started", "turn_id": "one", "started_at": 1767225600}},
         {"timestamp": "2026-01-01T00:00:10+00:00", "type": "event_msg", "payload": {"type": "task_complete", "turn_id": "one"}},
         {"timestamp": "2026-01-01T00:01:10+00:00", "type": "event_msg", "payload": {"type": "task_started", "turn_id": "two"}},
-        {"timestamp": "2026-01-01T00:01:15+00:00", "type": "event_msg", "payload": {"type": "task_complete", "turn_id": "two"}},
+        {"timestamp": "2026-01-01T00:01:15+00:00", "type": "event_msg", "payload": {"type": "turn_aborted", "turn_id": "two"}},
     ]
     log.write_text("\n".join(json.dumps(event) for event in events) + "\n", encoding="utf-8")
     run("init", "--process-dir", temp_dir, "--database", "CHARLS", "--topic-id", "040",
