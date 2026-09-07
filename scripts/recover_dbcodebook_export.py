@@ -11,6 +11,7 @@ import shutil
 import sys
 import tempfile
 import time
+import uuid
 import zipfile
 from collections.abc import Iterable
 from pathlib import Path
@@ -30,9 +31,15 @@ def database_page_url(base_url: str, database: str) -> str:
     return f"{base_url}/home/{database}/"
 
 
-def build_download_browser_action(base_url: str, database: str) -> dict:
+def build_download_browser_action(
+    base_url: str,
+    database: str,
+    attempt_id: str,
+    expected_variable_count: int,
+) -> dict:
     page_url = database_page_url(base_url, database)
     page_url_json = json.dumps(page_url, ensure_ascii=False)
+    attempt_id_json = json.dumps(attempt_id, ensure_ascii=False)
     run_script = rf'''async function resolveDbCodeBookDownloadTab(expectedPageUrl) {{
   const browsers = (await agent.browsers.list()).filter(item => item.type === "iab");
   if (browsers.length !== 1) {{
@@ -55,7 +62,21 @@ def build_download_browser_action(base_url: str, database: str) -> dict:
   }}
   return browser.tabs.get(matches[0].id);
 }}
-async function downloadDbCodeBookExport(tab, expectedPageUrl) {{
+async function triggerDbCodeBookExport(
+  tab,
+  expectedPageUrl,
+  attemptId,
+  expectedVariableCount
+) {{
+  globalThis.__dbCodeBookDownloadAttempts ??= new Set();
+  const markerKey = `dbcodebook-download-attempt:${{attemptId}}`;
+  const pageAttempt = await tab.playwright.evaluate(
+    key => window.sessionStorage.getItem(key),
+    markerKey
+  );
+  if (globalThis.__dbCodeBookDownloadAttempts.has(attemptId) || pageAttempt) {{
+    throw new Error("本次下载已经触发；请检查本地文件或账号下载记录，不得再次导出");
+  }}
   const current = new URL(await tab.url());
   const expected = new URL(expectedPageUrl);
   if (current.origin !== expected.origin || current.pathname !== expected.pathname) {{
@@ -63,6 +84,11 @@ async function downloadDbCodeBookExport(tab, expectedPageUrl) {{
   }}
   const selectedCount = await tab.playwright.locator("#tag-area .tag").count();
   if (selectedCount < 1) throw new Error("变量选择区为空；未触发下载");
+  if (selectedCount !== expectedVariableCount) {{
+    throw new Error(
+      `网页已选 ${{selectedCount}} 个变量，下载清单为 ${{expectedVariableCount}} 个；未触发下载`
+    );
+  }}
 
   const openButton = tab.playwright.locator('button[aria-label="下载数据"]');
   if (await openButton.count() !== 1) throw new Error("未找到唯一的下载入口；未触发下载");
@@ -73,42 +99,49 @@ async function downloadDbCodeBookExport(tab, expectedPageUrl) {{
   const finalButton = modal.locator("button.bili-btn.confirm");
   if (await finalButton.count() !== 1) throw new Error("未找到唯一的最终下载按钮；未触发下载");
 
-  let pendingDownload = tab.playwright.waitForEvent("download", {{ timeoutMs: 120000 }});
-  pendingDownload.catch(() => {{}});
-  await finalButton.click();
+  await tab.playwright.evaluate(
+    value => window.sessionStorage.setItem(value.key, value.timestamp),
+    {{ key: markerKey, timestamp: new Date().toISOString() }}
+  );
+  globalThis.__dbCodeBookDownloadAttempts.add(attemptId);
+  const clickedAt = Date.now();
   try {{
-    const download = await pendingDownload;
-    const archivePath = await download.path({{ timeoutMs: 120000 }});
-    if (!archivePath) throw new Error("浏览器没有返回下载文件路径");
-    return {{
-      ok: true,
-      status: "DOWNLOAD_PATH_RETURNED",
-      next_action: "validate_and_install_archive",
-      allow_new_export: false,
-      selected_variable_count: selectedCount,
-      archive_path: archivePath
-    }};
+    await finalButton.click({{ timeoutMs: 10000 }});
   }} catch (error) {{
     return {{
       ok: false,
-      status: "DOWNLOAD_EVENT_NOT_RETURNED",
+      status: "DOWNLOAD_CLICK_RESULT_UNCERTAIN",
       next_action: "run_watch_command",
       allow_new_export: false,
+      attempt_id: attemptId,
       selected_variable_count: selectedCount,
       message: String(error)
     }};
   }}
+  return {{
+    ok: true,
+    status: "DOWNLOAD_EXPORT_TRIGGERED",
+    next_action: "run_watch_command",
+    allow_new_export: false,
+    attempt_id: attemptId,
+    selected_variable_count: selectedCount,
+    browser_elapsed_ms: Date.now() - clickedAt
+  }};
 }}
 var dbCodeBookDownloadPageUrl = {page_url_json};
+var dbCodeBookDownloadAttemptId = {attempt_id_json};
 var dbCodeBookDownloadTab = await resolveDbCodeBookDownloadTab(dbCodeBookDownloadPageUrl);
-var dbCodeBookDownloadResult = await downloadDbCodeBookExport(
+var dbCodeBookDownloadResult = await triggerDbCodeBookExport(
   dbCodeBookDownloadTab,
-  dbCodeBookDownloadPageUrl
+  dbCodeBookDownloadPageUrl,
+  dbCodeBookDownloadAttemptId,
+  {expected_variable_count}
 );
 nodeRepl.write(JSON.stringify(dbCodeBookDownloadResult));'''
     return {
         "existing_tab_path": page_url,
-        "timeout_ms": 150000,
+        "timeout_ms": 30000,
+        "attempt_id": attempt_id,
         "run_script": run_script,
     }
 
@@ -348,6 +381,8 @@ def prepare_download(args: argparse.Namespace) -> dict:
     check_output_replacement(args.out, args.overwrite)
     snapshot = download_snapshot(args.prepare_download)
     snapshot["expected_vars"] = expected
+    attempt_id = str(uuid.uuid4())
+    snapshot["attempt_id"] = attempt_id
     args.snapshot_file.parent.mkdir(parents=True, exist_ok=True)
     args.snapshot_file.write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
     command = [sys.executable, "-X", "utf8", str(Path(__file__).resolve()),
@@ -360,7 +395,9 @@ def prepare_download(args: argparse.Namespace) -> dict:
         command.append("--overwrite")
     return {"ok": True, "next_action": "run_browser_action_once",
             "snapshot_file": str(args.snapshot_file.resolve()),
-            "browser_action": build_download_browser_action(args.base_url, args.database),
+            "browser_action": build_download_browser_action(
+                args.base_url, args.database, attempt_id, len(expected)
+            ),
             "watch_command": "& " + " ".join("'" + arg.replace("'", "''") + "'" for arg in command)}
 
 

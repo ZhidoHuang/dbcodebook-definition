@@ -583,7 +583,14 @@ def command_website_finish(args: argparse.Namespace) -> dict[str, Any]:
     report_path, markdown_path = paths(args.process_dir)
     report = load(report_path)
     stage = latest_stage(report, "website_sync")
-    result = json.loads(args.result.read_text(encoding="utf-8-sig"))
+    try:
+        result_json = getattr(args, "result_json", None)
+        if result_json is not None:
+            result = json.loads(result_json)
+        else:
+            result = json.loads(args.result.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise SystemExit(f"无法读取浏览器同步结果：{error}") from error
     if not isinstance(result, dict):
         raise SystemExit("浏览器结果必须是原始 JSON 对象。")
     if (report["status"] != "running" or stage["status"] != "running" or
@@ -609,9 +616,14 @@ def command_website_finish(args: argparse.Namespace) -> dict[str, Any]:
     finished = parse_time(stage["started_at"]) + timedelta(milliseconds=total)
     if finished > now() + timedelta(seconds=1):
         raise SystemExit("浏览器完成时间在未来；检查原始结果。")
+    result_path = report_path.parent / "website_sync_result.json"
+    result_path.write_text(
+        json.dumps(result, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     stage.update(status="completed", finished_at=finished.isoformat(timespec="milliseconds"),
                  elapsed_seconds=round(total / 1000, 3),
-                 summary=["正文和附件已提交，返回文章页。"], outputs=[str(args.result.resolve())],
+                 summary=["正文和附件已提交，返回文章页。"], outputs=[str(result_path.resolve())],
                  browser_result=result)
     report["stages"].append({
         "stage_id": "website_closure", "attempt": stage["attempt"], "name": "网站收口",
@@ -637,7 +649,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     website_finish = subparsers.add_parser("website-finish")
     website_finish.add_argument("--process-dir", required=True)
-    website_finish.add_argument("--result", required=True, type=Path)
+    website_result = website_finish.add_mutually_exclusive_group(required=True)
+    website_result.add_argument("--result", type=Path)
+    website_result.add_argument("--result-json")
     website_finish.set_defaults(func=command_website_finish)
 
     init_parser = subparsers.add_parser("init")

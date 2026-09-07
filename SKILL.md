@@ -55,10 +55,10 @@ The command rechecks current readiness and starts or resumes `website_sync` only
 
 Confirm that `browser_action.preload_sha256` matches the preflight output, then run `browser_action.run_script` unchanged in the very next CUA call. The program resolves the unique matching in-app-browser tab again; do not add a binding call, parse the script through another shell, rediscover browser methods, split it into manual steps, or substitute another upload implementation. The preloaded helper refuses to write if it was not dispatched within 60 seconds of the measured stage starting. It opens the exact edit page, verifies article identity before writing, imports the body once, uploads the two sidebar attachments one at a time in the declared order, checks body and attachment order, and submits once. Its result includes dispatch latency, total browser time, elapsed time since the website stage began, five step timings, and five explicit quality checks. If it fails before submission it reloads the same edit page to discard unsaved form changes and stops without retrying.
 
-After the article page returns, stop browser work. Save the unchanged browser result as `$SyncResult`, then import it. Submission time comes from that result; subsequent bookkeeping is recorded separately and ends with `finish`:
+After the article page returns, stop browser work. Keep the unchanged browser result JSON as `$SyncResult` and import it directly. `website-finish` validates it and writes the standard `website_sync_result.json` itself; do not manually create that file. Submission time comes from that result; subsequent bookkeeping is recorded separately and ends with `finish`:
 
 ```powershell
-& $Python scripts/execution_report.py website-finish --process-dir $Process --result $SyncResult
+& $Python scripts/execution_report.py website-finish --process-dir $Process --result-json $SyncResult
 & $Python scripts/execution_report.py finish --process-dir $Process --status completed --summary "网站已同步，待用户检查。"
 ```
 
@@ -110,7 +110,7 @@ Use the existing execution components for the mechanical parts:
 | Runtime and R invocation | Resolve configured executables once. In PowerShell 7: `./scripts/run_r_definition.ps1 -WorkDir $Formal -Script $RFile -LogPrefix $LogPrefix -ProcessDir $Process -Config $Config -Database $Database -PreflightOnly`; after Public-R review, use the same command without `-PreflightOnly`. Pass paths as parameters, not inside a temporary `Rscript -e` string. |
 | Public R structure | Start from [the fixed header](references/rules/common-materials.md#22-头部模板) and [dictionary template](templates/public-r-dictionary.R); fill the current sources/results rather than redesigning these components. |
 | Independent workbook verification | Import `read_xlsx_rows` from `scripts/check_definition_output.py`; it reads actual cells, including workbooks with an incorrect `A1` dimension. Keep the independent definition calculation separate from file reading. |
-| Reader review | `check_definition_readability.py init-reader` produces a DRAFT with each block's visible `source_text` and an exact excerpt. Give this draft and the final note to the reader; preserve their returned wording when recording the review. The reader still supplies the interpretation and findings; the draft cannot pass by itself. |
+| Reader review | `check_definition_readability.py init-reader` produces a DRAFT plus `ordinary_reader_input.md`, an allowlist containing that file alone, and the exact reviewer prompt. Give the reviewer only the returned input file and prompt; do not add the formal directory, public R, data, exploration record, or author review. Preserve the reader's returned wording when recording the review. The reader still supplies the interpretation and findings; the draft cannot pass by itself. |
 
 ## Download Commands
 
@@ -122,7 +122,7 @@ Treat the variable-selection page's normal export as the primary download path. 
 & $Python -X utf8 scripts/recover_dbcodebook_export.py --prepare-download $Downloads --snapshot-file "$Process/download_before.json" --database $Database --base-url $BaseUrl --out $Formal --expect-vars-file "$Process/download_selection.txt"
 ```
 
-The command checks inputs and the output boundary before spending points, records the current files, and returns one `browser_action.run_script`. Run that script unchanged once in the next CUA call with its declared timeout. It uses the selected matching variable-selection page, otherwise locates the unique matching Codex in-app-browser tab, opens the download dialog, starts the download-event listener before the final click, clicks that final control once, and returns the actual local archive path. Pass that path to `recover_dbcodebook_export.py --archive ...` for validation and installation. If the browser does not return a path, run the prepared `watch_command` as a fallback and follow its `next_action`; do not trigger another paid export merely because the event timed out. Use `--overwrite` only for an intentional replacement of existing formal raw.
+The command checks inputs and the output boundary before spending points, records the current files, assigns one attempt ID, and returns one `browser_action.run_script`. Run that script unchanged once in the next CUA call with its declared timeout. It uses the selected matching variable-selection page, otherwise locates the unique matching Codex in-app-browser tab, verifies the selected count, opens the download dialog, clicks the final control once, and returns immediately. The same attempt ID is stored in both the browser-control runtime and the variable-selection page session, so a runtime reset cannot authorize a second click. Then run the prepared `watch_command` once to locate, validate, and install the new archive. If no verified file appears, follow its `next_action` and inspect the existing paid record; never run the browser action again merely because no browser download event was returned. Use `--overwrite` only for an intentional replacement of existing formal raw.
 
 ## Boundaries
 

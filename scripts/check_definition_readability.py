@@ -15,6 +15,7 @@ from urllib.parse import urlsplit
 
 AUDIT_NAME = "readability_audit.json"
 READER_REVIEW_NAME = "reader_comprehension_review.json"
+READER_INPUT_NAME = "ordinary_reader_input.md"
 REPORT_NAME = "publish_readiness.json"
 IMPACT_NAME = "definition_change_impact.json"
 READER_COPY_NAME = "文案.md"
@@ -23,7 +24,8 @@ IMPACT_PASS_STATUS = "CHANGE_IMPACT_PASS"
 READER_REVIEW_PASS_STATUS = "READER_COMPREHENSION_PASS"
 AUDIT_SCHEMA_VERSION = 5
 IMPACT_SCHEMA_VERSION = 2
-READER_REVIEW_SCHEMA_VERSION = 1
+READER_REVIEW_SCHEMA_VERSION = 2
+LEGACY_READER_REVIEW_SCHEMA_VERSION = 1
 REQUIRED_ARTIFACTS = (
     "note",
     "public_r",
@@ -278,7 +280,11 @@ def normalized_visible_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def reader_review_block_sources(note_text: str) -> list[dict[str, str]]:
+def reader_review_block_sources(
+    note_text: str,
+    *,
+    include_materials: bool = False,
+) -> list[dict[str, str]]:
     summary_start = note_text.find("## 摘要导读")
     summary_end_candidates = [
         position
@@ -363,19 +369,49 @@ def reader_review_block_sources(note_text: str) -> list[dict[str, str]]:
                 }
             )
             seen.add(clean_variable)
+    reader_end = note_text.find("## 材料")
+    reader_note = (
+        note_text
+        if include_materials or reader_end < 0
+        else note_text[:reader_end]
+    )
     blocks.append({
         "name": "full_note_flow",
         "label": "全文衔接",
-        "review_text": note_text,
+        "review_text": reader_note,
     })
     return blocks
 
 
-def reader_review_blocks(note_text: str) -> list[dict[str, str]]:
+def reader_review_blocks(
+    note_text: str,
+    *,
+    include_materials: bool = False,
+) -> list[dict[str, str]]:
     return [
         {"name": block["name"], "label": block["label"]}
-        for block in reader_review_block_sources(note_text)
+        for block in reader_review_block_sources(
+            note_text,
+            include_materials=include_materials,
+        )
     ]
+
+
+def build_reader_input(topic_id: str, note_text: str) -> str:
+    lines = [
+        f"# {topic_id.zfill(3)} 普通读者审阅输入",
+        "",
+        "请只根据下面依次列出的读者可见内容判断是否容易理解。",
+        "不要推测数据、代码、探索记录或作者没有写出的信息。",
+    ]
+    for block in reader_review_block_sources(note_text):
+        lines.extend([
+            "",
+            f"## {block['label']}",
+            "",
+            normalized_visible_text(block["review_text"]),
+        ])
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def initialize_reader_review(
@@ -411,6 +447,11 @@ def initialize_reader_review(
         fail(f"{READER_REVIEW_NAME} already exists; use --overwrite for a new review")
     note_path = formal_dir / note_artifact["path"]
     note_text = note_path.read_text(encoding="utf-8-sig")
+    reader_input_path = process_dir / READER_INPUT_NAME
+    reader_input_path.write_text(
+        build_reader_input(topic_id, note_text),
+        encoding="utf-8",
+    )
     payload = {
         "schema_version": READER_REVIEW_SCHEMA_VERSION,
         "topic_id": topic_id.zfill(3),
@@ -443,6 +484,12 @@ def initialize_reader_review(
         "ok": True,
         "status": "READER_REVIEW_DRAFT_CREATED",
         "review": str(review_path),
+        "review_input": str(reader_input_path),
+        "allowed_inputs": [str(reader_input_path)],
+        "reviewer_prompt": (
+            f"只读取 {reader_input_path}，逐块用自己的话复述并报告疑问；"
+            "不要读取正式目录、公开R、数据、探索记录或作者审阅。"
+        ),
         "block_count": len(payload["blocks"]),
     }
 
@@ -459,9 +506,14 @@ def validate_reader_review(
         fail(f"{READER_REVIEW_NAME} does not exist; ordinary-reader review is required")
     with review_path.open("r", encoding="utf-8-sig") as handle:
         review = json.load(handle)
-    if review.get("schema_version") != READER_REVIEW_SCHEMA_VERSION:
+    reader_schema = review.get("schema_version")
+    if reader_schema not in {
+        LEGACY_READER_REVIEW_SCHEMA_VERSION,
+        READER_REVIEW_SCHEMA_VERSION,
+    }:
         fail(
-            f"reader review schema_version must be {READER_REVIEW_SCHEMA_VERSION}"
+            "reader review schema_version must be "
+            f"{LEGACY_READER_REVIEW_SCHEMA_VERSION} or {READER_REVIEW_SCHEMA_VERSION}"
         )
     expected_topic = topic_id.zfill(3)
     if str(review.get("topic_id", "")).zfill(3) != expected_topic:
@@ -483,7 +535,10 @@ def validate_reader_review(
     note_path = formal_dir / note_artifact["path"]
     note_text = note_path.read_text(encoding="utf-8-sig")
     visible_note = normalized_visible_text(note_text)
-    block_sources = reader_review_block_sources(note_text)
+    block_sources = reader_review_block_sources(
+        note_text,
+        include_materials=(reader_schema == LEGACY_READER_REVIEW_SCHEMA_VERSION),
+    )
     expected_blocks = [
         {"name": block["name"], "label": block["label"]}
         for block in block_sources
@@ -602,6 +657,9 @@ def initialize_audit(
     reader_review_path = process_dir / READER_REVIEW_NAME
     if reader_review_path.exists() and not preserve_reader:
         reader_review_path.unlink()
+    reader_input_path = process_dir / READER_INPUT_NAME
+    if reader_input_path.exists() and not preserve_reader:
+        reader_input_path.unlink()
     readiness_path = process_dir / REPORT_NAME
     if readiness_path.exists():
         readiness_path.unlink()

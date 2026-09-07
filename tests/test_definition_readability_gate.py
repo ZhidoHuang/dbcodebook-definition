@@ -225,16 +225,30 @@ def main() -> int:
         checker.initialize_audit(formal, process, "025", files)
         audit_path = process / checker.AUDIT_NAME
         complete_audit(checker, audit_path)
-        checker.initialize_reader_review(
+        reader_init = checker.initialize_reader_review(
             formal, process, "025", files["note"]
         )
         draft = json.loads((process / checker.READER_REVIEW_NAME).read_text(encoding="utf-8"))
+        reader_input_path = process / checker.READER_INPUT_NAME
+        reader_input = reader_input_path.read_text(encoding="utf-8")
+        assert reader_init["allowed_inputs"] == [str(reader_input_path)]
+        assert reader_init["review_input"] == str(reader_input_path)
+        assert str(reader_input_path) in reader_init["reviewer_prompt"]
+        assert "正式目录" in reader_init["reviewer_prompt"]
         source_blocks = checker.reader_review_block_sources((formal / files["note"]).read_text(encoding="utf-8-sig"))
         assert draft["status"] == "DRAFT"
         for block, source in zip(draft["blocks"], source_blocks, strict=True):
             assert block["source_text"] == checker.normalized_visible_text(source["review_text"])
             assert block["original_excerpt"] in block["source_text"]
             assert block["result"] == "pending" and not block["plain_paraphrase"]
+        scoped_input = checker.build_reader_input(
+            "025",
+            "## 摘要导读\n读者内容。\n\n## 定义\n定义内容。\n\n"
+            "## 材料\n### 2-代码材料\ninstall_github('private-review-input')\n",
+        )
+        assert "读者内容" in scoped_input
+        assert "install_github" not in scoped_input
+        assert "## 材料" not in scoped_input
         expect_failure(lambda: checker.validate_audit(formal, process, "025"), "status")
         complete_reader_review(checker, formal, process)
         result = checker.validate_audit(formal, process, "025")

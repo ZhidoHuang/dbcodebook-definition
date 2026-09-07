@@ -164,7 +164,10 @@ with tempfile.TemporaryDirectory() as temp_dir:
     assert report_path.read_bytes() == before
     run("stage-finish", "--process-dir", temp_dir, "--stage-id", "website_sync",
         "--status", "completed", ok=False)
-    run("website-finish", "--process-dir", temp_dir, "--result", str(browser_result(root)))
+    inline_result = browser_result(root).read_text(encoding="utf-8")
+    run("website-finish", "--process-dir", temp_dir, "--result-json", inline_result)
+    saved_result = root / "website_sync_result.json"
+    assert json.loads(saved_result.read_text(encoding="utf-8")) == json.loads(inline_result)
     run("finish", "--process-dir", temp_dir, "--status", "completed")
     finished = report_path.read_bytes()
     restarted = execution_report.begin_website_preparation(root, "CHARLS", "036", "工作属性")

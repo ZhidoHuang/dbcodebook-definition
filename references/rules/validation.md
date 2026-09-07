@@ -25,7 +25,7 @@
 
 
 
-机器闸门通过后，按通用规范先完成作者全文检查，再完成普通读者检查。主题作者生成 `readability_audit.json`；另一审核角色只阅读最终笔记并生成 `reader_comprehension_review.json`，逐块保存原文和大白话复述。`check_definition_readability.py check` 验证纯文案、两份审核及当前正式笔记、正式 R、analysis_db 和 analysis_codebook 哈希一致后，生成 `publish_readiness.json`。没有当前版本的 `PUBLISH_READY` 不得同步网站。请求包含网站更新时，按写入边界规则直接进入网站检查同步阶段，提交并收到文章详情页后进入 `USER_REVIEW_PENDING`；发布后不再重复检查页面，只有用户确认才算完成。
+机器闸门通过后，按通用规范先完成作者全文检查，再完成普通读者检查。主题作者生成 `readability_audit.json`；随后运行 `check_definition_readability.py init-reader`，它生成只含最终读者内容的 `ordinary_reader_input.md`、唯一输入白名单和固定审阅提示。另一审核角色只能接收该输入文件和提示，不能额外接收正式目录、公开 R、数据、探索记录或作者审阅；其复述和疑问写入 `reader_comprehension_review.json`。`check_definition_readability.py check` 验证纯文案、两份审核及当前正式笔记、正式 R、analysis_db 和 analysis_codebook 哈希一致后，生成 `publish_readiness.json`。没有当前版本的 `PUBLISH_READY` 不得同步网站。请求包含网站更新时，按写入边界规则直接进入网站检查同步阶段，提交并收到文章详情页后进入 `USER_REVIEW_PENDING`；发布后不再重复检查页面，只有用户确认才算完成。
 
 ### 修正后的复核范围
 
