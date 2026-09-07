@@ -268,7 +268,9 @@ def main() -> int:
 
         unchanged = {name: (formal / name).read_bytes() for name in files.values()}
         readiness_bytes = (process / checker.REPORT_NAME).read_bytes()
-        prepared = json.loads(prepare_sync_command(formal, process).stdout)
+        prepared_run = prepare_sync_command(formal, process)
+        assert prepared_run.stdout.isascii()
+        prepared = json.loads(prepared_run.stdout)
         prepared_action = prepared["browser_action"]
         assert "preload_script" in prepared_action
         assert "run_script" not in prepared_action

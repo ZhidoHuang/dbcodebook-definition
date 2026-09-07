@@ -1305,7 +1305,8 @@ def main() -> int:
             ))
         print(f"READABILITY_GATE_FAIL: {error}", file=sys.stderr)
         return 1
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    # Keep machine-consumed stdout code-page independent on Windows shells.
+    print(json.dumps(result, ensure_ascii=True, indent=2))
     return 0
 
 
