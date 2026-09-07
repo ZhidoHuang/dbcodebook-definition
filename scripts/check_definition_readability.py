@@ -949,7 +949,30 @@ def build_cua_sync_action(
         "sync_attempt": sync_attempt,
         "dispatch_limit_ms": 60000,
     }
-    preload_script = rf'''async function chooseVisibleFile(tab, selector, filePath) {{
+    existing_tab_match = [url for url in (payload["post_url"], payload["edit_url"]) if url]
+    existing_tab_match_json = json.dumps(existing_tab_match, ensure_ascii=False)
+    helper_script = rf'''async function resolveDbCodeBookTab(expectedUrls) {{
+  const browsers = (await agent.browsers.list()).filter(item => item.type === "iab");
+  if (browsers.length !== 1) {{
+    throw new Error(`需要且只能有一个 Codex 内置浏览器，当前找到 ${{browsers.length}} 个`);
+  }}
+  const browser = await agent.browsers.get(browsers[0].id);
+  const normalize = value => {{
+    const url = new URL(value);
+    url.hash = "";
+    return url.href.replace(/\/$/, "");
+  }};
+  const expected = new Set(expectedUrls.map(normalize));
+  const selected = await browser.tabs.selected();
+  if (expected.has(normalize(await selected.url()))) return selected;
+  const tabs = await browser.tabs.list();
+  const matches = tabs.filter(item => expected.has(normalize(item.url)));
+  if (matches.length !== 1) {{
+    throw new Error(`未找到唯一匹配的网站标签页，当前找到 ${{matches.length}} 个`);
+  }}
+  return browser.tabs.get(matches[0].id);
+}}
+async function chooseVisibleFile(tab, selector, filePath) {{
   const chooserPromise = tab.playwright.waitForEvent("filechooser");
   await tab.playwright.locator(selector).click();
   const chooser = await chooserPromise;
@@ -1138,11 +1161,18 @@ async function syncDbCodeBookPost(tab, payload) {{
     throw error;
   }}
 }}'''
+    preload_script = helper_script + rf'''
+var dbCodeBookSyncPreflightTab = await resolveDbCodeBookTab({existing_tab_match_json});
+nodeRepl.write(JSON.stringify({{
+  ok: true,
+  status: "SYNC_TAB_READY",
+  url: await dbCodeBookSyncPreflightTab.url()
+}}));'''
     action = {
-        "existing_tab_match": [url for url in (payload["post_url"], payload["edit_url"]) if url],
+        "existing_tab_match": existing_tab_match,
         "payload": payload,
         "preload_sha256": hashlib.sha256(
-            preload_script.encode("utf-8")
+            helper_script.encode("utf-8")
         ).hexdigest(),
     }
     if include_preload:
@@ -1150,8 +1180,10 @@ async function syncDbCodeBookPost(tab, payload) {{
     payload["preload_sha256"] = action["preload_sha256"]
     if sync_started_at is not None:
         payload_json = json.dumps(payload, ensure_ascii=False)
+        existing_tab_match_json = json.dumps(existing_tab_match, ensure_ascii=False)
         action["run_script"] = rf'''var dbCodeBookSyncPayload = {payload_json};
-var dbCodeBookSyncResult = await syncDbCodeBookPost(tab, dbCodeBookSyncPayload);
+var dbCodeBookSyncTab = await resolveDbCodeBookTab({existing_tab_match_json});
+var dbCodeBookSyncResult = await syncDbCodeBookPost(dbCodeBookSyncTab, dbCodeBookSyncPayload);
 nodeRepl.write(JSON.stringify(dbCodeBookSyncResult));'''
     return action
 

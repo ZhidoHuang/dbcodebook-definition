@@ -14,11 +14,103 @@ import time
 import zipfile
 from collections.abc import Iterable
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
 REQUIRED_ZIP_MEMBERS = {"raw_codebook.csv"}
 MANAGED_REPORT = "recover_dbcodebook_export_QA.json"
 PARTIAL_SUFFIXES = {".crdownload", ".part", ".download"}
+
+
+def database_page_url(base_url: str, database: str) -> str:
+    base_url = base_url.strip().rstrip("/")
+    parsed = urlsplit(base_url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        fail("--base-url must be an absolute http or https URL")
+    return f"{base_url}/home/{database}/"
+
+
+def build_download_browser_action(base_url: str, database: str) -> dict:
+    page_url = database_page_url(base_url, database)
+    page_url_json = json.dumps(page_url, ensure_ascii=False)
+    run_script = rf'''async function resolveDbCodeBookDownloadTab(expectedPageUrl) {{
+  const browsers = (await agent.browsers.list()).filter(item => item.type === "iab");
+  if (browsers.length !== 1) {{
+    throw new Error(`需要且只能有一个 Codex 内置浏览器，当前找到 ${{browsers.length}} 个`);
+  }}
+  const browser = await agent.browsers.get(browsers[0].id);
+  const page = new URL(expectedPageUrl);
+  const isMatch = value => {{
+    const current = new URL(value);
+    return current.origin === page.origin && current.pathname === page.pathname;
+  }};
+  const selected = await browser.tabs.selected();
+  if (isMatch(await selected.url())) return selected;
+  const tabs = await browser.tabs.list();
+  const matches = tabs.filter(item => {{
+    return isMatch(item.url);
+  }});
+  if (matches.length !== 1) {{
+    throw new Error(`未找到唯一匹配的变量选择页，当前找到 ${{matches.length}} 个`);
+  }}
+  return browser.tabs.get(matches[0].id);
+}}
+async function downloadDbCodeBookExport(tab, expectedPageUrl) {{
+  const current = new URL(await tab.url());
+  const expected = new URL(expectedPageUrl);
+  if (current.origin !== expected.origin || current.pathname !== expected.pathname) {{
+    throw new Error(`当前标签页不是指定变量选择页：${{current.href}}`);
+  }}
+  const selectedCount = await tab.playwright.locator("#tag-area .tag").count();
+  if (selectedCount < 1) throw new Error("变量选择区为空；未触发下载");
+
+  const openButton = tab.playwright.locator('button[aria-label="下载数据"]');
+  if (await openButton.count() !== 1) throw new Error("未找到唯一的下载入口；未触发下载");
+  await openButton.click();
+
+  const modal = tab.playwright.locator("#download-modal");
+  await modal.waitFor({{ state: "visible" }});
+  const finalButton = modal.locator("button.bili-btn.confirm");
+  if (await finalButton.count() !== 1) throw new Error("未找到唯一的最终下载按钮；未触发下载");
+
+  let pendingDownload = tab.playwright.waitForEvent("download", {{ timeoutMs: 120000 }});
+  pendingDownload.catch(() => {{}});
+  await finalButton.click();
+  try {{
+    const download = await pendingDownload;
+    const archivePath = await download.path({{ timeoutMs: 120000 }});
+    if (!archivePath) throw new Error("浏览器没有返回下载文件路径");
+    return {{
+      ok: true,
+      status: "DOWNLOAD_PATH_RETURNED",
+      next_action: "validate_and_install_archive",
+      allow_new_export: false,
+      selected_variable_count: selectedCount,
+      archive_path: archivePath
+    }};
+  }} catch (error) {{
+    return {{
+      ok: false,
+      status: "DOWNLOAD_EVENT_NOT_RETURNED",
+      next_action: "run_watch_command",
+      allow_new_export: false,
+      selected_variable_count: selectedCount,
+      message: String(error)
+    }};
+  }}
+}}
+var dbCodeBookDownloadPageUrl = {page_url_json};
+var dbCodeBookDownloadTab = await resolveDbCodeBookDownloadTab(dbCodeBookDownloadPageUrl);
+var dbCodeBookDownloadResult = await downloadDbCodeBookExport(
+  dbCodeBookDownloadTab,
+  dbCodeBookDownloadPageUrl
+);
+nodeRepl.write(JSON.stringify(dbCodeBookDownloadResult));'''
+    return {
+        "existing_tab_path": page_url,
+        "timeout_ms": 150000,
+        "run_script": run_script,
+    }
 
 
 def fail(message: str, *, detail: object | None = None) -> None:
@@ -266,8 +358,9 @@ def prepare_download(args: argparse.Namespace) -> dict:
                "--wait-seconds", str(args.wait_seconds)]
     if args.overwrite:
         command.append("--overwrite")
-    return {"ok": True, "next_action": "click_once_then_watch_files",
+    return {"ok": True, "next_action": "run_browser_action_once",
             "snapshot_file": str(args.snapshot_file.resolve()),
+            "browser_action": build_download_browser_action(args.base_url, args.database),
             "watch_command": "& " + " ".join("'" + arg.replace("'", "''") + "'" for arg in command)}
 
 
@@ -350,6 +443,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--snapshot-file", type=Path)
     parser.add_argument("--wait-seconds", type=float, default=20)
     parser.add_argument("--database", type=str.lower, choices=("charls", "elsa"))
+    parser.add_argument("--base-url")
     parser.add_argument("--out", type=Path)
     parser.add_argument("--expect-vars-file", type=Path)
     parser.add_argument("--overwrite", action="store_true")
@@ -358,6 +452,8 @@ def parse_args() -> argparse.Namespace:
         parser.error("snapshot and watch modes require --snapshot-file")
     if not args.snapshot_downloads and not all((args.database, args.out, args.expect_vars_file)):
         parser.error("install and watch modes require --database, --out and --expect-vars-file")
+    if args.prepare_download and not args.base_url:
+        parser.error("--prepare-download requires --base-url")
     if args.wait_seconds < 0:
         parser.error("--wait-seconds must be nonnegative")
     return args
@@ -367,7 +463,7 @@ def main() -> int:
     args = parse_args()
     try:
         if args.prepare_download:
-            print(json.dumps(prepare_download(args), ensure_ascii=False))
+            print(json.dumps(prepare_download(args), ensure_ascii=True))
             return 0
         if args.snapshot_downloads:
             snapshot = download_snapshot(args.snapshot_downloads)
@@ -384,7 +480,7 @@ def main() -> int:
             args.snapshot_file.with_name(args.snapshot_file.stem + "_result.json").write_text(
                 json.dumps(observation, ensure_ascii=False, indent=2), encoding="utf-8")
             if not observation["ok"]:
-                print(json.dumps(observation, ensure_ascii=False))
+                print(json.dumps(observation, ensure_ascii=True))
                 return 1
             archive_path = Path(observation["archive_source"])
         validated = ({key: observation[key] for key in ("zip_members", "codebook", "data")}
@@ -409,7 +505,7 @@ def main() -> int:
         if not isinstance(error, ValueError):
             print(f"RECOVER_FAIL: {error}", file=sys.stderr)
         return 1
-    print(json.dumps(report, ensure_ascii=False))
+    print(json.dumps(report, ensure_ascii=True))
     return 0
 
 

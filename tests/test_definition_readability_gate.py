@@ -272,6 +272,9 @@ def main() -> int:
         assert prepared_run.stdout.isascii()
         prepared = json.loads(prepared_run.stdout)
         prepared_action = prepared["browser_action"]
+        assert "resolveDbCodeBookTab" in prepared_action["preload_script"]
+        assert "await agent.browsers.list()" in prepared_action["preload_script"]
+        assert 'status: "SYNC_TAB_READY"' in prepared_action["preload_script"]
         assert "preload_script" in prepared_action
         assert "run_script" not in prepared_action
         preparation = json.loads((process / "execution_report.json").read_text(encoding="utf-8"))
@@ -324,7 +327,9 @@ def main() -> int:
         assert 'sync_elapsed_to_browser_return_ms' in preload_script
         assert 'quality_checks' in preload_script
         run_script = browser_action["run_script"]
-        assert 'await syncDbCodeBookPost(tab, dbCodeBookSyncPayload)' in run_script
+        assert "await resolveDbCodeBookTab" in run_script
+        assert "syncDbCodeBookPost(dbCodeBookSyncTab, dbCodeBookSyncPayload)" in run_script
+        assert "syncDbCodeBookPost(tab, dbCodeBookSyncPayload)" not in run_script
         assert len(run_script) < len(preload_script) // 2
         assert browser_action["payload"]["sync_started_at"] == started["execution"]["started_at"]
         assert "setInputFiles" not in preload_script
@@ -344,6 +349,46 @@ def main() -> int:
         assert 'post_url: postUrl' in preload_script
         node = shutil.which("node")
         if node:
+            preflight_fixture = root / "website_preflight.mjs"
+            preflight_fixture.write_text(
+                '''import assert from "node:assert/strict";
+const tab = { url: async () => "http://localhost:8000/nodes/post/221/" };
+let selectedUrl = "http://localhost:8000/nodes/post/221/";
+let listedTabs = [{ id: "tab-1", url: selectedUrl }];
+const agent = { browsers: {
+  list: async () => [{ id: "iab-1", type: "iab" }],
+  get: async id => {
+    assert.equal(id, "iab-1");
+    return { tabs: {
+      selected: async () => ({ url: async () => selectedUrl }),
+      list: async () => listedTabs,
+      get: async tabId => { assert.equal(tabId, "tab-1"); return tab; }
+    } };
+  }
+} };
+let result;
+const nodeRepl = { write: value => { result = JSON.parse(value); } };
+''' + preload_script + '''
+assert.equal(result.status, "SYNC_TAB_READY");
+assert.equal(result.url, "http://localhost:8000/nodes/post/221/");
+selectedUrl = "http://localhost:8000/home/charls/";
+listedTabs = [...listedTabs, { id: "tab-2", url: "http://localhost:8000/nodes/edit/221/" }];
+await assert.rejects(
+  resolveDbCodeBookTab([
+    "http://localhost:8000/nodes/post/221/",
+    "http://localhost:8000/nodes/edit/221/"
+  ]),
+  /当前找到 2 个/
+);
+console.log("website preflight self-binding PASS");
+''',
+                encoding="utf-8",
+            )
+            preflight_run = subprocess.run(
+                [node, str(preflight_fixture)], capture_output=True, text=True, encoding="utf-8"
+            )
+            assert preflight_run.returncode == 0, preflight_run.stderr
+            assert "website preflight self-binding PASS" in preflight_run.stdout
             category_code = preload_script.split("const categoryOptions =", 1)[1].split(
                 'await tab.playwright.locator("#tags-input")', 1
             )[0]

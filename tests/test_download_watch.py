@@ -126,14 +126,103 @@ with tempfile.TemporaryDirectory() as temp:
     prepare_args = [sys.executable, str(Path(recovery.__file__)),
                     "--prepare-download", str(fresh), "--snapshot-file", str(prepare_snapshot),
                     "--database", "CHARLS", "--out", str(protected),
-                    "--expect-vars-file", str(selection), "--wait-seconds", "2"]
+                    "--expect-vars-file", str(selection), "--base-url", "http://localhost:8000",
+                    "--wait-seconds", "2"]
     blocked = subprocess.run(prepare_args, capture_output=True, env={**os.environ, "PYTHONUTF8": "1"})
     assert blocked.returncode != 0 and not prepare_snapshot.exists()
     prepared_run = subprocess.run(prepare_args + ["--overwrite"], capture_output=True,
                                   text=True, encoding="utf-8", env={**os.environ, "PYTHONUTF8": "1"})
     assert prepared_run.returncode == 0, prepared_run.stderr
+    assert prepared_run.stdout.isascii()
     prepared = json.loads(prepared_run.stdout)
-    assert prepared["next_action"] == "click_once_then_watch_files"
+    assert prepared["next_action"] == "run_browser_action_once"
+    browser_action = prepared["browser_action"]
+    assert browser_action["existing_tab_path"] == "http://localhost:8000/home/charls/"
+    assert browser_action["timeout_ms"] == 150000
+    run_script = browser_action["run_script"]
+    assert "await agent.browsers.list()" in run_script
+    assert 'filter(item => item.type === "iab")' in run_script
+    assert 'locator("#tag-area .tag")' in run_script
+    assert 'button[aria-label="下载数据"]' in run_script
+    assert 'modal.locator("button.bili-btn.confirm")' in run_script
+    assert run_script.index('waitForEvent("download"') < run_script.index("await finalButton.click()")
+    assert "pendingDownload.catch(() => {})" in run_script
+    assert run_script.count("await finalButton.click()") == 1
+    assert 'download.path({ timeoutMs: 120000 })' in run_script
+    assert 'status: "DOWNLOAD_PATH_RETURNED"' in run_script
+    assert 'allow_new_export: false' in run_script
+    node = shutil.which("node")
+    if node:
+        browser_fixture = work / "download_browser_action.mjs"
+        browser_fixture.write_text(
+            '''import assert from "node:assert/strict";
+const calls = [];
+const finalButton = {
+  count: async () => 1,
+  click: async () => calls.push("final-click")
+};
+const modal = {
+  waitFor: async () => calls.push("modal-visible"),
+  locator: selector => {
+    assert.equal(selector, "button.bili-btn.confirm");
+    return finalButton;
+  }
+};
+const tab = {
+  url: async () => "http://localhost:8000/home/charls/?showInput=true",
+  playwright: {
+    locator: selector => {
+      if (selector === "#tag-area .tag") return { count: async () => 3 };
+      if (selector === 'button[aria-label="下载数据"]') return {
+        count: async () => 1,
+        click: async () => calls.push("open-dialog")
+      };
+      if (selector === "#download-modal") return modal;
+      throw new Error(`unexpected selector: ${selector}`);
+    },
+    waitForEvent: async eventName => {
+      assert.equal(eventName, "download");
+      calls.push("listen-download");
+      return { path: async () => { calls.push("read-path"); return "C:/Downloads/result.zip"; } };
+    }
+  }
+};
+let selectedUrl = "http://localhost:8000/home/charls/?showInput=true";
+let listedTabs = [{ id: "tab-1", url: selectedUrl }];
+const agent = { browsers: {
+  list: async () => [{ id: "iab-1", type: "iab" }],
+  get: async id => {
+    assert.equal(id, "iab-1");
+    return { tabs: {
+      selected: async () => ({ ...tab, url: async () => selectedUrl }),
+      list: async () => listedTabs,
+      get: async tabId => { assert.equal(tabId, "tab-1"); return tab; }
+    } };
+  }
+} };
+let result;
+const nodeRepl = { write: value => { result = JSON.parse(value); } };
+''' + run_script + '''
+assert.equal(result.status, "DOWNLOAD_PATH_RETURNED");
+assert.equal(result.archive_path, "C:/Downloads/result.zip");
+assert.deepEqual(calls, ["open-dialog", "modal-visible", "listen-download", "final-click", "read-path"]);
+selectedUrl = "http://localhost:8000/nodes/post/1/";
+listedTabs = [...listedTabs, { id: "tab-2", url: "http://localhost:8000/home/charls/" }];
+await assert.rejects(
+  resolveDbCodeBookDownloadTab("http://localhost:8000/home/charls/"),
+  /当前找到 2 个/
+);
+console.log("download browser action PASS");
+''',
+            encoding="utf-8",
+        )
+        browser_run = subprocess.run(
+            [node, str(browser_fixture)], capture_output=True, text=True, encoding="utf-8"
+        )
+        assert browser_run.returncode == 0, browser_run.stderr
+        assert "download browser action PASS" in browser_run.stdout
+    else:
+        print("download browser action SKIP: Node.js is not installed")
     assert original.read_text() == "keep until a valid replacement exists"
     prepared_baseline = json.loads(prepare_snapshot.read_text())
     try:

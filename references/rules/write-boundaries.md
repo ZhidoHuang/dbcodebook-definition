@@ -46,16 +46,7 @@
 
 正常下载是变量选择任务的主流程。修复或验收正常下载时，必须从变量选择页点击最终下载按钮，并以本次新数据包完整落盘和校验通过为成功；下载记录中的“找回”只处理已经失败的既有记录，不能代替正常下载验收。
 
-每次正常下载和找回均使用 [Skill 的下载入口](../../SKILL.md#download-commands)。先确认最终下载按钮、完整来源及别名，再运行 `--prepare-download`。准备通过后，在内置浏览器中先启动下载接收，再点击一次最终下载控件；取得浏览器返回的本地路径后，直接用 `--archive` 校验并安装。只有浏览器没有返回路径时，才原样执行准备命令返回的 `watch_command` 检查实际保存目录。`$Downloads` 必须是浏览器实际保存目录，已有正式 raw 的有意替换才加 `--overwrite`。
-
-```javascript
-// downloadButton 是刚从当前页面核实的最终下载控件。
-let pendingDownload = tab.playwright.waitForEvent("download", { timeoutMs: 120000 });
-pendingDownload.catch(() => {});
-await downloadButton.click();
-let download = await pendingDownload;
-let archivePath = await download.path({ timeoutMs: 120000 });
-```
+每次正常下载和找回均使用 [Skill 的下载入口](../../SKILL.md#download-commands)。确认完整来源及别名后运行 `--prepare-download`，再原样执行它返回的 `browser_action.run_script`。程序优先使用当前选中的匹配页，否则自行绑定唯一匹配的内置浏览器变量选择页，打开下载弹窗，先启动下载接收，再点击一次最终下载控件；取得浏览器返回的本地路径后，直接用 `--archive` 校验并安装。只有浏览器没有返回路径时，才原样执行准备命令返回的 `watch_command` 检查实际保存目录。`$Downloads` 必须是浏览器实际保存目录，已有正式 raw 的有意替换才加 `--overwrite`。
 
 从启动下载接收到取得路径期间，保留原页面，不刷新、导航、关闭或操作其它标签。等待 Promise 必须立即附加错误处理，避免超时导致浏览器连接被重置。浏览器路径和 `watch_command` 都只是寻找文件的方法，只有数据包通过变量清单与包内 CSV 校验才算下载成功。
 
@@ -94,7 +85,7 @@ dbCodeBook 的网页探索、变量选择、下载和网站同步统一使用 Co
 
 ### 唯一浏览器执行程序
 
-网站同步不得临场组合 CUA 调用。计时前的发布入口必须同时接收文章编号和配置中的站点地址，并返回 `browser_action.existing_tab_match`、固定载荷、helper 哈希及 `browser_action.preload_script`。先用 `cua.getState()` 找到匹配的现有内置浏览器标签，再用 `cua.getTab()` 将它绑定为 `tab`、确认登录，并原样运行 `preload_script`；预载只定义固定函数，不操作网页。`--start-sync` 只返回相同 helper 哈希、带开始时间的固定载荷和短 `run_script`，其后的下一次 CUA 调用必须原样执行 `run_script`，中间不得再绑定标签、解析长脚本或检查其它内容。缺少脚本、文章编号、站点地址、匹配标签或 helper 哈希不一致时停止，不猜测 API，也不手工重写脚本。固定程序如果在计时开始后 60 秒内仍未执行，必须在写入前拒绝本次同步。
+网站同步不得临场组合 CUA 调用。计时前的发布入口必须同时接收文章编号和配置中的站点地址，并返回 `browser_action.existing_tab_match`、固定载荷、helper 哈希及 `browser_action.preload_script`。确认匹配的页面已经在当前登录的 Codex 内置浏览器中打开后，原样运行 `preload_script`；程序优先使用当前选中的匹配页，否则自行找到唯一匹配标签并完成预检，只定义固定函数，不操作网页。`--start-sync` 只返回相同 helper 哈希、带开始时间的固定载荷和短 `run_script`，其后的下一次 CUA 调用必须原样执行 `run_script`，程序再次自行绑定该标签；中间不得另行绑定、解析长脚本或检查其它内容。缺少脚本、文章编号、站点地址、可确定的匹配标签或 helper 哈希不一致时停止，不猜测 API，也不手工重写脚本。固定程序如果在计时开始后 60 秒内仍未执行，必须在写入前拒绝本次同步。
 
 固定程序在写入前核对编辑页地址和标题身份；写入后核对正文 UTF-16 长度、首尾及侧栏附件名称顺序。附件控件一次选择多个文件时可能自行按名称排序，因此程序固定按 `analysis_db`、`analysis_codebook` 逐个选择，每次文件选择器只接收一个路径。任何提交前检查失败都重新载入同一编辑页，丢弃未保存表单并停止；不换方法、不重试。程序必须返回调度等待、浏览器总耗时、打开编辑页、身份核对、正文导入、附件处理、提交返回五段耗时，以及编辑页、标题、正文、附件顺序、文章返回五项检查结果。执行报告另行记录网站阶段最终墙钟时间，各类时间不得混写。
 
