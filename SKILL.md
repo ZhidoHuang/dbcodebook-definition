@@ -122,7 +122,7 @@ Treat the variable-selection page's normal export as the primary download path. 
 & $Python -X utf8 scripts/recover_dbcodebook_export.py --prepare-download $Downloads --snapshot-file "$Process/download_before.json" --database $Database --out $Formal --expect-vars-file "$Process/download_selection.txt"
 ```
 
-The command checks inputs and the output boundary before spending points, records the current files, and returns `watch_command`. Click the verified download control once, then immediately run that returned command. Keep the originating page unchanged until it returns; do not wait for a browser download event or operate another tab in between. Follow the returned `next_action`: a verified file continues the definition; an incomplete file needs a download-progress check; no matching file needs the existing download record checked. This helper never clicks, exports, or retries on its own. Use `--overwrite` only for an intentional replacement of existing formal raw.
+The command checks inputs and the output boundary before spending points and records the current files. In the in-app browser, start `tab.playwright.waitForEvent("download", { timeoutMs: ... })` before clicking the verified final download control, then read the returned download's local path. Pass that path to `recover_dbcodebook_export.py --archive ...` for validation and installation. If the browser does not return a path, run the prepared `watch_command` as a fallback and follow its `next_action`; do not trigger another paid export merely because the event timed out. This helper never clicks, exports, or retries on its own. Use `--overwrite` only for an intentional replacement of existing formal raw.
 
 ## Boundaries
 

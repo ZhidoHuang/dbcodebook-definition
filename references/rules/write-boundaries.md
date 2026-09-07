@@ -46,15 +46,18 @@
 
 正常下载是变量选择任务的主流程。修复或验收正常下载时，必须从变量选择页点击最终下载按钮，并以本次新数据包完整落盘和校验通过为成功；下载记录中的“找回”只处理已经失败的既有记录，不能代替正常下载验收。
 
-每次正常下载和找回均使用 [Skill 的下载入口](../../SKILL.md#download-commands)，不等下载事件报错后再启动文件观察。先确认最终下载按钮、完整来源及别名，再运行 `--prepare-download`；准备通过后只点击一次，随即原样执行返回的 `watch_command`。`$Downloads` 必须是浏览器实际保存目录，已有正式 raw 的有意替换才加 `--overwrite`。
+每次正常下载和找回均使用 [Skill 的下载入口](../../SKILL.md#download-commands)。先确认最终下载按钮、完整来源及别名，再运行 `--prepare-download`。准备通过后，在内置浏览器中先启动下载接收，再点击一次最终下载控件；取得浏览器返回的本地路径后，直接用 `--archive` 校验并安装。只有浏览器没有返回路径时，才原样执行准备命令返回的 `watch_command` 检查实际保存目录。`$Downloads` 必须是浏览器实际保存目录，已有正式 raw 的有意替换才加 `--overwrite`。
 
 ```javascript
 // downloadButton 是刚从当前页面核实的最终下载控件。
+let pendingDownload = tab.playwright.waitForEvent("download", { timeoutMs: 120000 });
+pendingDownload.catch(() => {});
 await downloadButton.click();
-// 本次浏览器调用到此结束；下一步执行 prepare-download 返回的 watch_command。
+let download = await pendingDownload;
+let archivePath = await download.path({ timeoutMs: 120000 });
 ```
 
-从点击到文件观察返回期间，保留原页面，不刷新、导航、关闭或操作其它标签，也不插入 `waitForEvent("download")`。这是让下载与验收连续执行的步骤，不是把切换标签认定为既往中断的已证实根因。
+从启动下载接收到取得路径期间，保留原页面，不刷新、导航、关闭或操作其它标签。等待 Promise 必须立即附加错误处理，避免超时导致浏览器连接被重置。浏览器路径和 `watch_command` 都只是寻找文件的方法，只有数据包通过变量清单与包内 CSV 校验才算下载成功。
 
 程序只接受相对快照新增或发生变化、已稳定且完整校验通过的数据包；旧包、临时文件、来源不符或多个匹配包都不能被随意选为结果。按 `next_action` 执行：
 
@@ -67,7 +70,7 @@ await downloadButton.click();
 
 所有观察结果都不会自动授权或触发重新付费导出。表单来源仍按网站的 `变量名 (来源文件)` 格式输入，别名以最终清单为准。
 
-没有取得文件时，在同一内置浏览器查看账号的下载记录，按本次时间、数据库、完整来源及别名核对记录。已有对应记录就使用其“找回”入口，不重新导出。找回后同样检查实际下载目录；若页面已显示“已找回”但尚未拿到文件，保留这一事实，不继续消耗其它找回机会。
+没有取得文件时，在同一内置浏览器查看账号的下载记录，按本次时间、数据库、完整来源及别名核对记录。已有对应记录就使用其“找回”入口，不重新导出。找回是直接文件链接时，同样先启动 `waitForEvent("download")`，再对刚核实的链接调用 `downloadMedia()`，随后读取 download path；不能把“已找回”当作文件已经落盘。浏览器仍未返回路径时再检查实际下载目录；若页面已显示“已找回”但尚未拿到文件，保留这一事实，不继续消耗其它找回机会。
 
 已明确文件路径时，用现有 `recover_dbcodebook_export.py --archive <本次数据包> --database <数据库> --out <正式目录> --expect-vars-file <download_selection.txt>` 校验并安装；文件观察模式已经完成安装则不重复运行。变量清单和包内 CSV 校验通过才继续定义。找回当前任务已生成的数据包不属于从旧主题重建 raw。重试付费导出前必须先解释已查到的下载记录与文件状态；状态不明时停止导出，不猜测网站仍在生成。
 
