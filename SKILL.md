@@ -19,7 +19,7 @@ Resolve the database, topic, formal directory, process directory, and configurat
 | Change R or calculation | Relevant R sections of [common-materials.md](references/rules/common-materials.md) and [validation.md](references/rules/validation.md) | Inspect current inputs, change R, rerun and validate; unchanged sources do not require another download |
 | Create, remake, or change sources | [database-routing.json](references/database-routing.json), the selected workflow/profile, [common-materials.md](references/rules/common-materials.md), and [evidence-and-literature.md](references/rules/evidence-and-literature.md) | Follow the complete definition workflow and refresh the full download when sources change |
 
-Use [rules/index.md](references/rules/index.md) to resolve ownership when editing rules, not as a mandatory prelude to every upload. Read [execution-report.md](references/rules/execution-report.md) before a production run; use its existing script for timing and status. Website-only runs use `--start-sync` below instead of separate report initialization and stage-start commands.
+Use [rules/index.md](references/rules/index.md) to resolve ownership when editing rules, not as a mandatory prelude to every upload. Read [execution-report.md](references/rules/execution-report.md) before a production run; use its existing script for timing and status. Website-only runs use `website-prepare`, then `--start-sync` below instead of manually creating timing stages.
 
 Work on one topic at a time and retain authorization already given. Pause only for an unresolved research decision, a required source gap, or an uncertain external write. Do not treat a requested upload as permission to rebuild the topic.
 
@@ -27,9 +27,10 @@ Work on one topic at a time and retain authorization already given. Pause only f
 
 Run from this skill root, using the configured Python executable and the current task's values for `$Formal`, `$Process`, `$Topic`, `$Database`, `$TopicName`, `$PostId`, and `$BaseUrl`. This is local preparation, not an uploader; it does not open a browser or submit anything.
 
-Record the first preparation action's actual timestamp for the end-to-end website total. First run the readiness check without `--start-sync`. Then reuse the current task's matching in-app-browser tab and confirm that it still shows the expected article and the logged-in edit control. These checks happen before fixed-submit timing begins, not outside the end-to-end total; use the existing report's `start-amend` command with timestamp evidence if report creation was later.
+Start the preparation clock before local checks or browser setup, then run the readiness check without `--start-sync`. Reuse the current task's matching in-app-browser tab and confirm that it still shows the expected article and the logged-in edit control. Preparation is part of the website total, separate from fixed-submit timing.
 
 ```powershell
+& $Python scripts/execution_report.py website-prepare --process-dir $Process --database $Database --topic-id $Topic --topic-name $TopicName
 & $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl
 ```
 
@@ -43,21 +44,21 @@ Only after both preflight checks pass, run the measured command below and execut
 & $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --start-sync --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl
 ```
 
-After local and browser preparation, close any `website_preparation` stage before `--start-sync`; do not manually create `website_sync`.
+After local and browser preparation, `--start-sync` closes `website_preparation` and starts `website_sync` automatically. Missing preparation timing blocks dispatch; do not manually create either stage.
 
 When the existing article also needs a new title, add the same
 `--website-title $WebsiteTitle` to both commands. The fixed browser program
 verifies the existing article identity first and changes the title in the same
 single submission as the body and sidebar attachments.
 
-The command rechecks the current readiness first and starts or resumes `website_sync` only after every local check passes. A finished previous run is archived by the report script. It returns the fixed payload, the helper hash, report identity, sync start time, and a short `browser_action.run_script`; it does not repeat the preloaded helper or a duplicate top-level upload payload. A failed preflight does not start or alter a website timer.
+The command rechecks current readiness and starts or resumes `website_sync` only after every local check passes. `website-prepare` archives a finished previous run. The dispatch command returns the fixed payload, helper hash, report identity, attempt, sync start time, and a short `browser_action.run_script`. A failed preflight leaves preparation time running; record and resolve that failure before dispatch.
 
 Confirm that `browser_action.preload_sha256` matches the preflight output, then run `browser_action.run_script` unchanged in the very next CUA call. Do not insert a binding call after timing starts, parse the script through another shell, rediscover browser methods, split it into manual steps, or substitute another upload implementation. The preloaded helper refuses to write if it was not dispatched within 60 seconds of the measured stage starting. It opens the exact edit page, verifies article identity before writing, imports the body once, uploads the two sidebar attachments one at a time in the declared order, checks body and attachment order, and submits once. Its result includes dispatch latency, total browser time, elapsed time since the website stage began, five step timings, and five explicit quality checks. If it fails before submission it reloads the same edit page to discard unsaved form changes and stops without retrying.
 
-After the article page returns, stop browser work and close the measured stage and report:
+After the article page returns, stop browser work. Save the unchanged browser result as `$SyncResult`, then import it. Submission time comes from that result; subsequent bookkeeping is recorded separately and ends with `finish`:
 
 ```powershell
-& $Python scripts/execution_report.py stage-finish --process-dir $Process --stage-id website_sync --status completed --summary "正文及本轮变化附件已提交，网站返回文章页。"
+& $Python scripts/execution_report.py website-finish --process-dir $Process --result $SyncResult
 & $Python scripts/execution_report.py finish --process-dir $Process --status completed --summary "网站已同步，待用户检查。"
 ```
 
@@ -81,7 +82,7 @@ Use the following current defaults when the host offers these models. If a named
 | Mechanical website operation | `gpt-5.6-luna` | `low` | Optional per-stage override for the already-authorized fixed upload action; keep the primary writer when switching would require another writer or task |
 | Exceptional independent validation | `gpt-5.6-sol` | `max` | Only for the unresolved evidence, research, or high-impact shared-mechanism cases defined in the validation rules |
 
-Machine checks use deterministic scripts rather than a model. Do not use `max` for routine work, and do not create a separate visible task or browser session only to change models. Keep reviewer inputs narrow and bind each review to the current artifacts so long primary-thread context does not contaminate the independent pass.
+Machine checks use deterministic scripts rather than a model. The report reads the primary model from this task's session log at stage start; an unavailable record is marked unverified, never filled from this routing table. Do not use `max` for routine work, and do not create a separate visible task or browser session only to change models. Keep reviewer inputs narrow and bind each review to the current artifacts so long primary-thread context does not contaminate the independent pass.
 
 For a full topic run, the definition-logic reviewer is required after the source plan is settled and before the final download or formal R. The Public-R reviewer is required after the R draft is complete and before it is accepted as the production script. The ordinary-reader reviewer is required after the reader artifacts are regenerated. The primary writer resolves every finding and reruns the affected review. Website work stays with the primary writer in the one existing in-app-browser session.
 
@@ -101,6 +102,15 @@ Only creation, remake, or source-changing work needs this whole path:
 4. Write beginner-readable R using established helpers and the fixed header. Run the existing runner with `-PreflightOnly` before the first Public-R review, resolve its findings, then complete Public-R review. Run `scripts/run_r_definition.ps1` in PowerShell 7 with the actual formal/process directories to produce the outputs.
 5. Validate results, review the complete `文案.md`, and finish ordinary-reader review against stable final artifacts. `scripts/check_definition_readability.py check` binds the current evidence and outputs; correction scope is defined in [validation.md](references/rules/validation.md).
 6. When website sync is authorized, use the website-only commands and [write-boundaries.md](references/rules/write-boundaries.md). Stop at copy only for an explicit `只审核、不执行` request.
+
+Use the existing execution components for the mechanical parts:
+
+| Step | Reusable entry |
+| --- | --- |
+| Runtime and R invocation | Resolve configured executables once. In PowerShell 7: `./scripts/run_r_definition.ps1 -WorkDir $Formal -Script $RFile -LogPrefix $LogPrefix -ProcessDir $Process -Config $Config -Database $Database -PreflightOnly`; after Public-R review, use the same command without `-PreflightOnly`. Pass paths as parameters, not inside a temporary `Rscript -e` string. |
+| Public R structure | Start from [the fixed header](references/rules/common-materials.md#22-头部模板) and [dictionary template](templates/public-r-dictionary.R); fill the current sources/results rather than redesigning these components. |
+| Independent workbook verification | Import `read_xlsx_rows` from `scripts/check_definition_output.py`; it reads actual cells, including workbooks with an incorrect `A1` dimension. Keep the independent definition calculation separate from file reading. |
+| Reader review | `check_definition_readability.py init-reader` produces a DRAFT with each block's visible `source_text` and an exact excerpt. Give this draft and the final note to the reader; preserve their returned wording when recording the review. The reader still supplies the interpretation and findings; the draft cannot pass by itself. |
 
 ## Download Commands
 
@@ -126,4 +136,4 @@ The command checks inputs and the output boundary before spending points, record
 
 Finish the execution report before claiming completion. Report in plain Chinese: what was checked, what changed, the concrete result, the total and per-stage time, any Bug or abnormal event, and what remains for user inspection. Do not lead with internal status labels or call a website update user acceptance.
 
-For repository release or a shared-mechanism change, run `tests/run_all.ps1` and the `skill-creator` quick validator. Record only observed results in [tests/acceptance-matrix.md](tests/acceptance-matrix.md); a database without a real forward test must remain explicitly marked as not yet tested rather than being inferred from another database.
+For repository release or a shared-mechanism change, locate the installed `skill-creator`'s `quick_validate.py` as `$Validator`, then run `tests/run_all.ps1 -Config $Config -SkillValidator $Validator`. Both tests and structure validation use the configured Python. Record only observed results in [tests/acceptance-matrix.md](tests/acceptance-matrix.md); a database without a real forward test must remain explicitly marked as not yet tested rather than being inferred from another database.

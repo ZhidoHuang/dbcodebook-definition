@@ -5,9 +5,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
+import os
+import re
 import sys
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -93,6 +96,65 @@ def latest_stage(report: dict[str, Any], stage_id: str) -> dict[str, Any]:
     if not matches:
         raise SystemExit(f"找不到环节：{stage_id}")
     return matches[-1]
+
+
+def current_session_log() -> Path | None:
+    """Resolve only this task's filename; never search other tasks' contents."""
+    thread_id = os.environ.get("CODEX_THREAD_ID", "")
+    try:
+        uuid.UUID(thread_id)
+    except ValueError:
+        return None
+    home = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+    matches = list((home / "sessions").glob(f"*/*/*/*-{thread_id}.jsonl"))
+    return matches[0] if len(matches) == 1 else None
+
+
+def reverse_lines(path: Path):
+    """Read the tail first, so a long-lived task does not require a full replay."""
+    with path.open("rb") as stream:
+        stream.seek(0, 2)
+        position = stream.tell()
+        remainder = b""
+        while position:
+            size = min(position, 65536)
+            position -= size
+            stream.seek(position)
+            lines = (stream.read(size) + remainder).split(b"\n")
+            remainder = lines[0]
+            yield from reversed(lines[1:])
+        if remainder:
+            yield remainder
+
+
+def stage_model(declared: str, started_at: str) -> dict[str, Any]:
+    if declared:
+        return {"model": declared, "model_source": "explicit"}
+    try:
+        log = current_session_log()
+        if log:
+            for line in reverse_lines(log):
+                if b'"turn_context"' not in line:
+                    continue
+                try:
+                    event = json.loads(line)
+                except (ValueError, UnicodeError):
+                    continue
+                if event.get("type") != "turn_context":
+                    continue
+                timestamp = event.get("timestamp")
+                if not timestamp or parse_time(timestamp) > parse_time(started_at):
+                    continue
+                payload = event.get("payload", {})
+                if payload.get("model"):
+                    return {"model": payload["model"], "model_source": "session_log",
+                            "model_evidence": {"log": str(log), "timestamp": timestamp,
+                                               "turn_id": payload.get("turn_id"),
+                                               "effort": payload.get("effort")}}
+                break
+    except (OSError, ValueError, TypeError):
+        pass
+    return {"model": "", "model_source": "unavailable"}
 
 
 def read_review_log(log_path: Path, role: str) -> dict[str, Any]:
@@ -210,12 +272,22 @@ def render_markdown(report: dict[str, Any]) -> str:
                     name=stage["name"],
                     mode=STAGE_MODE.get(stage.get("mode"), "未分类"),
                     role=stage["role"],
-                    model=stage.get("model") or "未指定",
+                    model=stage.get("model") or "未核实",
                     status=STAGE_STATUS[stage["status"]],
                     duration=duration_text(duration),
                     summary=summary.replace("|", "\\|"),
                 )
             )
+
+    preparations = [s for s in stages if s["stage_id"] == "website_preparation"]
+    if preparations:
+        website_stages = [s for s in stages if s["stage_id"] in
+                          {"website_preparation", "website_sync", "website_closure"}]
+        end = website_stages[-1].get("finished_at")
+        seconds = elapsed_seconds(preparations[0]["started_at"], end)
+        lines.extend(["", f"网站全过程：{duration_text(seconds)}（{seconds:.3f} 秒，含准备、提交、排错及收口；执行中则计至当前）。"])
+    if any(s.get("model_source") == "session_log" for s in stages):
+        lines.extend(["", "模型取自各环节开始时的本任务日志；具体证据和推理档位保存在 JSON 中。"])
 
     reviews = report.get("reviews", [])
     if reviews:
@@ -303,15 +375,16 @@ def command_stage_start(args: argparse.Namespace) -> dict[str, Any]:
     if any(s["stage_id"] == args.stage_id and s["status"] == "running" for s in report["stages"]):
         raise SystemExit("该环节仍在执行；请先结束它再记录下一次尝试。")
     attempts = sum(stage["stage_id"] == args.stage_id for stage in report["stages"]) + 1
+    started_at = now().isoformat(timespec="milliseconds")
     report["stages"].append({
         "stage_id": args.stage_id,
         "attempt": attempts,
         "name": args.name,
         "role": args.role,
-        "model": args.model,
+        **stage_model(args.model, started_at),
         "mode": args.mode,
         "status": "running",
-        "started_at": iso(),
+        "started_at": started_at,
         "finished_at": None,
         "elapsed_seconds": None,
         "summary": [],
@@ -347,7 +420,9 @@ def command_stage_finish(args: argparse.Namespace) -> dict[str, Any]:
     stage = latest_stage(report, args.stage_id)
     if stage["status"] != "running":
         raise SystemExit(f"环节不是执行中状态：{args.stage_id}")
-    stage["finished_at"] = iso()
+    if args.stage_id == "website_sync" and args.status in ("completed", "completed_with_issues"):
+        raise SystemExit("网站提交成功请用 website-finish --result 导入浏览器原始结果，不能用补写报告的时间代替提交时间。")
+    stage["finished_at"] = now().isoformat(timespec="milliseconds")
     stage["elapsed_seconds"] = elapsed_seconds(stage["started_at"], stage["finished_at"])
     stage["status"] = args.status
     stage["summary"] = args.summary or []
@@ -407,7 +482,7 @@ def command_finish(args: argparse.Namespace) -> dict[str, Any]:
     report_path, markdown_path = paths(args.process_dir)
     report = load(report_path)
     running = [stage["stage_id"] for stage in report["stages"] if stage["status"] == "running"]
-    if running:
+    if running and running != ["website_closure"]:
         raise SystemExit("仍有执行中的环节：" + ", ".join(running))
     if args.status in ("completed", "completed_with_issues"):
         if any(not review.get("closed") for review in report.get("reviews", [])):
@@ -420,21 +495,26 @@ def command_finish(args: argparse.Namespace) -> dict[str, Any]:
         if args.status == "completed" and report["issues"]:
             raise SystemExit("存在问题记录；请使用 completed_with_issues。")
     report["status"] = args.status
-    report["finished_at"] = iso()
+    report["finished_at"] = now().isoformat(timespec="milliseconds")
+    if running == ["website_closure"]:
+        closure = latest_stage(report, "website_closure")
+        closure.update(status="completed", finished_at=report["finished_at"],
+                       elapsed_seconds=elapsed_seconds(closure["started_at"], report["finished_at"]),
+                       summary=["保存同步结果并完成本轮记录。"])
     report["summary"] = args.summary or []
     save(report_path, markdown_path, report)
     return {"ok": True, "status": args.status, "elapsed_seconds": elapsed_seconds(report["started_at"], report["finished_at"])}
 
 
-def begin_website_sync(process_dir: Path, database: str, topic_id: str, topic_name: str) -> dict[str, Any]:
-    """Start timing after preflight, preserving an active sync's start."""
+def begin_website_preparation(process_dir: Path, database: str, topic_id: str, topic_name: str) -> dict[str, Any]:
+    """Start the end-to-end clock before local or browser preparation."""
     report_path, _ = paths(str(process_dir))
     if report_path.exists():
         report = load(report_path)
         if report["database"].casefold() != database.casefold() or report["topic_id"] != topic_id:
             raise ValueError("执行报告与本次数据库或主题不一致；未改动报告。")
         other_running = [s["stage_id"] for s in report["stages"]
-                         if s["status"] == "running" and s["stage_id"] != "website_sync"]
+                         if s["status"] == "running" and s["stage_id"] != "website_preparation"]
         if other_running:
             raise ValueError("先结束实际仍在执行的环节：" + ", ".join(other_running))
     else:
@@ -446,21 +526,109 @@ def begin_website_sync(process_dir: Path, database: str, topic_id: str, topic_na
         ))
         report = load(report_path)
     active = [s for s in report["stages"]
-              if s["stage_id"] == "website_sync" and s["status"] == "running"]
+              if s["stage_id"] == "website_preparation" and s["status"] == "running"]
     if not active:
         command_stage_start(argparse.Namespace(
-            process_dir=str(process_dir), stage_id="website_sync", name="网站同步",
+            process_dir=str(process_dir), stage_id="website_preparation", name="网站准备",
             role="主执行者", model="", mode="work",
         ))
         report = load(report_path)
-    stage = latest_stage(report, "website_sync")
+    stage = latest_stage(report, "website_preparation")
     return {"report": str(report_path), "run_id": report["run_id"],
             "stage_id": stage["stage_id"], "started_at": stage["started_at"]}
+
+
+def begin_website_sync(process_dir: Path, database: str, topic_id: str, topic_name: str) -> dict[str, Any]:
+    report_path, _ = paths(str(process_dir))
+    report = load(report_path)
+    if report["database"].casefold() != database.casefold() or report["topic_id"] != topic_id:
+        raise ValueError("执行报告与本次数据库或主题不一致；未改动报告。")
+    running = [s for s in report["stages"] if s["status"] == "running"]
+    if report["status"] != "running" or len(running) != 1 or running[0]["stage_id"] not in {
+        "website_preparation", "website_sync"
+    }:
+        raise ValueError("先运行 website-prepare 记录准备过程，并结束其它实际工作环节。")
+    if running[0]["stage_id"] == "website_preparation":
+        command_stage_finish(argparse.Namespace(
+            process_dir=str(process_dir), stage_id="website_preparation", status="completed",
+            summary=["本地检查、登录核对和 helper 预载完成。"], output=[],
+        ))
+        command_stage_start(argparse.Namespace(
+            process_dir=str(process_dir), stage_id="website_sync", name="网站提交",
+            role="主执行者", model="", mode="work",
+        ))
+    elif not any(s["stage_id"] == "website_preparation" and s["status"] == "completed"
+                 for s in report["stages"]):
+        raise ValueError("缺少准备计时；不能用手工创建的提交环节跳过 website-prepare。")
+    stage = latest_stage(load(report_path), "website_sync")
+    return {"report": str(report_path), "run_id": report["run_id"], "attempt": stage["attempt"],
+            "stage_id": stage["stage_id"], "started_at": stage["started_at"]}
+
+
+def command_website_prepare(args: argparse.Namespace) -> dict[str, Any]:
+    return begin_website_preparation(Path(args.process_dir), args.database, args.topic_id, args.topic_name)
+
+
+def command_website_finish(args: argparse.Namespace) -> dict[str, Any]:
+    report_path, markdown_path = paths(args.process_dir)
+    report = load(report_path)
+    stage = latest_stage(report, "website_sync")
+    result = json.loads(args.result.read_text(encoding="utf-8-sig"))
+    if not isinstance(result, dict):
+        raise SystemExit("浏览器结果必须是原始 JSON 对象。")
+    if (report["status"] != "running" or stage["status"] != "running" or
+        result.get("sync_run_id") != report["run_id"] or
+        result.get("sync_attempt") != stage["attempt"] or
+        result.get("sync_started_at") != stage["started_at"]):
+        raise SystemExit("同步结果不属于本次仍在执行的提交；未改动报告。")
+    checks = ("edit_url_verified", "title_verified", "body_verified",
+              "attachment_order_verified", "article_page_returned")
+    quality = result.get("quality_checks")
+    if (result.get("ok") is not True or result.get("status") != "ARTICLE_PAGE_RETURNED" or
+        not isinstance(quality, dict) or any(quality.get(key) is not True for key in checks)):
+        raise SystemExit("浏览器没有返回完整的同步成功证据；请记录实际失败。")
+    if not re.fullmatch(r"[0-9a-f]{64}", str(result.get("preload_sha256", ""))):
+        raise SystemExit("缺少固定提交程序的哈希记录。")
+    values = [result.get(key) for key in ("dispatch_latency_ms", "browser_elapsed_ms",
+                                          "sync_elapsed_to_browser_return_ms")]
+    if any(type(value) not in (int, float) or not math.isfinite(value) or value < 0 for value in values):
+        raise SystemExit("浏览器耗时缺失或无效。")
+    dispatch, browser, total = values
+    if abs(dispatch + browser - total) > 1:
+        raise SystemExit("浏览器计时相互矛盾。")
+    finished = parse_time(stage["started_at"]) + timedelta(milliseconds=total)
+    if finished > now() + timedelta(seconds=1):
+        raise SystemExit("浏览器完成时间在未来；检查原始结果。")
+    stage.update(status="completed", finished_at=finished.isoformat(timespec="milliseconds"),
+                 elapsed_seconds=round(total / 1000, 3),
+                 summary=["正文和附件已提交，返回文章页。"], outputs=[str(args.result.resolve())],
+                 browser_result=result)
+    report["stages"].append({
+        "stage_id": "website_closure", "attempt": stage["attempt"], "name": "网站收口",
+        "role": stage["role"], "model": stage["model"], "model_source": stage.get("model_source"),
+        "mode": "work", "status": "running", "started_at": stage["finished_at"],
+        "finished_at": None, "elapsed_seconds": None, "summary": [], "outputs": [],
+    })
+    save(report_path, markdown_path, report)
+    return {"ok": True, "submission_seconds": stage["elapsed_seconds"],
+            "next_action": "保存其余记录后执行 finish；提交返回之后的时间单列为网站收口。"}
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    preparation = subparsers.add_parser("website-prepare")
+    preparation.add_argument("--process-dir", required=True)
+    preparation.add_argument("--database", required=True)
+    preparation.add_argument("--topic-id", required=True)
+    preparation.add_argument("--topic-name", required=True)
+    preparation.set_defaults(func=command_website_prepare)
+
+    website_finish = subparsers.add_parser("website-finish")
+    website_finish.add_argument("--process-dir", required=True)
+    website_finish.add_argument("--result", required=True, type=Path)
+    website_finish.set_defaults(func=command_website_finish)
 
     init_parser = subparsers.add_parser("init")
     init_parser.add_argument("--process-dir", required=True)

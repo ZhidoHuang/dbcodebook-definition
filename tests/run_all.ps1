@@ -1,7 +1,10 @@
-param([string]$Config = "")
+param([string]$Config = "", [string]$SkillValidator = "")
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
+if ($SkillValidator) {
+  $SkillValidator = (Resolve-Path -LiteralPath $SkillValidator -ErrorAction Stop).Path
+}
 if ([string]::IsNullOrWhiteSpace($Config)) {
   $candidate = Join-Path $repoRoot "config.local.json"
   if (Test-Path -LiteralPath $candidate) {
@@ -62,6 +65,11 @@ if (-not [string]::IsNullOrWhiteSpace($rscript)) {
   if ($LASTEXITCODE -ne 0) { throw "test_summary_fact_helpers.R failed." }
 } else {
   Write-Output "R_TESTS_SKIP: Rscript is not configured or on PATH"
+}
+
+if ($SkillValidator) {
+  & $python @pythonArguments $SkillValidator $repoRoot
+  if ($LASTEXITCODE -ne 0) { throw "Skill structure validation failed." }
 }
 
 Write-Output "ALL_SKILL_TESTS_PASS"

@@ -175,6 +175,12 @@ def sync_command(formal: Path, process: Path, *, ok: bool = True) -> subprocess.
 
 
 def prepare_sync_command(formal: Path, process: Path) -> subprocess.CompletedProcess[str]:
+    subprocess.run(
+        [sys.executable, str(REPO_ROOT / "scripts" / "execution_report.py"), "website-prepare",
+         "--process-dir", str(process), "--database", "charls", "--topic-id", "025",
+         "--topic-name", "家庭支持"],
+        check=True, capture_output=True,
+    )
     result = subprocess.run(
         [sys.executable, str(CHECKER_PATH), "verify-ready", "--formal-dir", str(formal),
          "--process-dir", str(process), "--topic-id", "025",
@@ -222,6 +228,14 @@ def main() -> int:
         checker.initialize_reader_review(
             formal, process, "025", files["note"]
         )
+        draft = json.loads((process / checker.READER_REVIEW_NAME).read_text(encoding="utf-8"))
+        source_blocks = checker.reader_review_block_sources((formal / files["note"]).read_text(encoding="utf-8-sig"))
+        assert draft["status"] == "DRAFT"
+        for block, source in zip(draft["blocks"], source_blocks, strict=True):
+            assert block["source_text"] == checker.normalized_visible_text(source["review_text"])
+            assert block["original_excerpt"] in block["source_text"]
+            assert block["result"] == "pending" and not block["plain_paraphrase"]
+        expect_failure(lambda: checker.validate_audit(formal, process, "025"), "status")
         complete_reader_review(checker, formal, process)
         result = checker.validate_audit(formal, process, "025")
         assert result["status"] == "PUBLISH_READY"
@@ -258,11 +272,15 @@ def main() -> int:
         prepared_action = prepared["browser_action"]
         assert "preload_script" in prepared_action
         assert "run_script" not in prepared_action
-        assert not (process / "execution_report.json").exists()
+        preparation = json.loads((process / "execution_report.json").read_text(encoding="utf-8"))
+        assert preparation["stages"][0]["stage_id"] == "website_preparation"
+        assert preparation["stages"][0]["status"] == "running"
 
         started = json.loads(sync_command(formal, process).stdout)
         assert "upload" not in started
         browser_action = started["browser_action"]
+        assert browser_action["payload"]["sync_run_id"] == started["execution"]["run_id"]
+        assert browser_action["payload"]["sync_attempt"] == started["execution"]["attempt"]
         assert "preload_script" not in browser_action
         assert "run_script" in browser_action
         assert browser_action["preload_sha256"] == prepared_action["preload_sha256"]
@@ -387,11 +405,12 @@ async function selectDatabase(database, options) {
         report_path = process / "execution_report.json"
         execution = json.loads(report_path.read_text(encoding="utf-8"))
         assert execution["status"] == "running"
-        assert execution["stages"][0]["stage_id"] == "website_sync"
-        assert started["execution"]["started_at"] == execution["stages"][0]["started_at"]
+        assert execution["stages"][0]["stage_id"] == "website_preparation"
+        assert execution["stages"][1]["stage_id"] == "website_sync"
+        assert started["execution"]["started_at"] == execution["stages"][1]["started_at"]
         repeated = json.loads(sync_command(formal, process).stdout)
         assert repeated["execution"] == started["execution"]
-        assert len(json.loads(report_path.read_text(encoding="utf-8"))["stages"]) == 1
+        assert len(json.loads(report_path.read_text(encoding="utf-8"))["stages"]) == 2
         assert {name: (formal / name).read_bytes() for name in files.values()} == unchanged
         assert (process / checker.REPORT_NAME).read_bytes() == readiness_bytes
 

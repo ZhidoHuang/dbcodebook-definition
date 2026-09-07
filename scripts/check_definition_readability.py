@@ -421,15 +421,17 @@ def initialize_reader_review(
         "note": note_artifact,
         "blocks": [
             {
-                **block,
+                "name": block["name"],
+                "label": block["label"],
+                "source_text": normalized_visible_text(block["review_text"]),
                 "result": "pending",
-                "original_excerpt": "",
+                "original_excerpt": normalized_visible_text(block["review_text"])[:160],
                 "plain_paraphrase": "",
                 "who_when_what": "",
                 "possible_confusion": "",
                 "resolution": "",
             }
-            for block in reader_review_blocks(note_text)
+            for block in reader_review_block_sources(note_text)
         ],
         "unresolved_issues": [],
     }
@@ -894,6 +896,8 @@ def build_cua_sync_action(
     include_preload: bool = True,
     create: bool = False,
     directory_tag: str | None = None,
+    sync_run_id: str | None = None,
+    sync_attempt: int | None = None,
 ) -> dict:
     base_url = base_url.strip().rstrip("/")
     parsed = urlsplit(base_url)
@@ -941,9 +945,10 @@ def build_cua_sync_action(
         "body_check": upload["body_check"],
         "attachments": attachments,
         "sync_started_at": sync_started_at,
+        "sync_run_id": sync_run_id,
+        "sync_attempt": sync_attempt,
         "dispatch_limit_ms": 60000,
     }
-    payload_json = json.dumps(payload, ensure_ascii=False)
     preload_script = rf'''async function chooseVisibleFile(tab, selector, filePath) {{
   const chooserPromise = tab.playwright.waitForEvent("filechooser");
   await tab.playwright.locator(selector).click();
@@ -1105,6 +1110,10 @@ async function syncDbCodeBookPost(tab, payload) {{
     return {{
       ok: true,
       status: "ARTICLE_PAGE_RETURNED",
+      sync_started_at: payload.sync_started_at,
+      sync_run_id: payload.sync_run_id,
+      sync_attempt: payload.sync_attempt,
+      preload_sha256: payload.preload_sha256,
       post_url: postUrl,
       browser_elapsed_ms: finishedAt - startedAt,
       dispatch_latency_ms: dispatchLatencyMs,
@@ -1138,7 +1147,9 @@ async function syncDbCodeBookPost(tab, payload) {{
     }
     if include_preload:
         action["preload_script"] = preload_script
+    payload["preload_sha256"] = action["preload_sha256"]
     if sync_started_at is not None:
+        payload_json = json.dumps(payload, ensure_ascii=False)
         action["run_script"] = rf'''var dbCodeBookSyncPayload = {payload_json};
 var dbCodeBookSyncResult = await syncDbCodeBookPost(tab, dbCodeBookSyncPayload);
 nodeRepl.write(JSON.stringify(dbCodeBookSyncResult));'''
@@ -1266,6 +1277,7 @@ def main() -> int:
                         args.database, args.topic_id, args.topic_name,
                         args.website_title, sync["started_at"], include_preload=False,
                         create=args.create, directory_tag=args.directory_tag,
+                        sync_run_id=sync["run_id"], sync_attempt=sync["attempt"],
                     )
                     result = {"ok": True, "status": result["status"],
                               "topic_id": result["topic_id"],

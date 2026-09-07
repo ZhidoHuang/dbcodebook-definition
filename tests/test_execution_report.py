@@ -13,6 +13,22 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "execution_report.py"
 
 
+def browser_result(process_dir: Path) -> Path:
+    report = json.loads((process_dir / "execution_report.json").read_text(encoding="utf-8"))
+    stage = execution_report.latest_stage(report, "website_sync")
+    path = process_dir / "browser-result.json"
+    path.write_text(json.dumps({
+        "ok": True, "status": "ARTICLE_PAGE_RETURNED", "sync_run_id": report["run_id"],
+        "sync_attempt": stage["attempt"], "sync_started_at": stage["started_at"],
+        "preload_sha256": "0" * 64,
+        "dispatch_latency_ms": 0, "browser_elapsed_ms": 0,
+        "sync_elapsed_to_browser_return_ms": 0,
+        "quality_checks": {key: True for key in ("edit_url_verified", "title_verified", "body_verified",
+                                                "attachment_order_verified", "article_page_returned")},
+    }), encoding="utf-8")
+    return path
+
+
 def run(*args: str, ok: bool = True) -> subprocess.CompletedProcess[str]:
     env = dict(os.environ)
     env["PYTHONIOENCODING"] = "utf-8"
@@ -133,6 +149,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
 
 with tempfile.TemporaryDirectory() as temp_dir:
     root = Path(temp_dir)
+    execution_report.begin_website_preparation(root, "CHARLS", "036", "工作属性")
     started = execution_report.begin_website_sync(root, "CHARLS", "036", "工作属性")
     same = execution_report.begin_website_sync(root, "charls", "036", "工作属性")
     assert same == started
@@ -146,10 +163,11 @@ with tempfile.TemporaryDirectory() as temp_dir:
         raise AssertionError("wrong database unexpectedly accepted")
     assert report_path.read_bytes() == before
     run("stage-finish", "--process-dir", temp_dir, "--stage-id", "website_sync",
-        "--status", "completed", "--summary", "模拟网站返回成功")
+        "--status", "completed", ok=False)
+    run("website-finish", "--process-dir", temp_dir, "--result", str(browser_result(root)))
     run("finish", "--process-dir", temp_dir, "--status", "completed")
     finished = report_path.read_bytes()
-    restarted = execution_report.begin_website_sync(root, "CHARLS", "036", "工作属性")
+    restarted = execution_report.begin_website_preparation(root, "CHARLS", "036", "工作属性")
     assert restarted["run_id"] != started["run_id"]
     archive = root / "archived_runs" / started["run_id"] / "execution_report.json"
     assert archive.read_bytes() == finished
@@ -164,18 +182,20 @@ with tempfile.TemporaryDirectory() as temp_dir:
     try:
         execution_report.begin_website_sync(Path(temp_dir), "CHARLS", "036", "工作属性")
     except ValueError as error:
-        assert "formal_r" in str(error)
+        assert "其它实际工作环节" in str(error)
     else:
         raise AssertionError("unfinished production stage unexpectedly accepted")
     assert report_path.read_bytes() == before
     run("stage-finish", "--process-dir", temp_dir, "--stage-id", "formal_r",
         "--status", "completed")
     original = json.loads(report_path.read_text(encoding="utf-8"))
+    execution_report.begin_website_preparation(Path(temp_dir), "CHARLS", "036", "工作属性")
     sync = execution_report.begin_website_sync(Path(temp_dir), "CHARLS", "036", "工作属性")
     current = json.loads(report_path.read_text(encoding="utf-8"))
     assert sync["run_id"] == original["run_id"]
     assert current["stages"][0] == original["stages"][0]
-    assert current["stages"][1]["stage_id"] == "website_sync"
+    assert current["stages"][1]["stage_id"] == "website_preparation"
+    assert current["stages"][2]["stage_id"] == "website_sync"
 
 with tempfile.TemporaryDirectory() as temp_dir:
     root = Path(temp_dir)
@@ -255,5 +275,65 @@ with tempfile.TemporaryDirectory() as temp_dir:
     assert "未解决：1" in markdown and "根因待修复 1" in markdown
     assert "fixture first tool timestamp" in markdown
     assert "发现问题并解决" not in markdown
+
+with tempfile.TemporaryDirectory() as temp_dir:
+    from unittest.mock import patch
+    from datetime import datetime, timezone
+
+    home = Path(temp_dir)
+    thread = "019f0737-c39b-7ab3-b38c-a79dfefc7df7"
+    log_dir = home / "sessions" / "2026" / "09" / "07"
+    log_dir.mkdir(parents=True)
+    log = log_dir / f"rollout-fixture-{thread}.jsonl"
+    context = lambda model, minute: json.dumps({
+        "type": "turn_context", "timestamp": f"2026-09-07T00:{minute}:00Z",
+        "payload": {"model": model, "effort": "high", "turn_id": minute},
+    })
+    log.write_text(context("first-model", "00") + "\n" +
+                   json.dumps({"type": "response_item", "payload": "长记录" * 100000}) + "\n" +
+                   context("second-model", "01") + '\n{"incomplete":', encoding="utf-8")
+    with patch.dict(os.environ, {"CODEX_HOME": str(home), "CODEX_THREAD_ID": thread}):
+        first = execution_report.stage_model("", "2026-09-07T00:00:30+00:00")
+        second = execution_report.stage_model("", "2026-09-07T00:01:30+00:00")
+        assert first["model"] == "first-model" and second["model"] == "second-model"
+        assert second["model_evidence"]["turn_id"] == "01"
+        assert second["model_source"] == "session_log"
+        assert execution_report.stage_model("declared", "2026-09-07T00:02:00Z")["model"] == "declared"
+    with patch.dict(os.environ, {"CODEX_THREAD_ID": "unavailable"}):
+        unknown = execution_report.stage_model("", "2026-09-07T00:02:00Z")
+        assert unknown == {"model": "", "model_source": "unavailable"}
+
+    process = home / "process"
+    t0 = datetime(2026, 9, 7, tzinfo=timezone.utc)
+    with patch.object(execution_report, "now", return_value=t0):
+        prep = execution_report.begin_website_preparation(process, "CHARLS", "043", "fixture")
+        assert execution_report.begin_website_preparation(process, "CHARLS", "043", "fixture") == prep
+    with patch.object(execution_report, "now", return_value=t0 + timedelta(seconds=300)):
+        execution_report.begin_website_sync(process, "CHARLS", "043", "fixture")
+    path = browser_result(process)
+    good = json.loads(path.read_text(encoding="utf-8"))
+    good.update(dispatch_latency_ms=759, browser_elapsed_ms=1791,
+                sync_elapsed_to_browser_return_ms=2550)
+    report_path = process / "execution_report.json"
+    before = report_path.read_bytes()
+    bad_cases = [[], dict(good, sync_run_id="another-run"), dict(good, sync_attempt=100),
+                 dict(good, ok=False), dict(good, quality_checks={}),
+                 dict(good, quality_checks=None), dict(good, preload_sha256=None),
+                 dict(good, browser_elapsed_ms=float("nan")),
+                 dict(good, sync_elapsed_to_browser_return_ms=10)]
+    for invalid in bad_cases:
+        path.write_text(json.dumps(invalid), encoding="utf-8")
+        run("website-finish", "--process-dir", str(process), "--result", str(path), ok=False)
+        assert report_path.read_bytes() == before
+    path.write_text(json.dumps(good), encoding="utf-8")
+    with patch.object(execution_report, "now", return_value=t0 + timedelta(seconds=456)):
+        execution_report.command_website_finish(execution_report.argparse.Namespace(
+            process_dir=str(process), result=path))
+        execution_report.command_finish(execution_report.argparse.Namespace(
+            process_dir=str(process), status="completed", summary=[]))
+    final = json.loads(report_path.read_text(encoding="utf-8"))
+    assert [s["elapsed_seconds"] for s in final["stages"]] == [300, 2.55, 153.45]
+    assert "456.000" in (process / "执行报告.md").read_text(encoding="utf-8")
+    run("website-finish", "--process-dir", str(process), "--result", str(path), ok=False)
 
 print("EXECUTION_REPORT_TEST_PASS")
