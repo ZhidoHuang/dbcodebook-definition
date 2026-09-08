@@ -183,44 +183,44 @@ source_display_codebook <- data.frame(
   processed_vars = "raw1, raw2, raw3",
   stringsAsFactors = FALSE
 )
+source_display_raw_codebook <- data.frame(
+  Variable = c("raw1 (file)", "raw2 (file)", "raw3 (file)", "raw4 (file)"),
+  newname = c("raw1", "raw2", "raw3", "raw4"),
+  stringsAsFactors = FALSE
+)
 
 checks <- list(
   expect_identical(
-    "definition cards accept compact source display",
-    "definition_source_display" %in% names(formals(render_definition_bundle)),
+    "definition cards accept structured source aliases",
+    "definition_card_sources" %in% names(formals(render_definition_bundle)),
     TRUE
   ),
   expect_identical(
-    "definition cards accept verified compact ranges",
-    validate_definition_source_display(
-      c(test_var = "raw1~raw3"),
-      source_display_codebook
+    "definition cards format aliases as website mapping pairs",
+    format_definition_card_sources(
+      list(test_var = c("raw1", "raw3")),
+      source_display_codebook,
+      source_display_raw_codebook
     ),
-    invisible(TRUE)
+    c(test_var = "raw1 (file)=raw1, raw3 (file)=raw3")
   ),
   expect_identical(
-    "definition cards accept full website mapping pairs",
-    validate_definition_source_display(
-      c(test_var = "raw1 (file)=raw1, raw2 (file)=raw2"),
-      source_display_codebook
+    "definition cards default to all formal source aliases",
+    format_definition_card_sources(
+      NULL,
+      source_display_codebook,
+      source_display_raw_codebook
     ),
-    invisible(TRUE)
+    c(test_var = "raw1 (file)=raw1, raw2 (file)=raw2, raw3 (file)=raw3")
   ),
   expect_error_contains(
-    "definition cards reject mismatched mapping pairs",
-    validate_definition_source_display(
-      c(test_var = "raw1 (file)=raw2"),
-      source_display_codebook
+    "definition cards require aliases from the formal mapping",
+    validate_definition_card_sources(
+      list(test_var = "raw4"),
+      source_display_codebook,
+      source_display_raw_codebook
     ),
-    "正确配对"
-  ),
-  expect_error_contains(
-    "definition cards reject prose in source display",
-    validate_definition_source_display(
-      c(test_var = "同年完整题组"),
-      source_display_codebook
-    ),
-    "正确配对"
+    "raw4"
   ),
   expect_identical(
     "linear histogram includes its upper endpoint label",

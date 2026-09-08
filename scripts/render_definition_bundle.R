@@ -114,61 +114,58 @@ definition_source_members <- function(value) {
   trimws(strsplit(as.character(value), ",", fixed = TRUE)[[1]])
 }
 
-definition_source_range_members <- function(value) {
-  match <- regexec("^(.*?)([0-9]+)~(.*?)([0-9]+)$", value, perl = TRUE)
-  pieces <- regmatches(value, match)[[1]]
-  if (length(pieces) != 5L || pieces[2] != pieces[4]) return(character())
-  first <- as.integer(pieces[3])
-  last <- as.integer(pieces[5])
-  if (is.na(first) || is.na(last) || first > last) return(character())
-  paste0(pieces[2], seq.int(first, last))
+definition_card_default_sources <- function(analysis_codebook) {
+  if (!"processed_vars" %in% names(analysis_codebook)) {
+    stop("analysis_codebook 缺少 processed_vars，无法生成定义卡来源。")
+  }
+  setNames(
+    lapply(analysis_codebook$processed_vars, definition_source_members),
+    analysis_codebook$Variable
+  )
 }
 
-validate_definition_source_display <- function(display, analysis_codebook) {
-  if (is.null(display)) return(invisible(TRUE))
-  if (!is.character(display) || is.null(names(display)) ||
-      anyNA(display) || any(!nzchar(trimws(display)))) {
-    stop("定义卡来源展示必须是带变量名且内容非空的字符向量。")
+validate_definition_card_sources <- function(card_sources, analysis_codebook, raw_codebook) {
+  if (is.null(card_sources)) return(invisible(TRUE))
+  if (!is.list(card_sources) || is.null(names(card_sources)) ||
+      any(!nzchar(names(card_sources))) || anyDuplicated(names(card_sources))) {
+    stop("定义卡来源必须是以分析变量命名的下载别名列表。")
   }
-  unknown <- setdiff(names(display), analysis_codebook$Variable)
+  unknown <- setdiff(names(card_sources), analysis_codebook$Variable)
   if (length(unknown)) {
-    stop("定义卡来源展示包含未知变量：", paste(unknown, collapse = ", "))
+    stop("定义卡来源包含未知分析变量：", paste(unknown, collapse = ", "))
   }
-  for (variable in names(display)) {
-    row <- match(variable, analysis_codebook$Variable)
-    original_allowed <- definition_source_members(
-      analysis_codebook$original_vars[row]
-    )
-    processed_allowed <- if ("processed_vars" %in% names(analysis_codebook)) {
-      definition_source_members(analysis_codebook$processed_vars[row])
-    } else {
-      character()
+  if (!all(c("Variable", "newname") %in% names(raw_codebook))) {
+    stop("raw_codebook 必须包含 Variable 和 newname。")
+  }
+  defaults <- definition_card_default_sources(analysis_codebook)
+  for (variable in names(card_sources)) {
+    aliases <- as.character(card_sources[[variable]])
+    if (!length(aliases) || anyNA(aliases) || any(!nzchar(aliases)) || anyDuplicated(aliases)) {
+      stop(variable, "：定义卡来源必须是非空且不重复的下载别名。")
     }
-    allowed <- unique(c(original_allowed, processed_allowed))
-    shown <- definition_source_members(display[[variable]])
-    invalid <- vapply(shown, function(item) {
-      if (grepl("=", item, fixed = TRUE)) {
-        pair <- trimws(strsplit(item, "=", fixed = TRUE)[[1]])
-        if (length(pair) != 2L || any(!nzchar(pair))) return(TRUE)
-        pair_positions <- which(original_allowed == pair[1])
-        return(
-          !length(pair_positions) ||
-            !length(processed_allowed) ||
-            !any(processed_allowed[pair_positions] == pair[2])
-        )
-      }
-      if (item %in% allowed) return(FALSE)
-      expanded <- definition_source_range_members(item)
-      !length(expanded) || !all(expanded %in% allowed)
-    }, logical(1))
-    if (any(invalid)) {
-      stop(
-        variable, "：定义卡来源展示只能使用正确配对的完整映射、完整来源名或已核实的连续范围：",
-        paste(shown[invalid], collapse = ", ")
-      )
+    outside_mapping <- setdiff(aliases, defaults[[variable]])
+    if (length(outside_mapping)) {
+      stop(variable, "：定义卡来源不是该变量的正式来源：", paste(outside_mapping, collapse = ", "))
+    }
+    missing_aliases <- setdiff(aliases, raw_codebook$newname)
+    if (length(missing_aliases)) {
+      stop(variable, "：raw_codebook 中找不到下载别名：", paste(missing_aliases, collapse = ", "))
     }
   }
   invisible(TRUE)
+}
+
+format_definition_card_sources <- function(card_sources, analysis_codebook, raw_codebook) {
+  validate_definition_card_sources(card_sources, analysis_codebook, raw_codebook)
+  sources <- definition_card_default_sources(analysis_codebook)
+  if (!is.null(card_sources)) sources[names(card_sources)] <- card_sources
+  vapply(sources, function(aliases) {
+    rows <- match(aliases, raw_codebook$newname)
+    if (anyNA(rows)) {
+      stop("raw_codebook 中找不到下载别名：", paste(aliases[is.na(rows)], collapse = ", "))
+    }
+    paste0(raw_codebook$Variable[rows], "=", raw_codebook$newname[rows], collapse = ", ")
+  }, character(1))
 }
 
 append_linear_histogram_endpoint <- function(detail_html) {
@@ -251,7 +248,7 @@ render_definition_bundle <- function(
     summary_meanings,
     summary_groups,
     summary_object_overrides = NULL,
-    definition_source_display = NULL,
+    definition_card_sources = NULL,
     summary_entry,
     summary_selection,
     summary_insight_items,
@@ -289,7 +286,9 @@ render_definition_bundle <- function(
   stopifnot(all(analysis_vars %in% names(criteria)))
   stopifnot(all(nzchar(criteria[analysis_vars])))
   validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars)))
-  validate_definition_source_display(definition_source_display, analysis_codebook)
+  formatted_card_sources <- format_definition_card_sources(
+    definition_card_sources, analysis_codebook, raw_codebook
+  )
 
   format_n <- function(x) {
     format(x, big.mark = ",", scientific = FALSE)
@@ -423,16 +422,8 @@ render_definition_bundle <- function(
   definition_data <- definition_data[
     match(analysis_vars, definition_data$Variable),
   ]
-  if (!is.null(definition_source_display)) {
-    display_rows <- match(
-      definition_data$Variable,
-      names(definition_source_display)
-    )
-    has_display <- !is.na(display_rows)
-    definition_data$original_vars[has_display] <- unname(
-      definition_source_display[display_rows[has_display]]
-    )
-  }
+  display_rows <- match(definition_data$Variable, names(formatted_card_sources))
+  definition_data$original_vars <- unname(formatted_card_sources[display_rows])
   definition_details <- generate_var_details(
     detail_data,
     bar_color = paste0(theme_color, "90"),

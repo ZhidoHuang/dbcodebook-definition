@@ -63,7 +63,7 @@
 | --- | --- | --- |
 | `材料 → 1-提取变量` | 生成可以直接粘贴到 dbCodeBook 网站批量输入框的选项 | 每个来源写成 `网站完整原始变量身份=下载别名`。左侧逐字取自 `raw_codebook.csv` 的 `Variable`，保留模块或文件括号；右侧逐字取自 `newname`。没有改名时左右仍各写一次。每项完整列出并用逗号分隔，不使用范围标签或解释性文字 |
 | 正式 R 的 `add_mapping()`、`analysis_codebook` | 说明一个分析变量实际由哪些来源构成 | 追溯到全部参与赋值、路由、补值或完整性判断的原始变量；中间变量可以同时保留，但不能替代最初来源。只做独立验证而没有参与该变量生成的变量不写成其定义来源 |
-| 定义卡变量名右侧的 `←` 来源 | 让读者紧凑查看该变量的直接原始题项 | 单个题项变量只显示与它直接对应的原始变量，不显示为了补零、判断整组作答或处理跳题而使用的辅助来源。每个显示项必须沿用网站批量输入的完整单项形式 `网站完整原始变量身份=下载别名`，例如 `pain_head ← da042s1 (health status and functioning)=da042s1, da042_s1 (health status and functioning)=da042_s1, da028_s1 (health status and functioning)=da028_s1`，不能只写别名。计数、任一项等汇总变量才显示参与汇总的完整变量族，并可压缩成连续范围。这里是读者展示，不能拿来作为网站批量输入文本，也不能反向改变正式 mapping |
+| 定义卡变量名右侧的 `←` 来源 | 让读者查看该变量对应的原始题项 | 单个题项变量只声明与它直接对应的下载别名，不加入为了补零、判断整组作答或处理跳题而使用的辅助来源；汇总变量声明参与其生成的来源别名。正式 R 只提供下载别名列表，公共渲染器再从 `raw_codebook$Variable` 和 `raw_codebook$newname` 生成逐项完整的 `网站完整原始变量身份=下载别名`。例如 R 声明 `pain_head = c("da042s1", "da042_s1", "da028_s1")`，定义卡显示 `pain_head ← da042s1 (health status and functioning)=da042s1, da042_s1 (health status and functioning)=da042_s1, da028_s1 (health status and functioning)=da028_s1`。这里是读者展示，不能拿来作为网站批量输入文本，也不能反向改变正式 mapping |
 
 网站批量输入示例：
 
