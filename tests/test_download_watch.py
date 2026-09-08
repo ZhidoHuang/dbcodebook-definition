@@ -155,6 +155,8 @@ with tempfile.TemporaryDirectory() as temp:
     assert 'status: "DOWNLOAD_EXPORT_TRIGGERED"' in run_script
     assert 'next_action: "run_watch_command"' in run_script
     assert 'allow_new_export: false' in run_script
+    assert 'root.getAttribute("data-dbcodebook-download-attempt")' in run_script
+    assert 'root.setAttribute("data-dbcodebook-download-attempt"' in run_script
     node = shutil.which("node")
     if node:
         browser_fixture = work / "download_browser_action.mjs"
@@ -167,6 +169,7 @@ const finalButton = {
   click: async () => calls.push("final-click")
 };
 const modal = {
+  getAttribute: async name => name === "style" ? "display: none;" : null,
   waitFor: async () => calls.push("modal-visible"),
   locator: selector => {
     assert.equal(selector, "button.bili-btn.confirm");

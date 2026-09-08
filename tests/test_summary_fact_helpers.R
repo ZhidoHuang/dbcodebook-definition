@@ -180,6 +180,16 @@ materials_position <- match("## 材料", note_order_fixture)
 
 checks <- list(
   expect_identical(
+    "definition cards accept compact source display",
+    "definition_source_display" %in% names(formals(render_definition_bundle)),
+    TRUE
+  ),
+  expect_identical(
+    "definition cards accept unavailable periods",
+    "definition_unavailable_periods" %in% names(formals(render_definition_bundle)),
+    TRUE
+  ),
+  expect_identical(
     "CHARLS five-year full coverage",
     summary_period_text(charls_periods, "", charls_periods),
     "全周期"

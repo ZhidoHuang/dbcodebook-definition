@@ -247,8 +247,24 @@ def main() -> int:
             "## 材料\n### 2-代码材料\ninstall_github('private-review-input')\n",
         )
         assert "读者内容" in scoped_input
+        assert "\n## 摘要导读\n" not in scoped_input
         assert "install_github" not in scoped_input
         assert "## 材料" not in scoped_input
+        assert "不再复制整篇笔记" in scoped_input
+        long_note = (
+            "## 摘要导读\n简明摘要。\n\n"
+            "## 定义\n" + ("很长的定义内容。" * 5000) + "\n\n## 材料\n内部材料。\n"
+        )
+        long_blocks = checker.reader_review_block_sources(long_note)
+        full_flow = next(
+            item["review_text"]
+            for item in long_blocks
+            if item["name"] == "full_note_flow"
+        )
+        assert len(full_flow) < 500
+        assert "很长的定义内容。很长的定义内容。" not in full_flow
+        assert all(len(line) < 200 for line in full_flow.splitlines())
+        assert len(checker.build_reader_input("025", long_note)) < len(long_note) / 2
         expect_failure(lambda: checker.validate_audit(formal, process, "025"), "status")
         complete_reader_review(checker, formal, process)
         result = checker.validate_audit(formal, process, "025")

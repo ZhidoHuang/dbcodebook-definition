@@ -277,7 +277,24 @@ def normalized_visible_text(text: str) -> str:
     text = re.sub(r"(?is)<script\b.*?</script>", " ", text)
     text = re.sub(r"(?s)<[^>]+>", " ", text)
     text = html.unescape(text)
+    text = re.sub(r"(?m)^\s{0,3}#{1,6}\s+", "", text)
     return re.sub(r"\s+", " ", text).strip()
+
+
+def first_complete_sentence(text: str) -> str:
+    visible = normalized_visible_text(text)
+    match = re.match(r".*?[。！？]", visible)
+    return match.group(0).strip() if match else visible
+
+
+def flow_review_text(blocks: list[dict[str, str]]) -> str:
+    """Keep one complete ordered anchor per block without duplicating the note."""
+    anchors = []
+    for block in blocks:
+        sentence = first_complete_sentence(block["review_text"])
+        if sentence:
+            anchors.append(sentence)
+    return "\n".join(anchors)
 
 
 def reader_review_block_sources(
@@ -285,7 +302,8 @@ def reader_review_block_sources(
     *,
     include_materials: bool = False,
 ) -> list[dict[str, str]]:
-    summary_start = note_text.find("## 摘要导读")
+    summary_match = re.search(r"(?m)^##\s+摘要导读\s*$", note_text)
+    summary_start = summary_match.end() if summary_match else 0
     summary_end_candidates = [
         position
         for marker in (
@@ -354,13 +372,19 @@ def reader_review_block_sources(
     for index, match in enumerate(definition_matches):
         clean_variable = html.unescape(match.group(1)).strip()
         if clean_variable and clean_variable not in seen:
-            end = (
-                definition_matches[index + 1].start()
-                if index + 1 < len(definition_matches)
-                else note_text.find("## 定义的组分概览", match.end())
-            )
-            if end < 0:
-                end = len(note_text)
+            end_candidates = [
+                position
+                for position in (
+                    definition_matches[index + 1].start()
+                    if index + 1 < len(definition_matches)
+                    else -1,
+                    note_text.find("## 参考资料说明", match.end()),
+                    note_text.find("## 定义的组分概览", match.end()),
+                    note_text.find("## 材料", match.end()),
+                )
+                if position >= 0
+            ]
+            end = min(end_candidates) if end_candidates else len(note_text)
             blocks.append(
                 {
                     "name": f"definition:{clean_variable}",
@@ -369,16 +393,20 @@ def reader_review_block_sources(
                 }
             )
             seen.add(clean_variable)
-    reader_end = note_text.find("## 材料")
-    reader_note = (
-        note_text
-        if include_materials or reader_end < 0
-        else note_text[:reader_end]
-    )
+    reader_blocks = list(blocks)
+    if include_materials:
+        reader_end = len(note_text)
+        materials_start = note_text.find("## 材料")
+        if materials_start >= 0:
+            reader_blocks.append({
+                "name": "materials",
+                "label": "材料",
+                "review_text": note_text[materials_start:reader_end],
+            })
     blocks.append({
         "name": "full_note_flow",
         "label": "全文衔接",
-        "review_text": reader_note,
+        "review_text": flow_review_text(reader_blocks),
     })
     return blocks
 
@@ -398,13 +426,32 @@ def reader_review_blocks(
 
 
 def build_reader_input(topic_id: str, note_text: str) -> str:
+    blocks = reader_review_block_sources(note_text)
     lines = [
         f"# {topic_id.zfill(3)} 普通读者审阅输入",
         "",
         "请只根据下面依次列出的读者可见内容判断是否容易理解。",
         "不要推测数据、代码、探索记录或作者没有写出的信息。",
     ]
-    for block in reader_review_block_sources(note_text):
+    for block in blocks:
+        if block["name"] == "full_note_flow":
+            flow_sources = blocks[:-1]
+            flow_sentences = [
+                line for line in block["review_text"].splitlines() if line.strip()
+            ]
+            lines.extend([
+                "",
+                "## 全文衔接",
+                "",
+                "请结合前面已经按正式顺序列出的全部内容，检查相邻部分是否衔接清楚。",
+                "下面只重复每块开头的顺序锚点，不再复制整篇笔记。",
+                "",
+                *[
+                    f"- {source['label']}: {sentence}"
+                    for source, sentence in zip(flow_sources, flow_sentences)
+                ],
+            ])
+            continue
         lines.extend([
             "",
             f"## {block['label']}",

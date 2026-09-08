@@ -156,6 +156,8 @@ render_definition_bundle <- function(
     summary_meanings,
     summary_groups,
     summary_object_overrides = NULL,
+    definition_source_display = NULL,
+    definition_unavailable_periods = NULL,
     summary_entry,
     summary_selection,
     summary_insight_items,
@@ -193,6 +195,55 @@ render_definition_bundle <- function(
   stopifnot(all(analysis_vars %in% names(criteria)))
   stopifnot(all(nzchar(criteria[analysis_vars])))
   validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars)))
+  if (!is.null(definition_source_display)) {
+    if (!is.character(definition_source_display) ||
+        is.null(names(definition_source_display)) ||
+        anyNA(definition_source_display) ||
+        any(!nzchar(trimws(definition_source_display)))) {
+      stop("定义卡来源展示必须是带变量名且内容非空的字符向量。")
+    }
+    unknown_display_vars <- setdiff(names(definition_source_display), analysis_vars)
+    if (length(unknown_display_vars)) {
+      stop("定义卡来源展示包含未知变量：", paste(unknown_display_vars, collapse = ", "))
+    }
+  }
+  if (!is.null(definition_unavailable_periods)) {
+    if (!is.list(definition_unavailable_periods) ||
+        is.null(names(definition_unavailable_periods))) {
+      stop("未设置时期必须是按定义变量命名的列表。")
+    }
+    unknown_period_vars <- setdiff(names(definition_unavailable_periods), analysis_vars)
+    if (length(unknown_period_vars)) {
+      stop("未设置时期包含未知变量：", paste(unknown_period_vars, collapse = ", "))
+    }
+    invalid_periods <- setdiff(
+      unique(as.character(unlist(definition_unavailable_periods))),
+      as.character(cycle_order)
+    )
+    if (length(invalid_periods)) {
+      stop("未设置时期不在目标调查期中：", paste(invalid_periods, collapse = ", "))
+    }
+  }
+
+  mark_unavailable_periods <- function(detail_list) {
+    if (is.null(definition_unavailable_periods)) return(detail_list)
+    for (variable in intersect(names(definition_unavailable_periods), names(detail_list))) {
+      for (period in as.character(definition_unavailable_periods[[variable]])) {
+        empty_cell <- paste0(
+          "<span class='dbcb-var-cycle-label'>", period,
+          "</span><span class='dbcb-var-cycle-count'></span>"
+        )
+        marked_cell <- paste0(
+          "<span class='dbcb-var-cycle-label'>", period,
+          "</span><span class='dbcb-var-cycle-count'>未设置</span>"
+        )
+        detail_list[[variable]] <- gsub(
+          empty_cell, marked_cell, detail_list[[variable]], fixed = TRUE
+        )
+      }
+    }
+    detail_list
+  }
 
   format_n <- function(x) {
     format(x, big.mark = ",", scientific = FALSE)
@@ -271,6 +322,7 @@ render_definition_bundle <- function(
     show_cycle_heatmap = FALSE
   )
   names(details) <- names(db_data)
+  details <- mark_unavailable_periods(details)
   codebook$detail <- unname(details[codebook$Variable])
   codebook$easylabel <- codebook$Label
 
@@ -325,6 +377,16 @@ render_definition_bundle <- function(
   definition_data <- definition_data[
     match(analysis_vars, definition_data$Variable),
   ]
+  if (!is.null(definition_source_display)) {
+    display_rows <- match(
+      definition_data$Variable,
+      names(definition_source_display)
+    )
+    has_display <- !is.na(display_rows)
+    definition_data$original_vars[has_display] <- unname(
+      definition_source_display[display_rows[has_display]]
+    )
+  }
   definition_details <- generate_var_details(
     detail_data,
     bar_color = paste0(theme_color, "90"),
@@ -338,6 +400,7 @@ render_definition_bundle <- function(
     heatmap_color = theme_color
   )
   names(definition_details) <- names(db_data)
+  definition_details <- mark_unavailable_periods(definition_details)
   definition_data$detail <- unname(
     definition_details[definition_data$Variable]
   )

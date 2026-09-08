@@ -71,7 +71,12 @@ async function triggerDbCodeBookExport(
   globalThis.__dbCodeBookDownloadAttempts ??= new Set();
   const markerKey = `dbcodebook-download-attempt:${{attemptId}}`;
   const pageAttempt = await tab.playwright.evaluate(
-    key => window.sessionStorage.getItem(key),
+    key => {{
+      if (window.sessionStorage) return window.sessionStorage.getItem(key);
+      const root = document.documentElement;
+      return root && typeof root.getAttribute === "function" &&
+        root.getAttribute("data-dbcodebook-download-attempt") === key;
+    }},
     markerKey
   );
   if (globalThis.__dbCodeBookDownloadAttempts.has(attemptId) || pageAttempt) {{
@@ -92,15 +97,23 @@ async function triggerDbCodeBookExport(
 
   const openButton = tab.playwright.locator('button[aria-label="下载数据"]');
   if (await openButton.count() !== 1) throw new Error("未找到唯一的下载入口；未触发下载");
-  await openButton.click();
-
   const modal = tab.playwright.locator("#download-modal");
+  const modalStyle = await modal.getAttribute("style");
+  if (!modalStyle || !/display\s*:\s*block/i.test(modalStyle)) {{
+    await openButton.click();
+  }}
   await modal.waitFor({{ state: "visible" }});
   const finalButton = modal.locator("button.bili-btn.confirm");
   if (await finalButton.count() !== 1) throw new Error("未找到唯一的最终下载按钮；未触发下载");
 
   await tab.playwright.evaluate(
-    value => window.sessionStorage.setItem(value.key, value.timestamp),
+    value => {{
+      if (window.sessionStorage) window.sessionStorage.setItem(value.key, value.timestamp);
+      const root = document.documentElement;
+      if (root && typeof root.setAttribute === "function") {{
+        root.setAttribute("data-dbcodebook-download-attempt", value.key);
+      }}
+    }},
     {{ key: markerKey, timestamp: new Date().toISOString() }}
   );
   globalThis.__dbCodeBookDownloadAttempts.add(attemptId);
