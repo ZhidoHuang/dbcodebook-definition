@@ -854,6 +854,37 @@ def check_public_code_outline(
         ok(results, "public R unused objects", {"assigned_objects": len(assigned_objects)})
 
     check_public_dictionary(source_public, results)
+    check_backend_loader(source, results)
+
+
+def check_backend_loader(source: str, results: list[dict]) -> None:
+    if "DBCODEBOOK_DEFINITION_SKILL_ROOT" not in source:
+        return
+    boundary = re.search(r"(?m)^# 输出\s*$", source)
+    if boundary is None:
+        fail(results, "RStudio full-run loader", "# 输出 not found")
+        return
+    backend = source[boundary.end():]
+    required = {
+        "runner root": 'Sys.getenv("DBCODEBOOK_DEFINITION_SKILL_ROOT")',
+        "Codex home": 'Sys.getenv("CODEX_HOME")',
+        "Windows user home": 'Sys.getenv("USERPROFILE")',
+        "user fallback": 'path.expand("~")',
+        "default Codex home": 'file.path(user_home, ".codex")',
+        "installed skill": 'file.path(codex_home, "skills", "dbcodebook-definition")',
+        "helper check": "file.exists(helper_files)",
+        "summary helper": '"summary_fact_helpers.R"',
+        "renderer helper": '"render_definition_bundle.R"',
+    }
+    missing = [label for label, token in required.items() if token not in backend]
+    if "请通过 dbcodebook-definition 的正式 runner 运行本脚本" in backend or (
+        "请通过dbcodebook-definition正式runner运行" in backend
+    ):
+        missing.append("runner-only stop must be removed")
+    if missing:
+        fail(results, "RStudio full-run loader", missing)
+    else:
+        ok(results, "RStudio full-run loader")
 
 
 def check_public_dictionary(source_public: str, results: list[dict]) -> None:
@@ -1375,6 +1406,7 @@ def main() -> int:
             fail(results, "public R outline boundary", "# 输出 not found")
         else:
             check_public_dictionary(source[:boundary.start()], results)
+            check_backend_loader(source, results)
         passed = all(item["ok"] for item in results)
         print(json.dumps({"ok": passed, "checks": results}, ensure_ascii=False))
         return 0 if passed else 1

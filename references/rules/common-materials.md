@@ -284,22 +284,38 @@ table(data$var, useNA = "ifany")
 
 ### 3.6 公共生成脚本的定位
 
-正式 runner 会把当前 Skill 根目录写入环境变量 `DBCODEBOOK_DEFINITION_SKILL_ROOT`。主题 R 在 `# 输出` 之后从该位置读取公共生成脚本，不按成果目录层级寻找 `_工具`，也不写死作者电脑路径：
+主题 R 无论通过正式 runner 运行，还是在 RStudio 中直接全选运行，都必须继续生成完整笔记。正式 runner 会把当前 Skill 根目录写入环境变量 `DBCODEBOOK_DEFINITION_SKILL_ROOT`；直接全选时，R 自动从当前 `CODEX_HOME` 或用户目录下的 `.codex/skills/dbcodebook-definition` 查找已经安装的 Skill。不按成果目录层级寻找 `_工具`，也不写死作者电脑路径：
 
 ```r
 skill_root <- Sys.getenv("DBCODEBOOK_DEFINITION_SKILL_ROOT")
-if (!nzchar(skill_root)) stop("请通过 dbcodebook-definition 的正式 runner 运行本脚本。")
+if (!nzchar(skill_root)) {
+  codex_home <- Sys.getenv("CODEX_HOME")
+  if (!nzchar(codex_home)) {
+    user_home <- Sys.getenv("USERPROFILE")
+    if (!nzchar(user_home)) user_home <- path.expand("~")
+    codex_home <- file.path(user_home, ".codex")
+  }
+  skill_root <- file.path(codex_home, "skills", "dbcodebook-definition")
+}
+helper_files <- file.path(
+  skill_root,
+  "scripts",
+  c("summary_fact_helpers.R", "render_definition_bundle.R")
+)
+if (!all(file.exists(helper_files))) {
+  stop("未找到 dbcodebook-definition Skill。请先安装该 Skill。")
+}
 eval(parse(
-  file = file.path(skill_root, "scripts", "summary_fact_helpers.R"),
+  file = helper_files[1],
   encoding = "UTF-8"
 ))
 eval(parse(
-  file = file.path(skill_root, "scripts", "render_definition_bundle.R"),
+  file = helper_files[2],
   encoding = "UTF-8"
 ))
 ```
 
-这一段属于正式输出机制，不放进公开 R。既有主题在下次实质修改或重新生成时改用该入口；在完成迁移前，不提前删除仍被旧主题引用的兼容文件。
+这一段属于正式输出机制，不放进公开 R。既有主题在下次实质修改或重新生成时改用该入口；在完成迁移前，不提前删除仍被旧主题引用的兼容文件。正式检查必须拒绝只能由 runner 运行、无法在 RStudio 中全选生成完整笔记的脚本。
 
 ## 4. 用户文字共同原则
 

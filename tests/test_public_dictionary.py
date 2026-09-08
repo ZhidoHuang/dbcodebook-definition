@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from check_definition_output import check_public_dictionary
+from check_definition_output import check_backend_loader, check_public_dictionary
 
 prefix = """# ----------- 1 检查并安装包 -----------
 # ----------- 2 读取数据 -----------
@@ -17,6 +17,40 @@ valid = prefix + template
 checks = []
 check_public_dictionary(valid, checks)
 assert checks and all(check["ok"] for check in checks), checks
+
+standalone_loader = '''
+# 输出
+skill_root <- Sys.getenv("DBCODEBOOK_DEFINITION_SKILL_ROOT")
+if (!nzchar(skill_root)) {
+  codex_home <- Sys.getenv("CODEX_HOME")
+  if (!nzchar(codex_home)) {
+    user_home <- Sys.getenv("USERPROFILE")
+    if (!nzchar(user_home)) user_home <- path.expand("~")
+    codex_home <- file.path(user_home, ".codex")
+  }
+  skill_root <- file.path(codex_home, "skills", "dbcodebook-definition")
+}
+helper_files <- file.path(
+  skill_root,
+  "scripts",
+  c("summary_fact_helpers.R", "render_definition_bundle.R")
+)
+if (!all(file.exists(helper_files))) stop("missing Skill")
+'''
+checks = []
+check_backend_loader(valid + standalone_loader, checks)
+assert checks and all(check["ok"] for check in checks), checks
+
+runner_only = '''
+# 输出
+skill_root <- Sys.getenv("DBCODEBOOK_DEFINITION_SKILL_ROOT")
+if (!nzchar(skill_root)) {
+  stop("请通过 dbcodebook-definition 的正式 runner 运行本脚本。")
+}
+'''
+checks = []
+check_backend_loader(valid + runner_only, checks)
+assert checks and not all(check["ok"] for check in checks), checks
 
 for bad in (
     valid.replace("变量字典", "其他标题"),
