@@ -23,6 +23,8 @@ Use [rules/index.md](references/rules/index.md) to resolve ownership when editin
 
 Work on one topic at a time and retain authorization already given. Pause only for an unresolved research decision, a required source gap, or an uncertain external write. Do not treat a requested upload as permission to rebuild the topic.
 
+Every rule in this skill is an execution requirement, not an invitation to redesign it. Apply a clear rule directly without adding interpretations, exceptions, or alternative schemes. If a rule cannot be understood, two rules genuinely conflict, or a different approach appears necessary, report the exact uncertainty or proposed departure and its impact before making changes; do not change first and explain afterward.
+
 ## Website-Only Commands
 
 Run from this skill root, using the configured Python executable and the current task's values for `$Formal`, `$Process`, `$Topic`, `$Database`, `$TopicName`, `$PostId`, and `$BaseUrl`. This is local preparation, not an uploader; it does not open a browser or submit anything.

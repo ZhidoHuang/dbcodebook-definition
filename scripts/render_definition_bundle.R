@@ -124,46 +124,17 @@ definition_card_default_sources <- function(analysis_codebook) {
   )
 }
 
-validate_definition_card_sources <- function(card_sources, analysis_codebook, raw_codebook) {
-  if (is.null(card_sources)) return(invisible(TRUE))
-  if (!is.list(card_sources) || is.null(names(card_sources)) ||
-      any(!nzchar(names(card_sources))) || anyDuplicated(names(card_sources))) {
-    stop("定义卡来源必须是以分析变量命名的下载别名列表。")
-  }
-  unknown <- setdiff(names(card_sources), analysis_codebook$Variable)
-  if (length(unknown)) {
-    stop("定义卡来源包含未知分析变量：", paste(unknown, collapse = ", "))
-  }
+format_definition_card_sources <- function(analysis_codebook, raw_codebook) {
   if (!all(c("Variable", "newname") %in% names(raw_codebook))) {
     stop("raw_codebook 必须包含 Variable 和 newname。")
   }
-  defaults <- definition_card_default_sources(analysis_codebook)
-  for (variable in names(card_sources)) {
-    aliases <- as.character(card_sources[[variable]])
-    if (!length(aliases) || anyNA(aliases) || any(!nzchar(aliases)) || anyDuplicated(aliases)) {
-      stop(variable, "：定义卡来源必须是非空且不重复的下载别名。")
-    }
-    outside_mapping <- setdiff(aliases, defaults[[variable]])
-    if (length(outside_mapping)) {
-      stop(variable, "：定义卡来源不是该变量的正式来源：", paste(outside_mapping, collapse = ", "))
-    }
+  sources <- definition_card_default_sources(analysis_codebook)
+  vapply(sources, function(aliases) {
     missing_aliases <- setdiff(aliases, raw_codebook$newname)
     if (length(missing_aliases)) {
-      stop(variable, "：raw_codebook 中找不到下载别名：", paste(missing_aliases, collapse = ", "))
+      stop("raw_codebook 中找不到下载别名：", paste(missing_aliases, collapse = ", "))
     }
-  }
-  invisible(TRUE)
-}
-
-format_definition_card_sources <- function(card_sources, analysis_codebook, raw_codebook) {
-  validate_definition_card_sources(card_sources, analysis_codebook, raw_codebook)
-  sources <- definition_card_default_sources(analysis_codebook)
-  if (!is.null(card_sources)) sources[names(card_sources)] <- card_sources
-  vapply(sources, function(aliases) {
     rows <- match(aliases, raw_codebook$newname)
-    if (anyNA(rows)) {
-      stop("raw_codebook 中找不到下载别名：", paste(aliases[is.na(rows)], collapse = ", "))
-    }
     paste0(raw_codebook$Variable[rows], "=", raw_codebook$newname[rows], collapse = ", ")
   }, character(1))
 }
@@ -248,7 +219,6 @@ render_definition_bundle <- function(
     summary_meanings,
     summary_groups,
     summary_object_overrides = NULL,
-    definition_card_sources = NULL,
     summary_entry,
     summary_selection,
     summary_insight_items,
@@ -286,9 +256,7 @@ render_definition_bundle <- function(
   stopifnot(all(analysis_vars %in% names(criteria)))
   stopifnot(all(nzchar(criteria[analysis_vars])))
   validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars)))
-  formatted_card_sources <- format_definition_card_sources(
-    definition_card_sources, analysis_codebook, raw_codebook
-  )
+  formatted_card_sources <- format_definition_card_sources(analysis_codebook, raw_codebook)
 
   format_n <- function(x) {
     format(x, big.mark = ",", scientific = FALSE)
@@ -368,6 +336,11 @@ render_definition_bundle <- function(
   )
   details <- vapply(details, append_linear_histogram_endpoint, character(1))
   names(details) <- names(db_data)
+  analysis_source_rows <- match(codebook$Variable, names(formatted_card_sources))
+  has_analysis_source <- !is.na(analysis_source_rows)
+  codebook$original_vars[has_analysis_source] <- unname(
+    formatted_card_sources[analysis_source_rows[has_analysis_source]]
+  )
   codebook$detail <- unname(details[codebook$Variable])
   codebook$easylabel <- codebook$Label
 
@@ -422,8 +395,6 @@ render_definition_bundle <- function(
   definition_data <- definition_data[
     match(analysis_vars, definition_data$Variable),
   ]
-  display_rows <- match(definition_data$Variable, names(formatted_card_sources))
-  definition_data$original_vars <- unname(formatted_card_sources[display_rows])
   definition_details <- generate_var_details(
     detail_data,
     bar_color = paste0(theme_color, "90"),

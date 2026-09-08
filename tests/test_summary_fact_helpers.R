@@ -191,36 +191,25 @@ source_display_raw_codebook <- data.frame(
 
 checks <- list(
   expect_identical(
-    "definition cards accept structured source aliases",
+    "definition cards do not accept a separate source subset",
     "definition_card_sources" %in% names(formals(render_definition_bundle)),
-    TRUE
+    FALSE
   ),
   expect_identical(
-    "definition cards format aliases as website mapping pairs",
+    "definition cards format every formal source as a website mapping pair",
     format_definition_card_sources(
-      list(test_var = c("raw1", "raw3")),
-      source_display_codebook,
-      source_display_raw_codebook
-    ),
-    c(test_var = "raw1 (file)=raw1, raw3 (file)=raw3")
-  ),
-  expect_identical(
-    "definition cards default to all formal source aliases",
-    format_definition_card_sources(
-      NULL,
       source_display_codebook,
       source_display_raw_codebook
     ),
     c(test_var = "raw1 (file)=raw1, raw2 (file)=raw2, raw3 (file)=raw3")
   ),
   expect_error_contains(
-    "definition cards require aliases from the formal mapping",
-    validate_definition_card_sources(
-      list(test_var = "raw4"),
-      source_display_codebook,
+    "definition cards require every formal alias in raw codebook",
+    format_definition_card_sources(
+      transform(source_display_codebook, processed_vars = "raw1, raw5"),
       source_display_raw_codebook
     ),
-    "raw4"
+    "raw5"
   ),
   expect_identical(
     "linear histogram includes its upper endpoint label",
