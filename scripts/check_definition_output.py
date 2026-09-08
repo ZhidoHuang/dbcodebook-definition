@@ -528,7 +528,7 @@ def check_summary_prose(note_text: str, results: list[dict]) -> None:
         elif period_style == "constructed":
             expected_titles = {"构建数据库变化"}
         else:
-            expected_titles = {"问卷设计变化"}
+            expected_titles = {"问卷设计"}
         title_match = re.search(
             r'(?s)<[^>]*data-summary-period-note-title="true"[^>]*>(.*?)</[^>]+>',
             body,

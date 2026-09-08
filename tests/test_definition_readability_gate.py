@@ -296,6 +296,33 @@ def main() -> int:
         assert questionnaire_result["status"] == "QUESTIONNAIRE_RENDERING_PASS"
         assert questionnaire_result["rendered_question_periods"] == 1
 
+        # Both publication checks must accept the same multi-period headings.
+        from check_definition_output import check_summary_prose
+        first_period = questionnaire_note.read_text(encoding="utf-8")
+        later_period = first_period.replace("2011", "2013")
+        multi_note = (
+            "## 摘要导读\n"
+            "本主题分别记录两次调查中受访者是否工作，保留每个时期的结果，便于比较工作状态。\n"
+            '<div class="raw-source-structure">' + first_period + later_period
+            + '</div><div class="raw-source-link">工作模块。</div>\n## 定义\n'
+        )
+        multi_note = multi_note.replace(
+            "本期询问上周工作情况。",
+            "本期询问受访者上周是否工作，并按照回答继续询问工作信息。"
+            "工作包括挣工资、做生意或为家庭经营帮工，是否接受后续提问取决于本题回答。",
+        )
+        questionnaire_note.write_text(multi_note, encoding="utf-8")
+        source_record["questionnaire_evidence"][0]["periods"] = ["2011", "2013"]
+        checker.write_json(questionnaire_process / checker.SOURCE_RECORD_NAME, source_record)
+        results = []
+        check_summary_prose(multi_note, results)
+        assert all(item["ok"] for item in results), results
+        assert checker.validate_questionnaire_rendering(
+            questionnaire_formal, questionnaire_process, questionnaire_note.name
+        )["rendered_question_periods"] == 2
+        source_record["questionnaire_evidence"][0]["periods"] = ["2011"]
+        checker.write_json(questionnaire_process / checker.SOURCE_RECORD_NAME, source_record)
+
         questionnaire_note.write_text(
             '<section class="raw-source-period" data-raw-source-period="2011" '
             'data-label="2011 年"><div data-summary-period-note="true">'
