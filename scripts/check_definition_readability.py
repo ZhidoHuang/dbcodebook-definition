@@ -96,6 +96,10 @@ class QuestionnaireMarkupParser(HTMLParser):
         self.line_depth = 0
         self.question_id_depth: int | None = None
         self.question_id_parts: list[str] = []
+        self.current_note: dict | None = None
+        self.note_depth = 0
+        self.note_title_depth: int | None = None
+        self.note_title_parts: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         values = {key: value or "" for key, value in attrs}
@@ -105,11 +109,25 @@ class QuestionnaireMarkupParser(HTMLParser):
                     "period": values["data-raw-source-period"],
                     "label": values.get("data-label", ""),
                     "lines": [],
+                    "period_notes": [],
                 }
                 self.section_depth = 1
             return
 
         self.section_depth += 1
+        if self.current_note is None:
+            if values.get("data-summary-period-note") == "true":
+                self.current_note = {"text_parts": []}
+                self.note_depth = 1
+        else:
+            self.note_depth += 1
+        if (
+            self.current_note is not None
+            and values.get("data-summary-period-note-title") == "true"
+        ):
+            self.note_title_depth = self.note_depth
+            self.note_title_parts = []
+
         if self.current_line is None:
             if values.get("data-summary-questionnaire-line") == "true":
                 self.current_line = {
@@ -133,6 +151,10 @@ class QuestionnaireMarkupParser(HTMLParser):
             self.current_line["instruction_count"] += 1
 
     def handle_data(self, data: str) -> None:
+        if self.current_note is not None:
+            self.current_note["text_parts"].append(data)
+            if self.note_title_depth is not None:
+                self.note_title_parts.append(data)
         if self.current_line is None:
             return
         self.current_line["text_parts"].append(data)
@@ -142,6 +164,19 @@ class QuestionnaireMarkupParser(HTMLParser):
     def handle_endtag(self, tag: str) -> None:
         if self.current_section is None:
             return
+        if self.current_note is not None:
+            if self.note_title_depth == self.note_depth:
+                self.current_note["title"] = "".join(self.note_title_parts).strip()
+                self.note_title_depth = None
+                self.note_title_parts = []
+            self.note_depth -= 1
+            if self.note_depth == 0:
+                self.current_note["text"] = "".join(
+                    self.current_note.pop("text_parts")
+                ).strip()
+                self.current_section["period_notes"].append(self.current_note)
+                self.current_note = None
+
         if self.current_line is not None:
             if self.question_id_depth == self.line_depth:
                 question_id = "".join(self.question_id_parts).strip()
@@ -196,6 +231,7 @@ def validate_questionnaire_rendering(
             sections.setdefault(key, []).append(section)
 
     rendered_pairs: set[tuple[str, str]] = set()
+    validated_periods: set[str] = set()
     for index, item in enumerate(evidence, start=1):
         field = f"questionnaire_evidence[{index}]"
         if item.get("rendered_in_copy") is not True:
@@ -218,12 +254,36 @@ def validate_questionnaire_rendering(
         expected_jumps = item.get("skip_logic", [])
 
         for period in periods:
-            matches = sections.get(normalized_period(period), [])
+            period_key = normalized_period(period)
+            matches = sections.get(period_key, [])
             if not matches:
                 fail(f"final note has no questionnaire period section for {period}")
+            if len(matches) > 1:
+                fail(f"final note renders questionnaire period {period} more than once")
+            section = matches[0]
+            if period_key not in validated_periods:
+                period_notes = section["period_notes"]
+                if len(period_notes) != 1:
+                    fail(
+                        f"final note period {period} must contain exactly one "
+                        "questionnaire design note"
+                    )
+                if period_notes[0].get("title") != "问卷设计":
+                    fail(
+                        f"final note period {period} questionnaire design note "
+                        "must be titled 问卷设计"
+                    )
+                validated_periods.add(period_key)
+            if any(
+                question_text in normalized_evidence_text(note.get("text", ""))
+                for note in section["period_notes"]
+            ):
+                fail(
+                    f"final note period {period} duplicates the complete text of "
+                    f"{question_id} outside the structured questionnaire block"
+                )
             question_lines = [
                 line
-                for section in matches
                 for line in section["lines"]
                 if question_id in line["question_ids"]
             ]
@@ -429,11 +489,21 @@ def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
         required_names
     ):
         fail("impact surfaces do not match the required change surfaces")
+    surface_evidence_owners: dict[str, str] = {}
     for item in surfaces:
         name = item["name"]
         if item.get("result") != "pass":
             fail(f"impact surface {name} result must be pass")
-        nonempty_text(item.get("evidence"), f"impact surface {name} evidence", 20)
+        evidence_text = nonempty_text(
+            item.get("evidence"), f"impact surface {name} evidence", 20
+        )
+        normalized_evidence = normalized_visible_text(evidence_text)
+        if normalized_evidence in surface_evidence_owners:
+            fail(
+                f"impact surfaces {surface_evidence_owners[normalized_evidence]} "
+                f"and {name} reuse the same evidence"
+            )
+        surface_evidence_owners[normalized_evidence] = name
     unresolved = impact.get("unresolved_issues")
     if not isinstance(unresolved, list):
         fail("impact unresolved_issues must be a list")
@@ -718,6 +788,8 @@ def initialize_reader_review(
         "reviewer_prompt": (
             f"只读取 {reader_input_path}，逐块用自己的话复述并报告疑问；"
             "不要读取正式目录、公开R、数据、探索记录或作者审阅。"
+            "不同区块必须分别写出实际对象、时期、内容和疑点，不能复制同一套"
+            "复述；发现同一原题、说明或处理重复呈现时必须退回修改。"
         ),
         "block_count": len(payload["blocks"]),
     }
@@ -786,6 +858,8 @@ def validate_reader_review(
             "reader review blocks must match the final visible note in order; "
             f"expected={expected_names}, actual={names}"
         )
+    paraphrase_owners: dict[str, str] = {}
+    subject_owners: dict[str, str] = {}
     for block in blocks:
         name = block["name"]
         if block.get("result") != "pass":
@@ -801,9 +875,25 @@ def validate_reader_review(
         paraphrase = nonempty_text(
             block.get("plain_paraphrase"), f"{name}.plain_paraphrase", 20
         )
-        if normalized_visible_text(paraphrase) == normalized_visible_text(excerpt):
+        normalized_paraphrase = normalized_visible_text(paraphrase)
+        if normalized_paraphrase == normalized_visible_text(excerpt):
             fail(f"reader review block {name} paraphrase cannot copy the excerpt")
-        nonempty_text(block.get("who_when_what"), f"{name}.who_when_what", 16)
+        if normalized_paraphrase in paraphrase_owners:
+            fail(
+                f"reader review blocks {paraphrase_owners[normalized_paraphrase]} "
+                f"and {name} reuse the same paraphrase"
+            )
+        paraphrase_owners[normalized_paraphrase] = name
+        subject = nonempty_text(
+            block.get("who_when_what"), f"{name}.who_when_what", 16
+        )
+        normalized_subject = normalized_visible_text(subject)
+        if normalized_subject in subject_owners:
+            fail(
+                f"reader review blocks {subject_owners[normalized_subject]} and "
+                f"{name} reuse the same who-when-what description"
+            )
+        subject_owners[normalized_subject] = name
         nonempty_text(
             block.get("possible_confusion"), f"{name}.possible_confusion", 12
         )
@@ -1026,13 +1116,23 @@ def validate_audit(
         fail(f"readability scopes mismatch; missing={missing}, unexpected={unexpected}")
 
     finding_count = 0
+    scope_evidence_owners: dict[str, str] = {}
     for item in scopes:
         if not isinstance(item, dict):
             fail("every readability scope must be an object")
         name = item["name"]
         if item.get("result") != "pass":
             fail(f"scope {name} result must be pass")
-        nonempty_text(item.get("evidence"), f"scope {name} evidence", 20)
+        evidence_text = nonempty_text(
+            item.get("evidence"), f"scope {name} evidence", 20
+        )
+        normalized_evidence = normalized_visible_text(evidence_text)
+        if normalized_evidence in scope_evidence_owners:
+            fail(
+                f"readability scopes {scope_evidence_owners[normalized_evidence]} "
+                f"and {name} reuse the same evidence"
+            )
+        scope_evidence_owners[normalized_evidence] = name
         findings = item.get("findings")
         if not isinstance(findings, list):
             fail(f"scope {name} findings must be a list")

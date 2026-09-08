@@ -137,10 +137,10 @@ def complete_reader_review(
         block["result"] = "pass"
         block["original_excerpt"] = source[: min(40, len(source))]
         block["plain_paraphrase"] = (
-            "这段说明调查具体问了什么，以及这些回答最后怎样变成分析变量。"
+            f"这段 {block['label']} 说明调查具体问了什么，以及这些回答最后怎样变成分析变量。"
         )
         block["who_when_what"] = (
-            "答题人在相应调查时期回答问题，项目据此生成对应的分析结果。"
+            f"答题人在相应调查时期阅读 {block['name']}，项目据此生成对应的分析结果。"
         )
         block["possible_confusion"] = (
             "读者可能分不清调查原题和项目后续处理之间的关系。"
@@ -229,6 +229,9 @@ def main() -> int:
         questionnaire_note.write_text(
             '<section class="raw-source-period" data-raw-source-period="2011" '
             'data-label="2011 年">'
+            '<div data-summary-period-note="true">'
+            '<div data-summary-period-note-title="true">问卷设计</div>'
+            '本期询问上周工作情况。</div>'
             '<span data-summary-questionnaire-line="true">'
             '<strong data-summary-question-id="true">FA002</strong> '
             '上周您工作了至少一个小时吗？'
@@ -273,6 +276,7 @@ def main() -> int:
         questionnaire_note.write_text(
             '<section class="raw-source-period" data-raw-source-period="2011" '
             'data-label="2011 年"><div data-summary-period-note="true">'
+            '<div data-summary-period-note-title="true">问卷设计</div>'
             '本期询问工作情况。</div></section>',
             encoding="utf-8",
         )
@@ -283,6 +287,33 @@ def main() -> int:
                 questionnaire_note.name,
             ),
             "does not render question FA002",
+        )
+
+        questionnaire_note.write_text(
+            '<section class="raw-source-period" data-raw-source-period="2011" '
+            'data-label="2011 年">'
+            '<div data-summary-period-note="true">'
+            '<div data-summary-period-note-title="true">问卷设计</div>'
+            '本期询问上周工作情况。</div>'
+            '<div data-summary-period-note="true">'
+            '<div data-summary-period-note-title="true">原题</div>'
+            '上周您工作了至少一个小时吗？</div>'
+            '<span data-summary-questionnaire-line="true">'
+            '<strong data-summary-question-id="true">FA002</strong> '
+            '上周您工作了至少一个小时吗？'
+            '<span data-summary-question-option="true">1 是</span>'
+            '<span data-summary-question-instruction="true">→ 跳至 FB001</span>'
+            '<span data-summary-question-option="true">2 否</span>'
+            '</span></section>',
+            encoding="utf-8",
+        )
+        expect_failure(
+            lambda: checker.validate_questionnaire_rendering(
+                questionnaire_formal,
+                questionnaire_process,
+                questionnaire_note.name,
+            ),
+            "must contain exactly one questionnaire design note",
         )
 
         questionnaire_note.write_text(
