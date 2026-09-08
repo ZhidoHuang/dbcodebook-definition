@@ -130,6 +130,22 @@ with tempfile.TemporaryDirectory() as temp:
                     "--wait-seconds", "2"]
     blocked = subprocess.run(prepare_args, capture_output=True, env={**os.environ, "PYTHONUTF8": "1"})
     assert blocked.returncode != 0 and not prepare_snapshot.exists()
+    source_record = {
+        "schema_version": 1, "database": "CHARLS", "topic_id": "001", "status": "READY",
+        "source_groups": [{"raw_variables": ["value"]}],
+        "logic_review": dict.fromkeys(("period_coverage_checked", "same_name_drift_checked",
+            "meaning_change_checked", "formula_or_derivation_checked", "naming_checked"), True),
+        "logic_issues": [],
+    }
+    source_record["logic_review"]["result"] = "pending"
+    source_path = selection.parent / "definition_search_record.json"
+    source_path.write_text(json.dumps(source_record), encoding="utf-8")
+    rejected = subprocess.run(prepare_args + ["--overwrite"], capture_output=True,
+                              text=True, encoding="utf-8", env={**os.environ, "PYTHONUTF8": "1"})
+    assert rejected.returncode != 0 and "logic_review.result" in rejected.stderr, rejected.stdout + rejected.stderr
+    assert not prepare_snapshot.exists() and original.read_text() == "keep until a valid replacement exists"
+    source_record["logic_review"]["result"] = "clear"
+    source_path.write_text(json.dumps(source_record), encoding="utf-8")
     prepared_run = subprocess.run(prepare_args + ["--overwrite"], capture_output=True,
                                   text=True, encoding="utf-8", env={**os.environ, "PYTHONUTF8": "1"})
     assert prepared_run.returncode == 0, prepared_run.stderr

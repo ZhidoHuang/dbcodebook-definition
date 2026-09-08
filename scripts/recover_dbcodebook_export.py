@@ -417,6 +417,12 @@ def download_snapshot(directory: Path) -> dict:
 
 def prepare_download(args: argparse.Namespace) -> dict:
     expected = read_expected_vars_file(args.expect_vars_file)
+    from check_definition_source_record import load_json, validate_download_selection
+    record_path = args.expect_vars_file.parent / "definition_search_record.json"
+    record = load_json(record_path)
+    if str(record.get("database", "")).casefold() != args.database.casefold():
+        raise ValueError("source record database differs from the requested download")
+    validate_download_selection(record_path, args.expect_vars_file, str(record["topic_id"]).zfill(3))
     check_output_replacement(args.out, args.overwrite)
     snapshot = download_snapshot(args.prepare_download)
     snapshot["expected_vars"] = expected
@@ -578,8 +584,7 @@ def main() -> int:
             json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
         )
     except (OSError, ValueError, zipfile.BadZipFile, csv.Error) as error:
-        if not isinstance(error, ValueError):
-            print(f"RECOVER_FAIL: {error}", file=sys.stderr)
+        print(f"RECOVER_FAIL: {error}", file=sys.stderr)
         return 1
     print(json.dumps(report, ensure_ascii=True))
     return 0

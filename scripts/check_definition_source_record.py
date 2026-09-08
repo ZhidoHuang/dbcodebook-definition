@@ -693,6 +693,35 @@ def read_selection_vars(path: Path) -> list[str]:
     return values
 
 
+def validate_logic_review(record: dict) -> None:
+    schema_version = record.get("schema_version")
+    review = record.get("logic_review")
+    if not isinstance(review, dict):
+        fail("logic_review must be an object")
+    required = list(REQUIRED_LOGIC_CHECKS)
+    if schema_version >= 3:
+        required.extend(REQUIRED_V3_LOGIC_CHECKS)
+    if schema_version >= 7:
+        required.extend(REQUIRED_V7_LOGIC_CHECKS)
+    for field in required:
+        if review.get(field) is not True:
+            fail(f"logic_review.{field} must be true")
+    if review.get("result") not in LOGIC_RESULTS:
+        fail(f"logic_review.result must be one of {sorted(LOGIC_RESULTS)}")
+    issues = record.get("logic_issues")
+    if not isinstance(issues, list):
+        fail("logic_issues must be a list")
+    for index, issue in enumerate(issues, start=1):
+        if not isinstance(issue, dict):
+            fail(f"logic_issues[{index}] must be an object")
+        for field in ("description", "impact", "reported_to_user_at", "decision"):
+            nonempty_text(issue.get(field), f"logic_issues[{index}].{field}")
+        if issue.get("status") not in RESOLVED_ISSUE_STATUSES:
+            fail(f"logic_issues[{index}] is unresolved and must be reported")
+    if issues and review["result"] != "reported_and_resolved":
+        fail("logic_review.result must be reported_and_resolved when issues exist")
+
+
 def validate_download_selection(
     record_path: Path,
     selection_path: Path,
@@ -708,6 +737,7 @@ def validate_download_selection(
         fail(f"topic_id must be {topic_id}")
     if record.get("status") != READY_STATUS:
         fail(f"status must be {READY_STATUS} before download")
+    validate_logic_review(record)
 
     groups = record.get("source_groups")
     if not isinstance(groups, list) or not groups:
@@ -1290,39 +1320,9 @@ def validate_record(
     if unrecorded_paths:
         fail(f"R summary uses directories absent from source evidence: {unrecorded_paths}")
 
-    logic_review = record.get("logic_review")
-    if not isinstance(logic_review, dict):
-        fail("logic_review must be an object")
-    for field in REQUIRED_LOGIC_CHECKS:
-        if logic_review.get(field) is not True:
-            fail(f"logic_review.{field} must be true")
-    if schema_version in {3, 4, 5, 6, 7}:
-        for field in REQUIRED_V3_LOGIC_CHECKS:
-            if logic_review.get(field) is not True:
-                fail(f"logic_review.{field} must be true")
-    if schema_version == 7:
-        for field in REQUIRED_V7_LOGIC_CHECKS:
-            if logic_review.get(field) is not True:
-                fail(f"logic_review.{field} must be true")
-    result = logic_review.get("result")
-    if result not in LOGIC_RESULTS:
-        fail(f"logic_review.result must be one of {sorted(LOGIC_RESULTS)}")
-
-    issues = record.get("logic_issues")
-    if not isinstance(issues, list):
-        fail("logic_issues must be a list")
-    for index, issue in enumerate(issues, start=1):
-        if not isinstance(issue, dict):
-            fail(f"logic_issues[{index}] must be an object")
-        nonempty_text(issue.get("description"), f"logic_issues[{index}].description")
-        nonempty_text(issue.get("impact"), f"logic_issues[{index}].impact")
-        status = issue.get("status")
-        if status not in RESOLVED_ISSUE_STATUSES:
-            fail(f"logic_issues[{index}] is unresolved and must be reported")
-        nonempty_text(issue.get("reported_to_user_at"), "reported_to_user_at")
-        nonempty_text(issue.get("decision"), f"logic_issues[{index}].decision")
-    if issues and result != "reported_and_resolved":
-        fail("logic_review.result must be reported_and_resolved when issues exist")
+    validate_logic_review(record)
+    issues = record["logic_issues"]
+    result = record["logic_review"]["result"]
 
     return {
         "ok": True,

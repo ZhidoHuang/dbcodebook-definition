@@ -27,6 +27,8 @@ def main() -> int:
         "schema_version": 3,
         "topic_id": "037",
         "status": "READY",
+        "logic_review": {**dict.fromkeys((*checker.REQUIRED_LOGIC_CHECKS, *checker.REQUIRED_V3_LOGIC_CHECKS), True), "result": "clear"},
+        "logic_issues": [],
         "source_groups": [
             {"raw_variables": ["raw_a", "raw_b", "family_1_early"]},
             {"raw_variables": ["family_2_early"]},
@@ -68,6 +70,17 @@ def main() -> int:
         assert result["ok"] is True
         assert result["variables"] == 5
         assert result["alias_families"] == 1
+
+        record["logic_review"]["result"] = "pending"
+        record_path.write_text(json.dumps(record), encoding="utf-8")
+        try:
+            checker.validate_download_selection(record_path, selection_path, "037")
+        except ValueError as error:
+            assert "logic_review.result" in str(error)
+        else:
+            raise AssertionError("Unfinished logic review passed the download gate")
+        record["logic_review"]["result"] = "clear"
+        record_path.write_text(json.dumps(record), encoding="utf-8")
 
         selection_path.write_text(
             "raw_a\nraw_b\nfamily_1_early\nfamily_2_early\n", encoding="utf-8"

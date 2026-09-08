@@ -394,6 +394,14 @@ if ($topicLeaf -match '^(\d{3})_') {
   $resolvedSourceChecker = Resolve-RequiredPath -Path $sourceCheckerPath -Kind "Definition source-record checker"
   $resolvedRawCodebook = Resolve-RequiredPath -Path $rawCodebook -Kind "raw_codebook.csv"
 
+  & $resolvedPython @pythonArguments -X utf8 (Join-Path $PSScriptRoot "check_reader_copy.py") `
+    --copy $resolvedReaderCopy --record $resolvedSourceRecord
+  if ($LASTEXITCODE -ne 0) {
+    throw "Reader copy content check failed; formal R was not executed."
+  }
+  $env:DBCODEBOOK_DEFINITION_PYTHON = $resolvedPython
+  if ($Config) { $env:DBCODEBOOK_DEFINITION_CONFIG = $configPath }
+
   & $resolvedPython @pythonArguments -X utf8 $resolvedSourceChecker `
     --record $resolvedSourceRecord `
     --r-script $resolvedScript `

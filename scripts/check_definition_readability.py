@@ -13,6 +13,9 @@ import re
 import sys
 from urllib.parse import urlsplit
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from check_reader_copy import validate_note
+
 
 AUDIT_NAME = "readability_audit.json"
 READER_REVIEW_NAME = "reader_comprehension_review.json"
@@ -710,6 +713,12 @@ def build_reader_input(topic_id: str, note_text: str) -> str:
             "",
             normalized_visible_text(block["review_text"]),
         ])
+        if block["name"] == "summary_opening":
+            lines.append("请具体列出这里定义了哪些结果及其组成；成组概念是否明确列出成员？只能回答文字中已交代的内容，缺少时直接指出。")
+        elif block["name"].startswith("definition:"):
+            lines.append("请分别复述变量含义、关键判断、分类或单位和适用的注意点；指出缺少的信息，不能用其他变量的说明代替。没有独立注意点不算缺项。")
+        elif block["name"] == "insight_card":
+            lines.append("请说明每段增加了什么主题级解释；若只是重复时期说明或单变量规则，指出重复的具体位置。")
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -1097,6 +1106,11 @@ def validate_audit(
         process_dir,
         current_hashes["note"]["path"],
     )
+    content_consistency = validate_note(
+        formal_dir / READER_COPY_NAME,
+        formal_dir / current_hashes["note"]["path"],
+        formal_dir / current_hashes["analysis_codebook"]["path"],
+    )
     if audit.get("questionnaire_rendering") != questionnaire_rendering:
         fail(
             "readability audit is stale because questionnaire evidence or its "
@@ -1205,6 +1219,7 @@ def validate_audit(
         "change_impact": current_impact,
         "questionnaire_rendering": questionnaire_rendering,
         "reader_review": reader_review,
+        "content_consistency": content_consistency,
         "checked_at": datetime.now(timezone.utc).isoformat(),
     }
     if write_report:

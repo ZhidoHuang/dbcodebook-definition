@@ -21,6 +21,8 @@ Resolve the database, topic, formal directory, process directory, and configurat
 
 Use [rules/index.md](references/rules/index.md) to resolve ownership when editing rules, not as a mandatory prelude to every upload. Read [execution-report.md](references/rules/execution-report.md) before a production run; use its existing script for timing and status. Website-only runs use `website-prepare`, then `--start-sync` below instead of manually creating timing stages.
 
+Use the [stage execution and acceptance table](references/rules/validation.md#1-默认路径执行任务机器闭环) to identify each stage's input, action, output, actual checker, and remaining judgement. A passing script proves only its listed checks. Reader-facing copy follows the [plain-copy template](templates/reader-copy.md); the existing R renderer reads its summary, Criteria, insight and references with `read_definition_copy(analysis_vars)` and checks both its inputs and final output against that copy.
+
 Work on one topic at a time and retain authorization already given. Pause only for an unresolved research decision, a required source gap, or an uncertain external write. Do not treat a requested upload as permission to rebuild the topic.
 
 Every rule in this skill is an execution requirement, not an invitation to redesign it. Apply a clear rule directly without adding interpretations, exceptions, or alternative schemes. If a rule cannot be understood, two rules genuinely conflict, or a different approach appears necessary, report the exact uncertainty or proposed departure and its impact before making changes; do not change first and explain afterward.

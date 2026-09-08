@@ -6,6 +6,8 @@
 
 新建、重做或实质修改一个定义主题时，在第一次实质操作前运行 `scripts/execution_report.py init --workflow full_definition`。完整定义流程没有声明这个参数就不能作为正式执行报告。已有成果的网站同步由固定入口自动记录为 `website_only`：先用 `website-prepare` 记录本地准备和登录核对，再用 `verify-ready --start-sync` 自动结束准备、开始提交计时。只回答问题、只读查看或不改变主题成果的简短审核不创建报告。
 
+仅修正文案或共享工具、且不改变来源和计算时，使用现有 `--workflow general` 记录实际发生的修改、生成、验证和同步，不为满足完整定义流程的角色数量而重新调查或创建无关审核。修正范围按 [validation.md](validation.md) 确定；涉及来源或计算则回到完整定义流程。审核会话结束只证明其耗时已记录，不代表内容通过，内容是否可发布由当前成果检查和审核结论决定。
+
 报告保存在主题执行目录：
 
 - `execution_report.json` 是唯一事实来源，由脚本维护。

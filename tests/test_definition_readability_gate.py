@@ -8,6 +8,28 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import zipfile
+
+from test_reader_copy import render_note
+
+FIXTURE_QUESTION = "过去一年，您或您的配偶从父母那里得到过经济支持吗？"
+FIXTURE_CONTENT = {
+    "summary": f"问卷询问：\"{FIXTURE_QUESTION}\"这道题用于判断家庭是否从父母获得支持。",
+    "criteria": {"support_status": {
+        "定义": "家庭在过去一年是否从父母获得经济支持。",
+        "定义逻辑": "回答是记为[1]，回答否记为[0]；没有回答保留缺失。",
+        "分类": "- [1] 是\n- [0] 否",
+    }},
+    "insight": "",
+    "references": "问卷用于确定调查对象和提问时间。",
+}
+
+
+def write_codebook(path):
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("xl/workbook.xml", '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="data" sheetId="1" r:id="rId1"/></sheets></workbook>')
+        archive.writestr("xl/_rels/workbook.xml.rels", '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>')
+        archive.writestr("xl/worksheets/sheet1.xml", '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Variable</t></is></c></row><row r="2"><c r="A2" t="inlineStr"><is><t>support_status</t></is></c></row></sheetData></worksheet>')
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -28,13 +50,15 @@ def load_checker():
 def complete_impact(checker, formal: Path, process: Path) -> None:
     checker.initialize_impact(process, "025")
     copy = formal / checker.READER_COPY_NAME
-    question = "过去一年，您或您的配偶从父母那里得到过经济支持吗？"
+    question = FIXTURE_QUESTION
     copy.write_text(
         "## 摘要导读\n"
         f"问卷询问：\"{question}\"这道题用于判断家庭是否从父母获得支持。\n\n"
-        "## Criteria\n逐项说明定义规则、缺失和适用范围。\n\n"
-        "## 小book提示\n说明同时影响多个变量的调查边界。\n\n"
-        "## 参考资料说明\n说明每份材料支持的事实和边界。\n",
+        "## Criteria\n### support_status\n#### 定义\n家庭在过去一年是否从父母获得经济支持。\n\n"
+        "#### 定义逻辑\n回答是记为[1]，回答否记为[0]；没有回答保留缺失。\n\n"
+        "#### 分类\n- [1] 是\n- [0] 否\n\n"
+        "## 小book提示\n本主题没有需要单独提示的主题级边界\n\n"
+        "## 参考资料说明\n问卷用于确定调查对象和提问时间。\n",
         encoding="utf-8",
     )
     impact_path = process / checker.IMPACT_NAME
@@ -135,7 +159,7 @@ def complete_reader_review(
     for block in review["blocks"]:
         source = sources[block["name"]]
         block["result"] = "pass"
-        block["original_excerpt"] = source[: min(40, len(source))]
+        block["original_excerpt"] = source[: min(40, len(checker.first_complete_sentence(source)))]
         block["plain_paraphrase"] = (
             f"这段 {block['label']} 说明调查具体问了什么，以及这些回答最后怎样变成分析变量。"
         )
@@ -209,9 +233,7 @@ def main() -> int:
         }
         for role, name in files.items():
             content = (
-                "## 摘要导读\n"
-                "本主题说明家庭是否从父母获得经济支持，以及最后怎样生成分析变量。\n\n"
-                "## 定义\n"
+                render_note(FIXTURE_CONTENT)
                 if role == "note"
                 else f"fixture for {role}\n"
             )
@@ -220,6 +242,7 @@ def main() -> int:
                 (formal / name).write_text(content, encoding="utf-8-sig", newline="\r\n")
             else:
                 (formal / name).write_text(content, encoding="utf-8")
+        write_codebook(formal / files["analysis_codebook"])
 
         questionnaire_formal = root / "questionnaire-formal"
         questionnaire_process = root / "questionnaire-process"
@@ -623,6 +646,7 @@ async function selectDatabase(database, options) {
         failed = sync_command(formal, process, ok=False)
         assert "audit is stale" in failed.stderr
         assert report_path.read_bytes() == report_bytes_before_failed_preflight
+        (formal / files["note"]).write_bytes(unchanged[files["note"]])
 
         checker.initialize_audit(formal, process, "025", files, overwrite=True)
         complete_audit(checker, audit_path)

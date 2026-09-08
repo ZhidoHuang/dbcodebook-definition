@@ -241,6 +241,8 @@ def main() -> int:
         download_record = copy.deepcopy(pending)
         download_record.update({
             "schema_version": 7, "topic_id": "001", "status": "READY",
+            "logic_review": {**dict.fromkeys((*checker.REQUIRED_LOGIC_CHECKS, *checker.REQUIRED_V3_LOGIC_CHECKS, *checker.REQUIRED_V7_LOGIC_CHECKS), True), "result": "clear"},
+            "logic_issues": [],
             "human_record": "exploration.md", "source_groups": source_groups,
             "approved_analysis_vars": approved_names, "definition_plan": definition_plan,
             "exploration_log": [{**exploration_log[0], "human_step_id": "S001"}],

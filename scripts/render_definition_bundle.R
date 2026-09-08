@@ -80,6 +80,90 @@ criteria_item <- function(x) paste0(
 
 criteria_block <- function(...) paste(..., sep = "")
 
+definition_copy_check <- function(copy_path = "文案.md", source = NULL,
+                                  note = NULL, export = NULL) {
+  root <- Sys.getenv("DBCODEBOOK_DEFINITION_SKILL_ROOT")
+  if (!nzchar(root)) {
+    home <- Sys.getenv("CODEX_HOME")
+    if (!nzchar(home)) {
+      user_home <- Sys.getenv("USERPROFILE")
+      if (!nzchar(user_home)) user_home <- path.expand("~")
+      home <- file.path(user_home, ".codex")
+    }
+    root <- file.path(home, "skills", "dbcodebook-definition")
+  }
+  config <- Sys.getenv("DBCODEBOOK_DEFINITION_CONFIG")
+  if (!nzchar(config)) config <- file.path(root, "config.local.json")
+  python <- Sys.getenv("DBCODEBOOK_DEFINITION_PYTHON")
+  if (!nzchar(python) && file.exists(config)) {
+    settings <- jsonlite::read_json(config)
+    python <- settings$executables$python
+    if (is.null(python)) python <- ""
+    if (nzchar(python) && !grepl("^([A-Za-z]:|/|\\\\)", python)) {
+      python <- file.path(dirname(config), python)
+    }
+  }
+  if (!nzchar(python)) python <- Sys.which("python3")
+  if (!nzchar(python)) python <- Sys.which("python")
+  if (!nzchar(python)) stop("请在 Skill 配置中设置 Python 路径。")
+  args <- c("-X", "utf8", shQuote(file.path(root, "scripts", "check_reader_copy.py")),
+            "--copy", shQuote(copy_path))
+  temporary <- character()
+  on.exit(unlink(temporary), add = TRUE)
+  if (!is.null(source)) {
+    temporary <- tempfile(fileext = ".json")
+    jsonlite::write_json(source, temporary, auto_unbox = TRUE)
+    args <- c(args, "--source-json", shQuote(temporary))
+  }
+  if (!is.null(note)) args <- c(args, "--note", shQuote(note))
+  if (!is.null(export)) args <- c(args, "--export", shQuote(export))
+  output <- suppressWarnings(system2(python, args, stdout = TRUE, stderr = TRUE))
+  status <- attr(output, "status")
+  if (!is.null(status) && status != 0L) stop(paste(output, collapse = "\n"))
+  invisible(output)
+}
+
+read_definition_copy <- function(analysis_vars, path = "文案.md") {
+  exported <- tempfile(fileext = ".json")
+  on.exit(unlink(exported), add = TRUE)
+  definition_copy_check(path, export = exported)
+  copy <- jsonlite::read_json(exported)
+  if (!identical(names(copy$criteria), analysis_vars)) {
+    stop("文案 Criteria 的变量或顺序与 analysis_vars 不一致。")
+  }
+  paragraphs <- function(text) strsplit(text, "\n[[:blank:]]*\n", perl = TRUE)[[1]]
+  inline_parts <- function(text) {
+    pieces <- strsplit(text, "**", fixed = TRUE)[[1]]
+    lapply(seq_along(pieces), function(i) {
+      if (i %% 2L == 0L) summary_concept_part(pieces[i], quote = FALSE) else pieces[i]
+    })
+  }
+  render_values <- function(text) {
+    pieces <- strsplit(text, "`", fixed = TRUE)[[1]]
+    for (i in seq.int(1L, length(pieces), by = 2L)) {
+      pieces[i] <- gsub("\\[([^][]+)\\]", "<u>[\\1]</u>", pieces[i], perl = TRUE)
+    }
+    paste(pieces, collapse = "`")
+  }
+  criteria <- lapply(copy$criteria, function(fields) {
+    paste0(vapply(names(fields), function(field) {
+      lines <- strsplit(fields[[field]], "\n", fixed = TRUE)[[1]]
+      lines <- lines[nzchar(trimws(lines))]
+      paste0(criteria_heading(field), paste0(vapply(lines, function(line) {
+        criteria_item(render_values(line))
+      }, character(1)), collapse = ""))
+    }, character(1)), collapse = "")
+  })
+  list(
+    criteria = criteria,
+    summary_entry = list(paragraphs = lapply(paragraphs(copy$summary), function(text) {
+      list(parts = inline_parts(text))
+    })),
+    summary_insight_items = if (nzchar(copy$insight)) paragraphs(copy$insight) else NULL,
+    reference_lines = c("## 参考资料说明", "", copy$references)
+  )
+}
+
 validate_criteria_markup <- function(criteria, variable_names = character()) {
   criteria <- as.character(criteria)
   invalid_value_code <- grepl(
@@ -237,6 +321,12 @@ render_definition_bundle <- function(
     evidence_lines = character(),
     reference_lines = character(),
     summary_extra_lines = character()) {
+  definition_copy_check(source = list(
+    summary = render_summary_entry_paragraph(summary_entry, theme_color),
+    criteria = as.list(criteria[analysis_vars]),
+    insight = paste(summary_insight_items, collapse = "\n\n"),
+    references = paste(reference_lines[!grepl("^## 参考资料说明$", reference_lines)], collapse = "\n")
+  ))
   for (pkg in c("dplyr", "tidyr", "dbCodeBookr")) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
       stop("Required package is not installed: ", pkg)
@@ -489,4 +579,5 @@ render_definition_bundle <- function(
     detail_html_lines
   )
   writeLines(note_lines, note_name, useBytes = TRUE)
+  definition_copy_check(note = note_name)
 }
