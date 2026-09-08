@@ -41,6 +41,24 @@ ISSUE_STATUS = {
 }
 
 STAGE_MODE = {"work": "工作", "wait": "等待", "rework": "返工"}
+WORKFLOWS = {
+    "general": "一般任务",
+    "full_definition": "完整定义流程",
+    "website_only": "仅网站同步",
+}
+FULL_DEFINITION_STAGES = {
+    "locate": "任务定位与既有材料检查",
+    "sources": "来源探索与权威材料核对",
+    "download": "最终来源选择与下载",
+    "formal_r": "正式 R 编写、运行与成果生成",
+    "validation": "机器验证、全文与普通读者复核",
+}
+FULL_DEFINITION_REVIEW_ROLES = {
+    "定义逻辑复核",
+    "公开 R 复核",
+    "普通读者复核",
+}
+MAX_UNTRACKED_SECONDS = 60
 
 
 def duration_text(seconds: float) -> str:
@@ -96,6 +114,77 @@ def latest_stage(report: dict[str, Any], stage_id: str) -> dict[str, Any]:
     if not matches:
         raise SystemExit(f"找不到环节：{stage_id}")
     return matches[-1]
+
+
+def validate_full_definition_completion(
+    report: dict[str, Any], finished_at: datetime
+) -> None:
+    if report.get("workflow", "general") != "full_definition":
+        return
+    latest = {stage["stage_id"]: stage for stage in report.get("stages", [])}
+    terminal_statuses = {"completed", "completed_with_issues", "skipped"}
+    missing = [
+        f"{stage_id}（{label}）"
+        for stage_id, label in FULL_DEFINITION_STAGES.items()
+        if stage_id not in latest
+        or latest[stage_id].get("status") not in terminal_statuses
+    ]
+    if missing:
+        raise SystemExit("完整定义流程缺少已收口环节：" + "、".join(missing))
+    unexplained_skips = [
+        f"{stage_id}（{label}）"
+        for stage_id, label in FULL_DEFINITION_STAGES.items()
+        if latest[stage_id].get("status") == "skipped"
+        and not latest[stage_id].get("summary")
+    ]
+    if unexplained_skips:
+        raise SystemExit(
+            "完整定义流程的未执行环节没有说明原因：" + "、".join(unexplained_skips)
+        )
+
+    closed_roles = {
+        review.get("role")
+        for review in report.get("reviews", [])
+        if review.get("closed") and not review.get("unfinished_turns")
+    }
+    missing_roles = sorted(FULL_DEFINITION_REVIEW_ROLES - closed_roles)
+    if missing_roles:
+        raise SystemExit("完整定义流程缺少已完成审核：" + "、".join(missing_roles))
+
+    run_start = parse_time(report["started_at"])
+    run_end = finished_at
+    intervals: list[tuple[datetime, datetime]] = []
+    for stage in report.get("stages", []):
+        start_text = stage.get("started_at")
+        if not start_text:
+            continue
+        start = max(parse_time(start_text), run_start)
+        end_text = stage.get("finished_at")
+        end = parse_time(end_text) if end_text else run_end
+        end = min(end, run_end)
+        if end > start:
+            intervals.append((start, end))
+    intervals.sort(key=lambda item: item[0])
+    covered_seconds = 0.0
+    merged_start: datetime | None = None
+    merged_end: datetime | None = None
+    for start, end in intervals:
+        if merged_start is None:
+            merged_start, merged_end = start, end
+        elif start <= merged_end:
+            merged_end = max(merged_end, end)
+        else:
+            covered_seconds += (merged_end - merged_start).total_seconds()
+            merged_start, merged_end = start, end
+    if merged_start is not None and merged_end is not None:
+        covered_seconds += (merged_end - merged_start).total_seconds()
+    total_seconds = max(0.0, (run_end - run_start).total_seconds())
+    untracked_seconds = max(0.0, total_seconds - covered_seconds)
+    if untracked_seconds > MAX_UNTRACKED_SECONDS:
+        raise SystemExit(
+            "完整定义流程有未计入任何环节的时间："
+            f"{duration_text(untracked_seconds)}；请按原始时间记录工作、等待或返工，不能留空。"
+        )
 
 
 def current_session_log() -> Path | None:
@@ -255,6 +344,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"# {report['database']} {report['topic_id']} {report['topic_name']}：执行报告",
         "",
         f"- 任务：{report['task']}",
+        f"- 流程：{WORKFLOWS.get(report.get('workflow', 'general'), report.get('workflow', 'general'))}",
         f"- 状态：{RUN_STATUS[report['status']]}",
         f"- 开始：{report['started_at']}",
         f"- 结束：{finished_at or '尚未结束'}",
@@ -365,6 +455,7 @@ def command_init(args: argparse.Namespace) -> dict[str, Any]:
         "topic_id": args.topic_id,
         "topic_name": args.topic_name,
         "task": args.task,
+        "workflow": getattr(args, "workflow", "full_definition"),
         "status": "running",
         "started_at": iso(),
         "finished_at": None,
@@ -504,6 +595,7 @@ def command_finish(args: argparse.Namespace) -> dict[str, Any]:
             raise SystemExit("仍有失败环节未完成重试；不能标记完成。")
         if args.status == "completed" and report["issues"]:
             raise SystemExit("存在问题记录；请使用 completed_with_issues。")
+        validate_full_definition_completion(report, now())
     report["status"] = args.status
     report["finished_at"] = now().isoformat(timespec="milliseconds")
     if running == ["website_closure"]:
@@ -533,6 +625,7 @@ def begin_website_preparation(process_dir: Path, database: str, topic_id: str, t
         command_init(argparse.Namespace(
             process_dir=str(process_dir), database=database, topic_id=topic_id,
             topic_name=topic_name, task="同步已经审核的正式笔记及本轮变化的附件",
+            workflow="website_only",
         ))
         report = load(report_path)
     active = [s for s in report["stages"]
@@ -660,6 +753,9 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--topic-id", required=True)
     init_parser.add_argument("--topic-name", required=True)
     init_parser.add_argument("--task", required=True)
+    init_parser.add_argument(
+        "--workflow", choices=tuple(WORKFLOWS), default="full_definition"
+    )
     init_parser.set_defaults(func=command_init)
 
     start_amend = subparsers.add_parser("start-amend")

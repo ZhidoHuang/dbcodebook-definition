@@ -1,4 +1,5 @@
 import json
+import copy
 import os
 import subprocess
 import sys
@@ -11,6 +12,73 @@ import execution_report
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "execution_report.py"
+
+
+def expect_system_exit(action, contains: str) -> None:
+    try:
+        action()
+    except SystemExit as error:
+        assert contains in str(error), str(error)
+    else:
+        raise AssertionError(f"expected SystemExit containing {contains!r}")
+
+
+full_report = {
+    "workflow": "full_definition",
+    "started_at": "2026-09-08T10:00:00+08:00",
+    "stages": [
+        {
+            "stage_id": stage_id,
+            "status": "completed",
+            "started_at": f"2026-09-08T10:0{index}:00+08:00",
+            "finished_at": f"2026-09-08T10:0{index + 1}:00+08:00",
+        }
+        for index, stage_id in enumerate(execution_report.FULL_DEFINITION_STAGES)
+    ],
+    "reviews": [
+        {"role": role, "closed": True, "unfinished_turns": 0}
+        for role in execution_report.FULL_DEFINITION_REVIEW_ROLES
+    ],
+}
+full_end = execution_report.parse_time("2026-09-08T10:05:00+08:00")
+execution_report.validate_full_definition_completion(full_report, full_end)
+skipped_stage = copy.deepcopy(full_report)
+skipped_stage["stages"][2]["status"] = "skipped"
+skipped_stage["stages"][2]["summary"] = ["来源未变化，不重复下载。"]
+execution_report.validate_full_definition_completion(skipped_stage, full_end)
+unexplained_skip = copy.deepcopy(skipped_stage)
+unexplained_skip["stages"][2]["summary"] = []
+expect_system_exit(
+    lambda: execution_report.validate_full_definition_completion(
+        unexplained_skip, full_end
+    ),
+    "未执行环节没有说明原因",
+)
+missing_stage = copy.deepcopy(full_report)
+missing_stage["stages"] = [
+    stage for stage in missing_stage["stages"] if stage["stage_id"] != "download"
+]
+expect_system_exit(
+    lambda: execution_report.validate_full_definition_completion(
+        missing_stage, full_end
+    ),
+    "download",
+)
+missing_review = copy.deepcopy(full_report)
+missing_review["reviews"] = missing_review["reviews"][:-1]
+expect_system_exit(
+    lambda: execution_report.validate_full_definition_completion(
+        missing_review, full_end
+    ),
+    "缺少已完成审核",
+)
+expect_system_exit(
+    lambda: execution_report.validate_full_definition_completion(
+        full_report,
+        execution_report.parse_time("2026-09-08T10:08:00+08:00"),
+    ),
+    "未计入任何环节的时间",
+)
 
 
 def browser_result(process_dir: Path) -> Path:
@@ -55,6 +123,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
         "--topic-id", "036",
         "--topic-name", "工作属性",
         "--task", "前向验收",
+        "--workflow", "general",
     )
     run(
         "stage-start",
@@ -122,11 +191,13 @@ with tempfile.TemporaryDirectory() as temp_dir:
 
     previous_id = report["run_id"]
     run("init", "--process-dir", temp_dir, "--database", "CHARLS",
-        "--topic-id", "036", "--topic-name", "工作属性", "--task", "重新运行")
+        "--topic-id", "036", "--topic-name", "工作属性", "--task", "重新运行",
+        "--workflow", "general")
     archived = Path(temp_dir) / "archived_runs" / previous_id / "execution_report.json"
     assert json.loads(archived.read_text(encoding="utf-8")) == report
     run("init", "--process-dir", temp_dir, "--database", "CHARLS",
-        "--topic-id", "036", "--topic-name", "工作属性", "--task", "覆盖", ok=False)
+        "--topic-id", "036", "--topic-name", "工作属性", "--task", "覆盖",
+        "--workflow", "general", ok=False)
     run("stage-start", "--process-dir", temp_dir, "--stage-id", "fix",
         "--name", "修复", "--role", "主执行者", "--mode", "rework")
     run("stage-start", "--process-dir", temp_dir, "--stage-id", "fix",
@@ -177,7 +248,8 @@ with tempfile.TemporaryDirectory() as temp_dir:
 
 with tempfile.TemporaryDirectory() as temp_dir:
     run("init", "--process-dir", temp_dir, "--database", "CHARLS",
-        "--topic-id", "036", "--topic-name", "工作属性", "--task", "完整定义")
+        "--topic-id", "036", "--topic-name", "工作属性", "--task", "完整定义",
+        "--workflow", "general")
     run("stage-start", "--process-dir", temp_dir, "--stage-id", "formal_r",
         "--name", "正在运行R", "--role", "主执行者")
     report_path = Path(temp_dir) / "execution_report.json"
@@ -218,7 +290,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
     ]
     log.write_text("\n".join(json.dumps(event) for event in events) + "\n", encoding="utf-8")
     run("init", "--process-dir", temp_dir, "--database", "CHARLS", "--topic-id", "040",
-        "--topic-name", "review", "--task", "review fixture")
+        "--topic-name", "review", "--task", "review fixture", "--workflow", "general")
     for _ in range(2):
         imported = json.loads(run("review-import", "--process-dir", temp_dir,
                                   "--log", str(log), "--role", "logic").stdout)
@@ -234,7 +306,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
     markdown = (root / "执行报告.md").read_text(encoding="utf-8")
     assert "新建 0 个" in markdown and "15秒" in markdown and "1分0秒" in markdown
     run("init", "--process-dir", temp_dir, "--database", "CHARLS", "--topic-id", "040",
-        "--topic-name", "review", "--task", "unfinished fixture")
+        "--topic-name", "review", "--task", "unfinished fixture", "--workflow", "general")
     log.write_text("\n".join(json.dumps(event) for event in events[:-1]) + "\n", encoding="utf-8")
     assert "未结束轮次" in run("review-import", "--process-dir", temp_dir,
                             "--log", str(log), "--role", "logic", "--closed", ok=False).stderr
@@ -252,7 +324,8 @@ with tempfile.TemporaryDirectory() as temp_dir:
     from datetime import timedelta
 
     run("init", "--process-dir", temp_dir, "--database", "CHARLS",
-        "--topic-id", "042", "--topic-name", "fixture", "--task", "timing")
+        "--topic-id", "042", "--topic-name", "fixture", "--task", "timing",
+        "--workflow", "general")
     path = Path(temp_dir) / "execution_report.json"
     initial = json.loads(path.read_text(encoding="utf-8"))
     earlier = execution_report.parse_time(initial["started_at"]) - timedelta(seconds=50)

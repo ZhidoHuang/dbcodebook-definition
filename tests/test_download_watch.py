@@ -138,7 +138,7 @@ with tempfile.TemporaryDirectory() as temp:
     assert prepared["next_action"] == "run_browser_action_once"
     browser_action = prepared["browser_action"]
     assert browser_action["existing_tab_path"] == "http://localhost:8000/home/charls/"
-    assert browser_action["timeout_ms"] == 30000
+    assert browser_action["timeout_ms"] == 165000
     assert browser_action["attempt_id"] == json.loads(
         prepare_snapshot.read_text(encoding="utf-8")
     )["attempt_id"]
@@ -148,11 +148,14 @@ with tempfile.TemporaryDirectory() as temp:
     assert 'locator("#tag-area .tag")' in run_script
     assert 'button[aria-label="下载数据"]' in run_script
     assert 'modal.locator("button.bili-btn.confirm")' in run_script
-    assert 'waitForEvent("download"' not in run_script
+    assert 'waitForEvent("download"' in run_script
+    assert run_script.index('waitForEvent("download"') < run_script.index("await finalButton.click(")
     assert "__dbCodeBookDownloadAttempts" in run_script
     assert run_script.count("await finalButton.click(") == 1
     assert "timeoutMs: 10000" in run_script
-    assert 'status: "DOWNLOAD_EXPORT_TRIGGERED"' in run_script
+    assert 'download.path({ timeoutMs: 120000 })' in run_script
+    assert 'status: "DOWNLOAD_FILE_READY"' in run_script
+    assert 'next_action: "install_download_path"' in run_script
     assert 'next_action: "run_watch_command"' in run_script
     assert 'allow_new_export: false' in run_script
     assert 'root.getAttribute("data-dbcodebook-download-attempt")' in run_script
@@ -168,6 +171,13 @@ const finalButton = {
   count: async () => 1,
   click: async () => calls.push("final-click")
 };
+const download = {
+  path: async options => {
+    assert.deepEqual(options, { timeoutMs: 120000 });
+    calls.push("download-path");
+    return "C:\\\\temporary-downloads\\\\current.zip";
+  }
+};
 const modal = {
   getAttribute: async name => name === "style" ? "display: none;" : null,
   waitFor: async () => calls.push("modal-visible"),
@@ -179,6 +189,12 @@ const modal = {
 const tab = {
   url: async () => "http://localhost:8000/home/charls/?showInput=true",
   playwright: {
+    waitForEvent: async (event, options) => {
+      assert.equal(event, "download");
+      assert.deepEqual(options, { timeoutMs: 30000 });
+      calls.push("download-wait");
+      return download;
+    },
     evaluate: async (fn, value) => {
       if (typeof value === "string") return sessionStorage.get(value) || null;
       sessionStorage.set(value.key, value.timestamp);
@@ -210,9 +226,10 @@ const agent = { browsers: {
 let result;
 const nodeRepl = { write: value => { result = JSON.parse(value); } };
 ''' + run_script + '''
-assert.equal(result.status, "DOWNLOAD_EXPORT_TRIGGERED");
-assert.equal(result.next_action, "run_watch_command");
-assert.deepEqual(calls, ["open-dialog", "modal-visible", "final-click"]);
+assert.equal(result.status, "DOWNLOAD_FILE_READY");
+assert.equal(result.next_action, "install_download_path");
+assert.equal(result.download_path, "C:\\\\temporary-downloads\\\\current.zip");
+assert.deepEqual(calls, ["open-dialog", "modal-visible", "download-wait", "final-click", "download-path"]);
 globalThis.__dbCodeBookDownloadAttempts = new Set();
 await assert.rejects(
   triggerDbCodeBookExport(
@@ -223,7 +240,7 @@ await assert.rejects(
   ),
   /已经触发/
 );
-assert.deepEqual(calls, ["open-dialog", "modal-visible", "final-click"]);
+assert.deepEqual(calls, ["open-dialog", "modal-visible", "download-wait", "final-click", "download-path"]);
 await assert.rejects(
   triggerDbCodeBookExport(
     tab,
@@ -233,7 +250,7 @@ await assert.rejects(
   ),
   /下载清单为 2 个/
 );
-assert.deepEqual(calls, ["open-dialog", "modal-visible", "final-click"]);
+assert.deepEqual(calls, ["open-dialog", "modal-visible", "download-wait", "final-click", "download-path"]);
 selectedUrl = "http://localhost:8000/nodes/post/1/";
 listedTabs = [...listedTabs, { id: "tab-2", url: "http://localhost:8000/home/charls/" }];
 await assert.rejects(

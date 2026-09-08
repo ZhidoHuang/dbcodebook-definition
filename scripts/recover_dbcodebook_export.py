@@ -118,26 +118,52 @@ async function triggerDbCodeBookExport(
   );
   globalThis.__dbCodeBookDownloadAttempts.add(attemptId);
   const clickedAt = Date.now();
+  const downloadPromise = tab.playwright.waitForEvent("download", {{ timeoutMs: 30000 }});
+  let clickWarning = "";
   try {{
     await finalButton.click({{ timeoutMs: 10000 }});
   }} catch (error) {{
+    clickWarning = String(error);
+  }}
+  let download;
+  try {{
+    download = await downloadPromise;
+  }} catch (error) {{
     return {{
       ok: false,
-      status: "DOWNLOAD_CLICK_RESULT_UNCERTAIN",
+      status: "DOWNLOAD_EVENT_NOT_RECEIVED",
       next_action: "run_watch_command",
       allow_new_export: false,
       attempt_id: attemptId,
       selected_variable_count: selectedCount,
+      click_warning: clickWarning,
+      message: String(error)
+    }};
+  }}
+  let downloadPath;
+  try {{
+    downloadPath = await download.path({{ timeoutMs: 120000 }});
+  }} catch (error) {{
+    return {{
+      ok: false,
+      status: "DOWNLOAD_PATH_UNAVAILABLE",
+      next_action: "run_watch_command",
+      allow_new_export: false,
+      attempt_id: attemptId,
+      selected_variable_count: selectedCount,
+      click_warning: clickWarning,
       message: String(error)
     }};
   }}
   return {{
     ok: true,
-    status: "DOWNLOAD_EXPORT_TRIGGERED",
-    next_action: "run_watch_command",
+    status: "DOWNLOAD_FILE_READY",
+    next_action: "install_download_path",
     allow_new_export: false,
     attempt_id: attemptId,
     selected_variable_count: selectedCount,
+    download_path: downloadPath,
+    click_warning: clickWarning,
     browser_elapsed_ms: Date.now() - clickedAt
   }};
 }}
@@ -153,7 +179,7 @@ var dbCodeBookDownloadResult = await triggerDbCodeBookExport(
 nodeRepl.write(JSON.stringify(dbCodeBookDownloadResult));'''
     return {
         "existing_tab_path": page_url,
-        "timeout_ms": 30000,
+        "timeout_ms": 165000,
         "attempt_id": attempt_id,
         "run_script": run_script,
     }

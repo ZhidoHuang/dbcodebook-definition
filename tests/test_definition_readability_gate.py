@@ -221,6 +221,89 @@ def main() -> int:
             else:
                 (formal / name).write_text(content, encoding="utf-8")
 
+        questionnaire_formal = root / "questionnaire-formal"
+        questionnaire_process = root / "questionnaire-process"
+        questionnaire_formal.mkdir()
+        questionnaire_process.mkdir()
+        questionnaire_note = questionnaire_formal / "note.md"
+        questionnaire_note.write_text(
+            '<section class="raw-source-period" data-raw-source-period="2011" '
+            'data-label="2011 年">'
+            '<span data-summary-questionnaire-line="true">'
+            '<strong data-summary-question-id="true">FA002</strong> '
+            '上周您工作了至少一个小时吗？'
+            '<span data-summary-question-detail="true">'
+            '<span data-summary-question-option="true">1 是</span>'
+            '<span data-summary-question-instruction="true">→ 跳至 FB001</span>'
+            '</span>'
+            '<span data-summary-question-option="true">2 否</span>'
+            '</span></section>',
+            encoding="utf-8",
+        )
+        source_record = {
+            "schema_version": 6,
+            "questionnaire_evidence": [
+                {
+                    "question_id": "FA002",
+                    "question_text": "上周您工作了至少一个小时吗？",
+                    "response_type": "closed_options",
+                    "options": [
+                        {"value": "1", "label": "是"},
+                        {"value": "2", "label": "否"},
+                    ],
+                    "skip_logic": [{"when": "1 是", "destination": "FB001"}],
+                    "periods": ["2011"],
+                    "rendered_in_copy": True,
+                    "copy_locator": "文案.md > 摘要导读 > 2011 年",
+                }
+            ],
+        }
+        checker.write_json(
+            questionnaire_process / checker.SOURCE_RECORD_NAME,
+            source_record,
+        )
+        questionnaire_result = checker.validate_questionnaire_rendering(
+            questionnaire_formal,
+            questionnaire_process,
+            questionnaire_note.name,
+        )
+        assert questionnaire_result["status"] == "QUESTIONNAIRE_RENDERING_PASS"
+        assert questionnaire_result["rendered_question_periods"] == 1
+
+        questionnaire_note.write_text(
+            '<section class="raw-source-period" data-raw-source-period="2011" '
+            'data-label="2011 年"><div data-summary-period-note="true">'
+            '本期询问工作情况。</div></section>',
+            encoding="utf-8",
+        )
+        expect_failure(
+            lambda: checker.validate_questionnaire_rendering(
+                questionnaire_formal,
+                questionnaire_process,
+                questionnaire_note.name,
+            ),
+            "does not render question FA002",
+        )
+
+        questionnaire_note.write_text(
+            '<section class="raw-source-period" data-raw-source-period="2011" '
+            'data-label="2011 年"></section>',
+            encoding="utf-8",
+        )
+        source_record["questionnaire_evidence"][0]["rendered_in_copy"] = False
+        checker.write_json(
+            questionnaire_process / checker.SOURCE_RECORD_NAME,
+            source_record,
+        )
+        expect_failure(
+            lambda: checker.validate_questionnaire_rendering(
+                questionnaire_formal,
+                questionnaire_process,
+                questionnaire_note.name,
+            ),
+            "is not marked as rendered",
+        )
+
         complete_impact(checker, formal, process)
         checker.initialize_audit(formal, process, "025", files)
         audit_path = process / checker.AUDIT_NAME

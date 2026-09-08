@@ -6,6 +6,7 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import html
+from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
@@ -19,6 +20,7 @@ READER_INPUT_NAME = "ordinary_reader_input.md"
 REPORT_NAME = "publish_readiness.json"
 IMPACT_NAME = "definition_change_impact.json"
 READER_COPY_NAME = "文案.md"
+SOURCE_RECORD_NAME = "definition_search_record.json"
 PASS_STATUS = "FULL_TEXT_READABILITY_PASS"
 IMPACT_PASS_STATUS = "CHANGE_IMPACT_PASS"
 READER_REVIEW_PASS_STATUS = "READER_COMPREHENSION_PASS"
@@ -74,6 +76,186 @@ def write_json(path: Path, payload: dict) -> None:
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+
+
+def normalized_evidence_text(value: object) -> str:
+    return re.sub(r"[^0-9A-Za-z\u3400-\u9fff]+", "", str(value)).casefold()
+
+
+def normalized_period(value: object) -> str:
+    return normalized_evidence_text(value).replace("年", "").replace("期", "")
+
+
+class QuestionnaireMarkupParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.sections: list[dict] = []
+        self.current_section: dict | None = None
+        self.section_depth = 0
+        self.current_line: dict | None = None
+        self.line_depth = 0
+        self.question_id_depth: int | None = None
+        self.question_id_parts: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        values = {key: value or "" for key, value in attrs}
+        if self.current_section is None:
+            if tag == "section" and values.get("data-raw-source-period"):
+                self.current_section = {
+                    "period": values["data-raw-source-period"],
+                    "label": values.get("data-label", ""),
+                    "lines": [],
+                }
+                self.section_depth = 1
+            return
+
+        self.section_depth += 1
+        if self.current_line is None:
+            if values.get("data-summary-questionnaire-line") == "true":
+                self.current_line = {
+                    "text_parts": [],
+                    "question_ids": [],
+                    "option_count": 0,
+                    "instruction_count": 0,
+                }
+                self.line_depth = 1
+        else:
+            self.line_depth += 1
+
+        if self.current_line is None:
+            return
+        if values.get("data-summary-question-id") == "true":
+            self.question_id_depth = self.line_depth
+            self.question_id_parts = []
+        if values.get("data-summary-question-option") == "true":
+            self.current_line["option_count"] += 1
+        if values.get("data-summary-question-instruction") == "true":
+            self.current_line["instruction_count"] += 1
+
+    def handle_data(self, data: str) -> None:
+        if self.current_line is None:
+            return
+        self.current_line["text_parts"].append(data)
+        if self.question_id_depth is not None:
+            self.question_id_parts.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        if self.current_section is None:
+            return
+        if self.current_line is not None:
+            if self.question_id_depth == self.line_depth:
+                question_id = "".join(self.question_id_parts).strip()
+                if question_id:
+                    self.current_line["question_ids"].append(question_id)
+                self.question_id_depth = None
+                self.question_id_parts = []
+            self.line_depth -= 1
+            if self.line_depth == 0:
+                self.current_line["text"] = "".join(
+                    self.current_line.pop("text_parts")
+                ).strip()
+                self.current_section["lines"].append(self.current_line)
+                self.current_line = None
+
+        self.section_depth -= 1
+        if self.section_depth == 0:
+            self.sections.append(self.current_section)
+            self.current_section = None
+
+
+def validate_questionnaire_rendering(
+    formal_dir: Path,
+    process_dir: Path,
+    note_relative_path: str,
+) -> dict:
+    record_path = process_dir / SOURCE_RECORD_NAME
+    if not record_path.is_file():
+        return {"status": "not_applicable", "reason": "source record not present"}
+    record = json.loads(record_path.read_text(encoding="utf-8-sig"))
+    if record.get("schema_version", 0) < 6:
+        return {"status": "not_applicable", "reason": "legacy source record"}
+    evidence = record.get("questionnaire_evidence")
+    if not isinstance(evidence, list):
+        fail("source record questionnaire_evidence must be a list")
+
+    note_path = (formal_dir / note_relative_path).resolve()
+    try:
+        note_path.relative_to(formal_dir.resolve())
+    except ValueError:
+        fail("questionnaire note path leaves the formal directory")
+    parser = QuestionnaireMarkupParser()
+    parser.feed(note_path.read_text(encoding="utf-8-sig"))
+    sections: dict[str, list[dict]] = {}
+    for section in parser.sections:
+        keys = {
+            normalized_period(value)
+            for value in (section["period"], section["label"])
+            if normalized_period(value)
+        }
+        for key in keys:
+            sections.setdefault(key, []).append(section)
+
+    rendered_pairs: set[tuple[str, str]] = set()
+    for index, item in enumerate(evidence, start=1):
+        field = f"questionnaire_evidence[{index}]"
+        if item.get("rendered_in_copy") is not True:
+            fail(f"{field} is not marked as rendered in the final copy")
+        locator = str(item.get("copy_locator", ""))
+        if not locator.strip():
+            fail(f"{field}.copy_locator is empty")
+        if re.search(
+            r"待写入|待补|尚未写入|未写入|\bTODO\b|\bTBD\b|\bpending\b",
+            locator,
+            re.IGNORECASE,
+        ):
+            fail(f"{field}.copy_locator still describes unfinished copy")
+        question_id = str(item.get("question_id", "")).strip()
+        question_text = normalized_evidence_text(item.get("question_text", ""))
+        periods = item.get("periods")
+        if not question_id or not question_text or not isinstance(periods, list):
+            fail(f"{field} lacks question id, question text, or periods")
+        expected_options = item.get("options", [])
+        expected_jumps = item.get("skip_logic", [])
+
+        for period in periods:
+            matches = sections.get(normalized_period(period), [])
+            if not matches:
+                fail(f"final note has no questionnaire period section for {period}")
+            question_lines = [
+                line
+                for section in matches
+                for line in section["lines"]
+                if question_id in line["question_ids"]
+            ]
+            if not question_lines:
+                fail(f"final note period {period} does not render question {question_id}")
+            matching_lines = [
+                line
+                for line in question_lines
+                if question_text in normalized_evidence_text(line["text"])
+            ]
+            if not matching_lines:
+                fail(f"final note period {period} does not contain the complete text of {question_id}")
+            if len(matching_lines) > 1:
+                fail(f"final note period {period} renders question {question_id} more than once")
+            line = matching_lines[0]
+            if item.get("response_type") == "closed_options" and (
+                line["option_count"] < len(expected_options)
+            ):
+                fail(f"final note period {period} omits options for {question_id}")
+            if expected_jumps and line["instruction_count"] < 1:
+                fail(f"final note period {period} omits jump instructions for {question_id}")
+            rendered_pairs.add((question_id, str(period)))
+
+    return {
+        "status": "QUESTIONNAIRE_RENDERING_PASS",
+        "source_record": {
+            "path": SOURCE_RECORD_NAME,
+            "sha256": sha256_file(record_path),
+        },
+        "question_count": len(evidence),
+        "rendered_question_periods": len(rendered_pairs),
+    }
 
 
 def relative_artifact(formal_dir: Path, value: str, role: str) -> dict:
@@ -664,6 +846,11 @@ def initialize_audit(
         role: relative_artifact(formal_dir, artifact_paths[role], role)
         for role in REQUIRED_ARTIFACTS
     }
+    questionnaire_rendering = validate_questionnaire_rendering(
+        formal_dir,
+        process_dir,
+        artifacts["note"]["path"],
+    )
     if preserve_reader:
         if not audit_path.is_file():
             fail("preserving a reader review requires an existing author audit")
@@ -687,6 +874,7 @@ def initialize_audit(
             "sha256": change_impact["sha256"],
         },
         "reader_copy": change_impact["reader_copy"],
+        "questionnaire_rendering": questionnaire_rendering,
         "scopes": [
             {
                 "name": name,
@@ -716,6 +904,7 @@ def initialize_audit(
         "audit": str(audit_path),
         "artifacts": artifacts,
         "change_impact": change_impact,
+        "questionnaire_rendering": questionnaire_rendering,
         "reader_review_preserved": preserve_reader,
     }
 
@@ -813,6 +1002,17 @@ def validate_audit(
             )
         current_hashes[role] = {"path": relative, "sha256": current_hash}
 
+    questionnaire_rendering = validate_questionnaire_rendering(
+        formal_dir,
+        process_dir,
+        current_hashes["note"]["path"],
+    )
+    if audit.get("questionnaire_rendering") != questionnaire_rendering:
+        fail(
+            "readability audit is stale because questionnaire evidence or its "
+            "final rendering changed"
+        )
+
     scopes = audit.get("scopes")
     if not isinstance(scopes, list):
         fail("scopes must be a list")
@@ -903,6 +1103,7 @@ def validate_audit(
         "audit_sha256": sha256_file(audit_path),
         "artifacts": current_hashes,
         "change_impact": current_impact,
+        "questionnaire_rendering": questionnaire_rendering,
         "reader_review": reader_review,
         "checked_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -952,6 +1153,11 @@ def verify_existing_readiness(
             recorded.get("reader_review"),
             current.get("reader_review"),
         ),
+        (
+            "questionnaire_rendering",
+            recorded.get("questionnaire_rendering"),
+            current.get("questionnaire_rendering"),
+        ),
     )
     for label, old_value, current_value in comparisons:
         if old_value != current_value:
@@ -983,6 +1189,7 @@ def verify_existing_readiness(
         "report_sha256": sha256_file(report_path),
         "artifacts": current["artifacts"],
         "change_impact": current["change_impact"],
+        "questionnaire_rendering": current["questionnaire_rendering"],
         "reader_review": current["reader_review"],
         "verified_at": datetime.now(timezone.utc).isoformat(),
         "upload": upload,

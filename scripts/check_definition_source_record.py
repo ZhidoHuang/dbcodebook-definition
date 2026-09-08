@@ -245,6 +245,7 @@ def validate_questionnaire_evidence(
     record: dict,
     exploration_log: object,
     source_periods: dict[str, set[str]],
+    require_rendered: bool = False,
 ) -> dict:
     """Require schema v6+ period copy to have traceable questionnaire evidence."""
 
@@ -392,9 +393,20 @@ def validate_questionnaire_evidence(
                 f"{field} must reference official_material_review steps; "
                 f"invalid={wrong_actions}"
             )
-        if not isinstance(item.get("rendered_in_copy"), bool):
+        rendered_in_copy = item.get("rendered_in_copy")
+        if not isinstance(rendered_in_copy, bool):
             fail(f"{field}.rendered_in_copy must be true or false")
-        nonempty_text(item.get("copy_locator"), f"{field}.copy_locator")
+        copy_locator = nonempty_text(
+            item.get("copy_locator"), f"{field}.copy_locator"
+        )
+        if require_rendered and rendered_in_copy is not True:
+            fail(f"{field}.rendered_in_copy must be true before final validation")
+        if require_rendered and re.search(
+            r"待写入|待补|尚未写入|未写入|\bTODO\b|\bTBD\b|\bpending\b",
+            copy_locator,
+            re.IGNORECASE,
+        ):
+            fail(f"{field}.copy_locator still describes unfinished copy")
         evidence_by_id[evidence_id] = {
             "source_group": source_group,
             "periods": set(periods),
@@ -1133,7 +1145,7 @@ def validate_record(
     questionnaire_summary = {"questions": 0, "covered_periods": 0}
     if schema_version in {6, 7}:
         questionnaire_summary = validate_questionnaire_evidence(
-            record, exploration_log, source_periods
+            record, exploration_log, source_periods, require_rendered=True
         )
     alias_family_count = validate_alias_families(record, recorded_raw)
     raw_vars = read_raw_vars(raw_codebook_path)

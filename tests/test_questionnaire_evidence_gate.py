@@ -22,9 +22,13 @@ def load_checker():
     return module
 
 
-def expect_failure(checker, record, log, periods, message: str) -> None:
+def expect_failure(
+    checker, record, log, periods, message: str, require_rendered: bool = False
+) -> None:
     try:
-        checker.validate_questionnaire_evidence(record, log, periods)
+        checker.validate_questionnaire_evidence(
+            record, log, periods, require_rendered=require_rendered
+        )
     except ValueError as error:
         assert message in str(error), str(error)
     else:
@@ -108,6 +112,36 @@ def main() -> int:
             record, exploration_log, source_periods
         )
         assert result == {"questions": 1, "covered_periods": 2}
+
+        not_rendered = copy.deepcopy(record)
+        not_rendered["questionnaire_evidence"][0]["rendered_in_copy"] = False
+        not_rendered["questionnaire_evidence"][0]["copy_locator"] = (
+            "待写入文案.md > 摘要导读 > 2011-2013"
+        )
+        checker.validate_questionnaire_evidence(
+            not_rendered, exploration_log, source_periods
+        )
+        expect_failure(
+            checker,
+            not_rendered,
+            exploration_log,
+            source_periods,
+            "rendered_in_copy must be true before final validation",
+            require_rendered=True,
+        )
+
+        pending_locator = copy.deepcopy(record)
+        pending_locator["questionnaire_evidence"][0]["copy_locator"] = (
+            "待写入文案.md > 摘要导读 > 2011-2013"
+        )
+        expect_failure(
+            checker,
+            pending_locator,
+            exploration_log,
+            source_periods,
+            "copy_locator still describes unfinished copy",
+            require_rendered=True,
+        )
 
         incomplete_options = copy.deepcopy(record)
         incomplete_options["questionnaire_evidence"][0]["options"] = []
