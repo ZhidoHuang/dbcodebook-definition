@@ -136,23 +136,34 @@ validate_definition_source_display <- function(display, analysis_codebook) {
   }
   for (variable in names(display)) {
     row <- match(variable, analysis_codebook$Variable)
-    allowed <- unique(c(
-      definition_source_members(analysis_codebook$original_vars[row]),
-      if ("processed_vars" %in% names(analysis_codebook)) {
-        definition_source_members(analysis_codebook$processed_vars[row])
-      } else {
-        character()
-      }
-    ))
+    original_allowed <- definition_source_members(
+      analysis_codebook$original_vars[row]
+    )
+    processed_allowed <- if ("processed_vars" %in% names(analysis_codebook)) {
+      definition_source_members(analysis_codebook$processed_vars[row])
+    } else {
+      character()
+    }
+    allowed <- unique(c(original_allowed, processed_allowed))
     shown <- definition_source_members(display[[variable]])
     invalid <- vapply(shown, function(item) {
+      if (grepl("=", item, fixed = TRUE)) {
+        pair <- trimws(strsplit(item, "=", fixed = TRUE)[[1]])
+        if (length(pair) != 2L || any(!nzchar(pair))) return(TRUE)
+        pair_positions <- which(original_allowed == pair[1])
+        return(
+          !length(pair_positions) ||
+            !length(processed_allowed) ||
+            !any(processed_allowed[pair_positions] == pair[2])
+        )
+      }
       if (item %in% allowed) return(FALSE)
       expanded <- definition_source_range_members(item)
       !length(expanded) || !all(expanded %in% allowed)
     }, logical(1))
     if (any(invalid)) {
       stop(
-        variable, "：定义卡来源展示只能使用完整来源名或已核实的连续范围：",
+        variable, "：定义卡来源展示只能使用正确配对的完整映射、完整来源名或已核实的连续范围：",
         paste(shown[invalid], collapse = ", ")
       )
     }

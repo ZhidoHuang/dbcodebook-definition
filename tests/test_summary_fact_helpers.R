@@ -198,13 +198,29 @@ checks <- list(
     ),
     invisible(TRUE)
   ),
+  expect_identical(
+    "definition cards accept full website mapping pairs",
+    validate_definition_source_display(
+      c(test_var = "raw1 (file)=raw1, raw2 (file)=raw2"),
+      source_display_codebook
+    ),
+    invisible(TRUE)
+  ),
+  expect_error_contains(
+    "definition cards reject mismatched mapping pairs",
+    validate_definition_source_display(
+      c(test_var = "raw1 (file)=raw2"),
+      source_display_codebook
+    ),
+    "正确配对"
+  ),
   expect_error_contains(
     "definition cards reject prose in source display",
     validate_definition_source_display(
       c(test_var = "同年完整题组"),
       source_display_codebook
     ),
-    "只能使用完整来源名或已核实的连续范围"
+    "正确配对"
   ),
   expect_identical(
     "linear histogram includes its upper endpoint label",
