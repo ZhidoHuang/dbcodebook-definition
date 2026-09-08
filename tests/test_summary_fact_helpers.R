@@ -177,6 +177,12 @@ definition_end_position <- match("DEFINITION_END", note_order_fixture)
 reference_one_position <- match("> 1、REFERENCE_ONE", note_order_fixture)
 reference_two_position <- match("> 2、REFERENCE_TWO", note_order_fixture)
 materials_position <- match("## 材料", note_order_fixture)
+source_display_codebook <- data.frame(
+  Variable = "test_var",
+  original_vars = "raw1 (file), raw2 (file), raw3 (file)",
+  processed_vars = "raw1, raw2, raw3",
+  stringsAsFactors = FALSE
+)
 
 checks <- list(
   expect_identical(
@@ -185,8 +191,33 @@ checks <- list(
     TRUE
   ),
   expect_identical(
-    "definition cards accept unavailable periods",
-    "definition_unavailable_periods" %in% names(formals(render_definition_bundle)),
+    "definition cards accept verified compact ranges",
+    validate_definition_source_display(
+      c(test_var = "raw1~raw3"),
+      source_display_codebook
+    ),
+    invisible(TRUE)
+  ),
+  expect_error_contains(
+    "definition cards reject prose in source display",
+    validate_definition_source_display(
+      c(test_var = "同年完整题组"),
+      source_display_codebook
+    ),
+    "只能使用完整来源名或已核实的连续范围"
+  ),
+  expect_identical(
+    "linear histogram includes its upper endpoint label",
+    grepl(
+      "hist-endpoint-label'[^>]*>16</div>",
+      append_linear_histogram_endpoint(paste0(
+        "<div data-hist-mode='linear'><div class='hist-bars-wrapper'>",
+        "<div class='hist-bar' title='[15.0, 16.0): 35个'></div></div>",
+        "<div class='hist-labels-wrapper'>",
+        "<div class='hist-label' style='width:30px;'>15</div></div></div>"
+      )),
+      perl = TRUE
+    ),
     TRUE
   ),
   expect_identical(

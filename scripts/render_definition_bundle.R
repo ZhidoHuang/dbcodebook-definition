@@ -110,6 +110,90 @@ validate_criteria_markup <- function(criteria, variable_names = character()) {
   invisible(TRUE)
 }
 
+definition_source_members <- function(value) {
+  trimws(strsplit(as.character(value), ",", fixed = TRUE)[[1]])
+}
+
+definition_source_range_members <- function(value) {
+  match <- regexec("^(.*?)([0-9]+)~(.*?)([0-9]+)$", value, perl = TRUE)
+  pieces <- regmatches(value, match)[[1]]
+  if (length(pieces) != 5L || pieces[2] != pieces[4]) return(character())
+  first <- as.integer(pieces[3])
+  last <- as.integer(pieces[5])
+  if (is.na(first) || is.na(last) || first > last) return(character())
+  paste0(pieces[2], seq.int(first, last))
+}
+
+validate_definition_source_display <- function(display, analysis_codebook) {
+  if (is.null(display)) return(invisible(TRUE))
+  if (!is.character(display) || is.null(names(display)) ||
+      anyNA(display) || any(!nzchar(trimws(display)))) {
+    stop("定义卡来源展示必须是带变量名且内容非空的字符向量。")
+  }
+  unknown <- setdiff(names(display), analysis_codebook$Variable)
+  if (length(unknown)) {
+    stop("定义卡来源展示包含未知变量：", paste(unknown, collapse = ", "))
+  }
+  for (variable in names(display)) {
+    row <- match(variable, analysis_codebook$Variable)
+    allowed <- unique(c(
+      definition_source_members(analysis_codebook$original_vars[row]),
+      if ("processed_vars" %in% names(analysis_codebook)) {
+        definition_source_members(analysis_codebook$processed_vars[row])
+      } else {
+        character()
+      }
+    ))
+    shown <- definition_source_members(display[[variable]])
+    invalid <- vapply(shown, function(item) {
+      if (item %in% allowed) return(FALSE)
+      expanded <- definition_source_range_members(item)
+      !length(expanded) || !all(expanded %in% allowed)
+    }, logical(1))
+    if (any(invalid)) {
+      stop(
+        variable, "：定义卡来源展示只能使用完整来源名或已核实的连续范围：",
+        paste(shown[invalid], collapse = ", ")
+      )
+    }
+  }
+  invisible(TRUE)
+}
+
+append_linear_histogram_endpoint <- function(detail_html) {
+  if (!grepl("data-hist-mode='linear'", detail_html, fixed = TRUE)) {
+    return(detail_html)
+  }
+  interval_pattern <- "title='\\[[^,]+, ([^)]+)\\):"
+  intervals <- regmatches(
+    detail_html,
+    gregexpr(interval_pattern, detail_html, perl = TRUE)
+  )[[1]]
+  if (!length(intervals) || identical(intervals, character())) return(detail_html)
+  endpoint <- sub("^.*,[[:space:]]*([^)]+)\\):$", "\\1", tail(intervals, 1L))
+  endpoint_number <- suppressWarnings(as.numeric(endpoint))
+  if (!is.na(endpoint_number)) {
+    endpoint <- format(endpoint_number, trim = TRUE, scientific = FALSE)
+  }
+  labels_pattern <- paste0(
+    "(<div class='hist-labels-wrapper'>)",
+    "((?:<div class='hist-label'[^>]*>[^<]*</div>)+)",
+    "(</div>)"
+  )
+  endpoint_html <- paste0(
+    "<div class='hist-label hist-endpoint-label' ",
+    "style='width:0;margin-left:-3px;margin-right:0;overflow:visible;'>",
+    endpoint,
+    "</div>"
+  )
+  sub(
+    labels_pattern,
+    paste0("\\1\\2", endpoint_html, "\\3"),
+    detail_html,
+    perl = TRUE
+  )
+}
+
 compose_definition_note_lines <- function(
     summary_section,
     summary_extra_lines,
@@ -157,7 +241,6 @@ render_definition_bundle <- function(
     summary_groups,
     summary_object_overrides = NULL,
     definition_source_display = NULL,
-    definition_unavailable_periods = NULL,
     summary_entry,
     summary_selection,
     summary_insight_items,
@@ -195,55 +278,7 @@ render_definition_bundle <- function(
   stopifnot(all(analysis_vars %in% names(criteria)))
   stopifnot(all(nzchar(criteria[analysis_vars])))
   validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars)))
-  if (!is.null(definition_source_display)) {
-    if (!is.character(definition_source_display) ||
-        is.null(names(definition_source_display)) ||
-        anyNA(definition_source_display) ||
-        any(!nzchar(trimws(definition_source_display)))) {
-      stop("定义卡来源展示必须是带变量名且内容非空的字符向量。")
-    }
-    unknown_display_vars <- setdiff(names(definition_source_display), analysis_vars)
-    if (length(unknown_display_vars)) {
-      stop("定义卡来源展示包含未知变量：", paste(unknown_display_vars, collapse = ", "))
-    }
-  }
-  if (!is.null(definition_unavailable_periods)) {
-    if (!is.list(definition_unavailable_periods) ||
-        is.null(names(definition_unavailable_periods))) {
-      stop("未设置时期必须是按定义变量命名的列表。")
-    }
-    unknown_period_vars <- setdiff(names(definition_unavailable_periods), analysis_vars)
-    if (length(unknown_period_vars)) {
-      stop("未设置时期包含未知变量：", paste(unknown_period_vars, collapse = ", "))
-    }
-    invalid_periods <- setdiff(
-      unique(as.character(unlist(definition_unavailable_periods))),
-      as.character(cycle_order)
-    )
-    if (length(invalid_periods)) {
-      stop("未设置时期不在目标调查期中：", paste(invalid_periods, collapse = ", "))
-    }
-  }
-
-  mark_unavailable_periods <- function(detail_list) {
-    if (is.null(definition_unavailable_periods)) return(detail_list)
-    for (variable in intersect(names(definition_unavailable_periods), names(detail_list))) {
-      for (period in as.character(definition_unavailable_periods[[variable]])) {
-        empty_cell <- paste0(
-          "<span class='dbcb-var-cycle-label'>", period,
-          "</span><span class='dbcb-var-cycle-count'></span>"
-        )
-        marked_cell <- paste0(
-          "<span class='dbcb-var-cycle-label'>", period,
-          "</span><span class='dbcb-var-cycle-count'>未设置</span>"
-        )
-        detail_list[[variable]] <- gsub(
-          empty_cell, marked_cell, detail_list[[variable]], fixed = TRUE
-        )
-      }
-    }
-    detail_list
-  }
+  validate_definition_source_display(definition_source_display, analysis_codebook)
 
   format_n <- function(x) {
     format(x, big.mark = ",", scientific = FALSE)
@@ -321,8 +356,8 @@ render_definition_bundle <- function(
     show_distribution_nav = FALSE,
     show_cycle_heatmap = FALSE
   )
+  details <- vapply(details, append_linear_histogram_endpoint, character(1))
   names(details) <- names(db_data)
-  details <- mark_unavailable_periods(details)
   codebook$detail <- unname(details[codebook$Variable])
   codebook$easylabel <- codebook$Label
 
@@ -399,8 +434,12 @@ render_definition_bundle <- function(
     cycle_order = cycle_order,
     heatmap_color = theme_color
   )
+  definition_details <- vapply(
+    definition_details,
+    append_linear_histogram_endpoint,
+    character(1)
+  )
   names(definition_details) <- names(db_data)
-  definition_details <- mark_unavailable_periods(definition_details)
   definition_data$detail <- unname(
     definition_details[definition_data$Variable]
   )
