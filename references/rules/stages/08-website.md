@@ -23,11 +23,11 @@ Start the preparation clock before local checks or browser setup, then run the r
 & $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl
 ```
 
-Confirm that the required article or edit page is already open and logged in, then run the returned `browser_action.preload_script` once. The program uses the selected tab in `dbCodeBookBrowser` when it matches, otherwise locates the unique matching tab within that connection, and loads the fixed helper functions; it does not navigate, edit, upload, or submit.
+Confirm that the required article or edit page is already open and logged in. Save the complete readiness JSON as `$Preflight`, then run `playwright_session_action.py --mode preflight` using the recorded CLI session/workdir (full command in the linked browser-session section). This checks the matching tab without navigating, editing, uploading or submitting. Keep that same preflight JSON for the submission command; no extension connection or manual browser binding is needed.
 
 For a genuinely new article, open the site's new-article form in that same tab and verify it is blank. In both commands replace `--post-id $PostId` with `--create --website-title $WebsiteTitle --directory-tag $DirectoryTag`, using a directory tag verified on the website. The same helper sets the database and title, imports the body, uploads the two sidebar files in order, and submits once. It returns the actual newly assigned post URL; never create a placeholder article just to obtain an ID.
 
-Only after both preflight checks pass, run the measured command below and execute the returned CUA program immediately:
+Only after both preflight checks pass, run the measured command below, save its complete JSON as `$Action`, and immediately execute `playwright_session_action.py --mode sync --action $Action --preflight $Preflight` with the same session/workdir and result path:
 
 ```powershell
 & $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --start-sync --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl

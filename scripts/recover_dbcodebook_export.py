@@ -47,19 +47,20 @@ def build_download_browser_action(
     throw new Error("请先按浏览器技能连接选定的 Chrome 或 Edge，并绑定 dbCodeBookBrowser");
   }}
   const browser = dbCodeBookBrowser;
-  const page = new URL(expectedPageUrl);
-  const isMatch = value => {{
+  const parseUrl = async value => typeof dbCodeBookParseUrl === "function"
+    ? dbCodeBookParseUrl(value) : new URL(value);
+  const page = await parseUrl(expectedPageUrl);
+  const isMatch = async value => {{
     try {{
-      const current = new URL(value);
+      const current = await parseUrl(value);
       return current.origin === page.origin && current.pathname === page.pathname;
     }} catch {{ return false; }}
   }};
   const selected = await browser.tabs.selected();
-  if (selected && isMatch(await selected.url())) return selected;
+  if (selected && await isMatch(await selected.url())) return selected;
   const tabs = await browser.tabs.list();
-  const matches = tabs.filter(item => {{
-    return isMatch(item.url);
-  }});
+  const matches = [];
+  for (const item of tabs) if (await isMatch(item.url)) matches.push(item);
   if (matches.length !== 1) {{
     throw new Error(`未找到唯一匹配的变量选择页，当前找到 ${{matches.length}} 个`);
   }}
@@ -72,15 +73,20 @@ async function triggerDbCodeBookExport(
   expectedVariableCount,
   attemptFile
 ) {{
-  const fs = await import("node:fs/promises");
+  const attemptClaimed = typeof dbCodeBookAttemptClaimed !== "undefined" && dbCodeBookAttemptClaimed;
+  const fs = attemptClaimed ? null : await import("node:fs/promises");
+  if (!attemptClaimed) {{
   try {{
     await fs.stat(attemptFile);
     throw new Error("本次下载已经触发或已登记；请检查本地文件或账号下载记录，不得再次导出");
   }} catch (error) {{
     if (error.code !== "ENOENT") throw error;
   }}
-  const current = new URL(await tab.url());
-  const expected = new URL(expectedPageUrl);
+  }}
+  const parseUrl = async value => typeof dbCodeBookParseUrl === "function"
+    ? dbCodeBookParseUrl(value) : new URL(value);
+  const current = await parseUrl(await tab.url());
+  const expected = await parseUrl(expectedPageUrl);
   if (current.origin !== expected.origin || current.pathname !== expected.pathname) {{
     throw new Error(`当前标签页不是指定变量选择页：${{current.href}}`);
   }}
@@ -103,6 +109,7 @@ async function triggerDbCodeBookExport(
   const finalButton = modal.locator("button.bili-btn.confirm");
   if (await finalButton.count() !== 1) throw new Error("未找到唯一的最终下载按钮；未触发下载");
 
+  if (!attemptClaimed) {{
   try {{
     await fs.writeFile(attemptFile, JSON.stringify({{
       attempt_id: attemptId, claimed_at: new Date().toISOString(), page_url: current.href
@@ -112,6 +119,7 @@ async function triggerDbCodeBookExport(
       throw new Error("本次下载已经触发或已登记；请检查本地文件或账号下载记录，不得再次导出");
     }}
     throw error;
+  }}
   }}
   const clickedAt = Date.now();
   const downloadPromise = tab.playwright.waitForEvent("download", {{ timeoutMs: 30000 }});

@@ -1451,18 +1451,20 @@ def build_cua_sync_action(
     throw new Error("请先按浏览器技能连接选定的 Chrome 或 Edge，并绑定 dbCodeBookBrowser");
   }}
   const browser = dbCodeBookBrowser;
-  const normalize = value => {{
+  const normalize = async value => {{
     try {{
-      const url = new URL(value);
+      const url = typeof dbCodeBookParseUrl === "function"
+        ? await dbCodeBookParseUrl(value) : new URL(value);
       url.hash = "";
       return url.href.replace(/\/$/, "");
     }} catch {{ return null; }}
   }};
-  const expected = new Set(expectedUrls.map(normalize));
+  const expected = new Set(await Promise.all(expectedUrls.map(normalize)));
   const selected = await browser.tabs.selected();
-  if (selected && expected.has(normalize(await selected.url()))) return selected;
+  if (selected && expected.has(await normalize(await selected.url()))) return selected;
   const tabs = await browser.tabs.list();
-  const matches = tabs.filter(item => expected.has(normalize(item.url)));
+  const matches = [];
+  for (const item of tabs) if (expected.has(await normalize(item.url))) matches.push(item);
   if (matches.length !== 1) {{
     throw new Error(`未找到唯一匹配的网站标签页，当前找到 ${{matches.length}} 个`);
   }}

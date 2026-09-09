@@ -44,9 +44,30 @@
 
 dbCodeBook 的网页探索、变量选择、下载和网站同步只使用 Chrome 或 Edge，不再使用 Codex 内置浏览器，即使内置浏览器已经打开相关页面也不复用。用户指定哪一个就使用哪一个；未指定时，在 Chrome 和 Edge 中优先复用已连接且已登录 dbCodeBook 的会话，尚无可复用会话时默认 Chrome。选定后，本任务始终沿用该浏览器，不因失败自动切换到另一个浏览器、内置浏览器或临时访客配置。
 
-先读取当前环境提供的 Browser 或 Chrome 技能，按其支持的方式连接对应浏览器及配套扩展。网页窗口已经打开，不代表控制连接可用；必须实际读取目标标签页并确认登录。连接缺失时报告缺少的插件、扩展或连接条件；未登录时在选定浏览器完成登录后继续。不要另起 Playwright 默认 Chromium 或复制浏览器配置、Cookie 来替代现有会话。
+使用本地 Playwright CLI 直接控制已安装的 Chrome 或 Edge，不需要、不安装 ChatGPT 扩展，不走 Browser/Chrome 插件连接。先读取可用的 Playwright 技能。首次启动明确指定 `--browser msedge` 或 `--browser chrome`，不使用默认 Chromium；使用独立的持久配置目录，不能复制普通浏览器的配置或 Cookie。首次会话可能需要登录；验证码由用户在页面输入。浏览器窗口打开不等于控制成功，须实际读取页面、确认登录并完成一次无写入副作用的目录操作。
 
-把已连接并读过操作文档的浏览器对象命名为 `dbCodeBookBrowser`，供两个固定程序复用。例如已有 `chrome` 连接时使用 `const dbCodeBookBrowser = chrome;`；已有 `edge` 连接时使用 `const dbCodeBookBrowser = edge;`。这是同一连接的别名，不是另开浏览器。程序只在该连接内寻找目标标签，不再自行发现或更换浏览器。下载前同时确认该浏览器实际保存文件的目录，不能假定所有设备都使用同一个 Downloads 路径。
+在现有执行报告中记录浏览器、CLI 会话名、启动工作目录及持久配置目录。后续任务接手时先在同一工作目录运行同一会话的 `snapshot`，不要重复 `open`、清空会话或另建配置。会话确已关闭才用原配置重新打开。不要让两个任务同时操作同一会话。具体命令和两个固定程序的执行方式见下方；其中 `dbCodeBookBrowser` 是执行入口内部提供的兼容对象，不需要模型再配置扩展或手工绑定。
+
+```powershell
+# $SessionWorkdir / $Profile 来自本次记录，不把机器路径写入公共规则。
+Set-Location $SessionWorkdir
+npx --yes --package @playwright/cli playwright-cli -s=$Session snapshot
+# 仅首次建立或确认会话已关闭时执行 open：
+npx --yes --package @playwright/cli playwright-cli -s=$Session open $PageUrl --browser msedge --headed --profile $Profile
+```
+
+两个原有入口返回的 JSON 完整保存到当前执行目录，不改写其中的脚本。使用 `scripts/playwright_session_action.py` 在同一会话执行：
+
+```powershell
+# 下载：$Action 是 --prepare-download 输出；返回文件保存在 $Result 所在目录。
+& $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --mode download --action $Action --session $Session --session-workdir $SessionWorkdir --out $Result
+# 网站计时前：$Preflight 是不带 --start-sync 的 verify-ready 输出。
+& $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --mode preflight --action $Preflight --session $Session --session-workdir $SessionWorkdir --out $PreflightResult
+# 网站开始计时后：$Action 是 --start-sync 输出，继续使用同一份预检材料。
+& $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --mode sync --action $Action --preflight $Preflight --session $Session --session-workdir $SessionWorkdir --out $Result
+```
+
+执行入口只衔接原有固定动作与原生 Playwright，不新开浏览器。下载使用 `saveAs` 将文件保存到本次执行目录，再由原下载程序校验安装；下载观察目录因此设置为 `$Result` 所在目录，而不是猜测系统 Downloads。网站预检核对标签页，提交时校验预检 helper 哈希并复用同一动作。CLI 会自动生成页面快照，登录时不要在报告、Git 或交接消息中保留密码、验证码及 Cookie。
 
 ## 下载结果与找回
 
@@ -54,9 +75,9 @@ dbCodeBook 的网页探索、变量选择、下载和网站同步只使用 Chrom
 
 正常下载是变量选择任务的主流程。修复或验收正常下载时，必须从变量选择页点击最终下载按钮，并以本次新数据包完整落盘和校验通过为成功；下载记录中的“找回”只处理已经失败的既有记录，不能代替正常下载验收。
 
-每次正常下载和找回均使用 [Skill 的下载入口](stages/02-download.md#download-commands)。确认完整来源及别名后运行 `--prepare-download`，再原样执行它返回的 `browser_action.run_script`。程序在 `dbCodeBookBrowser` 中优先使用当前选中的匹配页，否则自行绑定唯一匹配的变量选择页，核对已选变量数量，打开下载弹窗，在最终点击前建立一次下载等待，点击一次最终下载控件，并读取浏览器返回的实际文件路径。返回 `DOWNLOAD_FILE_READY` 时，把 `download_path` 原样传给 `--archive` 完成校验和安装；浏览器不提供路径接口或返回 `run_watch_command` 时，运行同一次准备命令给出的目录观察命令。`$Downloads` 必须是该浏览器实际保存文件的目录；已有正式 raw 的有意替换才加 `--overwrite`。
+每次正常下载和找回均使用 [Skill 的下载入口](stages/02-download.md#download-commands)。确认完整来源及别名后运行 `--prepare-download`，把输出交给上方 CLI 执行入口的 `--mode download`，不手工改写返回脚本。程序核对网页变量数量，在最终点击前建立下载等待，只点一次，保存文件并返回路径。返回 `DOWNLOAD_FILE_READY` 时，把 `download_path` 原样传给 `--archive` 完成校验和安装；返回 `run_watch_command` 时，运行同一次准备命令给出的目录观察命令。`$Downloads` 为本次执行入口保存文件的目录；已有正式 raw 的有意替换才加 `--overwrite`。
 
-每次准备都会生成唯一 attempt ID。程序在最终点击前原子创建本地尝试记录，放在本次下载快照旁；记录已存在就拒绝再点，即使控制连接重置也不重复导出。不写网页会话或网页属性。最终点击返回不等于文件已经成功；浏览器路径交给 `--archive` 后通过变量清单与包内 CSV 校验，或目录观察命令找到并校验相对快照新增或变化的数据包，才算下载成功。
+每次准备都会生成唯一 attempt ID。CLI 执行入口在分派动作前原子创建本地尝试记录，放在本次下载快照旁；记录已存在就拒绝再次分派，即使控制连接重置也不重复导出。不写网页会话或网页属性。分派前认领不证明已经点击，失败时应区分尚未点击与已经提交。最终点击返回不等于文件已经成功；浏览器路径交给 `--archive` 后通过变量清单与包内 CSV 校验，或目录观察命令找到并校验相对快照新增或变化的数据包，才算下载成功。
 
 程序只接受相对快照新增或发生变化、已稳定且完整校验通过的数据包；旧包、临时文件、来源不符或多个匹配包都不能被随意选为结果。按 `next_action` 执行：
 
@@ -69,7 +90,7 @@ dbCodeBook 的网页探索、变量选择、下载和网站同步只使用 Chrom
 
 所有观察结果都不会自动授权或触发重新付费导出。表单来源仍按网站的 `变量名 (来源文件)` 格式输入，别名以最终清单为准。
 
-没有取得文件时，在同一选定浏览器查看账号的下载记录，按本次时间、数据库、完整来源及别名核对记录。已有对应记录就使用其“找回”入口，不重新导出。找回是直接文件链接时，同样先启动 `waitForEvent("download")`，再对刚核实的链接调用 `downloadMedia()`，随后按当前浏览器支持的接口读取路径；不能把“已找回”当作文件已经落盘。浏览器不提供路径或仍未返回路径时检查实际下载目录；若页面已显示“已找回”但尚未拿到文件，保留这一事实，不继续消耗其它找回机会。
+没有取得文件时，在同一选定浏览器查看账号的下载记录，按本次时间、数据库、完整来源及别名核对记录。已有对应记录就使用其“找回”入口，不重新导出。找回是直接文件链接时，通过同一 CLI 会话先等待 `page.waitForEvent("download")`，再点击刚核实的可见链接；对返回的下载对象使用 `saveAs` 保存到本次执行目录。不能把“已找回”当作文件已经落盘。若页面已显示“已找回”但尚未拿到文件，保留这一事实，不继续消耗其它找回机会。
 
 已明确文件路径时，用现有 `recover_dbcodebook_export.py --archive <本次数据包> --database <数据库> --out <正式目录> --expect-vars-file <download_selection.txt>` 校验并安装；文件观察模式已经完成安装则不重复运行。变量清单和包内 CSV 校验通过才继续定义。找回当前任务已生成的数据包不属于从旧主题重建 raw。重试付费导出前必须先解释已查到的下载记录与文件状态；状态不明时停止导出，不猜测网站仍在生成。
 
