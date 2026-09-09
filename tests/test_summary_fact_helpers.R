@@ -106,7 +106,7 @@ summary_insight_fixture <- paste(
 )
 summary_itemized_insight_fixture <- paste(
   render_summary_insight_card(
-    c("① 第一项。", "② 第二项。"),
+    c("1. 第一项。", "2. 第二项。"),
     "#A33842"
   ),
   collapse = "\n"
@@ -318,7 +318,16 @@ checks <- list(
   ),
   expect_identical(
     "insight numbered items are not indented",
-    grepl('text-indent:0;">② 第二项。', summary_itemized_insight_fixture, fixed = TRUE),
+    grepl('text-indent:0;">2. 第二项。', summary_itemized_insight_fixture, fixed = TRUE),
+    TRUE
+  ),
+  expect_identical(
+    "insight body uses 14px in both variants",
+    all(vapply(c("standard", "compact"), function(variant) {
+      output <- paste(render_summary_insight_card(c("1. 第一项。", "2. 第二项。"), "#A33842", variant), collapse = "\n")
+      grepl('data-summary-insight-body="true" style="font-size:14px;', output, fixed = TRUE) &&
+        !grepl('data-summary-insight-paragraph="true" style="[^\"]*font-size', output)
+    }, logical(1))),
     TRUE
   ),
   expect_identical(

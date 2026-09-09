@@ -895,7 +895,7 @@ render_summary_insight_card <- function(items,
         ';font-weight:700;margin-bottom:6px;">小book提示</div>'
       ),
       paste0(
-        '<div class="summary-insight-body" data-summary-insight-body="true">',
+        '<div class="summary-insight-body" data-summary-insight-body="true" style="font-size:14px;">',
         body, '</div>'
       ),
       "</div>",
@@ -912,7 +912,7 @@ render_summary_insight_card <- function(items,
     ),
     paste0(
       '<div class="summary-insight-body" data-summary-insight-body="true" ',
-      'style="font-size:16px;line-height:1.85;font-style:normal;font-weight:400;',
+      'style="font-size:14px;line-height:1.85;font-style:normal;font-weight:400;',
       'color:#344054;letter-spacing:0;">', body, '</div>'
     ),
     "</div>",
