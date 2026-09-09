@@ -1476,8 +1476,9 @@ async function chooseVisibleFile(tab, selector, filePath) {{
   const chooser = await chooserPromise;
   await chooser.setFiles([filePath]);
 }}
-async function syncDbCodeBookPost(tab, payload) {{
-  const startedAt = Date.now();
+async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
+  const phase = checkpoint?.phase;
+  const startedAt = checkpoint?.startedAt || Date.now();
   const syncStartedAt = payload.sync_started_at
     ? Date.parse(payload.sync_started_at)
     : null;
@@ -1493,10 +1494,15 @@ async function syncDbCodeBookPost(tab, payload) {{
       `网站同步启动后 ${{dispatchLatencyMs}} 毫秒仍未执行固定程序；未操作网站`
     );
   }}
-  const timings = {{}};
+  const timings = checkpoint?.timings || {{}};
   let submissionStarted = false;
   try {{
     let stepStarted = Date.now();
+    let keep = checkpoint?.keep || 0;
+    if (phase && phase !== "prepare" && await tab.url() !== payload.edit_url) {{
+      throw new Error("上传过程中编辑页已改变，停止提交");
+    }}
+    if (!phase || phase === "prepare") {{
     if (await tab.url() !== payload.edit_url) await tab.goto(payload.edit_url);
     await tab.playwright.waitForLoadState({{ state: "domcontentloaded" }});
     const currentUrl = await tab.playwright.evaluate(() => location.href);
@@ -1576,8 +1582,12 @@ async function syncDbCodeBookPost(tab, payload) {{
     if (!payload.create) await tab.playwright.getByRole("button", {{ name: "清空内容" }}).click();
     const emptyLength = await editor.evaluate(el => el.value.length);
     if (emptyLength !== 0) throw new Error("清空正文后编辑器仍非空");
+    if (phase) return {{ok: true, phase: "body", startedAt, timings,
+      uploadStartedAt: stepStarted}};
     await chooseVisibleFile(tab, "#content-import-input", payload.note);
+    }}
 
+    const editor = tab.playwright.locator("#editor");
     const body = await editor.evaluate(el => ({{
       length: el.value.length,
       head: el.value.slice(0, 160),
@@ -1588,7 +1598,8 @@ async function syncDbCodeBookPost(tab, payload) {{
         body.tail !== payload.body_check.tail) {{
       throw new Error("导入正文与发布入口核对值不一致");
     }}
-    timings.body_import_ms = Date.now() - stepStarted;
+    if (!phase || phase === "body") {{
+    timings.body_import_ms = Date.now() - (checkpoint?.uploadStartedAt || stepStarted);
 
     stepStarted = Date.now();
     const sidebar = tab.playwright.locator("#documents-sidebar-list");
@@ -1596,7 +1607,7 @@ async function syncDbCodeBookPost(tab, payload) {{
       .map(line => line.trim()).filter(line => /\.(xlsx|xls|csv|docx?|txt|pdf)$/i.test(line));
     const existingNames = readAttachmentNames(await sidebar.innerText());
     const previous = payload.previous_sync;
-    let keep = 0;
+    keep = 0;
     if (!payload.create && previous.post_url === payload.post_url) {{
       const prior = previous.attachment_signatures || [];
       while (keep < payload.attachments.length && keep < existingNames.length) {{
@@ -1611,9 +1622,13 @@ async function syncDbCodeBookPost(tab, payload) {{
       await deleteButtons.last().click();
       deleteButtons = sidebar.locator('button[title="删除"]');
     }}
+    if (phase) return {{ok: true, phase: "submit", startedAt, timings, keep,
+      uploadStartedAt: stepStarted}};
     for (const attachment of payload.attachments.slice(keep)) {{
       await chooseVisibleFile(tab, "#documents-sidebar-input", attachment.path);
     }}
+    }}
+    const sidebar = tab.playwright.locator("#documents-sidebar-list");
     const sidebarText = await sidebar.innerText();
     const actualNames = sidebarText.split(/\r?\n/)
       .map(line => line.trim())
@@ -1622,7 +1637,12 @@ async function syncDbCodeBookPost(tab, payload) {{
     if (JSON.stringify(actualNames) !== JSON.stringify(expectedNames)) {{
       throw new Error(`侧栏附件顺序不符：${{actualNames.join(", ")}}`);
     }}
-    timings.attachments_ms = Date.now() - stepStarted;
+    timings.attachments_ms = Date.now() - (checkpoint?.uploadStartedAt || stepStarted);
+
+    const finalTitle = await tab.playwright.locator("#title").evaluate(el => el.value);
+    if (!payload.expected_title_parts.every(part => finalTitle.toLocaleLowerCase().includes(String(part).toLocaleLowerCase()))) {{
+      throw new Error("提交前标题身份已改变，停止提交");
+    }}
 
     stepStarted = Date.now();
     const returned = tab.playwright.waitForURL(
@@ -1669,7 +1689,7 @@ async function syncDbCodeBookPost(tab, payload) {{
       attachment_signatures: payload.attachments.map(item => ({{name: item.name, sha256: item.sha256}}))
     }};
   }} catch (error) {{
-    if (!submissionStarted) {{
+    if (!checkpoint && !submissionStarted) {{
       try {{ await tab.goto(payload.edit_url); }} catch {{}}
     }}
     throw error;

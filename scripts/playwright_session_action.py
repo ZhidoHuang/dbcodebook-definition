@@ -8,6 +8,8 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import re
+import time
 
 
 ADAPTER = r'''
@@ -82,6 +84,106 @@ def build_code(action: dict, mode: str, preflight: dict | None, download_target:
     )
 
 
+class Session:
+    def __init__(self, name, workdir, code_path):
+        self.command = [shutil.which("npx.cmd") or shutil.which("npx"), "--yes",
+                        "--package", "@playwright/cli", "playwright-cli", "-s=" + name]
+        self.workdir, self.code_path = workdir, code_path
+        self.deadline = None
+
+    def call(self, *args, timeout=40):
+        if self.deadline is not None:
+            timeout = min(timeout, self.deadline - time.monotonic())
+            if timeout <= 0:
+                raise TimeoutError("Website operation exceeded 60 seconds")
+        result = subprocess.run(self.command + list(args), cwd=self.workdir,
+                                capture_output=True, encoding="utf-8", timeout=timeout)
+        if result.returncode or "### Error" in result.stdout:
+            raise RuntimeError(result.stdout + result.stderr)
+        return result.stdout
+
+    def code(self, code):
+        self.code_path.write_text(code, encoding="utf-8")
+        output = self.call("--raw", "run-code", "--filename", str(self.code_path.resolve()))
+        try:
+            return json.loads(output)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("CLI did not return JSON: " + output) from exc
+
+    def upload(self, selector, path):
+        # CLI owns the intercepted chooser. Native setFiles in run-code leaves it pending.
+        if not Path(path).is_file():
+            raise FileNotFoundError(path)
+        output = self.call("click", selector)
+        if "[File chooser]" not in output:
+            raise RuntimeError("Upload click did not open a CLI file chooser")
+        self.call("upload", str(Path(path).resolve()))
+
+    def select_target(self, urls):
+        listing = self.call("tab-list")
+        tabs = re.findall(r"^- (\d+): (.*?)\((https?://[^\s)]+)\)\s*$", listing, re.M)
+        matches = [tab for tab in tabs if tab[2].rstrip('/') in {url.rstrip('/') for url in urls}]
+        if any('(current)' in tab[1] for tab in matches):
+            return
+        if len(matches) != 1:
+            raise RuntimeError("No unique matching website tab")
+        self.call("tab-select", matches[0][0])
+
+    def discard(self, edit_url):
+        listing = self.call("tab-list")
+        current = re.search(r"^- (\d+): \(current\).*\((https?://[^\s)]+)\)", listing, re.M)
+        if not current or current[2] != edit_url:
+            raise RuntimeError("Cannot discard: current tab is not the expected editor")
+        # Keep the browser and its session cookies alive when cancelling the only tab.
+        self.call("tab-new", edit_url)
+        self.call("tab-close", current[1])
+        return self.code('async page => ({url: page.url(), editor: await page.locator("#editor").count()})')
+
+
+def run_sync(session, action, preflight):
+    build_code(action, "sync", preflight, Path("unused"))  # Validate the prepared helper hash.
+    helper = preflight["preload_script"].split("\nvar dbCodeBookSyncPreflightTab =", 1)[0]
+    payload = action["payload"]
+    state = {"phase": "prepare"}
+    submitted = False
+    started = time.monotonic()
+    session.deadline = started + 60
+
+    def step():
+        script = ("async page => { const downloadTarget = null;\n" + ADAPTER + helper
+                  + "\nconst tab = await resolveDbCodeBookTab(" + json.dumps(action["existing_tab_match"]) + ");"
+                  + "\nreturn await syncDbCodeBookPost(tab," + json.dumps(payload) + ","
+                  + json.dumps(state) + "); }")
+        return session.code(script)
+
+    try:
+        session.select_target(action["existing_tab_match"])
+        state = step()
+        session.upload("#content-import-input", payload["note"])
+        state = step()
+        for attachment in payload["attachments"][state["keep"]:]:
+            session.upload("#documents-sidebar-input", attachment["path"])
+        # A failed submit call may already have written remotely; never retry or discard it.
+        submitted = True
+        return step()
+    except Exception as exc:
+        session.deadline = None  # Recovery is disclosed separately, not a second submission.
+        result = {"ok": False, "status": "SUBMISSION_UNCERTAIN" if submitted else "SYNC_FAILED",
+                  "error": str(exc), "phase": state["phase"],
+                  "browser_elapsed_ms": round((time.monotonic() - started) * 1000),
+                  "recovery_attempted": False, "recovery_confirmed": False}
+        if not submitted and state["phase"] != "prepare":
+            result["recovery_attempted"] = True
+            try:
+                restored = session.discard(payload["edit_url"])
+                result["recovery_confirmed"] = restored == {"url": payload["edit_url"], "editor": 1}
+            except Exception as recovery:
+                result["recovery_error"] = str(recovery)
+        return result
+    finally:
+        session.deadline = None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--action", required=True, type=Path)
@@ -98,6 +200,12 @@ def main() -> None:
         raise RuntimeError("npx was not found")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     target = args.out.parent / ("download-" + action.get("attempt_id", "unused") + ".zip")
+    if args.mode == "sync":
+        payload = run_sync(Session(args.session, args.session_workdir, args.out.with_suffix(".browser.js")),
+                           action, preflight)
+        args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(payload, ensure_ascii=False))
+        raise SystemExit(0 if payload.get("ok") else 1)
     code = build_code(action, args.mode, preflight, target)
     code_path = args.out.with_suffix(".browser.js")
     code_path.write_text(code, encoding="utf-8")

@@ -146,7 +146,7 @@ def validate_full_definition_completion(
     closed_roles = {
         review.get("role")
         for review in report.get("reviews", [])
-        if review.get("closed") and not review.get("unfinished_turns")
+        if review_lifecycle_complete(review)
     }
     for role, review in report.get("stage_reviews", {}).items():
         if (review.get("mode") == "isolated" or review.get("reused_from")) and review.get("status") == "pass":
@@ -251,10 +251,20 @@ def stage_model(declared: str, started_at: str) -> dict[str, Any]:
     return {"model": "", "model_source": "unavailable"}
 
 
+def review_lifecycle_complete(review):
+    if review.get("unfinished_turns"):
+        return False
+    if review.get("closed"):
+        return True
+    rounds = review.get("rounds", [])
+    return bool(review.get("close_unavailable") and rounds and rounds[-1].get("outcome") == "completed")
+
+
 def read_review_log(log_path: Path, role: str) -> dict[str, Any]:
     """Read one explicitly selected agent log, never the whole session archive."""
     meta = None
     models = []
+    contexts = {}
     turns = {}
     with log_path.open(encoding="utf-8-sig") as stream:
         for line in stream:
@@ -263,6 +273,7 @@ def read_review_log(log_path: Path, role: str) -> dict[str, Any]:
             if event.get("type") == "session_meta" and meta is None:
                 meta = payload
             elif event.get("type") == "turn_context":
+                contexts[payload.get("turn_id")] = {"model": payload.get("model"), "effort": payload.get("effort")}
                 model = payload.get("model")
                 if model and model not in models:
                     models.append(model)
@@ -294,6 +305,7 @@ def read_review_log(log_path: Path, role: str) -> dict[str, Any]:
     rounds = sorted(turns.values(), key=lambda item: parse_time(item["started_at"]))
     prior_end = None
     for item in rounds:
+        item.update(contexts.get(item["turn_id"], {"model": None, "effort": None}))
         item["elapsed_seconds"] = (elapsed_seconds(item["started_at"], item["finished_at"])
                                    if item["finished_at"] else None)
         item["gap_before_seconds"] = (elapsed_seconds(prior_end, item["started_at"])
@@ -318,9 +330,13 @@ def command_review_import(args: argparse.Namespace) -> dict[str, Any]:
     review = read_review_log(args.log, args.role)
     if args.closed and review["unfinished_turns"]:
         raise SystemExit("审核日志仍有未结束轮次，不能登记为已关闭。")
+    limitation = getattr(args, "close_unavailable", None)
+    if limitation and (not limitation.strip() or review["unfinished_turns"] or review["rounds"][-1].get("outcome") != "completed"):
+        raise SystemExit("缺少关闭工具的例外只适用于日志确认已完成的审核，并须说明工具限制。")
     reviews = report.setdefault("reviews", [])
     prior = next((item for item in reviews if item["agent_id"] == review["agent_id"]), None)
     review["closed"] = bool(args.closed or (prior and prior.get("closed")))
+    review["close_unavailable"] = limitation or (prior or {}).get("close_unavailable")
     if review["unfinished_turns"]:
         review["closed"] = False
     review["created_during_run"] = parse_time(review["created_at"]) >= parse_time(report["started_at"])
@@ -432,7 +448,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- 状态：{RUN_STATUS[report['status']]}",
         f"- 开始：{report['started_at']}",
         f"- 结束：{finished_at or '尚未结束'}",
-        f"- 总耗时：{duration_text(total)}（{total:.3f} 秒）",
+        f"- 报告计时区间：{duration_text(total)}（{total:.3f} 秒；截至报告收口，不含之后的回复时间）",
         f"- Bug：{bug_count} 个；异常：{abnormal_count} 个；等待：{wait_count} 个；未解决：{open_count + pending_count} 个（仍阻断交付 {open_count} 个，已恢复但根因待修复 {pending_count} 个）",
         "",
         "## 环节耗时",
@@ -456,7 +472,7 @@ def render_markdown(report: dict[str, Any]) -> str:
                     name=stage["name"],
                     mode=STAGE_MODE.get(stage.get("mode"), "未分类"),
                     role=stage["role"],
-                    model=stage.get("model") or "未核实",
+                    model=(stage.get("model") or "未核实") + " / " + (stage.get("model_evidence", {}).get("effort") or "未核实"),
                     status=STAGE_STATUS[stage["status"]],
                     duration=duration_text(duration),
                     summary=summary.replace("|", "\\|"),
@@ -480,16 +496,25 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"已登记 {len(reviews)} 个独立会话，其中本次报告期间新建 {sum(r['created_during_run'] for r in reviews)} 个；"
             f"共处理 {sum(r['turn_count'] for r in reviews)} 轮；未登记关闭 {sum(not r['closed'] for r in reviews)} 个。",
             "运行时间来自子智能体日志，不是纯模型推理时间；轮次间隔包括主笔处理、讨论及其它工作，不能全部称为审核等待或主笔修改。历史复盘不计入本次任务总耗时。",
-            "", "| 角色 | 名称 | 轮次 | 已结束轮次运行时间 | 轮次间隔 | 收口 |",
-            "| --- | --- | ---: | ---: | ---: | --- |",
+            "", "| 角色 | 名称 | 实际模型 / 推理档位 | 轮次 | 已结束轮次运行时间 | 轮次间隔 | 收口 |",
+            "| --- | --- | --- | ---: | ---: | ---: | --- |",
         ])
         for review in reviews:
-            lines.append(f"| {review['role']} | {review['nickname']} | {review['turn_count']} | "
+            models = list(dict.fromkeys(f"{r.get('model') or '未核实'} / {r.get('effort') or '未核实'}" for r in review.get("rounds", [])))
+            lifecycle = '已关闭' if review['closed'] else ('审核已完成；宿主无关闭工具' if review_lifecycle_complete(review) else '未登记关闭')
+            lines.append(f"| {review['role']} | {review['nickname']} | {'; '.join(models)} | {review['turn_count']} | "
                          f"{duration_text(review['running_seconds'])} | "
                          f"{duration_text(review['between_rounds_seconds'])} | "
-                         f"{'已关闭' if review['closed'] else '未登记关闭'} |")
+                         f"{lifecycle} |")
+            if review.get("close_unavailable"):
+                lines.append(f"关闭限制（{review['nickname']}）：{review['close_unavailable']}")
     if report.get("summary"):
         lines.extend(["", "## 执行结果", "", *report["summary"]])
+    if report.get("turn_timing"):
+        timing = report["turn_timing"]
+        lines.extend(["", "## 任务轮次实耗", "",
+                      f"原始任务日志：{timing['started_at']} 至 {timing['finished_at']}，共 {duration_text(timing['elapsed_seconds'])}（{timing['elapsed_seconds']:.3f} 秒）。",
+                      f"报告初始化前 {timing['before_report_seconds']:.3f} 秒；报告收口后 {timing['after_report_seconds']:.3f} 秒。两者不是某个业务步骤的纯操作时间。"])
     if report.get("stage_reviews"):
         lines.extend(["", "## 环节审核交接", ""])
         for role, review in report["stage_reviews"].items():
@@ -674,6 +699,32 @@ def command_issue_amend(args: argparse.Namespace) -> dict[str, Any]:
     return {"ok": True, "issue_number": args.issue_number}
 
 
+def command_turn_timing(args):
+    report_path, markdown_path = paths(args.process_dir)
+    report = load(report_path)
+    if report["status"] == "running":
+        raise SystemExit("任务轮次结束后才导入完整耗时，不估算尚未完成的时间。")
+    start = end = None
+    with args.log.open(encoding="utf-8-sig") as stream:
+        for line in stream:
+            event = json.loads(line)
+            payload = event.get("payload", {})
+            if event.get("type") != "event_msg" or payload.get("turn_id") != args.turn_id:
+                continue
+            if payload.get("type") == "task_started":
+                start = event["timestamp"]
+            elif payload.get("type") in {"task_complete", "turn_aborted"}:
+                end = event["timestamp"]
+    if not start or not end or not (parse_time(start) <= parse_time(report["started_at"]) <= parse_time(report["finished_at"]) <= parse_time(end)):
+        raise SystemExit("该完整任务轮次不包含报告计时区间，不能混用两次任务的耗时。")
+    report["turn_timing"] = {"log": str(args.log.resolve()), "turn_id": args.turn_id,
+        "started_at": start, "finished_at": end, "elapsed_seconds": elapsed_seconds(start, end),
+        "before_report_seconds": elapsed_seconds(start, report["started_at"]),
+        "after_report_seconds": elapsed_seconds(report["finished_at"], end)}
+    save(report_path, markdown_path, report)
+    return {"ok": True, **report["turn_timing"]}
+
+
 def command_finish(args: argparse.Namespace) -> dict[str, Any]:
     report_path, markdown_path = paths(args.process_dir)
     report = load(report_path)
@@ -681,7 +732,7 @@ def command_finish(args: argparse.Namespace) -> dict[str, Any]:
     if running and running != ["website_closure"]:
         raise SystemExit("仍有执行中的环节：" + ", ".join(running))
     if args.status in ("completed", "completed_with_issues"):
-        if any(not review.get("closed") for review in report.get("reviews", [])):
+        if any(not review_lifecycle_complete(review) for review in report.get("reviews", [])):
             raise SystemExit("仍有审核会话未登记关闭；先关闭不再需要的会话并更新记录。")
         if any(issue["status"] == "open" for issue in report["issues"]):
             raise SystemExit("仍有未解决的问题；不能标记完成。")
@@ -916,7 +967,13 @@ def build_parser() -> argparse.ArgumentParser:
     review_parser.add_argument("--role", required=True)
     review_parser.add_argument("--closed", action="store_true",
                                help="Use only after the agent close tool succeeded.")
+    review_parser.add_argument("--close-unavailable", help="Actual host/tool limitation; requires a completed final review turn.")
     review_parser.set_defaults(func=command_review_import)
+    turn_timing = subparsers.add_parser("turn-timing")
+    turn_timing.add_argument("--process-dir", required=True)
+    turn_timing.add_argument("--log", required=True, type=Path)
+    turn_timing.add_argument("--turn-id", required=True)
+    turn_timing.set_defaults(func=command_turn_timing)
     for name in ("review-start", "review-result", "review-check"):
         stage_review = subparsers.add_parser(name)
         stage_review.add_argument("--process-dir", required=True)

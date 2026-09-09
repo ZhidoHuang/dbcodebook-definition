@@ -278,7 +278,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
     events = [
         {"type": "session_meta", "payload": {"id": "agent-1", "timestamp": "2026-01-01T00:00:00+00:00",
          "source": {"subagent": {"thread_spawn": {"parent_thread_id": "parent", "agent_nickname": "Reviewer"}}}}},
-        {"type": "turn_context", "payload": {"model": "fixture-model"}},
+        {"type": "turn_context", "payload": {"model": "fixture-model", "effort": "high", "turn_id": "one"}},
         {"timestamp": "2026-01-01T00:00:00+00:00", "type": "event_msg",
          "payload": {"type": "task_started", "turn_id": "copied-parent",
                      "started_at": 1767225540}},
@@ -298,6 +298,12 @@ with tempfile.TemporaryDirectory() as temp_dir:
         assert imported["turn_count"] == 2
         assert imported["running_seconds"] == 15
         assert imported["between_rounds_seconds"] == 60
+    evidence = execution_report.read_review_log(log, "logic")
+    assert evidence["rounds"][0]["model"] == "fixture-model"
+    assert evidence["rounds"][0]["effort"] == "high"
+    assert evidence["rounds"][1]["model"] is None
+    run("review-import", "--process-dir", temp_dir, "--log", str(log), "--role", "logic",
+        "--close-unavailable", "Host has no close tool", ok=False)
     assert "未登记关闭" in run("finish", "--process-dir", temp_dir,
                              "--status", "completed", ok=False).stderr
     run("review-import", "--process-dir", temp_dir, "--log", str(log), "--role", "logic", "--closed")
@@ -312,6 +318,16 @@ with tempfile.TemporaryDirectory() as temp_dir:
                             "--log", str(log), "--role", "logic", "--closed", ok=False).stderr
     unfinished = execution_report.read_review_log(log, "logic")
     assert unfinished["unfinished_turns"] == 1 and unfinished["running_seconds"] == 10
+    run("review-import", "--process-dir", temp_dir, "--log", str(log), "--role", "logic",
+        "--close-unavailable", "Host has no close tool", ok=False)
+    log.write_text("\n".join(json.dumps(event) for event in events[:-2]) + "\n", encoding="utf-8")
+    run("review-import", "--process-dir", temp_dir, "--log", str(log), "--role", "logic",
+        "--close-unavailable", "Host has no close tool")
+    run("finish", "--process-dir", temp_dir, "--status", "completed")
+    finished = json.loads((root / "execution_report.json").read_text(encoding="utf-8"))
+    assert not finished["reviews"][0]["closed"]
+    markdown = (root / "执行报告.md").read_text(encoding="utf-8")
+    assert "审核已完成；宿主无关闭工具" in markdown and "fixture-model / high" in markdown
     log.write_text('{"type":"session_meta","payload":{"source":"cli","id":"parent"}}\n', encoding="utf-8")
     try:
         execution_report.read_review_log(log, "logic")
@@ -415,5 +431,24 @@ with tempfile.TemporaryDirectory() as temp_dir:
     assert [s["elapsed_seconds"] for s in final["stages"]] == [300, 2.55, 153.45]
     assert "456.000" in (process / "执行报告.md").read_text(encoding="utf-8")
     run("website-finish", "--process-dir", str(process), "--result", str(path), ok=False)
+
+with tempfile.TemporaryDirectory() as temp_dir:
+    from unittest.mock import patch
+    root = Path(temp_dir)
+    report = {"status": "completed", "started_at": "2026-09-09T10:00:25Z", "finished_at": "2026-09-09T10:02:00Z"}
+    log = root / "task.jsonl"
+    log.write_text('\n'.join(json.dumps(event) for event in [
+        {"type": "event_msg", "timestamp": "2026-09-09T10:00:00Z", "payload": {"type": "task_started", "turn_id": "selected"}},
+        {"type": "event_msg", "timestamp": "2026-09-09T10:02:50Z", "payload": {"type": "task_complete", "turn_id": "selected"}},
+    ]), encoding="utf-8")
+    args = execution_report.argparse.Namespace(process_dir=temp_dir, log=log, turn_id="selected")
+    with patch.object(execution_report, "load", return_value=report), patch.object(execution_report, "save"):
+        timing = execution_report.command_turn_timing(args)
+        assert timing["elapsed_seconds"] == 170 and timing["before_report_seconds"] == 25 and timing["after_report_seconds"] == 50
+        args.turn_id = "wrong"
+        expect_system_exit(lambda: execution_report.command_turn_timing(args), "不包含报告")
+        args.turn_id = "selected"
+        report["status"] = "running"
+        expect_system_exit(lambda: execution_report.command_turn_timing(args), "轮次结束后")
 
 print("EXECUTION_REPORT_TEST_PASS")

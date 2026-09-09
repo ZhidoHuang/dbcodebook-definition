@@ -629,6 +629,8 @@ async function selectDatabase(database, options) {
 '''.replace("CATEGORY_CODE", "const categoryOptions =" + category_code)
             subprocess.run([node, "-e", category_test], check=True)
             attachment_code = 'const sidebar = ' + preload_script.split('const sidebar = ', 1)[1].split('timings.attachments_ms =', 1)[0]
+            attachment_code = attachment_code.replace('    }\n    const sidebar = tab.playwright.locator("#documents-sidebar-list");', '')
+            attachment_code = 'let keep; const phase = null;\n' + attachment_code
             attachment_test = r'''
 const assert = require("node:assert/strict");
 async function run(initial, previousResult, changes = {}) {
