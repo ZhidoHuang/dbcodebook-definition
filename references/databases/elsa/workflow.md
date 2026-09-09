@@ -4,7 +4,7 @@
 
 适用范围：通过 dbCodeBook 为 ELSA 发现候选、裁决研究口径、下载 raw、编写正式 R，并完成正式成果与机器闭环。
 
-本文件只保留 ELSA 特有规则。跨数据库的命名、公开 R、`Criteria`、摘要导读、小book提示、输出合同和机器检查，以 [common-materials.md](../../rules/common-materials.md) 为唯一来源；数据库身份和文件族见 [profile.md](profile.md)。不得从 CHARLS 流程复制题号、波次、编码、前缀或主题经验。
+本文件只保留 ELSA 特有规则。跨数据库的命名、公开 R、`Criteria`、摘要导读、小book提示、输出合同和机器检查，按 [共同规则索引](../../rules/common-materials.md) 进入对应环节，不重复定义；数据库身份和文件族见 [profile.md](profile.md)。不得从 CHARLS 流程复制题号、波次、编码、前缀或主题经验。
 
 ## 1. 任务与目录
 
@@ -125,15 +125,10 @@
 - db、codebook、analysis_db、analysis_codebook 四表。
 - QA、definition HTML、detail HTML 和定义笔记。
 
-闭环至少完成：
+通用执行、审核、返修范围和发布状态统一见 [验收流程](../../rules/validation.md)。ELSA 的结果检查显式使用 --db elsa；不能继承 CHARLS 的默认参数。
 
-1. 正式 runner 从头运行，日志 exit code 为 0。
-2. 固定自检显式使用 `--db elsa`，核对文件清单、raw/header/codebook、xlsx、analysis 列、禁止产物和唯一日志。
-3. 生成机器可读 evidence manifest，枚举本轮实际引用的截图、recover 报告、成功日志和关键核对报告，并记录存在、大小、可读性；图片另记可解码性。
-4. 生成 machine closure JSON，记录 transaction、raw/analysis 行数、变量顺序、mapping、Wave 覆盖、特殊编码、来源重叠核对和自检结果。
-5. 依据 [validation.md](../../rules/validation.md) 判断是否需要独立验收；无风险时记录 `independent_validation_required=false`。
-6. 机器闭环通过后，按公共规范先由作者完成 `readability_audit.json` 的八项全文文案审阅，再由不同审核角色只读最终笔记并完成 `reader_comprehension_review.json`；正式笔记、正式 R、analysis_db 或 analysis_codebook 变化后，两份审阅都必须重做。
-7. `check_definition_readability.py check` 验证纯文案、作者审阅和四份成果属于同一版本，并生成当前版本的 `publish_readiness.json`；通过只表示可以同步网站供用户检查。
-8. 当前主题到达可发布状态后，进入网站检查同步阶段，按 [write-boundaries.md](../../rules/write-boundaries.md) 完成 `verify-ready`、网站提交、主题索引和验收台账更新；网站返回文章详情页后状态记为 `USER_REVIEW_PENDING`，发布后不再重复检查页面。只有用户确认后才算完成。
+ELSA 另需保留已有证据清单和机器闭环记录：实际引用的截图、原始包恢复报告、成功日志、关键核对报告的存在与可读性；transaction、raw/analysis 行数、变量顺序、完整 File 身份、Wave 覆盖、负值和重叠来源比较。结果不明时回到对应研究口径，不强行合并。
 
-机器闭环只报告真实证据，不要求另写叙述型过程卡或历史复盘。遇到新问题时，先解决当前主题；只有用户确认具有通用性后，才修改公共流程。
+生成器适配边界见 [成果生成](../../rules/stages/05-generate.md#数据库适配边界)。最终笔记未变时是否保留读者审核，完全按共同修正规则；不因附件或 R 后台变化无条件重做两轮。
+
+机器闭环只报告真实证据，不要求另写叙述型过程卡或历史复盘。具体主题问题不自动写成公共规则。

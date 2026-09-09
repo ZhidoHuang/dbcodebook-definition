@@ -399,6 +399,11 @@ if ($topicLeaf -match '^(\d{3})_') {
   if ($LASTEXITCODE -ne 0) {
     throw "Reader copy content check failed; formal R was not executed."
   }
+  & $resolvedPython @pythonArguments -X utf8 (Join-Path $PSScriptRoot "check_definition_readability.py") `
+    check-impact --formal-dir $resolvedWorkDir --process-dir $ProcessDir --topic-id $topicId
+  if ($LASTEXITCODE -ne 0) {
+    throw "Definition change impact check failed; formal R was not executed."
+  }
   $env:DBCODEBOOK_DEFINITION_PYTHON = $resolvedPython
   if ($Config) { $env:DBCODEBOOK_DEFINITION_CONFIG = $configPath }
 
@@ -437,6 +442,14 @@ if ($PreflightOnly) {
   }
   Write-Output ("Total: {0}" -f (Format-Duration $overallWatch.Elapsed.TotalSeconds))
   exit 0
+}
+
+if ($topicLeaf -match '^\d{3}_') {
+  & $resolvedPython @pythonArguments -X utf8 (Join-Path $PSScriptRoot "execution_report.py") `
+    review-check --process-dir $ProcessDir --role "公开 R 复核"
+  if ($LASTEXITCODE -ne 0) {
+    throw "Current public R review is missing or stale; formal R was not executed."
+  }
 }
 
 if ([string]::IsNullOrWhiteSpace($ArchiveDir)) {

@@ -96,6 +96,21 @@ def complete_impact(checker, formal: Path, process: Path) -> None:
     checker.write_json(impact_path, impact)
 
 
+def initialize_fixture_audit(checker, formal, process, topic, files, **kwargs):
+    # Only an audit handoff fixture; real generation is verified in other tests.
+    source = process / checker.SOURCE_RECORD_NAME
+    if not source.exists():
+        checker.write_json(source, {"schema_version": 1})
+    checker.write_json(process / checker.RESULT_CHECK_NAME, {
+        "ok": True, "scope": "complete", "status": "MACHINE_CHECK_PASS",
+        "checks": [{"ok": True, "check": "isolated audit fixture"}],
+        "artifacts": {name: checker.sha256_file(formal / name) for name in files.values()},
+        "source_sha256": checker.sha256_file(source),
+        "checker_sha256": checker.sha256_file(REPO_ROOT / "scripts/check_definition_output.py"),
+    })
+    return checker.initialize_audit(formal, process, topic, files, **kwargs)
+
+
 def complete_audit(checker, audit_path: Path) -> None:
     audit = checker.json.loads(audit_path.read_text(encoding="utf-8"))
     audit["status"] = checker.PASS_STATUS
@@ -386,7 +401,7 @@ def main() -> int:
         )
 
         complete_impact(checker, formal, process)
-        checker.initialize_audit(formal, process, "025", files)
+        initialize_fixture_audit(checker, formal, process, "025", files)
         audit_path = process / checker.AUDIT_NAME
         complete_audit(checker, audit_path)
         reader_init = checker.initialize_reader_review(
@@ -502,7 +517,7 @@ def main() -> int:
         ]
         preload_script = prepared_action["preload_script"]
         assert 'chooser.setFiles([filePath])' in preload_script
-        assert 'for (const attachment of payload.attachments)' in preload_script
+        assert 'for (const attachment of payload.attachments.slice(keep))' in preload_script
         assert 'const titleDeadline = Date.now() + 5000' in preload_script
         assert 'titleValue.toLocaleLowerCase().includes(String(part).toLocaleLowerCase())' in preload_script
         assert 'await title.fill(payload.desired_title)' in preload_script
@@ -608,6 +623,40 @@ async function selectDatabase(database, options) {
 })().catch(error => { console.error(error); process.exitCode = 1; });
 '''.replace("CATEGORY_CODE", "const categoryOptions =" + category_code)
             subprocess.run([node, "-e", category_test], check=True)
+            attachment_code = 'const sidebar = ' + preload_script.split('const sidebar = ', 1)[1].split('timings.attachments_ms =', 1)[0]
+            attachment_test = r'''
+const assert = require("node:assert/strict");
+async function run(initial, previousResult, changes = {}) {
+  let names = [...initial];
+  const actions = [];
+  const payload = {create: false, post_url: "post/221", previous_sync: previousResult,
+    attachments: [{name: "db.xlsx", path: "db.xlsx", sha256: "db-new"},
+                  {name: "book.xlsx", path: "book.xlsx", sha256: "book-new"}], ...changes};
+  const sidebar = { innerText: async () => names.join("\n"), locator: () => ({
+    count: async () => names.length,
+    last: () => ({click: async () => {actions.push("delete:" + names.pop());}})
+  })};
+  const tab = {playwright: {locator: () => sidebar}};
+  async function chooseVisibleFile(tab, selector, path) {actions.push("upload:" + path); names.push(path);}
+  ATTACHMENT_CODE
+  return {actions, names, keep};
+}
+(async () => {
+  const signatures = [{name: "db.xlsx", sha256: "db-new"}, {name: "book.xlsx", sha256: "book-new"}];
+  const previous = {post_url: "post/221", attachment_signatures: signatures};
+  assert.deepEqual((await run(["db.xlsx", "book.xlsx"], previous)).actions, []);
+  const secondChanged = {post_url: "post/221", attachment_signatures: [signatures[0], {...signatures[1], sha256:"old"}]};
+  assert.deepEqual((await run(["db.xlsx", "book.xlsx"], secondChanged)).actions, ["delete:book.xlsx", "upload:book.xlsx"]);
+  const firstChanged = {post_url: "post/221", attachment_signatures: [{...signatures[0], sha256:"old"}, signatures[1]]};
+  const replaced = await run(["db.xlsx", "book.xlsx"], firstChanged);
+  assert.deepEqual(replaced.names, ["db.xlsx", "book.xlsx"]);
+  assert.equal(replaced.actions.length, 4);
+  assert.equal((await run(["db.xlsx", "book.xlsx"], {...previous,post_url:"post/other"})).keep, 0);
+  assert.equal((await run(["book.xlsx", "db.xlsx"], previous)).keep, 0);
+  console.log("ATTACHMENT_REUSE_PASS");
+})().catch(error => {console.error(error);process.exitCode=1;});
+'''.replace("ATTACHMENT_CODE", attachment_code.replace('const sidebar = tab.playwright.locator("#documents-sidebar-list");', ''))
+            subprocess.run([node, "-e", attachment_test], check=True)
         else:
             print("SKIP category JavaScript runtime fixture: Node.js unavailable")
         expect_failure(
@@ -675,7 +724,7 @@ async function selectDatabase(database, options) {
         assert report_path.read_bytes() == report_bytes_before_failed_preflight
         (formal / files["note"]).write_bytes(unchanged[files["note"]])
 
-        checker.initialize_audit(formal, process, "025", files, overwrite=True)
+        initialize_fixture_audit(checker, formal, process, "025", files, overwrite=True)
         complete_audit(checker, audit_path)
         audit = checker.json.loads(audit_path.read_text(encoding="utf-8"))
         public_r_scope = next(
@@ -690,7 +739,7 @@ async function selectDatabase(database, options) {
             "public R code walkthrough is required",
         )
 
-        checker.initialize_audit(formal, process, "025", files, overwrite=True)
+        initialize_fixture_audit(checker, formal, process, "025", files, overwrite=True)
         complete_audit(checker, audit_path)
         audit = checker.json.loads(audit_path.read_text(encoding="utf-8"))
         audit["scopes"] = audit["scopes"][:-1]
@@ -700,7 +749,7 @@ async function selectDatabase(database, options) {
             "scopes mismatch",
         )
 
-        checker.initialize_audit(formal, process, "025", files, overwrite=True)
+        initialize_fixture_audit(checker, formal, process, "025", files, overwrite=True)
         complete_audit(checker, audit_path)
         audit = checker.json.loads(audit_path.read_text(encoding="utf-8"))
         audit["unresolved_issues"] = ["文献边界仍未核清"]
@@ -710,7 +759,7 @@ async function selectDatabase(database, options) {
             "unresolved_issues must be empty",
         )
 
-        checker.initialize_audit(formal, process, "025", files, overwrite=True)
+        initialize_fixture_audit(checker, formal, process, "025", files, overwrite=True)
         complete_audit(checker, audit_path)
         checker.initialize_reader_review(
             formal, process, "025", files["note"]
@@ -730,7 +779,7 @@ async function selectDatabase(database, options) {
         reader_path = process / checker.READER_REVIEW_NAME
         original_reader = reader_path.read_bytes()
         (formal / files["analysis_db"]).write_bytes(b"changed data fixture")
-        result = checker.initialize_audit(
+        result = initialize_fixture_audit(checker,
             formal, process, "025", files, overwrite=True, preserve_reader=True
         )
         assert result["reader_review_preserved"]
@@ -743,7 +792,7 @@ async function selectDatabase(database, options) {
         original_note = note_path.read_bytes()
         note_path.write_bytes(original_note + b"\nchanged reader text\n")
         expect_failure(
-            lambda: checker.initialize_audit(
+            lambda: initialize_fixture_audit(checker,
                 formal, process, "025", files, overwrite=True, preserve_reader=True
             ),
             "final note changed",

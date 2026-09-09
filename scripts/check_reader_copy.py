@@ -117,8 +117,73 @@ def read_copy(path, expected_vars=None):
     insight = parts["小book提示"]
     if normalized(insight) == NO_INSIGHT:
         insight = ""
-    return {"summary": parts["摘要导读"], "criteria": criteria,
-            "insight": insight, "references": parts["参考资料说明"]}
+    result = {"summary": parts["摘要导读"], "criteria": criteria,
+              "insight": insight, "references": parts["参考资料说明"]}
+    if "原始问卷" in parts:
+        result["questionnaire"] = read_questionnaire_copy(parts["原始问卷"])
+    return result
+
+
+def read_questionnaire_copy(text):
+    periods = {}
+    for label, body in sections(text, 3).items():
+        period = re.sub(r"[^A-Za-z0-9]+", "_", label).strip("_")
+        if not period or period in periods:
+            raise ValueError("原始问卷时期标识为空或重复：" + label)
+        design = re.split(r"(?m)^#### ", body, maxsplit=1)[0].strip()
+        if not normalized(design):
+            raise ValueError("原始问卷缺少时期设计说明：" + label)
+        questions = []
+        for question_id, content in sections(body, 4).items():
+            question = {"id": question_id, "text": "", "condition": "", "options": [], "instructions": []}
+            text_lines = []
+            for line in content.splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                if line.startswith("适用对象："):
+                    if question["condition"]:
+                        raise ValueError("重复的题目适用对象：" + question_id)
+                    question["condition"] = line.removeprefix("适用对象：").strip()
+                elif line.startswith("跳题说明："):
+                    question["instructions"].append(line.removeprefix("跳题说明：").strip())
+                elif line.startswith("- "):
+                    option = re.split(r"\s*(?:→|->)\s*", line[2:], maxsplit=1)
+                    question["options"].append({"text": option[0], "jump": "→ " + option[1] if len(option) > 1 else ""})
+                else:
+                    text_lines.append(line)
+            question["text"] = "\n".join(text_lines)
+            if not question["text"]:
+                raise ValueError("原始问卷缺少完整题文：" + question_id)
+            questions.append(question)
+        if not questions:
+            raise ValueError("原始问卷缺少题目：" + label)
+        periods[period] = {"label": label, "design": design, "questions": questions}
+    if not periods:
+        raise ValueError("原始问卷没有时期内容")
+    return periods
+
+
+def questionnaire_text(period):
+    parts = [period["label"], "问卷设计", period["design"]]
+    for question in period["questions"]:
+        parts.extend([question["id"], question["text"]])
+        if question["condition"]:
+            parts.append("（" + question["condition"] + "）")
+        parts.extend(option["text"] + option["jump"] for option in question["options"])
+        parts.extend(question["instructions"])
+    return "\n".join(parts)
+
+
+def questionnaire_content(markup):
+    root = Document(markup).root
+    periods = {}
+    for element in root.find(lambda e: bool(e.attrs.get("data-raw-source-period"))):
+        key = element.attrs["data-raw-source-period"]
+        if key in periods:
+            raise ValueError("成品有重复的原始问卷时期：" + key)
+        periods[key] = element.text()
+    return periods
 
 
 def require_equal(expected, actual, location):
@@ -165,6 +230,15 @@ def compare_content(copy, actual, *, source=False):
             raise ValueError(f"Criteria/{variable} 栏目丢失或增加：应为{list(fields)}，实际{list(rendered)}")
         for field, text in fields.items():
             require_equal(text, rendered[field], f"Criteria/{variable}/{field}")
+    if "questionnaire" in copy:
+        rendered = actual.get("questionnaire", {})
+        if isinstance(rendered, str):
+            rendered = questionnaire_content(rendered)
+        if list(copy["questionnaire"]) != list(rendered):
+            raise ValueError("原始问卷的时期或顺序与文案不一致")
+        for period, value in copy["questionnaire"].items():
+            actual_text = questionnaire_text(rendered[period]) if isinstance(rendered[period], dict) else rendered[period]
+            require_equal(questionnaire_text(value), actual_text, "原始问卷/" + period)
     return {"ok": True, "variables": list(copy["criteria"]), "checked": ["summary", "criteria", "insight", "references"]}
 
 
@@ -197,7 +271,8 @@ def note_content(text):
     # Generated detail HTML is not part of the reference prose.
     references = re.split(r"<style\b|<table\b", references, maxsplit=1, flags=re.I)[0]
     return {"summary": visible_markup(summary), "criteria": criteria,
-            "insight": insight[0].text() if insight else "", "references": visible_markup(references)}
+            "insight": insight[0].text() if insight else "", "references": visible_markup(references),
+            "questionnaire": questionnaire_content(text)}
 
 
 def validate_note(copy_path, note_path, codebook_path=None):

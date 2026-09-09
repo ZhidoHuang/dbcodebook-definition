@@ -212,6 +212,23 @@ checks <- list(
     "raw5"
   ),
   expect_identical(
+    "definition cards resolve intermediate sources without changing formal mapping",
+    format_definition_card_sources(
+      data.frame(Variable = "result", processed_vars = "raw1, intermediate"),
+      source_display_raw_codebook,
+      data.frame(Variable = "intermediate", processed_vars = "raw2, raw3")
+    ),
+    c(result = "raw1 (file)=raw1, raw2 (file)=raw2, raw3 (file)=raw3")
+  ),
+  expect_error_contains(
+    "cyclic source relationships fail with their path",
+    format_definition_card_sources(
+      data.frame(Variable = c("result", "intermediate"), processed_vars = c("intermediate", "result")),
+      source_display_raw_codebook
+    ),
+    "result -> intermediate -> result"
+  ),
+  expect_identical(
     "linear histogram includes its upper endpoint label",
     grepl(
       "hist-endpoint-label'[^>]*>16</div>",

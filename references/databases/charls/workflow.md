@@ -221,22 +221,9 @@ python <skill-root>/scripts/check_definition_source_record.py `
 
 ## 5. CHARLS 正式 R
 
-### 5.1 开工闸门与通用代码合同
+### 5.1 CHARLS 代码补充
 
-正式 R 开工前，以下内容必须已经由网页探索、官方材料、实际 raw 和必要裁决确定：
-
-1. 研究概念、正式变量和变量关系；
-2. 各周期采用的来源、题义、对象、回顾期和记录方式；
-3. 跨周期来源哪些方面一致、哪些方面不同，以及合并或分开的理由；
-4. 编码分组、跳题、结构性 0、特殊缺失和计算公式；
-5. 已发现的原始题目间矛盾怎样分别忠实保留、记录和披露；
-6. 不存在仍会改变定义结果的未决问题。
-
-正式 R 只解释并实现上述既定方案，不承担寻找规律、比较候选方案或现场决定研究口径的任务。来源选择、合并或区分、编码映射、阈值、跳题、缺失和公式等处理决定必须先于正式代码及其中的验证输出形成；验证只能确认既定判断，不能在运行后首次生成研究口径。发现任一项仍不清楚时，立即退回相应探索或裁决步骤，不用公开代码边写边猜。
-
-如果本轮改变分析变量集合、调查对象、周期、问法、组成关系或缺失处理，还必须先完成 `definition_change_impact.json`。其中每个改变的问卷题组都要指向官方材料和正式成果目录 `文案.md` 中已经写出的代表性原题或明确标注的概括；不能先写 R、生成笔记，再回头补一张影响表。
-
-包头、公开代码边界、读者背景、`recode.chr()`、`recode.num()`、`yyds_coalesce()`、mapping、命名和用户材料统一遵守公共规范，不在本流程复述。
+通用前置条件、固定头部、代码组织和首次预检统一见 [公开 R](../../rules/stages/04-public-r.md)。变更影响先在 [纯文案](../../rules/stages/03-copy.md) 完成，不在本文件另写时序。
 
 CHARLS 补充要求：
 
@@ -258,7 +245,7 @@ CHARLS 补充要求：
 
 ### 5.3 Mapping
 
-`add_mapping()` 追溯到全部参与定义的 raw 来源。中间派生变量可以同时保留，但不能替代 raw 来源；中间变量即使不在 raw codebook 中，也不能因为匹配不到标签而从 `processed_vars` 或 `original_vars` 丢失。
+正式来源关系与中间变量按 [来源命名和三种变量关系](../../rules/stages/02-download.md#来源命名) 处理；字典实现见 [公开 R](../../rules/stages/04-public-r.md)。CHARLS 网站原始身份保留模块括号。
 
 ## 6. 正式输出与用户材料
 
@@ -304,33 +291,13 @@ CHARLS 补充要求：
 
 依赖安装和正式运行分开。只有新环境、缺包或明确需要更新 `dbCodeBookr` 时，才单独运行 `setup_definition_environment.ps1`；正式定义运行期间不联网安装或更新 R 包。
 
-使用当前 Skill 根目录的 `scripts/run_r_definition.ps1`，在 PowerShell 7 中直接读取本机配置并从头正式运行。正常运行已经先检查公开代码合同、已安装包、来源记录、下载代码本和下载凭证，预检通过才进入 R，不需单独重复预检。只有本次目的就是检查运行条件、不生成成果时才加 `-PreflightOnly`。runner 和 checker 都使用当前 Skill 的脚本，验证读取本次正式目录，不调用演示目录、旧仓库或旧临时数据副本。
+预检、只读复核和正式运行的唯一顺序见 [公开 R](../../rules/stages/04-public-r.md) 与 [成果生成](../../rules/stages/05-generate.md)。使用当前 Skill 的脚本和当前正式目录，不调用演示目录或旧数据副本。
 
-正式运行默认最多 30 分钟，日志分别记录静态检查、包检查、来源检查和 R 执行耗时。超时或失败后停止并查看该次错误，不自动重跑；修正明确原因后再由人工发起下一次正式运行。临时片段、环境探针或改写副本不能代替正式运行。
+正式运行默认最多 30 分钟。失败或超时查明原因后再发起，不自动重跑；临时片段不能代替正式运行。
 
 ### 7.3 收口
 
-收口依次完成：
-
-1. 正式 runner 成功，目录只保留一个含退出码 0 的最终日志；
-2. 固定检查器和按改动范围所需的回归/复算通过；
-3. `探索记录.md`、`definition_search_record.json`、恢复报告、自检报告和必要裁决证据存在且可读；
-4. 对最终版运行 `check_definition_readability.py init`，由作者生成绑定当前笔记、正式 R、analysis_db 和 analysis_codebook 哈希的 `readability_audit.json`；作者完成后，再由不同审核角色运行 `init-reader`，只阅读最终笔记并填写 `reader_comprehension_review.json`；
-5. 当前主题任务按通用规范从头到尾通读最终笔记和公开 R，逐项填写八个 scope；发现问题时修改生成源、正式重生，并重新初始化和完整通读，不能复用旧审核；
-6. 运行 `check_definition_readability.py check`，验证纯文案、作者审阅和四份成果属于同一版本；通过只表示当前版本可以同步网站；
-7. 当前主题到达可发布状态后，进入网站检查同步阶段，按 [write-boundaries.md](../../rules/write-boundaries.md) 完成 `verify-ready`、网站提交、主题索引和验收台账更新；数据库流程不复制网站控件、超时、失败恢复或发布后检查规则。网站返回文章详情页后状态记为 `USER_REVIEW_PENDING`；
-8. 报告哪些用户可见表面发生变化，以便宣传任务单独同步；
-9. 用户确认后，把同一主题状态更新为 `COMPLETE`。
-
-默认状态为：
-
-```text
-DISCOVERY -> DEFINITION_READY -> GENERATED -> MACHINE_CHECK_PASS
-          -> AUTHOR_FULL_TEXT_REVIEW -> ORDINARY_READER_REVIEW -> PUBLISH_READY
-          -> USER_REVIEW_PENDING -> COMPLETE
-```
-
-`PUBLISH_READY` 表示作者检查和普通读者检查都已完成，检查器确认纯文案、两份审核记录和四份成果属于同一版本，可以同步网站；它不表示用户已经认可内容。成果变化后的复核和审核保留条件统一执行 [validation.md](../../rules/validation.md) 的“修正后的复核范围”。网站同步后进入 `USER_REVIEW_PENDING`，只有用户确认才进入 `COMPLETE`。机器检查通过只表示事实和结构检查完成，不能代替两轮阅读。
+沿用 [验收流程与修正范围](../../rules/validation.md)，不在数据库流程中另列一套审核、网站操作或状态顺序。当前证据必须与成果对应；未变笔记能否保留读者审核按共同规则。网站同步后更新主题索引、验收台账，等待用户确认，不复审已提交页面。
 
 ## 8. Profile 边界
 

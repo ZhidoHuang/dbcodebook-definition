@@ -14,13 +14,14 @@ import sys
 from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from check_reader_copy import validate_note
+from check_reader_copy import Document, validate_note, normalized
 
 
 AUDIT_NAME = "readability_audit.json"
 READER_REVIEW_NAME = "reader_comprehension_review.json"
 READER_INPUT_NAME = "ordinary_reader_input.md"
 REPORT_NAME = "publish_readiness.json"
+RESULT_CHECK_NAME = "result_check.json"
 IMPACT_NAME = "definition_change_impact.json"
 READER_COPY_NAME = "文案.md"
 SOURCE_RECORD_NAME = "definition_search_record.json"
@@ -222,7 +223,9 @@ def validate_questionnaire_rendering(
     except ValueError:
         fail("questionnaire note path leaves the formal directory")
     parser = QuestionnaireMarkupParser()
-    parser.feed(note_path.read_text(encoding="utf-8-sig"))
+    note_text = note_path.read_text(encoding="utf-8-sig")
+    parser.feed(note_text)
+    document = Document(note_text).root
     sections: dict[str, list[dict]] = {}
     for section in parser.sections:
         keys = {
@@ -308,6 +311,35 @@ def validate_questionnaire_rendering(
                 fail(f"final note period {period} omits options for {question_id}")
             if expected_jumps and line["instruction_count"] < 1:
                 fail(f"final note period {period} omits jump instructions for {question_id}")
+            period_nodes = list(document.find(lambda e: normalized_period(e.attrs.get("data-raw-source-period", "")) == period_key))
+            question_nodes = list(period_nodes[0].find(lambda e: e.attrs.get("data-summary-questionnaire-line") == "true"))
+            node = next(e for e in question_nodes if any(
+                normalized(q.text()) == normalized(question_id)
+                for q in e.find(lambda q: q.attrs.get("data-summary-question-id") == "true")
+            ))
+            options = list(node.find(lambda e: e.attrs.get("data-summary-question-option") == "true"))
+            if item.get("response_type") == "closed_options":
+                expected_text = [normalized(f"{option['value']} {option['label']}") for option in expected_options]
+                if [normalized(option.text()) for option in options] != expected_text:
+                    fail(f"final note period {period} option values/labels/order differ for {question_id}")
+            for jump in expected_jumps:
+                trigger = normalized(jump["when"])
+                destination = normalized(jump["destination"])
+                matching_options = [option for option in options if normalized(option.text()) == trigger]
+                if matching_options:
+                    # An option and its route belong to the same rendered detail row.
+                    rows = list(node.find(lambda e: e.attrs.get("data-summary-question-detail") == "true"
+                                          and any(option is matching_options[0] for option in e.children)))
+                    descriptions = [instruction.text() for row in rows for instruction in row.find(
+                        lambda e: e.attrs.get("data-summary-question-instruction") == "true")]
+                else:
+                    descriptions = [e.text() for e in node.find(lambda e:
+                        e.attrs.get("data-summary-question-instruction") == "true"
+                        or e.attrs.get("data-summary-question-detail-role") == "instruction")
+                        if trigger in normalized(e.text())]
+                target_pattern = r"(?<![A-Za-z0-9_])" + re.escape(destination) + r"(?![A-Za-z0-9_])"
+                if not any(re.search(target_pattern, text) for text in descriptions):
+                    fail(f"final note period {period} route differs for {question_id}: {jump['when']} -> {jump['destination']}")
             rendered_pairs.add((question_id, str(period)))
 
     return {
@@ -525,6 +557,31 @@ def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
             "sha256": sha256_file(copy_path),
         },
     }
+
+
+def validate_result_check(formal_dir: Path, process_dir: Path, artifacts: dict) -> dict:
+    path = process_dir / RESULT_CHECK_NAME
+    if not path.is_file():
+        fail("完整结果检查缺失：先运行输出检查器 --complete，保存 result_check.json")
+    record = json.loads(path.read_text(encoding="utf-8-sig"))
+    if (record.get("ok") is not True or record.get("scope") != "complete"
+            or record.get("status") != "MACHINE_CHECK_PASS"
+            or not record.get("checks") or not all(item.get("ok") is True for item in record["checks"])):
+        fail("result_check.json 不是完整结果检查通过记录")
+    recorded = record.get("artifacts", {})
+    if record.get("checker_sha256") != sha256_file(Path(__file__).with_name("check_definition_output.py")):
+        fail("结果检查程序已经变化，请用当前完整检查重新核对成果")
+    source_path = process_dir / SOURCE_RECORD_NAME
+    if not source_path.is_file() or record.get("source_sha256") != sha256_file(source_path):
+        fail("结果检查的来源方案已变化")
+    for artifact in artifacts.values():
+        if recorded.get(artifact["path"]) != artifact["sha256"]:
+            fail("结果检查不属于当前成果：" + artifact["path"])
+    for name, expected in recorded.items():
+        target = (formal_dir / name).resolve()
+        if target.parent != formal_dir.resolve() or not target.is_file() or sha256_file(target) != expected:
+            fail("结果检查的输入或产物已变化：" + name)
+    return {"path": RESULT_CHECK_NAME, "sha256": sha256_file(path), "scope": "complete"}
 
 
 def normalized_visible_text(text: str) -> str:
@@ -945,6 +1002,7 @@ def initialize_audit(
         role: relative_artifact(formal_dir, artifact_paths[role], role)
         for role in REQUIRED_ARTIFACTS
     }
+    validate_result_check(formal_dir, process_dir, artifacts)
     questionnaire_rendering = validate_questionnaire_rendering(
         formal_dir,
         process_dir,
@@ -1204,9 +1262,11 @@ def validate_audit(
         reviewer,
     )
 
+    result_check = validate_result_check(formal_dir, process_dir, current_hashes)
     result = {
         "ok": True,
         "status": "PUBLISH_READY",
+        "result_check": result_check,
         "topic_id": expected_topic,
         "audited_at": audited_at,
         "reviewer": reviewer,
@@ -1258,6 +1318,7 @@ def verify_existing_readiness(
         ("topic_id", recorded.get("topic_id"), current.get("topic_id")),
         ("audit_sha256", recorded.get("audit_sha256"), current.get("audit_sha256")),
         ("artifacts", recorded.get("artifacts"), current.get("artifacts")),
+        ("result_check", recorded.get("result_check"), current.get("result_check")),
         (
             "change_impact",
             recorded.get("change_impact"),
@@ -1296,6 +1357,11 @@ def verify_existing_readiness(
         ],
         "attachment_location": "侧栏文档",
     }
+    previous_sync = process_dir / "website_sync_result.json"
+    if previous_sync.is_file():
+        previous = json.loads(previous_sync.read_text(encoding="utf-8-sig"))
+        if previous.get("ok") is True and previous.get("status") == "ARTICLE_PAGE_RETURNED":
+            upload["previous_sync"] = previous
     return {
         "ok": True,
         "status": "PUBLISH_READY_VERIFIED",
@@ -1339,7 +1405,8 @@ def build_cua_sync_action(
         fail("--post-id must be a positive integer")
 
     attachments = [
-        {"role": item["role"], "path": item["path"], "name": Path(item["path"]).name}
+        {"role": item["role"], "path": item["path"], "name": Path(item["path"]).name,
+         "sha256": sha256_file(Path(item["path"]))}
         for item in upload["attachments"]
     ]
     expected_title_parts = [topic_id.zfill(3), database, topic_name]
@@ -1371,6 +1438,7 @@ def build_cua_sync_action(
         "note": upload["note"],
         "body_check": upload["body_check"],
         "attachments": attachments,
+        "previous_sync": upload.get("previous_sync", {}),
         "sync_started_at": sync_started_at,
         "sync_run_id": sync_run_id,
         "sync_attempt": sync_attempt,
@@ -1521,12 +1589,26 @@ async function syncDbCodeBookPost(tab, payload) {{
 
     stepStarted = Date.now();
     const sidebar = tab.playwright.locator("#documents-sidebar-list");
+    const readAttachmentNames = text => text.split(/\r?\n/)
+      .map(line => line.trim()).filter(line => /\.(xlsx|xls|csv|docx?|txt|pdf)$/i.test(line));
+    const existingNames = readAttachmentNames(await sidebar.innerText());
+    const previous = payload.previous_sync;
+    let keep = 0;
+    if (!payload.create && previous.post_url === payload.post_url) {{
+      const prior = previous.attachment_signatures || [];
+      while (keep < payload.attachments.length && keep < existingNames.length) {{
+        const expected = payload.attachments[keep];
+        if (existingNames[keep] !== expected.name || prior[keep]?.name !== expected.name ||
+            prior[keep]?.sha256 !== expected.sha256) break;
+        keep++;
+      }}
+    }}
     let deleteButtons = sidebar.locator('button[title="删除"]');
-    while (await deleteButtons.count()) {{
+    while (await deleteButtons.count() > keep) {{
       await deleteButtons.last().click();
       deleteButtons = sidebar.locator('button[title="删除"]');
     }}
-    for (const attachment of payload.attachments) {{
+    for (const attachment of payload.attachments.slice(keep)) {{
       await chooseVisibleFile(tab, "#documents-sidebar-input", attachment.path);
     }}
     const sidebarText = await sidebar.innerText();
@@ -1579,7 +1661,9 @@ async function syncDbCodeBookPost(tab, payload) {{
         article_page_returned: true
       }},
       body_length_utf16: body.length,
-      attachments: actualNames
+      attachments: actualNames,
+      attachments_preserved: keep,
+      attachment_signatures: payload.attachments.map(item => ({{name: item.name, sha256: item.sha256}}))
     }};
   }} catch (error) {{
     if (!submissionStarted) {{
@@ -1631,6 +1715,8 @@ def parse_args() -> argparse.Namespace:
     impact_parser.add_argument("--process-dir", required=True, type=Path)
     impact_parser.add_argument("--topic-id", required=True)
     impact_parser.add_argument("--overwrite", action="store_true")
+    impact_check = subparsers.add_parser("check-impact")
+    add_common_arguments(impact_check)
 
     init_parser = subparsers.add_parser("init")
     add_common_arguments(init_parser)
@@ -1683,6 +1769,8 @@ def main() -> int:
                 args.topic_id,
                 overwrite=args.overwrite,
             )
+        elif args.command == "check-impact":
+            result = {"ok": True, "impact": validate_impact(args.formal_dir, args.process_dir, args.topic_id)}
         elif args.command == "init":
             result = initialize_audit(
                 args.formal_dir,

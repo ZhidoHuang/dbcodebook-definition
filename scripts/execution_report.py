@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -147,6 +148,10 @@ def validate_full_definition_completion(
         for review in report.get("reviews", [])
         if review.get("closed") and not review.get("unfinished_turns")
     }
+    for role, review in report.get("stage_reviews", {}).items():
+        if (review.get("mode") == "isolated" or review.get("reused_from")) and review.get("status") == "pass":
+            validate_stage_review(report, role)
+            closed_roles.add(role)
     missing_roles = sorted(FULL_DEFINITION_REVIEW_ROLES - closed_roles)
     if missing_roles:
         raise SystemExit("完整定义流程缺少已完成审核：" + "、".join(missing_roles))
@@ -329,6 +334,85 @@ def command_review_import(args: argparse.Namespace) -> dict[str, Any]:
             "between_rounds_seconds": review["between_rounds_seconds"], "closed": review["closed"]}
 
 
+def input_hashes(paths):
+    result = {}
+    for value in paths:
+        path = Path(value).resolve(strict=True)
+        if not path.is_file():
+            raise ValueError("审核输入必须是文件：" + str(path))
+        content = path.read_bytes()
+        if path.name == "definition_search_record.json":
+            plan = json.loads(content.decode("utf-8-sig"))
+            # Recording the review verdict does not change its source-plan input.
+            plan.pop("logic_review", None)
+            content = json.dumps(plan, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        result[str(path)] = hashlib.sha256(content).hexdigest()
+    if not result:
+        raise ValueError("审核不能没有输入")
+    return result
+
+
+def validate_stage_review(report, role):
+    review = report.get("stage_reviews", {}).get(role)
+    if not review or review.get("status") != "pass" or not review.get("evidence", "").strip():
+        raise ValueError("本环节审核尚未通过：" + role)
+    if input_hashes(review["inputs"]) != review["inputs"]:
+        raise ValueError("审核输入已变化，须复核受影响部分：" + role)
+    if review.get("mode") == "isolated":
+        if not review.get("limitation", "").strip():
+            raise ValueError("隔离自查缺少环境限制说明")
+    else:
+        agent = review.get("prior_agent_record") or next((item for item in report.get("reviews", []) if item["agent_id"] == review.get("agent_id")), None)
+        latest = max(agent.get("rounds", []), key=lambda item: parse_time(item["started_at"]), default={}) if agent else {}
+        if (not agent or agent["role"] != role or agent["unfinished_turns"]
+                or latest.get("outcome") != "completed"
+                or parse_time(latest["started_at"]) < parse_time(review["started_at"])):
+            raise ValueError("缺少本轮实际完成的只读审核记录：" + role)
+    return review
+
+
+def command_review_stage(args):
+    report_path, markdown_path = paths(args.process_dir)
+    report = load(report_path)
+    if args.command == "review-check":
+        if args.role not in report.get("stage_reviews", {}):
+            candidates = sorted(report_path.parent.glob("archived_runs/*/execution_report.json"),
+                                key=lambda path: path.stat().st_mtime, reverse=True)
+            for path in candidates:
+                previous = load(path)
+                if args.role not in previous.get("stage_reviews", {}):
+                    continue
+                prior = validate_stage_review(previous, args.role)
+                agent = prior.get("prior_agent_record") or next((item for item in previous.get("reviews", [])
+                    if item["agent_id"] == prior.get("agent_id")), None)
+                report.setdefault("stage_reviews", {})[args.role] = {
+                    **prior, "reused_from": str(path), "prior_agent_record": agent}
+                if report["status"] == "running":
+                    save(report_path, markdown_path, report)
+                break
+        review = validate_stage_review(report, args.role)
+        return {"ok": True, "role": args.role, "mode": review["mode"], "input_count": len(review["inputs"])}
+    if report["status"] != "running":
+        raise ValueError("审核交接须在正在执行的报告中登记")
+    reviews = report.setdefault("stage_reviews", {})
+    if args.command == "review-start":
+        reviews[args.role] = {"status": "pending", "started_at": iso(), "inputs": input_hashes(args.input)}
+    else:
+        prior = reviews.get(args.role)
+        if not prior or input_hashes(prior["inputs"]) != prior["inputs"]:
+            raise ValueError("先绑定稳定输入；审核期间发生变化则重新发起受影响复核")
+        if not args.evidence.strip():
+            raise ValueError("必须保留审核者的具体发现与结论")
+        updated = {**prior, "status": args.result, "evidence": args.evidence,
+                   "agent_id": args.agent_id, "limitation": args.isolated_reason,
+                   "mode": "isolated" if args.isolated_reason else "independent", "finished_at": iso()}
+        reviews[args.role] = updated
+        if args.result == "pass":
+            validate_stage_review(report, args.role)
+    save(report_path, markdown_path, report)
+    return {"ok": True, "role": args.role, "status": reviews[args.role]["status"]}
+
+
 def render_markdown(report: dict[str, Any]) -> str:
     finished_at = report.get("finished_at")
     total = elapsed_seconds(report["started_at"], finished_at)
@@ -406,6 +490,17 @@ def render_markdown(report: dict[str, Any]) -> str:
                          f"{'已关闭' if review['closed'] else '未登记关闭'} |")
     if report.get("summary"):
         lines.extend(["", "## 执行结果", "", *report["summary"]])
+    if report.get("stage_reviews"):
+        lines.extend(["", "## 环节审核交接", ""])
+        for role, review in report["stage_reviews"].items():
+            mode = "隔离自查（非独立复核）" if review.get("mode") == "isolated" else "只读角色复核"
+            lines.append(f"- {role}：{review['status']}；{mode}；输入 {len(review['inputs'])} 份。")
+            if review.get("limitation"):
+                lines.append("  环境限制：" + review["limitation"])
+            if review.get("reused_from"):
+                lines.append("  沿用当前输入未变的既有结论，不计本轮新增审核耗时：" + review["reused_from"])
+            if review.get("evidence"):
+                lines.append("  实际结论：" + review["evidence"])
     lines.extend(["", "## Bug 与异常", ""])
     if not issues:
         lines.append("本次尚未记录 Bug 或异常。")
@@ -822,6 +917,18 @@ def build_parser() -> argparse.ArgumentParser:
     review_parser.add_argument("--closed", action="store_true",
                                help="Use only after the agent close tool succeeded.")
     review_parser.set_defaults(func=command_review_import)
+    for name in ("review-start", "review-result", "review-check"):
+        stage_review = subparsers.add_parser(name)
+        stage_review.add_argument("--process-dir", required=True)
+        stage_review.add_argument("--role", required=True)
+        if name == "review-start":
+            stage_review.add_argument("--input", action="append", required=True)
+        if name == "review-result":
+            stage_review.add_argument("--evidence", required=True)
+            stage_review.add_argument("--result", choices=("pass", "blocked"), required=True)
+            stage_review.add_argument("--agent-id")
+            stage_review.add_argument("--isolated-reason")
+        stage_review.set_defaults(func=command_review_stage)
 
     return parser
 

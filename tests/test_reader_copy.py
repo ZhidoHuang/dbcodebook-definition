@@ -83,7 +83,7 @@ def main():
         del bad["criteria"]["fall_status"]["注意点"]
         rejects(lambda: compare_content(with_note, bad), "栏目丢失")
 
-        path.write_text(original.replace("② 没有有效回答时保留缺失。", "② 当`raw_a[1]<a`时保留缺失。"), encoding="utf-8")
+        path.write_text(original.replace("① 回答“是”记为[1]，回答“否”记为[0]。", "① 当`raw_a[1]<a`时保留缺失。"), encoding="utf-8")
         rscript = os.environ.get("RSCRIPT")
         if not rscript:
             raise RuntimeError("RSCRIPT is required for the real reader-loader forward test")
@@ -124,6 +124,34 @@ cat("R_COPY_FORWARD_PASS\\n")
         assert run.returncode == 0, run.stdout + run.stderr
         assert "R_COPY_FORWARD_PASS" in run.stdout
         assert validate_note(path, note)["ok"]
+        questionnaire_copy = (ROOT / "templates/questionnaire-copy.md").read_text(encoding="utf-8")
+        path.write_text(original + "\n\n" + questionnaire_copy, encoding="utf-8")
+        questionnaire_script = folder / "questionnaire.R"
+        questionnaire_script.write_text('''
+root <- Sys.getenv("DBCODEBOOK_DEFINITION_SKILL_ROOT")
+source(file.path(root, "scripts", "summary_fact_helpers.R"), encoding="UTF-8")
+source(file.path(root, "scripts", "render_definition_bundle.R"), encoding="UTF-8")
+copy <- read_definition_copy(c("fall_status", "fall_count"))
+actual <- list(summary=render_summary_entry_paragraph(copy$summary_entry, "#A33842"),
+  criteria=copy$criteria, insight="", references=tail(copy$reference_lines, 1),
+  questionnaire=render_summary_selection_paragraph(copy$summary_selection, "#A33842"))
+definition_copy_check(source=actual)
+rows <- vapply(names(copy$criteria), function(v) paste0('<tr><td>',v,
+ '</td><td>',copy$criteria[[v]],'</td><td>distribution</td></tr>'), character(1))
+writeLines(c("## 摘要导读",actual$summary,actual$questionnaire,"## 定义",
+ '<table><tr><th>Definition</th><th>Criteria</th><th>detail</th></tr>',rows,'</table>',
+ copy$reference_lines,"## 材料"),"questionnaire_note.md",useBytes=TRUE)
+definition_copy_check(note="questionnaire_note.md")
+cat("QUESTIONNAIRE_COPY_FORWARD_PASS\\n")
+''', encoding="utf-8")
+        run = subprocess.run([rscript, "--vanilla", "--encoding=UTF-8", str(questionnaire_script)],
+                             cwd=folder, env=env, capture_output=True, text=True, encoding="utf-8")
+        assert run.returncode == 0, run.stdout + run.stderr
+        assert "QUESTIONNAIRE_COPY_FORWARD_PASS" in run.stdout
+        generated = folder / "questionnaire_note.md"
+        assert validate_note(path, generated)["ok"]
+        generated.write_text(generated.read_text(encoding="utf-8").replace("跳至 Q002", "跳至 Q999"), encoding="utf-8")
+        rejects(lambda: validate_note(path, generated), "原始问卷")
     print("READER_COPY_TESTS_PASS: copy, actual R inputs, rendered output, optional notes, missing fields, extra insight, order, values")
     return 0
 

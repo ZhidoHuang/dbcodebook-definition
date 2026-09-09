@@ -11,6 +11,7 @@ import argparse
 from collections import Counter
 import csv
 import fnmatch
+import hashlib
 import html
 import json
 import re
@@ -57,6 +58,7 @@ def parse_args() -> argparse.Namespace:
     mode.add_argument("--public-r-script", type=Path,
                       help="Check dictionary and outline before executing R; no outputs are written.")
     parser.add_argument("--process-dir", type=Path)
+    parser.add_argument("--complete", action="store_true", help="Require and bind the full output-check scope; partial checks cannot authorize publication.")
     parser.add_argument("--expected-files", help="Comma-separated required file names.")
     parser.add_argument("--raw-vars", help="Comma-separated expected raw variables after database identity columns.")
     parser.add_argument("--analysis-db", help="Analysis db xlsx file name in formal dir.")
@@ -85,6 +87,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-md", type=int, default=1)
     parser.add_argument("--report", type=Path, help="Optional QA report path.")
     args = parser.parse_args()
+    if args.complete:
+        required = ("formal_dir", "process_dir", "expected_files", "raw_vars", "analysis_db",
+                    "analysis_columns", "analysis_codebook", "analysis_vars",
+                    "check_summary_facts", "require_log_exit_code", "report")
+        missing = [name for name in required if not getattr(args, name)]
+        if missing:
+            parser.error("--complete requires: " + ", ".join("--" + name.replace("_", "-") for name in missing))
     if args.public_r_script is not None:
         output_options = {key: value for key, value in vars(args).items()
                           if key not in {"formal_dir", "public_r_script", "db", "max_md"} and value}
@@ -1059,177 +1068,6 @@ def check_category_order(formal_dir: Path, note_text: str, results: list[dict]) 
     else:
         ok(results, "detail/note category order", {name: extract_category_pairs(text) for name, text in materials.items()})
 
-
-def check_summary_facts(
-    formal_dir: Path,
-    analysis_db_name: str | None,
-    analysis_codebook_name: str | None,
-    results: list[dict],
-    db: str,
-) -> None:
-    if not analysis_db_name or not analysis_codebook_name:
-        fail(results, "summary facts inputs", "--analysis-db and --analysis-codebook are required")
-        return
-
-    notes = formal_note_files(formal_dir)
-    if len(notes) != 1:
-        fail(results, "summary note", [path.name for path in notes])
-        return
-    note_text = notes[0].read_text(encoding="utf-8", errors="replace")
-    user_materials = [
-        *sorted(formal_dir.glob("*.md")),
-        *sorted(formal_dir.glob("*.html")),
-    ]
-    indented = [path.name for path in user_materials if "&emsp;" in path.read_text(encoding="utf-8", errors="replace")]
-    if indented:
-        fail(results, "summary prose indentation", indented)
-    else:
-        ok(results, "summary prose indentation", "&emsp; indentation entities = 0")
-
-    try:
-        summary_rows = parse_summary_table(note_text)
-    except ValueError as exc:
-        fail(results, "summary table structure", str(exc))
-        return
-
-    check_summary_prose(note_text, results)
-
-    circular = [
-        row["Variable"]
-        for row in summary_rows
-        if re.search(r"有.*(?:题目信息|变量信息)|非缺失者", row["object"])
-    ]
-    if circular:
-        fail(results, "summary circular object", circular)
-    else:
-        ok(results, "summary circular object")
-
-    db_rows = read_xlsx_rows(formal_dir / analysis_db_name)
-    cb_rows = read_xlsx_rows(formal_dir / analysis_codebook_name)
-    db_header = [str(value) if value is not None else "" for value in db_rows[0]]
-    cb_header = [str(value) if value is not None else "" for value in cb_rows[0]]
-    for required in ["Variable", "original_vars", "Label"]:
-        if required not in cb_header:
-            fail(results, "summary codebook fields", f"missing {required}")
-            return
-    period_fields = {name.casefold(): name for name in db_header}
-    period_kind = "wave" if "wave" in period_fields else "year" if "year" in period_fields else None
-    period_name = period_fields.get(period_kind) if period_kind else None
-    if period_name is None:
-        fail(results, "summary period field", "analysis_db requires wave or year")
-        return
-    period_prefix = "" if period_kind == "year" else "Wave"
-
-    cb_variables: list[str] = []
-    expected: list[dict[str, str]] = []
-    var_idx = cb_header.index("Variable")
-    source_idx = cb_header.index("original_vars")
-    label_idx = cb_header.index("Label")
-    period_idx = db_header.index(period_name)
-    for cb_row in cb_rows[1:]:
-        if len(cb_row) <= var_idx or not is_nonmissing(cb_row[var_idx]):
-            continue
-        variable = str(cb_row[var_idx])
-        cb_variables.append(variable)
-        if variable not in db_header:
-            fail(results, "summary variable in analysis_db", variable)
-            return
-        value_idx = db_header.index(variable)
-        totals: dict[int, list[int]] = {}
-        for row in db_rows[1:]:
-            if len(row) <= period_idx or not is_nonmissing(row[period_idx]):
-                continue
-            period_value = str(row[period_idx]).strip()
-            wave_match = re.fullmatch(r"(?:Wave|W)\s*(\d+)", period_value, flags=re.IGNORECASE)
-            period = int(wave_match.group(1)) if wave_match else int(float(period_value))
-            totals.setdefault(period, [0, 0])
-            totals[period][1] += 1
-            value = row[value_idx] if len(row) > value_idx else None
-            if is_nonmissing(value):
-                totals[period][0] += 1
-        stats = [(period, counts[0], counts[1]) for period, counts in sorted(totals.items())]
-        covered = [period for period, nonmissing, _ in stats if nonmissing > 0]
-        sources = str(cb_row[source_idx] if len(cb_row) > source_idx and cb_row[source_idx] is not None else "")
-        unique_sources = list(dict.fromkeys(item.strip() for item in sources.split(",") if item.strip()))
-        label = str(cb_row[label_idx] if len(cb_row) > label_idx and cb_row[label_idx] is not None else "").strip()
-        expected.append(
-            {
-                "Variable": variable,
-                "raw_count": str(len(unique_sources)),
-                "period": period_text(
-                    covered,
-                    period_prefix,
-                    [2011, 2013, 2015, 2018, 2020]
-                    if db == "charls" else sorted(totals),
-                ),
-                "object": object_text(stats, prefix=period_prefix),
-                "object_precise": precise_object_text(stats, prefix=period_prefix),
-                "label": label,
-            }
-        )
-
-    actual_variables = [row["Variable"] for row in summary_rows]
-    if actual_variables == cb_variables:
-        ok(results, "summary variables and order", actual_variables)
-    else:
-        fail(results, "summary variables and order", {"expected": cb_variables, "actual": actual_variables})
-
-    mismatches: list[dict[str, object]] = []
-    expected_by_var = {row["Variable"]: row for row in expected}
-    for row in summary_rows:
-        fact = expected_by_var.get(row["Variable"])
-        if fact is None:
-            continue
-        wrong = {
-            field: {"expected": fact[field], "actual": row[field]}
-            for field in ["raw_count", "period"]
-            if row[field] != fact[field]
-        }
-        if row["object"] not in {fact["object"], fact["object_precise"]}:
-            wrong["object"] = {
-                "expected": [fact["object"], fact["object_precise"]],
-                "actual": row["object"],
-            }
-        if not row["meaning"] or not fact["label"]:
-            wrong["meaning_review"] = {"meaning": row["meaning"], "Label": fact["label"]}
-        if wrong:
-            mismatches.append({"Variable": row["Variable"], "fields": wrong})
-    if mismatches:
-        fail(results, "summary facts", mismatches)
-    else:
-        ok(results, "summary facts", {"rows": len(summary_rows), "fields": ["raw_count", "period", "object"]})
-
-    wrong_period_terms = []
-    for row in summary_rows:
-        combined = f"{row['period']} {row['object']}"
-        if period_kind == "year" and ("Year" in combined or "Wave" in combined or "覆盖波次" in combined):
-            wrong_period_terms.append(row["Variable"])
-        if period_kind == "wave" and ("Year" in combined or "覆盖年份" in combined):
-            wrong_period_terms.append(row["Variable"])
-    if wrong_period_terms:
-        fail(results, "summary period terminology", wrong_period_terms)
-    else:
-        ok(results, "summary period terminology", {"period_col": period_name, "prefix": period_prefix})
-
-    display_policy = {
-        "charls_full": period_text([2011, 2013, 2015], "", [2011, 2013, 2015]),
-        "charls_partial": period_text([2011, 2015], "", [2011, 2013, 2015]),
-        "elsa_partial": period_text([1, 2, 4], "Wave", [1, 2, 3, 4]),
-    }
-    expected_policy = {
-        "charls_full": "全周期",
-        "charls_partial": "2011、2015",
-        "elsa_partial": "Wave 1-2、Wave 4",
-    }
-    if display_policy != expected_policy:
-        fail(results, "database period display policy", display_policy)
-    else:
-        ok(results, "database period display policy", display_policy)
-
-    check_public_code_outline(formal_dir, note_text, results, db)
-    check_category_order(formal_dir, note_text, results)
-
-
 def check_summary_facts(
     formal_dir: Path,
     analysis_db_name: str | None,
@@ -1419,6 +1257,15 @@ def main() -> int:
     ok(results, "formal dir exists", str(formal_dir))
 
     expected_files = split_csv(args.expected_files)
+    if args.complete:
+        required_names = {"raw_data.csv", "raw_codebook.csv", args.analysis_db, args.analysis_codebook}
+        missing = required_names - set(expected_files)
+        roles = {"public_r": any(name.lower().endswith(".r") for name in expected_files),
+                 "note": any(name.endswith(".md") and name != READER_COPY_NAME for name in expected_files),
+                 "db": any(name.startswith("db_") and name.endswith(".xlsx") for name in expected_files),
+                 "codebook": any(name.startswith("codebook_") and name.endswith(".xlsx") for name in expected_files)}
+        if missing or not all(roles.values()):
+            fail(results, "complete artifact scope", {"missing_files": sorted(missing), "roles": roles})
     for name in expected_files:
         path = formal_dir / name
         if path.exists():
@@ -1540,6 +1387,13 @@ def main() -> int:
             results,
             args.db,
         )
+    if args.complete:
+        from check_definition_source_record import load_json
+        record = load_json(args.process_dir / "definition_search_record.json")
+        if record.get("approved_analysis_vars") != split_csv(args.analysis_vars):
+            fail(results, "approved result scope", "analysis vars differ from the settled source plan")
+        if str(record.get("database", "")).lower() != args.db:
+            fail(results, "approved database", "database differs from the source plan")
     check_required_user_text(formal_dir, required_user_text, results)
     check_criteria_evolution(formal_dir, criteria_evolution_text, results)
     check_forbidden_formal_content(formal_dir, forbid_vars, results)
@@ -1547,7 +1401,18 @@ def main() -> int:
     check_logs(formal_dir, args.log_prefix, args.require_log_exit_code, results)
 
     passed = all(item["ok"] for item in results)
-    payload = {"ok": passed, "checks": results}
+    payload = {"ok": passed, "scope": "complete" if args.complete else "partial",
+               "status": ("MACHINE_CHECK_PASS" if args.complete else "PARTIAL_CHECK_PASS") if passed else "CHECK_FAILED",
+               "checks": results}
+    if args.complete and passed:
+        payload["artifacts"] = {
+            path.name: hashlib.sha256(path.read_bytes()).hexdigest().upper()
+            for path in sorted(formal_dir.iterdir()) if path.is_file()
+        }
+        payload["database"] = args.db
+        payload["analysis_vars"] = split_csv(args.analysis_vars)
+        payload["source_sha256"] = hashlib.sha256((args.process_dir / "definition_search_record.json").read_bytes()).hexdigest().upper()
+        payload["checker_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest().upper()
     text = json.dumps(payload, ensure_ascii=False, indent=2)
     print(text)
     if args.report:

@@ -154,7 +154,7 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
       }, character(1)), collapse = ""))
     }, character(1)), collapse = "")
   })
-  list(
+  result <- list(
     criteria = criteria,
     summary_entry = list(paragraphs = lapply(paragraphs(copy$summary), function(text) {
       list(parts = inline_parts(text))
@@ -162,6 +162,22 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
     summary_insight_items = if (nzchar(copy$insight)) paragraphs(copy$insight) else NULL,
     reference_lines = c("## 参考资料说明", "", copy$references)
   )
+  if (!is.null(copy$questionnaire)) {
+    result$summary_selection <- list(class = "raw-source-structure", display = "period-tabs",
+      groups = lapply(names(copy$questionnaire), function(period) {
+        block <- copy$questionnaire[[period]]
+        lines <- c(list(summary_period_note(paragraphs(block$design))),
+          lapply(block$questions, function(question) {
+            summary_questionnaire_line(question$id, question$text,
+              condition = if (nzchar(question$condition)) question$condition else character(),
+              options = lapply(question$options, function(option) {
+                summary_questionnaire_option(option$text, option$jump)
+              }), after = unlist(question$instructions, use.names = FALSE))
+          }))
+        list(period = period, label = block$label, lines = lines)
+      }))
+  }
+  result
 }
 
 validate_criteria_markup <- function(criteria, variable_names = character()) {
@@ -208,17 +224,27 @@ definition_card_default_sources <- function(analysis_codebook) {
   )
 }
 
-format_definition_card_sources <- function(analysis_codebook, raw_codebook) {
+format_definition_card_sources <- function(analysis_codebook, raw_codebook,
+                                           source_codebook = analysis_codebook) {
   if (!all(c("Variable", "newname") %in% names(raw_codebook))) {
     stop("raw_codebook 必须包含 Variable 和 newname。")
   }
-  sources <- definition_card_default_sources(analysis_codebook)
-  vapply(sources, function(aliases) {
-    missing_aliases <- setdiff(aliases, raw_codebook$newname)
-    if (length(missing_aliases)) {
-      stop("raw_codebook 中找不到下载别名：", paste(missing_aliases, collapse = ", "))
-    }
-    rows <- match(aliases, raw_codebook$newname)
+  sources <- definition_card_default_sources(source_codebook)
+  sources[names(definition_card_default_sources(analysis_codebook))] <-
+    definition_card_default_sources(analysis_codebook)
+  resolve_sources <- function(aliases, visiting = character()) {
+    resolved <- lapply(aliases, function(alias) {
+      if (alias %in% raw_codebook$newname) return(alias)
+      if (alias %in% visiting) stop("正式来源关系存在循环：", paste(c(visiting, alias), collapse = " -> "))
+      if (!alias %in% names(sources)) {
+        stop("raw_codebook 或正式来源关系中找不到变量：", alias)
+      }
+      resolve_sources(sources[[alias]], c(visiting, alias))
+    })
+    unique(unlist(resolved, use.names = FALSE))
+  }
+  vapply(analysis_codebook$Variable, function(variable) {
+    rows <- match(resolve_sources(sources[[variable]], variable), raw_codebook$newname)
     paste0(raw_codebook$Variable[rows], "=", raw_codebook$newname[rows], collapse = ", ")
   }, character(1))
 }
@@ -325,7 +351,8 @@ render_definition_bundle <- function(
     summary = render_summary_entry_paragraph(summary_entry, theme_color),
     criteria = as.list(criteria[analysis_vars]),
     insight = paste(summary_insight_items, collapse = "\n\n"),
-    references = paste(reference_lines[!grepl("^## 参考资料说明$", reference_lines)], collapse = "\n")
+    references = paste(reference_lines[!grepl("^## 参考资料说明$", reference_lines)], collapse = "\n"),
+    questionnaire = if (missing(summary_selection)) "" else render_summary_selection_paragraph(summary_selection, theme_color)
   ))
   for (pkg in c("dplyr", "tidyr", "dbCodeBookr")) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -346,7 +373,7 @@ render_definition_bundle <- function(
   stopifnot(all(analysis_vars %in% names(criteria)))
   stopifnot(all(nzchar(criteria[analysis_vars])))
   validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars)))
-  formatted_card_sources <- format_definition_card_sources(analysis_codebook, raw_codebook)
+  formatted_card_sources <- format_definition_card_sources(analysis_codebook, raw_codebook, codebook)
 
   format_n <- function(x) {
     format(x, big.mark = ",", scientific = FALSE)

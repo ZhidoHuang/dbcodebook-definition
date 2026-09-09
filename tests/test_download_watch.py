@@ -146,6 +146,13 @@ with tempfile.TemporaryDirectory() as temp:
     assert not prepare_snapshot.exists() and original.read_text() == "keep until a valid replacement exists"
     source_record["logic_review"]["result"] = "clear"
     source_path.write_text(json.dumps(source_record), encoding="utf-8")
+    from execution_report import input_hashes
+    (source_path.parent / "execution_report.json").write_text(json.dumps({
+        "stage_reviews": {"定义逻辑复核": {"status": "pass", "mode": "isolated",
+            "limitation": "Isolated test fixture; no live agent or website.",
+            "evidence": "Selection fixture reviewed for this download test.",
+            "inputs": input_hashes([source_path])}}
+    }), encoding="utf-8")
     prepared_run = subprocess.run(prepare_args + ["--overwrite"], capture_output=True,
                                   text=True, encoding="utf-8", env={**os.environ, "PYTHONUTF8": "1"})
     assert prepared_run.returncode == 0, prepared_run.stderr
