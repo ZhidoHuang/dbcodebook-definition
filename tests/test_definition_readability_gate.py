@@ -481,8 +481,8 @@ def main() -> int:
         assert prepared_run.stdout.isascii()
         prepared = json.loads(prepared_run.stdout)
         prepared_action = prepared["browser_action"]
+        assert prepared_action["browser_binding"] == "dbCodeBookBrowser"
         assert "resolveDbCodeBookTab" in prepared_action["preload_script"]
-        assert "await agent.browsers.list()" in prepared_action["preload_script"]
         assert 'status: "SYNC_TAB_READY"' in prepared_action["preload_script"]
         assert "preload_script" in prepared_action
         assert "run_script" not in prepared_action
@@ -563,23 +563,28 @@ def main() -> int:
                 '''import assert from "node:assert/strict";
 const tab = { url: async () => "http://localhost:8000/nodes/post/221/" };
 let selectedUrl = "http://localhost:8000/nodes/post/221/";
-let listedTabs = [{ id: "tab-1", url: selectedUrl }];
+let listedTabs = [{ id: "tab-1", url: selectedUrl }, { id: "blank" }];
 const agent = { browsers: {
-  list: async () => [{ id: "iab-1", type: "iab" }],
-  get: async id => {
-    assert.equal(id, "iab-1");
-    return { tabs: {
-      selected: async () => ({ url: async () => selectedUrl }),
-      list: async () => listedTabs,
-      get: async tabId => { assert.equal(tabId, "tab-1"); return tab; }
-    } };
-  }
+  list: async () => { throw new Error("must not rediscover browsers"); },
+  get: async () => { throw new Error("must not switch browsers"); }
+} };
+let dbCodeBookBrowser = { browserId: "chrome-existing", tabs: {
+  selected: async () => selectedUrl === null ? undefined : ({ url: async () => selectedUrl }),
+  list: async () => listedTabs,
+  get: async tabId => { assert.equal(tabId, "tab-1"); return tab; }
 } };
 let result;
 const nodeRepl = { write: value => { result = JSON.parse(value); } };
 ''' + preload_script + '''
 assert.equal(result.status, "SYNC_TAB_READY");
 assert.equal(result.url, "http://localhost:8000/nodes/post/221/");
+dbCodeBookBrowser = { ...dbCodeBookBrowser, browserId: "edge-existing" };
+selectedUrl = null;
+assert.equal(await resolveDbCodeBookTab(["http://localhost:8000/nodes/post/221/"]), tab);
+const savedBrowser = dbCodeBookBrowser;
+dbCodeBookBrowser = undefined;
+await assert.rejects(resolveDbCodeBookTab(["http://localhost:8000/nodes/post/221/"]), /dbCodeBookBrowser/);
+dbCodeBookBrowser = savedBrowser;
 selectedUrl = "http://localhost:8000/home/charls/";
 listedTabs = [...listedTabs, { id: "tab-2", url: "http://localhost:8000/nodes/edit/221/" }];
 await assert.rejects(

@@ -1447,19 +1447,20 @@ def build_cua_sync_action(
     existing_tab_match = [url for url in (payload["post_url"], payload["edit_url"]) if url]
     existing_tab_match_json = json.dumps(existing_tab_match, ensure_ascii=False)
     helper_script = rf'''async function resolveDbCodeBookTab(expectedUrls) {{
-  const browsers = (await agent.browsers.list()).filter(item => item.type === "iab");
-  if (browsers.length !== 1) {{
-    throw new Error(`需要且只能有一个 Codex 内置浏览器，当前找到 ${{browsers.length}} 个`);
+  if (typeof dbCodeBookBrowser === "undefined" || !dbCodeBookBrowser?.tabs) {{
+    throw new Error("请先按浏览器技能连接选定的 Chrome 或 Edge，并绑定 dbCodeBookBrowser");
   }}
-  const browser = await agent.browsers.get(browsers[0].id);
+  const browser = dbCodeBookBrowser;
   const normalize = value => {{
-    const url = new URL(value);
-    url.hash = "";
-    return url.href.replace(/\/$/, "");
+    try {{
+      const url = new URL(value);
+      url.hash = "";
+      return url.href.replace(/\/$/, "");
+    }} catch {{ return null; }}
   }};
   const expected = new Set(expectedUrls.map(normalize));
   const selected = await browser.tabs.selected();
-  if (expected.has(normalize(await selected.url()))) return selected;
+  if (selected && expected.has(normalize(await selected.url()))) return selected;
   const tabs = await browser.tabs.list();
   const matches = tabs.filter(item => expected.has(normalize(item.url)));
   if (matches.length !== 1) {{
@@ -1681,6 +1682,7 @@ nodeRepl.write(JSON.stringify({{
 }}));'''
     action = {
         "existing_tab_match": existing_tab_match,
+        "browser_binding": "dbCodeBookBrowser",
         "payload": payload,
         "preload_sha256": hashlib.sha256(
             helper_script.encode("utf-8")

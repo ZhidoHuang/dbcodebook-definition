@@ -37,6 +37,16 @@
 | 旧本地框架收口 | 数据库主题色移入 `references/database-themes.json` 并加入路由校验；37 个仍依赖旧 `_工具` 的现行正式 R 改由 Skill runner 提供公共脚本，42 个现行正式 R 全部通过语法解析；公众号 SVG、封面与富文本从已安装 Skill 读取主题参数，CHARLS/ELSA 实际载入通过；现行规则、正式源和宣传代码中的旧框架引用清零 | 通过 | `_执行线程` 和 `archived_source` 中的旧路径是历史记录，不作为当前运行入口，也不回写历史证据 |
 | 公开与跨设备 | 本机配置由 `config.local.json` 承载并被忽略；共享规则不含本机路径、账号或本地域名；官方材料由 manifest 登记；Git 文本行尾固定为 LF。官方 quick validator 与全套测试均通过；正式仓库同步到 [ZhidoHuang/dbcodebook-definition](https://github.com/ZhidoHuang/dbcodebook-definition) | 通过 | 新设备需安装 Skill，并自行创建 `config.local.json` 配置 Python、R 与网站地址 |
 
+## 2026-09-09 Chrome / Edge 会话适配
+
+共同浏览器规则改为 Chrome 或 Edge；本节取代上表内置浏览器专用的执行前提，不改写早期真实验收记录。
+
+| 范围 | 实际检查 | 结论与边界 |
+| --- | --- | --- |
+| 会话复用 | 两个固定程序使用预先绑定的 `dbCodeBookBrowser`；Node 模拟传入不同会话，禁止程序重新发现或选择浏览器，覆盖当前页匹配、无当前选中页、空 URL、多个匹配页和缺失连接 | 专项测试通过；这里验证接口契约，不等于真实 Chrome / Edge 扩展连接验收 |
+| 下载兼容与防重复 | 实际生成程序在 Node 模拟中先监听、后单次点击；独占创建本地尝试文件，重复调用被拒绝，不再写网页会话或属性；无下载路径接口时返回原目录观察命令 | 专项测试通过；未触发真实付费下载，尚未验证各设备浏览器保存目录及扩展的真实下载行为 |
+| 网站与既有功能 | `tests/run_all.ps1` 包含网站预检、文章身份、正文和附件检查、文件观察及包校验；Python、PowerShell、R 和官方 Skill 结构检查全部通过 | `ALL_SKILL_TESTS_PASS`；未操作网站、未重跑任何主题，下一次真实任务才验证 Chrome / Edge 端到端同步 |
+
 ## 2026-09-09 阶段连接与文案生成检查
 
 ### 分环节规则与交接修复

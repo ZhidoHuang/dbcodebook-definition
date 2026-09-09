@@ -39,7 +39,7 @@ Before substantive production or shared-tool modification, start the existing [e
 
 - Clear rules are requirements, not invitations to redesign. If any rule is unclear, conflicts with another, or appears to require a departure, report the exact uncertainty and impact before changing it. This applies to all rules, not only source mapping.
 - Keep authorized scope: no unrelated topics, website source changes, account changes, or promotional assets. Detailed write boundaries are in [write-boundaries.md](references/rules/write-boundaries.md).
-- Use only the current task's Codex in-app browser for dbCodeBook; verify login before gated work. Never switch to Chrome.
+- Use Chrome or Edge for dbCodeBook, following [browser session setup](references/rules/write-boundaries.md#浏览器会话). Reuse the chosen logged-in session throughout the task; pass that browser to the fixed download and website programs.
 - Continue through authorized generation, verification and website sync without asking at every step. Stop at copy only for explicit “只审核、不执行”; pause for an unresolved research decision, required source gap, or uncertain external write.
 - Keep full original identity and actual download alias distinct; do not rename downloaded CSV headers or replace formal sources with display abbreviations.
 - A script pass proves only what it actually compared. Do not mark unexecuted checks passed or use presence, length, or hashes as proof of readable or correct content.

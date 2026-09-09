@@ -166,14 +166,12 @@ with tempfile.TemporaryDirectory() as temp:
         prepare_snapshot.read_text(encoding="utf-8")
     )["attempt_id"]
     run_script = browser_action["run_script"]
-    assert "await agent.browsers.list()" in run_script
-    assert 'filter(item => item.type === "iab")' in run_script
+    assert browser_action["browser_binding"] == "dbCodeBookBrowser"
     assert 'locator("#tag-area .tag")' in run_script
     assert 'button[aria-label="下载数据"]' in run_script
     assert 'modal.locator("button.bili-btn.confirm")' in run_script
     assert 'waitForEvent("download"' in run_script
     assert run_script.index('waitForEvent("download"') < run_script.index("await finalButton.click(")
-    assert "__dbCodeBookDownloadAttempts" in run_script
     assert run_script.count("await finalButton.click(") == 1
     assert "timeoutMs: 10000" in run_script
     assert 'download.path({ timeoutMs: 120000 })' in run_script
@@ -181,15 +179,12 @@ with tempfile.TemporaryDirectory() as temp:
     assert 'next_action: "install_download_path"' in run_script
     assert 'next_action: "run_watch_command"' in run_script
     assert 'allow_new_export: false' in run_script
-    assert 'root.getAttribute("data-dbcodebook-download-attempt")' in run_script
-    assert 'root.setAttribute("data-dbcodebook-download-attempt"' in run_script
     node = shutil.which("node")
     if node:
         browser_fixture = work / "download_browser_action.mjs"
         browser_fixture.write_text(
             '''import assert from "node:assert/strict";
 const calls = [];
-const sessionStorage = new Map();
 const finalButton = {
   count: async () => 1,
   click: async () => calls.push("final-click")
@@ -201,6 +196,7 @@ const download = {
     return "C:\\\\temporary-downloads\\\\current.zip";
   }
 };
+let downloadResult = download;
 const modal = {
   getAttribute: async name => name === "style" ? "display: none;" : null,
   waitFor: async () => calls.push("modal-visible"),
@@ -216,11 +212,7 @@ const tab = {
       assert.equal(event, "download");
       assert.deepEqual(options, { timeoutMs: 30000 });
       calls.push("download-wait");
-      return download;
-    },
-    evaluate: async (fn, value) => {
-      if (typeof value === "string") return sessionStorage.get(value) || null;
-      sessionStorage.set(value.key, value.timestamp);
+      return downloadResult;
     },
     locator: selector => {
       if (selector === "#tag-area .tag") return { count: async () => 1 };
@@ -234,17 +226,15 @@ const tab = {
   }
 };
 let selectedUrl = "http://localhost:8000/home/charls/?showInput=true";
-let listedTabs = [{ id: "tab-1", url: selectedUrl }];
+let listedTabs = [{ id: "tab-1", url: selectedUrl }, { id: "blank" }];
 const agent = { browsers: {
-  list: async () => [{ id: "iab-1", type: "iab" }],
-  get: async id => {
-    assert.equal(id, "iab-1");
-    return { tabs: {
-      selected: async () => ({ ...tab, url: async () => selectedUrl }),
-      list: async () => listedTabs,
-      get: async tabId => { assert.equal(tabId, "tab-1"); return tab; }
-    } };
-  }
+  list: async () => { throw new Error("must not rediscover browsers"); },
+  get: async () => { throw new Error("must not switch browsers"); }
+} };
+let dbCodeBookBrowser = { browserId: "chrome-existing", tabs: {
+  selected: async () => selectedUrl === null ? undefined : ({ ...tab, url: async () => selectedUrl }),
+  list: async () => listedTabs,
+  get: async tabId => { assert.equal(tabId, "tab-1"); return tab; }
 } };
 let result;
 const nodeRepl = { write: value => { result = JSON.parse(value); } };
@@ -253,13 +243,13 @@ assert.equal(result.status, "DOWNLOAD_FILE_READY");
 assert.equal(result.next_action, "install_download_path");
 assert.equal(result.download_path, "C:\\\\temporary-downloads\\\\current.zip");
 assert.deepEqual(calls, ["open-dialog", "modal-visible", "download-wait", "final-click", "download-path"]);
-globalThis.__dbCodeBookDownloadAttempts = new Set();
 await assert.rejects(
   triggerDbCodeBookExport(
     tab,
     "http://localhost:8000/home/charls/",
     dbCodeBookDownloadAttemptId,
-    1
+    1,
+    dbCodeBookDownloadAttemptFile
   ),
   /已经触发/
 );
@@ -269,11 +259,29 @@ await assert.rejects(
     tab,
     "http://localhost:8000/home/charls/",
     "different-attempt",
-    2
+    2,
+    dbCodeBookDownloadAttemptFile + ".mismatch"
   ),
   /下载清单为 2 个/
 );
 assert.deepEqual(calls, ["open-dialog", "modal-visible", "download-wait", "final-click", "download-path"]);
+selectedUrl = null;
+assert.equal(await resolveDbCodeBookDownloadTab("http://localhost:8000/home/charls/"), tab);
+dbCodeBookBrowser = { ...dbCodeBookBrowser, browserId: "edge-existing" };
+downloadResult = {};
+const edgeResult = await triggerDbCodeBookExport(
+  await resolveDbCodeBookDownloadTab("http://localhost:8000/home/charls/"),
+  "http://localhost:8000/home/charls/", "edge-attempt", 1,
+  dbCodeBookDownloadAttemptFile + ".edge"
+);
+assert.equal(edgeResult.status, "DOWNLOAD_PATH_NOT_SUPPORTED");
+assert.equal(edgeResult.next_action, "run_watch_command");
+assert.equal(edgeResult.allow_new_export, false);
+assert.equal(calls.filter(value => value === "final-click").length, 2);
+const savedBrowser = dbCodeBookBrowser;
+dbCodeBookBrowser = undefined;
+await assert.rejects(resolveDbCodeBookDownloadTab("http://localhost:8000/home/charls/"), /dbCodeBookBrowser/);
+dbCodeBookBrowser = savedBrowser;
 selectedUrl = "http://localhost:8000/nodes/post/1/";
 listedTabs = [...listedTabs, { id: "tab-2", url: "http://localhost:8000/home/charls/" }];
 await assert.rejects(

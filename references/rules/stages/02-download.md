@@ -4,7 +4,7 @@
 
 - 输入：已复核的来源方案、完整身份和别名清单
 - 另读：所选数据库 workflow 的选择、预览、落盘部分；[写入边界](../write-boundaries.md) 中下载与来源缺口部分
-- 执行：先在现有内置浏览器确认登录和选择，再执行下方固定下载动作一次；核对本次包和 raw
+- 执行：按共同浏览器规则连接 Chrome 或 Edge，确认登录、选择和实际下载目录，再执行下方固定下载动作一次；核对本次包和 raw
 - 交付：当前下载包、原样 raw/codebook、下载凭据和实际取值/路径记录
 - 程序检查：prepare-download 直接检查选择；恢复与正式 R 前来源检查对账清单、包内原文件和实际路径人数
 - 模型判断：原始取值是否与问卷含义相符；数据异常是否要求修订方案
@@ -55,7 +55,7 @@ ztooth (health status and functioning)=ztooth
 
 ## Download Commands
 
-Read [download execution](../write-boundaries.md#下载结果与找回). Once the source list and the final download control are verified in the existing logged-in in-app-browser tab, prepare the local observer:
+Read [browser session setup](../write-boundaries.md#浏览器会话) and [download execution](../write-boundaries.md#下载结果与找回). Bind the chosen connection as `dbCodeBookBrowser`, verify the source list and final download control in its logged-in tab, and set `$Downloads` to that browser's actual download directory. Then prepare the local observer:
 
 Treat the variable-selection page's normal export as the primary download path. A test of recovery cannot substitute for a forward test of that normal export.
 
@@ -63,4 +63,4 @@ Treat the variable-selection page's normal export as the primary download path. 
 & $Python -X utf8 scripts/recover_dbcodebook_export.py --prepare-download $Downloads --snapshot-file "$Process/download_before.json" --database $Database --base-url $BaseUrl --out $Formal --expect-vars-file "$Process/download_selection.txt"
 ```
 
-The command checks inputs and the output boundary before spending points, records the current files, assigns one attempt ID, and returns one `browser_action.run_script`. Run that script unchanged once in the next CUA call with its declared timeout. It uses the selected matching variable-selection page, otherwise locates the unique matching Codex in-app-browser tab, verifies the selected count, starts waiting for that tab's download, and clicks the final control once. The same attempt ID is stored in both the browser-control runtime and the variable-selection page session, so a runtime reset cannot authorize a second click. When it returns `DOWNLOAD_FILE_READY`, pass its `download_path` unchanged to `recover_dbcodebook_export.py --archive <download_path>` with the same database, output directory, selection file, and intentional `--overwrite` setting. Run the prepared `watch_command` only when the browser result says `next_action: run_watch_command`. If neither route verifies a file, inspect the existing paid record; never run the browser action again. Use `--overwrite` only for an intentional replacement of existing formal raw.
+The command checks inputs and the output boundary before spending points, records the current files, assigns one attempt ID, and returns one `browser_action.run_script`. Run that script unchanged once through the browser skill's execution tool with its declared timeout. It uses the selected matching variable-selection page within `dbCodeBookBrowser`, otherwise locates the unique matching tab in that same connection, verifies the selected count, starts waiting for that tab's download, and clicks the final control once. An exclusive local attempt file beside the snapshot prevents a second click after a runtime reset without modifying the page. When it returns `DOWNLOAD_FILE_READY`, pass its `download_path` unchanged to `recover_dbcodebook_export.py --archive <download_path>` with the same database, output directory, selection file, and intentional `--overwrite` setting. A browser without a download-path interface returns `next_action: run_watch_command`; run the prepared observer rather than guessing a file API. If neither route verifies a file, inspect the existing paid record; never run the browser action again. Use `--overwrite` only for an intentional replacement of existing formal raw.
