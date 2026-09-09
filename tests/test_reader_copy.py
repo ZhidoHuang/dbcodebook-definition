@@ -93,6 +93,7 @@ root <- Sys.getenv("DBCODEBOOK_DEFINITION_SKILL_ROOT")
 source(file.path(root, "scripts", "summary_fact_helpers.R"), encoding="UTF-8")
 source(file.path(root, "scripts", "render_definition_bundle.R"), encoding="UTF-8")
 copy <- read_definition_copy(c("fall_status", "fall_count"))
+stopifnot(is.null(copy$summary_selection))
 stopifnot(grepl("<code>raw_a[1]&lt;a</code>", copy$criteria$fall_status, fixed=TRUE))
 actual <- list(summary=render_summary_entry_paragraph(copy$summary_entry, "#A33842"),
                criteria=copy$criteria, insight="", references=tail(copy$reference_lines, 1))
@@ -107,8 +108,7 @@ failed <- tryCatch({render_definition_bundle(analysis_vars=c("fall_status", "fal
 stopifnot(failed)
 rows <- vapply(names(copy$criteria), function(v) paste0('<tr><td class="plain-cell">',v,
  '</td><td>',copy$criteria[[v]],'</td><td>distribution</td></tr>'), character(1))
-text <- c("## 摘要导读", actual$summary,
- '<div class="raw-source-structure">questionnaire</div>', "## 定义",
+text <- c("## 摘要导读", actual$summary, "## 定义",
  '<table><tr><th>Definition</th><th>Criteria</th><th>detail</th></tr>', rows, '</table>',
  copy$reference_lines, "## 材料")
 writeLines(text, "note.md", useBytes=TRUE)
