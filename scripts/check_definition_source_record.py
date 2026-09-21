@@ -90,8 +90,14 @@ def nonempty_text(value: object, field: str) -> str:
 def resolve_material_path(material_text: str, database: str, local_root: Path) -> Path:
     """Resolve current relative paths and older absolute records to bundled evidence."""
 
-    recorded = Path(material_text)
+    recorded = Path(material_text.replace("\\", "/"))
     if not recorded.is_absolute():
+        parts = recorded.parts
+        prefix = ("references", "source-materials", database.casefold())
+        if tuple(p.casefold() for p in parts[:3]) == prefix:
+            suggestion = "/".join(parts[3:]) or "."
+            fail(f"local_material_path is relative to the database material root {local_root}, "
+                 f"not the repository; use {suggestion!r} instead of {material_text!r}")
         return (local_root / recorded).resolve()
     resolved = recorded.resolve()
     try:

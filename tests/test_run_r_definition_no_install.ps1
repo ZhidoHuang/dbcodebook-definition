@@ -115,6 +115,22 @@ cat("RUN_OK\n")
   }
 
   $badConfig = Join-Path $tempDir "bad-config.json"
+  $multilineReads = @'
+dt <- read.csv(
+  "raw_data.csv",
+  colClasses = c(communityid = "character", householdid = "character", id = "character")
+)
+name_z<-read.csv('raw_codebook.csv')
+'@
+  [System.IO.File]::WriteAllText($scriptPath,
+    $publicPart + "`n" + $multilineReads + "`n" + $outputBoundary + "`nstop('MUST_NOT_RUN')`n",
+    [System.Text.UTF8Encoding]::new($false))
+  $charlsPreflight = & $runner -WorkDir $tempDir -Script "fixture.R" -LogPrefix "fixture" `
+    -Rscript $Rscript -Database CHARLS -PreflightOnly 2>&1 | Out-String
+  if ($LASTEXITCODE -ne 0 -or $charlsPreflight -match "MUST_NOT_RUN") {
+    throw "Multiline CHARLS raw reads did not pass semantic preflight: $charlsPreflight"
+  }
+  [System.IO.File]::WriteAllText($scriptPath, $fixture, [System.Text.UTF8Encoding]::new($false))
   @{ schema_version = 1; executables = @{ rscript = "missing-Rscript.exe" } } |
     ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $badConfig -Encoding UTF8
   $invalidConfigBlocked = $false

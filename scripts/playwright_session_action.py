@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import re
 import time
+from skill_config import load_config, playwright_command
 
 
 ADAPTER = r'''
@@ -85,9 +86,8 @@ def build_code(action: dict, mode: str, preflight: dict | None, download_target:
 
 
 class Session:
-    def __init__(self, name, workdir, code_path):
-        self.command = [shutil.which("npx.cmd") or shutil.which("npx"), "--yes",
-                        "--package", "@playwright/cli", "playwright-cli", "-s=" + name]
+    def __init__(self, name, workdir, code_path, config=None):
+        self.command = playwright_command(config) + ["-s=" + name]
         self.workdir, self.code_path = workdir, code_path
         self.deadline = None
 
@@ -97,7 +97,8 @@ class Session:
             if timeout <= 0:
                 raise TimeoutError("Website operation exceeded 60 seconds")
         result = subprocess.run(self.command + list(args), cwd=self.workdir,
-                                capture_output=True, encoding="utf-8", timeout=timeout)
+                                capture_output=True, encoding="utf-8", timeout=timeout,
+                                stdin=subprocess.DEVNULL)
         if result.returncode or "### Error" in result.stdout:
             raise RuntimeError(result.stdout + result.stderr)
         return result.stdout
@@ -192,16 +193,16 @@ def main() -> None:
     parser.add_argument("--session", required=True)
     parser.add_argument("--session-workdir", required=True, type=Path)
     parser.add_argument("--out", required=True, type=Path)
+    parser.add_argument("--config", type=Path)
     args = parser.parse_args()
     action = read_action(args.action)
     preflight = read_action(args.preflight) if args.preflight else None
-    npx = shutil.which("npx.cmd") or shutil.which("npx")
-    if not npx:
-        raise RuntimeError("npx was not found")
+    config = load_config(args.config)
+    command = playwright_command(config)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     target = args.out.parent / ("download-" + action.get("attempt_id", "unused") + ".zip")
     if args.mode == "sync":
-        payload = run_sync(Session(args.session, args.session_workdir, args.out.with_suffix(".browser.js")),
+        payload = run_sync(Session(args.session, args.session_workdir, args.out.with_suffix(".browser.js"), config),
                            action, preflight)
         args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         print(json.dumps(payload, ensure_ascii=False))
@@ -216,10 +217,9 @@ def main() -> None:
             json.dump({"attempt_id": action["attempt_id"], "session": args.session,
                        "status": "claimed_before_cli_dispatch"}, handle)
     result = subprocess.run(
-        [npx, "--yes", "--package", "@playwright/cli", "playwright-cli",
-         "-s=" + args.session, "--raw", "run-code", "--filename", str(code_path.resolve())],
+        command + ["-s=" + args.session, "--raw", "run-code", "--filename", str(code_path.resolve())],
         cwd=args.session_workdir, encoding="utf-8", capture_output=True,
-        timeout=action.get("timeout_ms", 90000) / 1000 + 30,
+        timeout=action.get("timeout_ms", 90000) / 1000 + 30, stdin=subprocess.DEVNULL,
     )
     if result.returncode:
         raise RuntimeError(result.stdout + result.stderr)

@@ -10,7 +10,7 @@ import subprocess
 import sys
 import tempfile
 
-from skill_config import load_config, configured_executable, configured_path
+from skill_config import load_config, configured_executable, configured_path, playwright_command
 
 
 R_PACKAGES = ("openxlsx", "dplyr", "tidyr", "jsonlite", "dbCodeBookr")
@@ -103,7 +103,7 @@ def check_environment(config, mode, browser, explicit_browser=None):
 
     if mode in ("full", "browser"):
         def node_probe():
-            node = shutil.which("node")
+            node = configured_executable(config, "node")
             if not node:
                 raise FileNotFoundError("node was not found")
             return command_probe([node, "--version"])
@@ -112,11 +112,7 @@ def check_environment(config, mode, browser, explicit_browser=None):
               "Install Node.js and make node and npx available to this task, then retry the check.")
 
         def cli_probe():
-            npx = shutil.which("npx.cmd") or shutil.which("npx")
-            if not npx:
-                raise FileNotFoundError("npx was not found")
-            return command_probe([npx, "--offline", "--yes", "--package", "@playwright/cli",
-                                  "playwright-cli", "--version"])
+            return command_probe(playwright_command(config) + ["--version"])
 
         check("playwright_cli_cached", cli_probe,
               "For a cache miss, provision @playwright/cli once using the installed Playwright skill. "

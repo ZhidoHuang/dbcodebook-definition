@@ -50,23 +50,27 @@ dbCodeBook 的网页探索、变量选择、下载和网站同步只使用 Chrom
 
 在现有执行报告中记录浏览器、CLI 会话名、启动工作目录及持久配置目录。后续任务接手时先在同一工作目录运行同一会话的 `snapshot`，不要重复 `open`、清空会话或另建配置。会话确已关闭才用原配置重新打开。不要让两个任务同时操作同一会话。具体命令和两个固定程序的执行方式见下方；其中 `dbCodeBookBrowser` 是执行入口内部提供的兼容对象，不需要模型再配置扩展或手工绑定。
 
+预检与正式动作共用同一个 CLI 解析入口。优先使用配置 executables.playwright_cli；填写 JS 入口时同时配置 executables.node，无需 npm/npx。没有显式配置时使用 PATH 中的 playwright-cli，再退到 npx 离线缓存；运行中不联网装包或生成伪造的 npx 包装器。缓存缺失只在环境准备时安装一次。配置指向的文件不存在时明确失败，不偷偷换入口。
+
 ```powershell
 # $SessionWorkdir / $Profile 来自本次记录，不把机器路径写入公共规则。
 Set-Location $SessionWorkdir
-npx --yes --package @playwright/cli playwright-cli -s=$Session snapshot
+$Cli = @((& $Python -X utf8 "$Skill/scripts/skill_config.py" --config $Config --browser-cli | ConvertFrom-Json).browser_cli)
+$CliArgs = @($Cli | Select-Object -Skip 1)
+& $Cli[0] @CliArgs "-s=$Session" snapshot
 # 仅首次建立或确认会话已关闭时执行 open：
-npx --yes --package @playwright/cli playwright-cli -s=$Session open $PageUrl --browser msedge --headed --profile $Profile
+& $Cli[0] @CliArgs "-s=$Session" open $PageUrl --browser msedge --headed --profile $Profile
 ```
 
 两个原有入口返回的 JSON 完整保存到当前执行目录，不改写其中的脚本。使用 `scripts/playwright_session_action.py` 在同一会话执行：
 
 ```powershell
 # 下载：$Action 是 --prepare-download 输出；返回文件保存在 $Result 所在目录。
-& $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --mode download --action $Action --session $Session --session-workdir $SessionWorkdir --out $Result
+& $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --config $Config --mode download --action $Action --session $Session --session-workdir $SessionWorkdir --out $Result
 # 网站计时前：$Preflight 是不带 --start-sync 的 verify-ready 输出。
-& $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --mode preflight --action $Preflight --session $Session --session-workdir $SessionWorkdir --out $PreflightResult
+& $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --config $Config --mode preflight --action $Preflight --session $Session --session-workdir $SessionWorkdir --out $PreflightResult
 # 网站开始计时后：$Action 是 --start-sync 输出，继续使用同一份预检材料。
-& $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --mode sync --action $Action --preflight $Preflight --session $Session --session-workdir $SessionWorkdir --out $Result
+& $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --config $Config --mode sync --action $Action --preflight $Preflight --session $Session --session-workdir $SessionWorkdir --out $Result
 ```
 
 执行入口只衔接原有固定动作与原生 Playwright，不新开浏览器。下载使用 `saveAs` 将文件保存到本次执行目录，再由原下载程序校验安装；下载观察目录因此设置为 `$Result` 所在目录，而不是猜测系统 Downloads。网站预检核对标签页，提交时校验预检 helper 哈希并复用同一动作。CLI 会自动生成页面快照，登录时不要在报告、Git 或交接消息中保留密码、验证码及 Cookie。

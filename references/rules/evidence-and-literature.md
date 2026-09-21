@@ -24,6 +24,8 @@ For each period and source group represented as original-question content, recor
 - repository material path and page, question, or section locator;
 - the copy section that uses the evidence.
 
+`local_material_path` is relative to the selected database's material root, not the repository. For CHARLS, the root is `references/source-materials/charls`; write `官方问卷/2011/2011 家户问卷.pdf`, not `references/source-materials/charls/官方问卷/2011/2011 家户问卷.pdf`. The example illustrates the base only; verify the actual filename before using it. For missing materials, record the existing directory actually searched; put page/question details in `locator`, not in the file path.
+
 An explanatory phrase such as “进入工作分支” may clarify a destination but cannot replace an available question number or original destination. Do not present a paraphrase as an original question.
 
 When repository material is absent, record the searched local location and the absence before adding an official web source. A similar website label is not questionnaire evidence.

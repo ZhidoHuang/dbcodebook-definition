@@ -98,6 +98,27 @@ def database_config(config: dict[str, Any], database: str) -> dict[str, Any]:
     return value
 
 
+def playwright_command(config: dict[str, Any] | None = None) -> list[str]:
+    """Resolve the same installed CLI for probes, session reuse and actions."""
+    config = load_config() if config is None else config
+    explicit = (config.get("executables") or {}).get("playwright_cli")
+    if explicit:
+        cli = configured_executable(config, "playwright_cli")
+        if Path(cli).suffix.lower() in {".js", ".mjs", ".cjs"}:
+            node = configured_executable(config, "node")
+            if not node:
+                raise FileNotFoundError("Set executables.node for the configured Playwright CLI script")
+            return [node, cli]
+        return [cli]
+    cli = shutil.which("playwright-cli.cmd") or shutil.which("playwright-cli")
+    if cli:
+        return [cli]
+    npx = shutil.which("npx.cmd") or shutil.which("npx")
+    if not npx:
+        raise FileNotFoundError("Set executables.playwright_cli to an installed CLI, or provision Node/npx and @playwright/cli once")
+    return [npx, "--offline", "--yes", "--package", "@playwright/cli", "playwright-cli"]
+
+
 def database_url(config: dict[str, Any], database: str) -> str:
     website = config.get("website", {})
     if not isinstance(website, dict):
@@ -114,6 +135,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Resolve dbcodebook-definition settings.")
     parser.add_argument("--config", type=Path)
     parser.add_argument("--database")
+    parser.add_argument("--browser-cli", action="store_true")
     args = parser.parse_args()
     try:
         config = load_config(args.config, required=True)
@@ -127,6 +149,8 @@ def main() -> int:
         if args.database:
             result["database"] = database_config(config, args.database)
             result["website_url"] = database_url(config, args.database)
+        if args.browser_cli:
+            result["browser_cli"] = playwright_command(config)
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"CONFIG_FAIL: {error}", file=sys.stderr)
         return 1

@@ -42,7 +42,7 @@ with tempfile.TemporaryDirectory(prefix="env space_") as temporary:
         assert not result["ok"] and len(result["not_verified"]) == 3
         assert all(c.get("remedy") for c in result["checks"] if not c["ok"])
 
-    with patch.object(probe.shutil, "which", return_value="fake-tool"), \
+    with patch.object(probe.shutil, "which", side_effect=lambda x: "fake-tool" if x in ("node", "npx") else None), \
          patch.object(probe, "browser_path", return_value="installed-edge"), \
          patch.object(probe, "command_probe", return_value="ready") as commands:
         result = probe.check_environment(config, "browser", "msedge")

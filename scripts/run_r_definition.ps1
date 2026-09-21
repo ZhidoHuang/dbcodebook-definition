@@ -199,27 +199,7 @@ if ($isCharls) {
       )
     }
   }
-  $hasSimpleCodebookRead = $publicSource.Contains('name_z <- read.csv("raw_codebook.csv")')
-  if (-not $hasSimpleCodebookRead) {
-    $publicIssues.Add(
-      'CHARLS public R must read raw_codebook.csv without extra options.'
-    )
-  }
-  $hasSimpleDataRead = $publicSource.Contains('dt <- read.csv("raw_data.csv")')
-  $hasHouseholdDataRead = $publicSource.Contains(
-    'colClasses = c(householdid = "character", id = "character")'
-  )
-  $hasPersonDataRead = $publicSource.Contains(
-    'colClasses = c(id = "character")'
-  )
-  $hasCommunityDataRead = $publicSource.Contains(
-    'colClasses = c(communityid = "character")'
-  )
-  if (-not ($hasSimpleDataRead -or $hasPersonDataRead -or $hasHouseholdDataRead -or $hasCommunityDataRead)) {
-    $publicIssues.Add(
-      'CHARLS public R must use the simple read, except that person/household/community identity columns may be preserved as character.'
-    )
-  }
+  # The R preflight below checks parsed read.csv calls, not spacing or line breaks.
   if ($publicSource -match '(?m)^names\((?:data|dt)\)\s*\[[^\]]+\]\s*<-') {
     $publicIssues.Add(
       'CHARLS public R must not rename raw columns by position. Assign unique aliases in dbCodeBook before download.'
@@ -360,6 +340,11 @@ if (length(missing)) {
   ))
 }
 "@
+  if ($Database -ieq "CHARLS") {
+    $rawReadHelper = ConvertTo-Json -InputObject (Join-Path $PSScriptRoot "check_public_raw_reads.R") -Compress
+    $rawReadScript = ConvertTo-Json -InputObject $resolvedScript -Compress
+    $packageCheckExpression += "`nsource($rawReadHelper, encoding='UTF-8')`ncheck_public_raw_reads(readLines($rawReadScript, encoding='UTF-8', warn=FALSE))`n"
+  }
   Invoke-RCode `
     -RscriptPath $resolvedRscript `
     -Code $packageCheckExpression `
