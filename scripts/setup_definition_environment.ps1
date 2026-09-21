@@ -16,7 +16,7 @@ if ([string]::IsNullOrWhiteSpace($Rscript)) {
   throw "Rscript does not exist: $Rscript"
 }
 
-$cranPackages = @("devtools", "openxlsx", "dplyr")
+$cranPackages = @("devtools", "openxlsx", "dplyr", "tidyr", "jsonlite")
 $quotedCranPackages = ($cranPackages | ForEach-Object { "'" + $_ + "'" }) -join ","
 $installMissingValue = if ($InstallMissing) { "TRUE" } else { "FALSE" }
 $updateDbCodeBookrValue = if ($UpdateDbCodeBookr) { "TRUE" } else { "FALSE" }

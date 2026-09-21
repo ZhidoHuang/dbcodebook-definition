@@ -1,6 +1,6 @@
 # 定义成果机器闭环与按需验收规则
 
-正式源说明：本文件是 CHARLS、ELSA 及后续数据库共用的唯一验收规则。独立验收不是定义流水线的固定工位，不得因任务类型、改动类型或历史习惯自动启动。
+正式源说明：本文件是各数据库共用的执行与验证流程。默认采用执行负责、程序验证、一次定义逻辑与 R 实现的合并独立复核。额外独立验收仅处理下述异常，不固定重复整条流程。
 
 ## 1. 默认路径：执行任务机器闭环
 
@@ -8,22 +8,22 @@
 
 | 顺序 | 当前步骤及唯一规则 | 通过后交接 |
 | --- | --- | --- |
-| 1 | [选题与来源方案](stages/01-source-plan.md) | 已复核的来源、定义、路径与候选取舍 |
+| 1 | [选题与来源方案](stages/01-source-plan.md) | 执行者已核对的来源、定义、路径与候选取舍 |
 | 2 | [选择与下载](stages/02-download.md) | 本次完整原始包、raw/codebook 与真实取值 |
 | 3 | [纯文案](stages/03-copy.md) | 已定稿文案及已核对的变更影响 |
-| 4 | [公开 R](stages/04-public-r.md) | 预检和公开 R 复核通过的正式源 |
+| 4 | [公开 R](stages/04-public-r.md) | 预检及定义逻辑与 R 合并独立复核通过的正式源 |
 | 5 | [成果生成](stages/05-generate.md) | 当前成果及明确退出码的运行日志 |
 | 6 | [结果验证](stages/06-results.md) | 当前版本、明确检查范围的结果证据 |
-| 7 | [全文审核](stages/07-review.md) | 作者与普通读者审核及当前发布许可 |
+| 7 | [成品交接](stages/07-review.md) | 执行结论汇总、生成一致性及当前发布许可 |
 | 8 | [网站同步](stages/08-website.md) | 提交结果、实际耗时和待用户检查状态 |
 
 每步规则同时给出输入、必读材料、动作、产物、程序检查、模型判断和退回位置。程序只负责可比较的事实，模型必须给出具体解释与未解决问题。没有执行的检查不能写“通过”。阶段验收针对稳定交付物，不是每条命令都安排一个审核角色。
 
 ### 修正后的复核范围
 
-首次完整生成先完成机器验证，再做两轮阅读。之后按实际影响回到相应步骤：来源或别名变化重新下载全量来源并从头运行；计算逻辑变化从头运行并验证受影响结果；仅表达变化重新生成并核对文字及结果未被改变，不重新探索或下载。相应只读角色复核它负责的改动及上下游关系，不重复未受影响的来源调查。
+首次完整生成先完成机器验证，再核对生成物与已完成的文案、代码及整篇衔接；不固定增加两轮阅读。之后按实际影响回到相应步骤：来源或别名变化重新下载全量来源并从头运行；计算逻辑变化从头运行并验证受影响结果；仅表达变化重新生成并核对文字及结果未被改变，不重新探索或下载。相应只读角色复核它负责的改动及上下游关系，不重复未受影响的来源调查。
 
-任何绑定成果变化都会使发布许可失效，作者必须重新绑定当前文件并记录变更影响。最终笔记有变化时重新全文阅读；最终笔记文件完全相同、仅 R 后台区或分析附件变化时，作者核对受影响成果和它与正文的一致性，可引用未变部分原有的全文审核证据。此时 `init --overwrite --preserve-reader` 会验证并保留同一笔记已有的合格读者审核，不重新派普通读者。笔记哈希、审核状态或逐块证据不符时该选项失败，不会自动补成通过。最终仍须重新运行 `check` 取得当前发布许可。
+任何绑定成果变化都会使发布许可失效，作者必须重新绑定当前文件并记录变更影响。最终笔记有变化时阅读受影响内容及相邻衔接；输入未变的执行结论可沿用。仅 R 后台区或分析附件变化时核对受影响成果与正文的一致性，不重读未变内容。此时 `init --overwrite --preserve-reader` 会验证并保留同一笔记已有的合格读者审核，不重新派普通读者。笔记哈希、审核状态或逐块证据不符时该选项失败，不会自动补成通过。最终仍须重新运行 `check` 取得当前发布许可。
 
 ## 2. 独立验收仅有四个入口
 
@@ -53,9 +53,9 @@
 
 ## 4. 状态与入账
 
-- 默认路径：`GENERATED -> MACHINE_CHECK_PASS -> AUTHOR_FULL_TEXT_REVIEW -> ORDINARY_READER_REVIEW -> PUBLISH_READY -> USER_REVIEW_PENDING -> COMPLETE`。
-- 异常路径：`GENERATED -> MACHINE_CHECK_PASS/BLOCKED -> SENT_FOR_VALIDATION -> VALIDATION_PASS -> AUTHOR_FULL_TEXT_REVIEW -> ORDINARY_READER_REVIEW -> PUBLISH_READY -> USER_REVIEW_PENDING -> COMPLETE`。
+- 默认路径：`GENERATED -> MACHINE_CHECK_PASS -> DELIVERY_CHECK -> PUBLISH_READY -> USER_REVIEW_PENDING -> COMPLETE`。
+- 异常路径：`GENERATED -> MACHINE_CHECK_PASS/BLOCKED -> SENT_FOR_VALIDATION -> VALIDATION_PASS -> DELIVERY_CHECK -> PUBLISH_READY -> USER_REVIEW_PENDING -> COMPLETE`。
 - machine closure 只需记录机器报告路径和是否存在上述四类异常；无异常时写 `independent_validation_required=false`，不要求另建过程卡。
-- `MACHINE_CHECK_PASS` 说明机器证据闭环；`PUBLISH_READY` 说明作者检查和普通读者检查均已完成，且检查器确认两份审核记录和四份成果一致，可以同步网站；`USER_REVIEW_PENDING` 说明成果已同步并等待用户阅读；只有用户确认后才标记 `COMPLETE`。这些状态不能写成同一时点的并列状态。
+- `MACHINE_CHECK_PASS` 说明机器证据闭环；`PUBLISH_READY` 说明执行结论与四份成果一致，程序验证及已发起的额外读者复核没有未解决问题，可以同步网站；`USER_REVIEW_PENDING` 说明成果已同步并等待用户阅读；只有用户确认后才标记 `COMPLETE`。这些状态不能写成同一时点的并列状态。
 
 独立验收任务保留为异常调查工具，不参与常规定义闭环。

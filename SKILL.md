@@ -20,6 +20,8 @@ This repository is the canonical source for rules, evidence, scripts, and tests.
 
 ## Stage Order
 
+On a new device or after runtime changes, run the [environment check](references/rules/stages/01-source-plan.md#新设备准备) once before production. Resolve all reported missing dependencies together; do not repeat unchanged checks per variable or stage. A local dependency pass does not establish browser control or website login.
+
 [validation.md](references/rules/validation.md) owns stage order and correction scope. Each stage document contains its input, necessary additional reading, execution, output, machine checks, model judgement, and return point. Read the current stage and its relevant database sections, not all stages or both database workflows.
 
 1. [Source plan](references/rules/stages/01-source-plan.md).
@@ -28,7 +30,7 @@ This repository is the canonical source for rules, evidence, scripts, and tests.
 4. [Public R](references/rules/stages/04-public-r.md).
 5. [Generation](references/rules/stages/05-generate.md).
 6. [Result verification](references/rules/stages/06-results.md).
-7. [Author and ordinary-reader review](references/rules/stages/07-review.md).
+7. [Delivery check](references/rules/stages/07-review.md).
 8. [Authorized website sync](references/rules/stages/08-website.md).
 
 Resolve database-specific materials from [database-routing.json](references/database-routing.json). A route is not evidence that a database has passed end-to-end testing. The generation stage states the current shared renderer's database boundary.
@@ -36,6 +38,8 @@ Resolve database-specific materials from [database-routing.json](references/data
 Before substantive production or shared-tool modification, start the existing [execution report](references/rules/execution-report.md); do not create parallel timing or audit systems. Use one primary writer. When a stage calls for a read-only reviewer, use [review roles](references/rules/review-roles.md), create it only when input is stable, reuse it for affected rechecks, and close it afterward. Do not create visible tasks merely to split work.
 
 ## Global Boundaries
+
+Execution owns completeness and readability. Do not create reviewers for each stage or writing requirement. A full topic uses one combined independent definition-and-R review after the stable R draft. Ordinary-reader review is optional for a specific unresolved readability concern or an explicit user request. Preserve deterministic checks and truthful evidence; self-check is not independent review.
 
 - Clear rules are requirements, not invitations to redesign. If any rule is unclear, conflicts with another, or appears to require a departure, report the exact uncertainty and impact before changing it. This applies to all rules, not only source mapping.
 - Keep authorized scope: no unrelated topics, website source changes, account changes, or promotional assets. Detailed write boundaries are in [write-boundaries.md](references/rules/write-boundaries.md).

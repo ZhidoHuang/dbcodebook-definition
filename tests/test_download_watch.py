@@ -156,6 +156,20 @@ with tempfile.TemporaryDirectory() as temp:
     prepared_run = subprocess.run(prepare_args + ["--overwrite"], capture_output=True,
                                   text=True, encoding="utf-8", env={**os.environ, "PYTHONUTF8": "1"})
     assert prepared_run.returncode == 0, prepared_run.stderr
+    from execution_report import REVIEW_POLICY
+    (source_path.parent / "execution_report.json").write_text(
+        json.dumps({"review_policy": REVIEW_POLICY}), encoding="utf-8")
+    execution_first = subprocess.run(prepare_args + ["--overwrite"], capture_output=True,
+                                    text=True, encoding="utf-8", env={**os.environ, "PYTHONUTF8": "1"})
+    assert execution_first.returncode == 0, execution_first.stderr
+    source_record["logic_review"]["result"] = "pending"
+    source_path.write_text(json.dumps(source_record), encoding="utf-8")
+    incomplete = subprocess.run(prepare_args + ["--overwrite"], capture_output=True,
+                               text=True, encoding="utf-8", env={**os.environ, "PYTHONUTF8": "1"})
+    assert incomplete.returncode != 0 and "logic_review.result" in incomplete.stderr
+    source_record["logic_review"]["result"] = "clear"
+    source_path.write_text(json.dumps(source_record), encoding="utf-8")
+    prepared_run = execution_first
     assert prepared_run.stdout.isascii()
     prepared = json.loads(prepared_run.stdout)
     assert prepared["next_action"] == "run_browser_action_once"

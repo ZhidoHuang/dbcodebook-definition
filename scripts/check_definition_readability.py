@@ -29,6 +29,7 @@ PASS_STATUS = "FULL_TEXT_READABILITY_PASS"
 IMPACT_PASS_STATUS = "CHANGE_IMPACT_PASS"
 READER_REVIEW_PASS_STATUS = "READER_COMPREHENSION_PASS"
 AUDIT_SCHEMA_VERSION = 5
+REVIEW_POLICY = "execution_first_v1"
 IMPACT_SCHEMA_VERSION = 2
 READER_REVIEW_SCHEMA_VERSION = 2
 LEGACY_READER_REVIEW_SCHEMA_VERSION = 1
@@ -842,6 +843,8 @@ def initialize_reader_review(
         "unresolved_issues": [],
     }
     write_json(review_path, payload)
+    audit["reader_review_required"] = True
+    write_json(audit_path, audit)
     readiness_path = process_dir / REPORT_NAME
     if readiness_path.exists():
         readiness_path.unlink()
@@ -995,6 +998,10 @@ def initialize_audit(
     audit_path = process_dir / AUDIT_NAME
     if audit_path.exists() and not overwrite:
         fail(f"{AUDIT_NAME} already exists; use --overwrite after a new regeneration")
+    previous_audit = json.loads(audit_path.read_text(encoding="utf-8-sig")) if audit_path.exists() else {}
+    reader_required = bool(previous_audit.get("reader_review_required")) or (
+        process_dir / READER_REVIEW_NAME
+    ).exists()
 
     change_impact = validate_impact(formal_dir, process_dir, topic_id)
 
@@ -1020,6 +1027,8 @@ def initialize_audit(
         )
     payload = {
         "schema_version": AUDIT_SCHEMA_VERSION,
+        "review_policy": REVIEW_POLICY,
+        "reader_review_required": reader_required,
         "topic_id": topic_id.zfill(3),
         "status": "DRAFT",
         "audited_at": "",
@@ -1254,12 +1263,8 @@ def validate_audit(
     if unresolved:
         fail("unresolved_issues must be empty before publication")
 
-    reader_review = validate_reader_review(
-        formal_dir,
-        process_dir,
-        expected_topic,
-        current_hashes["note"],
-        reviewer,
+    reader_review = publication_reader_review(
+        audit, formal_dir, process_dir, expected_topic, current_hashes["note"], reviewer
     )
 
     result_check = validate_result_check(formal_dir, process_dir, current_hashes)
@@ -1290,6 +1295,15 @@ def validate_audit(
         write_json(report_path, result)
         result["report"] = str(report_path)
     return result
+
+
+def publication_reader_review(audit, formal_dir, process_dir, topic_id, note, reviewer):
+    # Existing reviews remain binding; omitting a new review is not a pass verdict.
+    if (audit.get("review_policy") == REVIEW_POLICY
+            and not audit.get("reader_review_required", False)
+            and not (process_dir / READER_REVIEW_NAME).exists()):
+        return {"status": "NOT_REQUESTED", "required": False}
+    return validate_reader_review(formal_dir, process_dir, topic_id, note, reviewer)
 
 
 def verify_existing_readiness(

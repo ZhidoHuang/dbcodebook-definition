@@ -52,7 +52,7 @@ FULL_DEFINITION_STAGES = {
     "sources": "来源探索与权威材料核对",
     "download": "最终来源选择与下载",
     "formal_r": "正式 R 编写、运行与成果生成",
-    "validation": "机器验证、全文与普通读者复核",
+    "validation": "机器验证与成品交接",
 }
 FULL_DEFINITION_REVIEW_ROLES = {
     "定义逻辑复核",
@@ -60,6 +60,8 @@ FULL_DEFINITION_REVIEW_ROLES = {
     "普通读者复核",
 }
 MAX_UNTRACKED_SECONDS = 60
+REVIEW_POLICY = "execution_first_v1"
+COMBINED_REVIEW_ROLE = "公开 R 复核"
 
 
 def duration_text(seconds: float) -> str:
@@ -152,7 +154,11 @@ def validate_full_definition_completion(
         if (review.get("mode") == "isolated" or review.get("reused_from")) and review.get("status") == "pass":
             validate_stage_review(report, role)
             closed_roles.add(role)
-    missing_roles = sorted(FULL_DEFINITION_REVIEW_ROLES - closed_roles)
+    required_roles = FULL_DEFINITION_REVIEW_ROLES
+    if report.get("review_policy") == REVIEW_POLICY:
+        required_roles = {COMBINED_REVIEW_ROLE}
+        validate_stage_review(report, COMBINED_REVIEW_ROLE)
+    missing_roles = sorted(required_roles - closed_roles)
     if missing_roles:
         raise SystemExit("完整定义流程缺少已完成审核：" + "、".join(missing_roles))
 
@@ -375,6 +381,8 @@ def validate_stage_review(report, role):
     if input_hashes(review["inputs"]) != review["inputs"]:
         raise ValueError("审核输入已变化，须复核受影响部分：" + role)
     if review.get("mode") == "isolated":
+        if report.get("review_policy") == REVIEW_POLICY and role == COMBINED_REVIEW_ROLE:
+            raise ValueError("定义逻辑与 R 实现需要独立复核，隔离自查不能替代")
         if not review.get("limitation", "").strip():
             raise ValueError("隔离自查缺少环境限制说明")
     else:
@@ -396,6 +404,10 @@ def command_review_stage(args):
                                 key=lambda path: path.stat().st_mtime, reverse=True)
             for path in candidates:
                 previous = load(path)
+                if (report.get("review_policy") == REVIEW_POLICY
+                        and args.role == COMBINED_REVIEW_ROLE
+                        and previous.get("review_policy") != REVIEW_POLICY):
+                    continue
                 if args.role not in previous.get("stage_reviews", {}):
                     continue
                 prior = validate_stage_review(previous, args.role)
@@ -570,6 +582,7 @@ def command_init(args: argparse.Namespace) -> dict[str, Any]:
                 (archive / existing.name).write_bytes(existing.read_bytes())
     report = {
         "schema_version": 1,
+        "review_policy": REVIEW_POLICY,
         "run_id": str(uuid.uuid4()),
         "database": args.database,
         "topic_id": args.topic_id,

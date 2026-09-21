@@ -443,8 +443,10 @@ def prepare_download(args: argparse.Namespace) -> dict:
     if str(record.get("database", "")).casefold() != args.database.casefold():
         raise ValueError("source record database differs from the requested download")
     validate_download_selection(record_path, args.expect_vars_file, str(record["topic_id"]).zfill(3))
-    from execution_report import load, validate_stage_review
-    validate_stage_review(load(record_path.parent / "execution_report.json"), "定义逻辑复核")
+    from execution_report import load, validate_stage_review, REVIEW_POLICY
+    report = load(record_path.parent / "execution_report.json")
+    if report.get("review_policy") != REVIEW_POLICY:
+        validate_stage_review(report, "定义逻辑复核")
     check_output_replacement(args.out, args.overwrite)
     snapshot = download_snapshot(args.prepare_download)
     snapshot["expected_vars"] = expected

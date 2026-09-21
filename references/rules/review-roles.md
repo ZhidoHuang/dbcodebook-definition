@@ -1,49 +1,30 @@
 # 复核角色与模型
 
-只在需要调度对应角色时读取；角色输入和通过条件由各环节规定。模型名称沿用现有配置，记录实际可用模型，不因改规则重选模型。
-
 ## 稳定输入到复核结论
 
-定义逻辑和公开 R 的复核交接记录在现有 execution_report.json 中，不另建审核报告。发给角色前运行 review-start，重复 --input 指定本轮要读的准确文件。来源方案至少包括探索记录和 definition_search_record.json；公开 R 至少包括正式 R、raw_codebook.csv 和定义方案。单纯表达变化由文案和全文环节检查，不把文案的措辞修改自动算成代码复核失效。
+完整主题默认只有一次独立复核：在 R 草稿通过预检后，同时核对定义口径与代码实现。沿用现有角色名“公开 R 复核”，不再固定派发下载前的逻辑复核和生成后的普通读者复核。
 
-返修先运行 review-check；本轮没有新复核记录时，它可检查同一过程目录最近的归档结论。所有绑定输入均未变才沿用，并披露沿用来源；当前已有待处理或失败结论时不退回旧通过记录。没有合格结论或输入变化时，才创建本次需要的只读复核。
+主执行者在来源探索时核对来源完整性、对象、时期、单位、键、进入条件与缺失边界；在写作和编程时完成可读性要求。独立复核重点检查这些定义是否有依据，以及 R 是否正确实现，不能代替主执行者完成基本工作。
+
+给复核者一次提供稳定的正式 R、raw_codebook.csv、definition_search_record.json、探索记录和相关权威证据。先确认该角色能够访问这些准确路径；无法访问时修复材料交接，不让它自行猜目录或重新探索。以同一组文件逐项重复 --input 绑定输入：
 
 ```powershell
-& $Python scripts/execution_report.py review-start --process-dir $Process --role $Role --input $InputFile
+& $Python -X utf8 scripts/execution_report.py review-start --process-dir $Process `
+  --role "公开 R 复核" --input $RScript --input $RawCodebook --input $SourceRecord --input $Exploration
 ```
 
-新发起的复核收到具体发现后，先用 review-import 登记对应 agent 日志；解决发现后，用 review-result --role $Role --agent-id $AgentId --result pass|blocked --evidence $ActualFindings 保存实际结论。新复核要求当前输入未变、该角色最新一轮确已完成且结论通过；沿用归档复核时则检查原轮次证据和当前输入，不要求再开本轮审核。两种情况均用 review-check 交接。保存字段不证明判断正确，具体标准仍按当前环节逐条核对。不得把没有完成的审核填成通过。
+复核者只读，集中返回具体发现、未解决问题及结论，不修改成果、不重跑生产、不操作网站。主执行者集中处理后，只请求受影响分支的复查。复核可以没有发现，但必须实际读到材料并完成判断。
 
-环境确实无法建立独立角色时，采用隔离上下文自查，使用 review-result 的 --isolated-reason 写明限制并保留具体发现，不传虚构 agent ID。报告明确显示“隔离自查（非独立复核）”，不冒充独立角色，也不为满足计数创建无关角色。此例外不改变普通读者已有的输入隔离和逐块审核要求。
+用 review-import 导入实际角色日志，再用 review-result 保存具体结论，review-check 核对输入仍未变。没有读到文件、任务未收到、轮次中止或环境不支持独立角色，均是“未完成”；可以继续准备不依赖此结论的工作，但不能以隔离自查代替所需独立复核。报告写明实际阻塞，不虚构 agent ID 或通过记录。
 
-## Execution Roles And Model Routing
+返修先 review-check；输入未变的合格结论可以沿用，输入变化只复核受影响部分。当前已有失败或待处理结论时，不退回历史通过记录。不为措辞修改自动重新探索、下载或派发代码复核。
 
-Keep one primary writer for the entire topic. Use internal read-only subagents for the required reviews; do not create separate visible task threads merely to divide stages. Reviewers report findings to the primary writer and never edit files, rerun the production workflow, operate the website, or create competing versions.
+## 角色生命周期
 
-Create a reviewer when its input is ready, not at the start of the topic. Retain its agent ID and use `send_input` for that topic's focused rechecks. Do not create another reviewer for a small correction. After the final affected review passes, close the agent with `close_agent`; an agent that has returned a result is still open until explicitly closed. Preserve its evidence and record its actual rounds using the report's `review-import` command. A later new topic gets its own scoped review context.
+一个主执行者负责整个主题。输入稳定时才创建内部只读角色，不为分步骤创建可见任务。同一主题返修复用角色；结束后 close_agent，并用 review-import --closed 登记真实关闭。宿主没有关闭工具时，最后一轮确已完成才能登记 --close-unavailable 和具体限制，不能冒充已关闭。
 
-Use the following current defaults when the host offers these models. If a named model is unavailable, preserve the role by choosing the strongest available flagship model for quality-first review, a balanced agentic model for ordinary execution, and an efficient model only for bounded mechanical work. Do not weaken a role merely to preserve an exact model name.
+沿用任务当前模型和用户已授权的配置，不为切换模型创建新任务。保留既有默认路由：普通执行 gpt-5.6-terra/high，复杂主题执行 gpt-5.6-sol/high，合并独立复核 gpt-5.6-sol/high，按需普通读者 gpt-5.6-terra/medium，异常独立验收 gpt-5.6-sol/max。宿主不提供这些模型时，质量判断使用可用的强模型，普通执行使用均衡模型；不因模型名不可用削弱复核职责。
 
-| Role | Current default | Reasoning | Scope |
-| --- | --- | --- | --- |
-| Primary writer | `gpt-5.6-terra` | `high` | Ordinary source discovery, definition, download, R, generation, revision, and authorized website sync |
-| Complex-topic primary writer | `gpt-5.6-sol` | `high` | Multiple periods or files, complex questionnaire paths, long-to-wide outcomes, official derived indicators, or unresolved source inconsistencies |
-| Definition-logic reviewer | `gpt-5.6-sol` | `xhigh` | Read-only review of source completeness, questionnaire-path closure, definition breadth, period, population, unit, keys, and each source variable's purpose |
-| Public-R reviewer | `gpt-5.6-sol` | `high` | Read-only review of final aliases, fixed header, observed-value checks, beginner-readable execution order, missing handling, mapping, and output boundary |
-| Ordinary-reader reviewer | `gpt-5.6-terra` | `medium` | Read only the final reader copy and test whether each part can be understood and restated without technical context |
-| Mechanical website operation | `gpt-5.6-luna` | `low` | Optional per-stage override for the already-authorized fixed upload action; keep the primary writer when switching would require another writer or task |
-| Exceptional independent validation | `gpt-5.6-sol` | `max` | Only for the unresolved evidence, research, or high-impact shared-mechanism cases defined in the validation rules |
+默认路由不等于实际切换或用户授权。只在调度工具允许且用户已授权时传模型参数；可见任务默认沿用用户设置。报告从各自日志记录实际模型与推理档位，无法核实就写“未核实”，不从预设表推测。
 
-Machine checks use deterministic scripts rather than a model. The report reads the primary model from this task's session log at stage start; an unavailable record is marked unverified, never filled from this routing table. Do not use `max` for routine work, and do not create a separate visible task or browser session only to change models. Keep reviewer inputs narrow and bind each review to the current artifacts so long primary-thread context does not contaminate the independent pass.
-
-The table does not switch models. When dispatching a reviewer, pass its model and reasoning effort in the actual tool arguments. For a user-requested task, the caller must honor the task tool's model-override permissions: a Skill default alone is not user authorization to select a model. If the user has authorized this routing, pass `model` and `thinking` when creating or resuming the task; omission preserves the existing/user default. A running task cannot silently change its own model. Record any mismatch and its reason instead of claiming the table was applied. Reports read each review round's actual model and effort from its own log, not from the primary writer or this table.
-
-If the host has no `close_agent`, do not invent a close result or open another reviewer. After the final round actually completes, use `review-import --close-unavailable "<observed host/tool limitation>"`. The report keeps `closed=false` and separately states that the review completed; an unfinished or aborted final round does not qualify. This lifecycle exception does not replace the review's content verdict.
-
-For a full topic run, the definition-logic reviewer is required after the source plan is settled and before the final download or formal R. The Public-R reviewer is required after the R draft is complete and before it is accepted as the production script. The ordinary-reader reviewer is required after the reader artifacts are regenerated. The primary writer resolves every finding and reruns the affected review. Website work stays with the primary writer in the chosen Chrome or Edge session.
-
-Schedule reviews at these dependency boundaries, not while their inputs are still changing. While a reviewer works, the primary writer may prepare a disjoint part of the deliverable, but must not rewrite the reviewer's inputs or repeat its review. Finish machine validation before final reading; use the change scope in the validation rules to decide which evidence needs renewal.
-
-Submit the complete source plan and evidence together. Ask the reviewer to collect all findings in one pass; the primary writer resolves the batch before requesting a focused recheck of the changed branches and their dependents. Preserve unaffected findings instead of restarting discovery or whole-topic review. If the same gap recurs, resolve its missing evidence before another review request. Do not start a production stage merely to fill review waiting time; start it when its prerequisites and actual work are ready.
-
-Before the first Public-R review, use the existing runner's `-PreflightOnly` mode to catch fixed-header, source, environment and syntax errors without producing outputs. Send the stable draft after fixing that batch. Do not send progress-only messages to a waiting reviewer; send the completed correction and affected scope together. The later production run still checks its actual inputs; do not insert another standalone preflight immediately before it.
+机器能确定的身份、格式、文件和数据一致性由程序检查，不交给模型重复阅读。普通读者仅按 [成品交接](stages/07-review.md#按需普通读者复核) 触发；异常调查仅按 [验收规则](validation.md#2-独立验收仅有四个入口) 触发，不扩展成整主题再做一次。

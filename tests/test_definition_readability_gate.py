@@ -404,10 +404,20 @@ def main() -> int:
         initialize_fixture_audit(checker, formal, process, "025", files)
         audit_path = process / checker.AUDIT_NAME
         complete_audit(checker, audit_path)
+        # A new execution-first topic can publish without an extra reader role.
+        ready = checker.validate_audit(formal, process, "025")
+        assert ready["reader_review"] == {"status": "NOT_REQUESTED", "required": False}
         reader_init = checker.initialize_reader_review(
             formal, process, "025", files["note"]
         )
         draft = json.loads((process / checker.READER_REVIEW_NAME).read_text(encoding="utf-8"))
+        expect_failure(lambda: checker.validate_audit(formal, process, "025"),
+                       "reader review status must be")
+        initialize_fixture_audit(checker, formal, process, "025", files, overwrite=True)
+        complete_audit(checker, audit_path)
+        expect_failure(lambda: checker.validate_audit(formal, process, "025"),
+                       "ordinary-reader review is required")
+        checker.initialize_reader_review(formal, process, "025", files["note"])
         reader_input_path = process / checker.READER_INPUT_NAME
         reader_input = reader_input_path.read_text(encoding="utf-8")
         assert reader_init["allowed_inputs"] == [str(reader_input_path)]
