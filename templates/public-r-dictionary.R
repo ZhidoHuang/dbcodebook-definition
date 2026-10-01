@@ -31,8 +31,8 @@ analysis_codebook <- bind_rows(codebook)
 # db_data、codebook、analysis_data 在前面的正式定义中建立；文件前缀按本主题替换。
 openxlsx::write.xlsx(db_data, "db_topic.xlsx", overwrite = TRUE)
 openxlsx::write.xlsx(codebook, "codebook_topic.xlsx", overwrite = TRUE)
-openxlsx::write.xlsx(analysis_data, "db_topic_analysis.xlsx", overwrite = TRUE)
-openxlsx::write.xlsx(analysis_codebook, "codebook_topic_analysis.xlsx", overwrite = TRUE)
+openxlsx::write.xlsx(analysis_data, "analysis_db_topic.xlsx", overwrite = TRUE)
+openxlsx::write.xlsx(analysis_codebook, "analysis_codebook_topic.xlsx", overwrite = TRUE)
 
 # 输出
 # 后台 QA、HTML 与笔记生成放在此处；上面的四份正式工作簿属于公开代码。

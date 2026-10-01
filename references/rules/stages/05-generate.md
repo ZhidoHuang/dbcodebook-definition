@@ -50,7 +50,7 @@ CHARLS 五期是当前共同覆盖契约，不能依据本主题恰好出现的�
 - 只有正式业务分组宽度已经明确时才设置 `hist_binwidth`；不同变量需要不同宽度时使用命名向量。
 
 
-保持完整生成调用；四份write.xlsx在唯一 `# 输出` 前，后台QA和渲染在后，写法见[字典模板](../../../templates/public-r-dictionary.R)。生成器对公开代码以空编号标题结束发出警告。
+保持完整生成调用；四份write.xlsx在唯一 `# 输出` 前，后台QA和渲染在后，写法见[字典模板](../../../templates/public-r-dictionary.R)。四份文件依次命名为 `db_<主题>.xlsx`、`codebook_<主题>.xlsx`、`analysis_db_<主题>.xlsx`、`analysis_codebook_<主题>.xlsx`，只替换主题部分，不调整前缀顺序。生成器对公开代码以空编号标题结束发出警告。
 
 定义笔记公开R不显示raw获取提示；`# raw_data.csv从网站dbcodebook.cn对应笔记，go to提取变量获得`只由公众号SVG/富文本工具注入。宣传材料不作定义措辞底稿；定义事实变化后，由独立宣传任务评估更新。用户材料不显示工具、版本史、验收或过程证据。
 
