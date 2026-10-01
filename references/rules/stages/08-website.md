@@ -14,7 +14,7 @@
 
 ```powershell
 & $Python scripts/execution_report.py website-prepare --process-dir $Process --database $Database --topic-id $Topic --topic-name $TopicName
-& $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl | Set-Content -Encoding utf8 $Preflight
+& $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl --website-title $WebsiteTitle | Set-Content -Encoding utf8 $Preflight
 ```
 
 准备计时从本地检查和登录核对前开始。确认目标页已打开且登录有效，沿用该任务观察并绑定的 `$TabId`。未登录时在尚未改动的页面完成登录后继续。预检只读，不导航、导入或提交：
@@ -28,7 +28,7 @@
 本地与浏览器预检均通过后，启动提交计时，并立即执行固定入口：
 
 ```powershell
-& $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --start-sync --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl | Set-Content -Encoding utf8 $Action
+& $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --start-sync --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl --website-title $WebsiteTitle | Set-Content -Encoding utf8 $Action
 & $Python -X utf8 scripts/playwright_session_action.py --config $Config --mode sync --action $Action --preflight $Preflight --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $SyncResult
 ```
 
@@ -47,8 +47,8 @@
 
 ## 新建、改标题与附件
 
-- 网站标题使用“数据库 主题名称”，不带主题序号，例如“ELSA 孤独感”；序号只用于本地目录和内部记录。新建和以后同步时按此执行，不因此批量改动未请求同步的旧文章。程序兼容识别带序号的旧标题，以文章地址、数据库和主题名称核对身份。
-- 新建文章在同一标签打开网站空白新建表单。两个verify-ready命令均将post-id参数替换为 `--create --website-title $WebsiteTitle --directory-tag $DirectoryTag`；不先建占位文章取得ID，不用新建绕过既有文章身份检查。
+- 网站标题使用“数据库 — 中文（英文）”，例如“ELSA — 认知功能（Cognitive Function）”：数据库后用两侧各一个空格的长破折号，英文名称用中文全角括号，不带主题序号。中英文含义一致且覆盖实际定义范围，采用主题已确定的英文名称，不由程序猜译。新建和以后同步时，两次verify-ready（预检及--start-sync）均显式传入同一完整`--website-title`，不使用旧的仅中文默认标题。序号只用于本地目录和内部记录；不因此批量改动未请求同步的旧文章。程序兼容识别旧标题，以文章地址、数据库和主题名称核对身份。
+- 新建文章在同一标签打开网站空白新建表单。两个verify-ready命令均将post-id参数替换为 `--create --directory-tag $DirectoryTag`，保留上述完整标题参数；不先建占位文章取得ID，不用新建绕过既有文章身份检查。
 - 文章编号支持正整数及 `local-正整数`，传入实际文章地址中的完整编号；程序将 `local-N` 的编辑入口映射为 `/nodes/edit/N/`。更新返回允许同一编号的纯数字或 `local-` 地址，不接受另一编号；新建返回必须属于当前站点的文章路径。
 - 改既有标题时，两个命令都加同一 `--website-title`；先确认旧文章身份，再与正文附件同次提交。
 - 目录标签与跨库主题（网页显示“主题标签”）均为单选：先读取当前下拉选项，优先选择含义匹配的已有项；检查同义、近义项后确无匹配才新建。旧台账仅作线索，不能代替当前选项；不能把“搜索无结果”或“出现新建按钮”当成没有语义匹配。更新时未要求调整的字段保留。
