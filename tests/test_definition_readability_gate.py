@@ -611,6 +611,21 @@ def main() -> int:
         assert local_action["payload"]["edit_url"] == "http://localhost:8000/nodes/edit/384/"
         assert local_action["payload"]["desired_title"] == "ELSA 孤独感"
         assert local_action["payload"]["identity_title_parts"] == ["ELSA", "孤独感"]
+        assert local_action["payload"]["taxonomy_plan"] == {}
+        taxonomy_action = checker.build_cua_sync_action(
+            upload, "http://localhost:8000", "local-384", "ELSA", "004", "孤独感",
+            taxonomy_plan={"directory_tag": {"value": "心理社会", "mode": "existing"},
+                           "cross_database_topic": {"value": "孤独感", "mode": "create",
+                                                    "options": ["生活质量"], "reason": "不同测量概念"}},
+        )
+        assert taxonomy_action["payload"]["taxonomy_plan"]["cross_database_topic"]["mode"] == "create"
+        assert 'taxonomy = await applyWebsiteTaxonomy' in taxonomy_action["preload_script"]
+        assert 'timings, keep, taxonomy,' in taxonomy_action["preload_script"]
+        assert 'await verifyWebsiteTaxonomy(tab, taxonomy)' in taxonomy_action["preload_script"]
+        expect_failure(lambda: checker.build_cua_sync_action(
+            upload, "http://localhost:8000", "local-384", "ELSA", "004", "孤独感",
+            taxonomy_plan={"cross_database_topic": {"value": "孤独感", "mode": "create"}},
+        ), "reviewed options and reason")
         for invalid_id in ("local-0", "local-01", "local--1", "LOCAL-384", "local-384/", "../384", "384?x=1"):
             expect_failure(lambda: checker.build_cua_sync_action(
                 upload, "http://localhost:8000", invalid_id, "ELSA", "004", "孤独感"
@@ -679,7 +694,7 @@ console.log("website preflight self-binding PASS");
             assert preflight_run.returncode == 0, preflight_run.stderr
             assert "website preflight self-binding PASS" in preflight_run.stdout
             category_code = preload_script.split("const categoryOptions =", 1)[1].split(
-                'await tab.playwright.locator("#tags-input")', 1
+                'const metadata =', 1
             )[0]
             category_test = r'''
 const assert = require("node:assert/strict");

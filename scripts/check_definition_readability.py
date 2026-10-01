@@ -1470,6 +1470,8 @@ def build_cua_sync_action(
     directory_tag: str | None = None,
     sync_run_id: str | None = None,
     sync_attempt: int | None = None,
+    cross_database_topic: str | None = None,
+    taxonomy_plan: dict | None = None,
 ) -> dict:
     base_url = base_url.strip().rstrip("/")
     parsed = urlsplit(base_url)
@@ -1478,7 +1480,27 @@ def build_cua_sync_action(
     post_id = (post_id or "").strip()
     if create and post_id:
         fail("--create cannot be combined with --post-id")
-    if create and not (website_title and directory_tag and directory_tag.strip()):
+    plans = dict(taxonomy_plan or {})
+    for field, value in (("directory_tag", directory_tag), ("cross_database_topic", cross_database_topic)):
+        if value:
+            if field in plans and plans[field].get("value") != value.strip():
+                fail(f"Conflicting taxonomy values: {field}")
+            plans.setdefault(field, {"value": value.strip(), "mode": "existing"})
+    if create and "cross_database_topic" not in plans:
+        plans["cross_database_topic"] = {"value": topic_name, "mode": "existing"}
+    for field, spec in plans.items():
+        if field not in {"directory_tag", "cross_database_topic"} or not isinstance(spec, dict):
+            fail("Invalid taxonomy plan field")
+        if not isinstance(spec.get("value"), str) or not spec["value"].strip() or spec.get("mode") not in {"existing", "create"}:
+            fail(f"Taxonomy plan requires value and existing/create mode: {field}")
+        spec["value"] = spec["value"].strip()
+        if spec["mode"] == "create" and (
+            not isinstance(spec.get("options"), list) or
+            not all(isinstance(item, str) and item.strip() for item in spec["options"]) or
+            not isinstance(spec.get("reason"), str) or not spec["reason"].strip()
+        ):
+            fail(f"New taxonomy value requires reviewed options and reason: {field}")
+    if create and not (website_title and "directory_tag" in plans):
         fail("--create requires --website-title and --directory-tag")
     if not create and not re.fullmatch(r"(?:local-)?[1-9][0-9]*", post_id):
         fail("--post-id must be a positive integer or local- followed by a positive integer")
@@ -1508,6 +1530,7 @@ def build_cua_sync_action(
         "create": create,
         "database": database,
         "directory_tag": directory_tag.strip() if directory_tag else None,
+        "taxonomy_plan": plans,
         "post_id": post_id,
         "post_url": None if create else f"{base_url}/nodes/post/{post_id}/",
         "post_url_prefix": f"{base_url}/nodes/post/",
@@ -1584,6 +1607,7 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
     );
   }}
   const timings = checkpoint?.timings || {{}};
+  let taxonomy = checkpoint?.taxonomy || {{}};
   let submissionStarted = false;
   try {{
     let stepStarted = Date.now();
@@ -1654,16 +1678,15 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
       );
       if (matchingCategories.length !== 1) throw new Error("未找到唯一匹配的数据库选项");
       await tab.playwright.locator("#category").selectOption({{ value: matchingCategories[0].value }});
-      await tab.playwright.locator("#tags-input").fill(payload.directory_tag);
-      await tab.playwright.locator("#tags-input").press("Enter");
       const metadata = await tab.playwright.evaluate(() => ({{
-        database: document.querySelector("#category").selectedOptions[0].textContent.trim(),
-        tags: document.querySelector("#tags-container").innerText
+        database: document.querySelector("#category").selectedOptions[0].textContent.trim()
       }}));
-      if (metadata.database.toLocaleLowerCase() !== payload.database.trim().toLocaleLowerCase() ||
-          !metadata.tags.includes(payload.directory_tag)) {{
-        throw new Error("数据库或目录标签未设置成功");
+      if (metadata.database.toLocaleLowerCase() !== payload.database.trim().toLocaleLowerCase()) {{
+        throw new Error("数据库未设置成功");
       }}
+    }}
+    if (Object.keys(payload.taxonomy_plan || {{}}).length) {{
+      taxonomy = await applyWebsiteTaxonomy(tab, payload.taxonomy_plan);
     }}
 
     stepStarted = Date.now();
@@ -1671,7 +1694,7 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
     if (!payload.create) await tab.playwright.getByRole("button", {{ name: "清空内容" }}).click();
     const emptyLength = await editor.evaluate(el => el.value.length);
     if (emptyLength !== 0) throw new Error("清空正文后编辑器仍非空");
-    if (phase) return {{ok: true, phase: "body", startedAt, timings,
+    if (phase) return {{ok: true, phase: "body", startedAt, timings, taxonomy,
       uploadStartedAt: stepStarted}};
     await chooseVisibleFile(tab, "#content-import-input", payload.note);
     }}
@@ -1711,7 +1734,7 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
       await deleteButtons.last().click();
       deleteButtons = sidebar.locator('button[title="删除"]');
     }}
-    if (phase) return {{ok: true, phase: "submit", startedAt, timings, keep,
+    if (phase) return {{ok: true, phase: "submit", startedAt, timings, keep, taxonomy,
       uploadStartedAt: stepStarted}};
     for (const attachment of payload.attachments.slice(keep)) {{
       await chooseVisibleFile(tab, "#documents-sidebar-input", attachment.path);
@@ -1729,6 +1752,7 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
     timings.attachments_ms = Date.now() - (checkpoint?.uploadStartedAt || stepStarted);
 
     const finalTitle = await tab.playwright.locator("#title").evaluate(el => el.value);
+    if (Object.keys(taxonomy).length) await verifyWebsiteTaxonomy(tab, taxonomy);
     if (!payload.expected_title_parts.every(part => finalTitle.toLocaleLowerCase().includes(String(part).toLocaleLowerCase()))) {{
       throw new Error("提交前标题身份已改变，停止提交");
     }}
@@ -1772,6 +1796,7 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
         article_page_returned: true
       }},
       body_length_utf16: body.length,
+      taxonomy,
       attachments: actualNames,
       attachments_preserved: keep,
       attachment_signatures: payload.attachments.map(item => ({{name: item.name, sha256: item.sha256}}))
@@ -1783,6 +1808,8 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
     throw error;
   }}
 }}'''
+    helper_script = (Path(__file__).with_name("website_taxonomy.js").read_text(encoding="utf-8")
+                     + "\n" + helper_script)
     preload_script = helper_script + rf'''
 var dbCodeBookSyncPreflightTab = await resolveDbCodeBookTab({existing_tab_match_json});
 nodeRepl.write(JSON.stringify({{
@@ -1858,6 +1885,8 @@ def parse_args() -> argparse.Namespace:
     verify_parser.add_argument("--post-id")
     verify_parser.add_argument("--create", action="store_true")
     verify_parser.add_argument("--directory-tag")
+    verify_parser.add_argument("--cross-database-topic")
+    verify_parser.add_argument("--taxonomy-plan", type=Path, help="Current dropdown choices; creation requires reviewed options and reason")
     verify_parser.add_argument("--base-url")
     verify_parser.add_argument("--website-title")
     return parser.parse_args()
@@ -1928,6 +1957,8 @@ def main() -> int:
                     result["upload"], args.base_url, args.post_id, args.database,
                     args.topic_id, args.topic_name, args.website_title,
                     create=args.create, directory_tag=args.directory_tag,
+                    cross_database_topic=args.cross_database_topic,
+                    taxonomy_plan=json.loads(args.taxonomy_plan.read_text(encoding="utf-8-sig")) if args.taxonomy_plan else None,
                 )
                 if sync_requested:
                     import execution_report
@@ -1941,6 +1972,8 @@ def main() -> int:
                         args.database, args.topic_id, args.topic_name,
                         args.website_title, sync["started_at"], include_preload=False,
                         create=args.create, directory_tag=args.directory_tag,
+                        cross_database_topic=args.cross_database_topic,
+                        taxonomy_plan=json.loads(args.taxonomy_plan.read_text(encoding="utf-8-sig")) if args.taxonomy_plan else None,
                         sync_run_id=sync["run_id"], sync_attempt=sync["attempt"],
                     )
                     result = {"ok": True, "status": result["status"],

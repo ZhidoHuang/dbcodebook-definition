@@ -294,7 +294,7 @@ def run_sync(session, action, preflight):
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--action", type=Path)
-    parser.add_argument("--mode", choices=["bind", "tab-code", "login-status", "login-open", "select", "download", "preflight", "sync"], required=True)
+    parser.add_argument("--mode", choices=["bind", "tab-code", "taxonomy-options", "login-status", "login-open", "select", "download", "preflight", "sync"], required=True)
     parser.add_argument("--database", choices=["charls", "elsa", "hrs"])
     parser.add_argument("--script", type=Path, help="tab-code: async page function restricted to the bound page")
     parser.add_argument("--tab-index", type=int, help="Observed tab-list index; only used to create a binding")
@@ -329,6 +329,16 @@ def main() -> None:
         args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
         print(json.dumps(payload, ensure_ascii=False))
         raise SystemExit(0 if payload.get('ok') else 1)
+    if args.mode == "taxonomy-options":
+        if not args.tab_id:
+            parser.error('taxonomy-options requires --tab-id')
+        helper = Path(__file__).with_name('website_taxonomy.js').read_text(encoding='utf-8')
+        payload = Session(args.session, args.session_workdir,
+                          args.out.with_suffix('.browser.js'), config, args.tab_id).code(
+                              'async page => {\n' + helper + '\nreturn {ok:true, url:page.url(), fields:await readWebsiteTaxonomy({playwright:page})}; }')
+        args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+        print(json.dumps(payload, ensure_ascii=False))
+        return
     if args.mode == "tab-code":
         if not args.tab_id or not args.script:
             parser.error('tab-code requires --tab-id and --script')
