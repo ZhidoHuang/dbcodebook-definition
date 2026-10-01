@@ -552,11 +552,11 @@ def main() -> int:
             "http://localhost:8000/nodes/edit/221/",
         ]
         assert browser_action["payload"]["expected_title_parts"] == [
-            "025", "charls", "家庭支持"
+            "charls", "家庭支持"
         ]
-        assert browser_action["payload"]["identity_title_parts"] == ["025", "charls"]
+        assert browser_action["payload"]["identity_title_parts"] == ["charls", "家庭支持"]
         assert browser_action["payload"]["desired_title"] == (
-            "025 CHARLS — 家庭支持（Family Support）"
+            "CHARLS — 家庭支持（Family Support）"
         )
         assert browser_action["payload"]["note"] == upload["note"]
         assert browser_action["payload"]["body_check"] == upload["body_check"]
@@ -599,10 +599,18 @@ def main() -> int:
         assert created["payload"]["post_url"] is None
         assert created["existing_tab_match"] == ["http://localhost:8000/nodes/edit/"]
         assert created["payload"]["directory_tag"] == "medical"
+        assert created["payload"]["desired_title"] == "CHARLS 家庭支持"
+        unnumbered = checker.build_cua_sync_action(
+            upload, "http://localhost:8000", "", "ELSA", "003", "生活质量 CASP-19",
+            "ELSA 生活质量 CASP-19", create=True, directory_tag="medical",
+        )
+        assert unnumbered["payload"]["desired_title"] == "ELSA 生活质量 CASP-19"
         local_action = checker.build_cua_sync_action(
             upload, "http://localhost:8000", "local-384", "ELSA", "004", "孤独感",
         )
         assert local_action["payload"]["edit_url"] == "http://localhost:8000/nodes/edit/384/"
+        assert local_action["payload"]["desired_title"] == "ELSA 孤独感"
+        assert local_action["payload"]["identity_title_parts"] == ["ELSA", "孤独感"]
         for invalid_id in ("local-0", "local-01", "local--1", "LOCAL-384", "local-384/", "../384", "384?x=1"):
             expect_failure(lambda: checker.build_cua_sync_action(
                 upload, "http://localhost:8000", invalid_id, "ELSA", "004", "孤独感"
@@ -764,7 +772,7 @@ async function run(initial, previousResult, changes = {}) {
                 upload, "http://localhost:8000", "221", "CHARLS", "025", "家庭支持",
                 "025 CHARLS — Other Topic",
             ),
-            "must contain the topic id, database and topic name",
+            "must contain the database and topic name",
         )
         report_path = process / "execution_report.json"
         execution = json.loads(report_path.read_text(encoding="utf-8"))

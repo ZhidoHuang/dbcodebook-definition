@@ -1488,8 +1488,12 @@ def build_cua_sync_action(
          "sha256": sha256_file(Path(item["path"]))}
         for item in upload["attachments"]
     ]
-    expected_title_parts = [topic_id.zfill(3), database, topic_name]
-    website_title = website_title.strip() if website_title else None
+    expected_title_parts = [database, topic_name]
+    website_title = website_title.strip() if website_title else f"{database.upper()} {topic_name}"
+    # Topic numbers belong to local organization, not the published title.
+    website_title = re.sub(
+        rf"^0*{re.escape(str(int(topic_id)))}[\s_—–.、:：-]+", "", website_title
+    ).strip()
     if website_title:
         folded_title = website_title.casefold()
         missing_parts = [
@@ -1497,7 +1501,7 @@ def build_cua_sync_action(
         ]
         if missing_parts:
             fail(
-                "--website-title must contain the topic id, database and topic name; "
+                "--website-title must contain the database and topic name; "
                 f"missing: {', '.join(missing_parts)}"
             )
     payload = {
@@ -1509,9 +1513,7 @@ def build_cua_sync_action(
         "post_url_prefix": f"{base_url}/nodes/post/",
         "edit_url": f"{base_url}/nodes/edit/" if create else f"{base_url}/nodes/edit/{post_id.removeprefix('local-')}/",
         "success_url_pattern": "**/nodes/post/*/",
-        "identity_title_parts": (
-            [topic_id.zfill(3), database] if website_title else expected_title_parts
-        ),
+        "identity_title_parts": expected_title_parts,
         "expected_title_parts": expected_title_parts,
         "desired_title": website_title,
         "note": upload["note"],
