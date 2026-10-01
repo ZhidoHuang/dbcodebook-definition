@@ -1,0 +1,197 @@
+==========================================================================================
+1996 HRS Exit (Final Release)
+ODBC Reference: [HRS1996x]
+Perl script: CodebkD9.pl v5.041 Wed Oct 22 12:36:23 2003
+
+Note to Users: The program that generated this codebook is under development. 
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION CS: Coverscreen (HHMemberChild)
+
+==========================================================================================
+
+HHID      Household Identifier
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9001
+          Type: Character       Width: 6                  Decimals: 0
+          ................................................................................
+             72       000000-099000. Household Identification Number
+
+==========================================================================================
+
+PN        Person Number
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9002
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+             42       010. Respondent Person Identification Number
+                      011. Respondent Person Identification Number
+             16       020. Respondent Person Identification Number
+              1       030. Respondent Person Identification Number
+             13       040. Respondent Person Identification Number
+
+==========================================================================================
+
+CSUBHH    1994 Sub-household Identifier
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9003
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+             71         0. 1994 Sub-Household Identification Number
+                        1. 1994 Sub-Household Identification Number
+              1         2. 1994 Sub-Household Identification Number
+
+==========================================================================================
+
+PSUBHH    1996 Sub-household Identifier
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9004
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+             71         3. 1996 Sub-Household Identification Number
+                        4. 1996 Sub-Household Identification Number
+
+==========================================================================================
+
+PPN_SP    1996 Spouse / Partner Person Number
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9005
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+             22       010. Spouse Person Identification Number
+              4       011. Spouse Person Identification Number
+             12       020. Spouse Person Identification Number
+              7       030. Spouse Person Identification Number
+              1       040. Spouse Person Identification Number
+             26     Blank. No Spouse
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from P489 when [Q1:HH ID] IS (GE 0 OR LE 0)
+          *  Jump from P489 when [Q203:WHICH HH] IS (1) AND {When Q3 is (1) AND [Q6:HH1
+             STATUS] IS (5)}
+          *  Jump from P489 when [Q203:WHICH HH] IS (2) AND {When Q44 is (0 OR 5) AND
+             [Q47:HH2 STATUS] IS (1 OR 2 OR 3)}
+          *  Jump from P489 when [Q203:WHICH HH] IS (1) AND {When Q6 is (2 OR 4)}
+          *  Jump from P489 when [Q203:WHICH HH] IS (1) AND {When Q3 is (0 OR 5) AND
+             [Q6:HH1 STATUS] IS (1 OR 2 OR 3)}
+          *  Jump from P489 when [Q203:WHICH HH] IS (2) AND {When Q44 is (1) AND [Q47:HH2
+             STATUS] IS (5)}
+          *  Jump from P489 when [Q203:WHICH HH] IS (2) AND {When Q47 is (2 OR 4)}
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+OPN       Other Person Number
+          Section: CS           Level: HHMemberChild      CAI Reference: Q490
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+             72             041-995. Other Person Number
+
+==========================================================================================
+
+P491      CS48.GRID MONTH
+          Section: CS           Level: HHMemberChild      CAI Reference: Q491
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS48.
+                  In what month and year did
+          IF Q203 IS (1)
+          IF {When Q2 IS (Q490), Q6 IS (4)}
+
+                  [Q7-HH1 FIRST NAME]  die?
+          ELSE {When Q2 IS (Q490), Q3 IS (0 OR 5) AND Q6 IS (1 OR 2 OR 3)}
+
+                  [Q371-R FIRST NAME]  and
+                  [Q7-HH1 FIRST NAME]  start living together?
+          ELSE {When Q2 IS (Q490), Q3 IS (1) AND Q6 IS (5)}
+
+                  [Q371-R FIRST NAME]  and
+                  [Q7-HH1 FIRST NAME]  stop living together?
+          ELSE
+
+                  [Q7-HH1 FIRST NAME]  stop living in (your and Q371-R FIRST
+          NAME's/Q371-R FIRST NAME's) home?
+          END
+
+          ELSE
+          IF {When Q43 IS (Q490), Q47 IS (4)}
+
+                  [Q48-HH2 FIRST NAME]  die?
+          ELSE {When Q43 IS (Q490), Q44 IS (0 OR 5) AND Q47 IS (1 OR 2 OR 3)}
+
+                  [Q371-R FIRST NAME]  and
+                  [Q48-HH2 FIRST NAME]  start living together?
+          ELSE {When Q43 IS (Q490), Q44 IS (1) AND Q47 IS (5)}
+
+                  [Q371-R FIRST NAME]  and
+                  [Q48-HH2 FIRST NAME]  stop living together?
+          ELSE
+
+                  [Q48-HH2 FIRST NAME]  stop living in (your and Q371-R FIRST
+          NAME's/Q371-R FIRST NAME's) home?
+          END
+
+          END
+
+                  MONTH:
+                  YEAR:
+          ................................................................................
+              8         1. JAN
+              2         2. FEB
+              3         3. MAR
+              3         4. APR
+              5         5. MAY
+              4         6. JUN
+              6         7. JUL
+              5         8. AUG
+              8         9. SEP
+              6        10. OCT
+             10        11. NOV
+              7        12. DEC
+                       97. Other
+              5        98. DK
+                       99. RF
+                    Blank. INAP (Inapplicable); [Q220:WHICH IW 1ST R-2ND R] IS (NE 1);
+                           [Q489:CS52 CKPT] IS (NE 1); [Q220:WHICH IW 1ST R-2ND R] IS (2)
+
+==========================================================================================
+
+P492      CS48a.GRID YEAR
+          Section: CS           Level: HHMemberChild      CAI Reference: Q492
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+             66           1993-1996. Range of Values
+              6                9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+
+==========================================================================================
+
+P493      CS48bx.TEMP/PERM MOVE
+          Section: CS           Level: HHMemberChild      CAI Reference: Q493
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS48bx.
+                  Was the move intended to be temporary or was it thought
+                  of as permanent?
+          ................................................................................
+                        1. TEMPORARY
+                        2. PERMANENT
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+             72     Blank. INAP (Inapplicable); [Q220:WHICH IW 1ST R-2ND R] IS (NE 1);
+                           [Q489:CS52 CKPT] IS (NE 1); [Q220:WHICH IW 1ST R-2ND R] IS (2)
+
+==========================================================================================
+
+PQNR      Surveycraft Case Number
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9012
+          Type: Numeric         Width: 3                  Decimals: 0
+          ................................................................................
+             72               0-250. Surveycraft Case Number
+
+==========================================================================================
+
+PVERSION  1996 EXIT RELEASE VERSION NUMBER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9013
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             72         1. Release Version 1
+

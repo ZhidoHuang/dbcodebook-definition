@@ -1,0 +1,3974 @@
+==========================================================================================
+
+HRS 2016 Final Post Exit
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section PR: PRELOAD  (Respondent)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+           121           000003-916532.  Household Identifier
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+            79         010.  Person Identifier
+             1         011.  Person Identifier
+            24         020.  Person Identifier
+             1         021.  Person Identifier
+             6         030.  Person Identifier
+            10         040.  Person Identifier
+
+
+==========================================================================================
+
+ZPSUBHH                       2016 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           116           3.  1st deceased respondent from a household
+             5           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+OSUBHH                        2014 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           116           3.  1st deceased respondent from a household
+             5           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+ZPPN_SP                       2016 SPOUSE PERSON IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+             9         010.  Person Identifier
+            18         020.  Person Identifier
+             3         040.  Person Identifier
+            91       Blank.  No Spouse
+
+
+==========================================================================================
+
+ZPEXITIW                      YEAR OF EXIT INTERVIEW
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+
+         .................................................................................
+             8        2010.  Year of Exit Interview
+            20        2012.  Year of Exit Interview
+            93        2014.  Year of Exit Interview
+
+
+==========================================================================================
+
+ZPZ004                        R MONTH BORN
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: RTab[1].X004AmoBorn
+
+         R MONTH BORN
+
+         .................................................................................
+            13           1.  JAN
+            14           2.  FEB
+             9           3.  MAR
+             9           4.  APR
+             8           5.  MAY
+             8           6.  JUN
+             9           7.  JUL
+            11           8.  AUG
+             8           9.  SEP
+             7          10.  OCT
+            12          11.  NOV
+            13          12.  DEC
+                     Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPX067_R                      YEAR BORN-UPDATED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: Respondents[1].X067AYrBorn
+
+         (What year FNAME born)?
+
+         .................................................................................
+           121               1912-1955.  Actual Value
+                                 Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPZ023                        PREV WAVE WHICH COHORT
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: HH.X023_Cohort_V
+
+         PREV WAVE WHICH COHORT
+
+         .................................................................................
+            38           1.  AHEAD (born before 1924)
+            13           2.  CODA (1924-1930)
+            56           3.  HRS (1931-1941)
+             6           4.  WAR BABY (1942-1947)
+             6           5.  EARLY BABY BOOMER (1948-1953)
+             2           6.  MID BABY BOOMER (1954-1959)
+
+
+==========================================================================================
+
+ZPX026M                       1ST ADDRESS STATE-MASKED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: HH.X026_MainST
+
+         1ST ADDRESS STATE
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+             1           1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+             8           2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+            18           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+             7           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+            26           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+             6           6.  South Region: East South Central Division (KY, TN, AL, MS)
+            15           7.  South Region: West South Central Division (AR, LA, OK, TX)
+             2           8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+            13           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+             1          11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+            24       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: HH.X027_Has2ndRes := HASOTHRES:{PREVIOUS ASK} 
+         SecA.HousingLocation.A085_WhichMainRes 
+         ORIF ((((SecA.ContinuInterview.A218_AgeGreaterThan17 > 17) OR 
+         (SecA.ContinuInterview.A019_RAge > 17)) AND (Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT)) AND (Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST)) AND 
+         (Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST) THEN 
+         IF (Preload_HH.X024_ReIwHH_V = YES) OR (((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (SecA.StartInterview.A007TRAlive_A = YES)) AND (SecA.A158_NewCohortNotEligable 
+         <> CASEINELIGIBLE)) THEN 
+         IF (SCV.XR1_R2 = FIRST) AND (SecA.HousingLocation.A084_NumRes = TWORES) THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPX027                        HAS 2ND RESIDENCE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: HH.X027_Has2ndRes
+
+         HAS 2ND RESIDENCE
+
+         .................................................................................
+            10           1.  HAS OTHER RESIDENCE
+            81           5.  NO OTHER RESIDENCE
+            30       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPX030M                       2ND ADDRESS STATE-MASKED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: HH.X030_2ndResST
+
+         2ND ADDRESS STATE
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+                         1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+                         2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+             1           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+             1           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+             2           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+                         6.  South Region: East South Central Division (KY, TN, AL, MS)
+             4           7.  South Region: West South Central Division (AR, LA, OK, TX)
+                         8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+             2           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+                        11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           111       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPX060_R                      SEX OF INDIVIDUAL-UPDATED -1
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: Respondents[1].X060ASex
+
+         (What is FNAME Sex?)
+         
+         INTERVIEWER: VERIFY SPELLING OF FIRST AND LAST NAME AND SEX. IF NECESSARY, USE
+         "YEAR BORN" TO CLARIFY IDENTITY OF R AND SPOUSE/PARTNER. PLEASE CHECK THAT
+         RELATION TO R AND WHETHER LIVING ARE CORRECT.
+
+         .................................................................................
+            52           1.  MALE
+            69           2.  FEMALE
+
+
+==========================================================================================
+
+ZPX065_R                      COUPLENESS STATUS OF INDIVIDUAL-UPDATED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: Respondents[1].X065ACouplenss
+
+         Is NAME married or living with a partner?
+         COUPLENESS STATUS OF INDIVIDUAL
+
+         .................................................................................
+            33           1.  MARRIED
+                         2.  REMARRIED
+             1           3.  PARTNERED (VOLUNTEERED)
+                         4.  REPARTNERED (VOLUNTEERED)
+            87           6.  OTHER
+                     Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPZ077                        PREV WAVE R ORIG SAMP MEMBER
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z077_OrigSamp_V
+
+         PREV WAVE R ORIG SAMP MEMBER
+
+         .................................................................................
+           119           1.  ORIGINAL SAMPLE MEMBER
+             2           5.  NOT AN ORIGINAL SAMPLE MEMBER
+
+
+==========================================================================================
+
+ZPZ080                        PREV WAVE R MARITAL STATUS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z080_MarStat_V
+
+         PREV WAVE R MARITAL STATUS
+
+         .................................................................................
+             5           0.  UNKNOWN
+            26           1.  MARRIED
+                         2.  MARRIED SP ABSENT (IN INSTITUTION)
+             5           3.  MARRIED SP ABSENT (NOT IN INSTITUTION)
+            16           4.  DIVORCED/SEPARATED
+            63           5.  WIDOWED
+             6           6.  NEVER MARRIED
+                     Blank.  Data from prior wave not available
+
+
+==========================================================================================
+
+         ASSIGN: RVARS.Z092_IwMo_V := Preload_HH.X034_1stRIwMo_V:IF (Init.A120_UPDATER > 
+         0) OR Init.A503_REFRESH <> EMPTY THEN 
+         IF Preload_RVARS.Z092_IwMo_V = EMPTY AND Preload_RVARS.Z093_IwYr_V = EMPTY THEN 
+         IF Preload_HH.X034_1stRIwMo_V <> EMPTY AND Preload_HH.X035_1stRIwYr_V <> EMPTY 
+         THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPZ092                        PREV WAVE IW MONTH
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: RVARS.Z092_IwMo_V
+
+         PREV WAVE IW MONTH
+
+         .................................................................................
+             6           1.  JAN
+             1           2.  FEB
+             7           3.  MAR
+            19           4.  APR
+            38           5.  MAY
+            21           6.  JUN
+             7           7.  JUL
+             5           8.  AUG
+             5           9.  SEP
+             4          10.  OCT
+             3          11.  NOV
+             5          12.  DEC
+                     Blank.  Data from prior wave not available
+
+
+==========================================================================================
+
+         ASSIGN: RVARS.Z093_IwYr_V := A062T2YrsAgo_A:IF (Init.A120_UPDATER > 0) OR 
+         Init.A503_REFRESH <> EMPTY THEN 
+         IF Preload_RVARS.Z092_IwMo_V = EMPTY AND Preload_RVARS.Z093_IwYr_V = EMPTY THEN 
+         IF NOT(Preload_HH.X034_1stRIwMo_V <> EMPTY AND Preload_HH.X035_1stRIwYr_V <> 
+         EMPTY) THEN 
+         ASSIGN: RVARS.Z093_IwYr_V := Preload_HH.X035_1stRIwYr_V:IF (Init.A120_UPDATER > 
+         0) OR Init.A503_REFRESH <> EMPTY THEN 
+         IF Preload_RVARS.Z092_IwMo_V = EMPTY AND Preload_RVARS.Z093_IwYr_V = EMPTY THEN 
+         IF Preload_HH.X034_1stRIwMo_V <> EMPTY AND Preload_HH.X035_1stRIwYr_V <> EMPTY 
+         THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPZ093                        PREV WAVE IW YEAR
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: RVARS.Z093_IwYr_V
+
+         PREV WAVE IW YEAR
+
+         .................................................................................
+           121               2010-2015.  Actual Value
+
+
+==========================================================================================
+
+ZPZ096                        PREV WAVE PROXY RTR
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: RVARS.Z096_PrxyRTR_V
+
+         PREV WAVE PROXY RTR
+
+         .................................................................................
+                         1.  SELF
+            24           2.  SPOUSE/PARTNER
+            29           3.  SON
+                         4.  STEPSON
+                         5.  SPOUSE/PARTNER OF DAUGHTER (SON-IN-LAW)
+            51           6.  DAUGHTER
+                         7.  STEPDAUGHTER
+                         8.  SPOUSE/PARTNER OF SON (DAUGHTER-IN-LAW)
+             3           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+                        14.  R'S PARENTS
+                        15.  BROTHER
+                        16.  BROTHER OF SPOUSE/PARTNER (BROTHER-IN-LAW)
+             1          17.  SISTER
+                        18.  SISTER OF SPOUSE/PARTNER (SISTER-IN-LAW)
+             9          19.  OTHER RELATIVE
+             4          20.  OTHER INDIVIDUAL
+                        21.  ORGANIZATION
+                        22.  EMPLOYEE OF INSTITUTION
+                        23.  PAID HELPER
+                        24.  PROFESSIONAL
+                        25.  PROFESSIONAL (SPECIFY)
+                        26.  LATE SPOUSE/PARTNER
+                        27.  EX-SPOUSE/PARTNER
+                        28.  UNLISTED CHILD OR CHILD-IN-LAW
+                        29.  NOT PROXY INTERVIEW
+                        30.  FORMER STEP-CHILD
+                        31.  FORMER CHILD-IN-LAW
+                        32.  RELATIONSHIP UNKNOWN
+                        33.  SPOUSE/PARTNER OF GRANDCHILD
+                        34.  NOT A SIBLING
+                        90.  AMBIGUOUS CHILD RELATIONSHIP
+                        91.  AMBIGUOUS CHILD-IN-LAW RELATIONSHIP
+                     Blank.  Data from prior wave not available
+
+
+==========================================================================================
+
+ZPZ129                        PREV WAVE MONTH OF DEATH
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: RVARS.Z129_MoDeath_V
+
+         PREV WAVE MONTH OF DEATH
+
+         .................................................................................
+            14           1.  JAN
+            12           2.  FEB
+            10           3.  MAR
+            10           4.  APR
+             7           5.  MAY
+            10           6.  JUN
+             6           7.  JUL
+             9           8.  AUG
+            13           9.  SEP
+             7          10.  OCT
+            14          11.  NOV
+             9          12.  DEC
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+                     Blank.  INAP (Inapplicable); Data Missing
+
+
+==========================================================================================
+
+ZPZ131                        PREV WAVE YEAR OF DEATH
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: RVARS.Z131_YrDeath_V
+
+         PREV WAVE YEAR OF DEATH
+
+         .................................................................................
+           121               2008-2014.  Actual Value
+                                  9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+                                 Blank.  INAP (Inapplicable); Data Missing
+
+
+==========================================================================================
+
+ZPZ145                        TYPE POST EXIT INTERVIEW
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z145_TypeExit_V
+
+         PREV WAVE TYPE POST EXIT INTERVIEW
+
+         .................................................................................
+            97           2.  NEW POST EXIT
+            19           3.  FIRST REPEAT POST EXIT
+             5           4.  SECOND REPEAT POST EXIT
+
+
+==========================================================================================
+
+ZPZ146                        ASK HOME/WILL/TRUST
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z146_HomeWillTrust_V
+
+         PREV WAVE ASK HOME/WILL/TRUST
+
+         .................................................................................
+            62           1.  ASK ABOUT HOME ONLY
+            37           2.  ASK ABOUT WILL/TRUST ONLY
+            22           3.  ASK BOTH HOME AND WILL/TRUST
+                     Blank.  Data not available
+
+
+==========================================================================================
+
+ZPX502                        PREASSIGNED RANDOM VALUE -1
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X502_2Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+            59           1.  RANDOM ASSIGNMENT 1
+            62           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+ZPX503                        PREASSIGNED RANDOM VALUE -2
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X503_3Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+            51           1.  RANDOM ASSIGNMENT 1
+            70           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+ZPX505                        PREASSIGNED RANDOM VALUE -3
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X505_5Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+            62           1.  RANDOM ASSIGNMENT 1
+            59           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+ZPX511                        PREASSIGNED RANDOM VALUE -4
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X511_1Random1_3
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+            35           1.  RANDOM ASSIGNMENT 1
+            39           2.  RANDOM ASSIGNMENT 2
+            47           3.  RANDOM ASSIGNMENT 3
+
+
+==========================================================================================
+
+ZPZ274                        R HAS DISCUSSED MEDICAL CARE WITH OTHERS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z274_DiscussedCare
+
+         *
+
+         .................................................................................
+            48           1.  YES
+            73           5.  NO
+                     Blank.  INAP (Inapplicable); Data Missing
+
+
+==========================================================================================
+
+ZPZ275                        CARE ARRANGEMENTS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z275_CareArrangements
+
+         *
+
+         .................................................................................
+             8           1.  DPOA ONLY
+             6           2.  LIVING WILL ONLY
+            37           3.  BOTH TYPE
+            29           5.  NEITHER
+            41       Blank.  Data Not Available; Non-reinterview respondent
+
+
+==========================================================================================
+
+ZPZ276                        R HAS CONFIRMED PENSIONS IN A PRIOR WAVE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z276_PensionsConfirmed
+
+         *
+
+         .................................................................................
+            80           1.  YES
+            41           5.  NO
+                     Blank.  INAP (Inapplicable); Data Missing
+
+
+==========================================================================================
+
+ZPVDATE                       2016 DATA MODEL VERSION
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+         .................................................................................
+                         1.  Version 1
+                         2.  Version 2
+                         3.  Version 3
+            27           4.  Version 4
+            39           5.  Version 5
+             3           6.  Version 6
+            25           7.  Version 7
+             7           8.  Version 8
+             4           9.  Version 9
+            16          10.  Version 10
+
+
+==========================================================================================
+
+ZPVERSN                       2016 POST-EXIT RELEASE VERSION NUMBER
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+           121           1.  HRS 2016 Post-Exit Final Release
+
+
+==========================================================================================
+
+Section PR: PRELOAD  (HH Member Child)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: HH Member Child Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+           655           000003-916532.  Household Identifier
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: PR    Level: HH Member Child Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           412         010.  Person Identifier
+             4         011.  Person Identifier
+           146         020.  Person Identifier
+             7         021.  Person Identifier
+            39         030.  Person Identifier
+            47         040.  Person Identifier
+
+
+==========================================================================================
+
+ZPSUBHH                       2016 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: HH Member Child Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           634           3.  1st deceased respondent from a household
+            21           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+OSUBHH                        2014 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: HH Member Child Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           634           3.  1st deceased respondent from a household
+            21           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+ZPPN_SP                       2016 SPOUSE PERSON IDENTIFICATION NUMBER
+         Section: PR    Level: HH Member Child Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+            51         010.  Person Identifier
+           113         020.  Person Identifier
+            16         040.  Person Identifier
+           475       Blank.  No Spouse
+
+
+==========================================================================================
+
+ZPEXITIW                      YEAR OF EXIT INTERVIEW
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 4   Decimals: 0
+
+         .................................................................................
+                      2010.  Year of Exit Interview
+           112        2012.  Year of Exit Interview
+           543        2014.  Year of Exit Interview
+
+
+==========================================================================================
+
+OPN                           PERSON NUMBER OF KID/HHM/SIB AND THEIR SPOUSES
+         Section: PR    Level: HH Member Child Type: Character  Width: 3   Decimals: 0
+         Ref: Children[1].X055APPN
+
+         PERSON NUMBER OF KID/HHM/SIB AND THEIR SPOUSES
+
+         .................................................................................
+           655                 041-796.  Other Person Identifier
+
+
+==========================================================================================
+
+ZPX054_MC                     FAMILY MEMBER INDEX
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 2   Decimals: 0
+         Ref: Children[1].X054APNdx
+
+         FAMILY MEMBER INDEX
+
+         .................................................................................
+           655                    3-26.  Household Member/Child Index Number
+
+
+==========================================================================================
+
+ZPX056_MC                     RESIDENCY STATUS
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 1   Decimals: 0
+         Ref: Children[1].X056AresStat
+
+         RESIDENCY STATUS
+
+         .................................................................................
+            51           1.  RESIDENT
+             2           2.  AWAY/INST: THE PERSON IS TEMPORARILY AWAY (IN SCHOOL, JAIL,
+                             REHAB, ETC.) AND DOES NOT HAVE ANY OTHER PERMANENT ADDRESS
+             1           3.  AWAY/OTHER: THE PERSON IS TEMPORARILY AWAY (FOR ANOTHER
+                             REASON, SUCH AS TRAVELLING) AND DOES NOT HAVE ANY OTHER
+                             PERMANENT ADDRESS
+            23           4.  DIED
+           577           5.  NONRESIDENT
+             1           6.  HAVE NO CONTACT
+                         7.  DELETED
+                         8.  DUPLICATE
+                     Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPX060_MC                     SEX OF INDIVIDUAL
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 1   Decimals: 0
+         Ref: Children[1].X060ASex
+
+         (What is FNAME Sex?)
+                 
+         INTERVIEWER: VERIFY SPELLING OF FIRST AND LAST NAME AND SEX. IF NECESSARY, USE
+         "YEAR BORN" TO CLARIFY IDENTITY OF R AND SPOUSE/PARTNER. PLEASE CHECK THAT
+         RELATION TO R AND WHETHER LIVING ARE CORRECT.
+
+         .................................................................................
+           320           1.  MALE
+           334           2.  FEMALE
+             1       Blank.  Data Missing
+
+
+==========================================================================================
+
+ZPX061_MC                     RELATIONSHIP TO R
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 2   Decimals: 0
+         Ref: Children[1].X061ARelateR
+
+         (What is FNAME Relationship to you?)
+
+         .................................................................................
+           183           3.  SON
+            17           4.  STEPSON
+           110           5.  SPOUSE/PARTNER OF DAUGHTER (SON-IN-LAW)
+           170           6.  DAUGHTER
+            16           7.  STEPDAUGHTER
+           131           8.  SPOUSE/PARTNER OF SON (DAUGHTER-IN-LAW)
+            10           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+                        14.  R'S PARENTS
+                        15.  BROTHER
+                        16.  BROTHER OF SPOUSE/PARTNER (BROTHER-IN-LAW)
+                        17.  SISTER
+                        18.  SISTER OF SPOUSE/PARTNER (SISTER-IN-LAW)
+                        19.  OTHER RELATIVE
+            14          20.  OTHER INDIVIDUAL
+                        21.  ORGANIZATION
+                        22.  EMPLOYEE OF INSTITUTION
+                        23.  PAID HELPER
+                        24.  PROFESSIONAL
+                        25.  PROFESSIONAL (SPECIFY)
+                        26.  LATE SPOUSE/PARTNER
+                        27.  EX-SPOUSE/PARTNER
+                        28.  UNLISTED CHILD OR CHILD-IN-LAW
+                        29.  NOT PROXY INTERVIEW
+                        30.  FORMER STEP-CHILD
+             1          31.  FORMER CHILD-IN-LAW
+             1          32.  RELATIONSHIP UNKNOWN
+                        33.  SPOUSE/PARTNER OF GRANDCHILD
+                        90.  AMBIGUOUS CHILD RELATIONSHIP
+             2          91.  AMBIGUOUS CHILD-IN-LAW RELATIONSHIP
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+                     Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPX063_MC                     RELATIONSHIP TO SPOUSE/PARTNER OF R
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 2   Decimals: 0
+         Ref: Children[1].X063ARelateSp
+
+         (What is FNAME Relationship to your SPOUSE/PARTNER?)
+
+         .................................................................................
+                         1.  SELF
+                         2.  SPOUSE/PARTNER
+            79           3.  SON
+            11           4.  STEPSON
+           109           5.  SPOUSE/PARTNER OF DAUGHTER (SON-IN-LAW)
+            58           6.  DAUGHTER
+             9           7.  STEPDAUGHTER
+           126           8.  SPOUSE/PARTNER OF SON (DAUGHTER-IN-LAW)
+             1           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+                        14.  R'S PARENTS
+                        15.  BROTHER
+                        16.  BROTHER OF SPOUSE/PARTNER (BROTHER-IN-LAW)
+                        17.  SISTER
+                        18.  SISTER OF SPOUSE/PARTNER (SISTER-IN-LAW)
+                        19.  OTHER RELATIVE
+             5          20.  OTHER INDIVIDUAL
+                        21.  ORGANIZATION
+                        22.  EMPLOYEE OF 'INSTITUTION'
+                        23.  PAIDHELPER
+                        24.  PROFESSIONAL
+                        25.  PROFESSIONAL (SPECIFY)
+                        26.  LATE SPOUSE/PARTNER
+                        27.  EX-SPOUSE/PARTNER
+                        28.  UNLISTED CHILD OR CHILD-IN-LAW
+                        29.  NOT PROXY INTERVIEW
+                        30.  FORMER STEP-CHILD
+                        31.  FORMER CHILD-IN-LAW
+             1          32.  RELATIONSHIP UNKNOWN
+                        33.  SPOUSE/PARTNER OF GRANDCHILD
+             5          90.  AMBIGUOUS CHILD RELATIONSHIP
+             6          91.  AMBIGUOUS CHILD-IN-LAW RELATIONSHIP
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           245       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPX065_MC                     COUPLENESS STATUS OF INDIVIDUAL
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 1   Decimals: 0
+         Ref: Children[1].X065ACouplenss
+
+         Is NAME married or living with a partner?
+         COUPLENESS STATUS OF INDIVIDUAL
+
+         .................................................................................
+           419           1.  MARRIED
+                         2.  REMARRIED
+            64           3.  PARTNERED (VOLUNTEERED)
+                         4.  REPARTNERED (VOLUNTEERED)
+           172           6.  OTHER
+                     Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPX067_MC                     YEAR BORN
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 4   Decimals: 0
+         Ref: Children[1].X067AYrBorn
+
+         (What year FNAME born)?
+
+         .................................................................................
+           611               1916-2003.  Actual Value
+            44                   Blank.  INAP (Inapplicable); Data Missing
+
+
+==========================================================================================
+
+ZPX069_MC                     RELATIONSHIP TO PERSON OTHER THAN R OR SPOUSE OF R
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 2   Decimals: 0
+         Ref: Children[1].X069ARelateOth
+
+         RELATIONSHIP TO PERSON OTHER THAN R OR SPOUSE OF R
+         
+         User Note:  This relationship code is the relationship of the Child/HHM to the
+         person who's index number is listed in X070_MC.
+
+         .................................................................................
+           241           2.  SPOUSE/PARTNER
+             3           3.  SON
+                         4.  STEPSON
+                         5.  SPOUSE/PARTNER OF DAUGHTER (SON-IN-LAW)
+             5           6.  DAUGHTER
+                         7.  STEPDAUGHTER
+                         8.  SPOUSE/PARTNER OF SON (DAUGHTER-IN-LAW)
+                         9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+                        26.  LATE SPOUSE/PARTNER
+                        27.  EX-SPOUSE/PARTNER
+                        30.  FORMER STEP-CHILD
+                        31.  FORMER CHILD-IN-LAW
+           406       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPX070_MC                     INDEX NUM OF KID/HHM/SIB THAT INDIVIDUAL IS RELATED TO
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 2   Decimals: 0
+         Ref: Children[1].X070AWhoRelOth
+
+         INDEX NUM OF KID/HHM/SIB THAT INDIVIDUAL IS RELATED TO
+
+         .................................................................................
+           248                    3-25.  Child Index Number
+           407                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPX072_MC                     HHM/KID MOVE IN/OUT/DIE-MNTH -UPDATED
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 2   Decimals: 0
+         Ref: Children[1].X072AMoChgResStat
+
+         MONTH HHM MOVED IN/OUT/DIED
+
+         .................................................................................
+             5           1.  JAN
+             2           2.  FEB
+             4           3.  MAR
+             1           4.  APR
+                         5.  MAY
+             3           6.  JUN
+                         7.  JUL
+             2           8.  AUG
+                         9.  SEP
+             3          10.  OCT
+             1          11.  NOV
+             3          12.  DEC
+           631       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+ZPX073_MC                     HHM/KID MOVE IN/OUT/DIE-YEAR-UPDATED
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 4   Decimals: 0
+         Ref: Children[1].X073AYrChgResStat
+
+         YEAR HHM MOVED IN/OUT/DIED
+
+         .................................................................................
+            24               1981-2014.  Actual Value
+                                  9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           631                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+ZPX076_MC                     CHILDS FORMER SPOUSE_INFO-UPDATED
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 1   Decimals: 0
+         Ref: Children[1].X076AWhySplit
+
+         Is [NAME OF CHILD'S FORMER SPOUSE] still alive?
+
+         .................................................................................
+             8           1.  YES
+             4           5.  NO
+             1           6.  SPOUSE/PARTNER UNKNOWN
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           642       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+ZPVDATE                       2016 DATA MODEL VERSION
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 2   Decimals: 0
+
+         .................................................................................
+                         1.  Version 1
+                         2.  Version 2
+                         3.  Version 3
+           149           4.  Version 4
+           218           5.  Version 5
+            14           6.  Version 6
+           143           7.  Version 7
+            32           8.  Version 8
+            18           9.  Version 9
+            81          10.  Version 10
+
+
+==========================================================================================
+
+ZPVERSN                       2016 POST-EXIT RELEASE VERSION NUMBER
+         Section: PR    Level: HH Member Child Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+           655           1.  HRS 2016 Post-Exit Final Release
+
+
+==========================================================================================
+
+Section A: COVERSCREEN  (Respondent)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+           121           000003-916532.  Household Identifier
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+            79         010.  Person Identifier
+             1         011.  Person Identifier
+                       012.  Person Identifier
+            24         020.  Person Identifier
+             1         021.  Person Identifier
+                       022.  Person Identifier
+             6         030.  Person Identifier
+                       031.  Person Identifier
+            10         040.  Person Identifier
+                       041.  Person Identifier
+
+
+==========================================================================================
+
+ZPSUBHH                       2016 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           116           3.  1st deceased respondent from a household
+             5           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+OSUBHH                        2014 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           116           3.  1st deceased respondent from a household
+             5           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+ZPPN_SP                       2016 SPOUSE PERSON IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+             9         010.  Person Identifier
+            18         020.  Person Identifier
+             3         040.  Person Identifier
+            91       Blank.  No Spouse
+
+
+==========================================================================================
+
+ZPEXITIW                      YEAR OF EXIT INTERVIEW
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+
+         .................................................................................
+             8        2010.  Year of Exit Interview
+            20        2012.  Year of Exit Interview
+            93        2014.  Year of Exit Interview
+
+
+==========================================================================================
+
+         ASSIGN: A500_CurDate := SYSDATE:IF (Init.A120_UPDATER > 0) OR Init.A503_REFRESH 
+         <> EMPTY THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPA500                        DATE OF INTERVIEW - MONTH
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: Init.A500_CurDate
+
+         *
+
+         .................................................................................
+             5           1.  JAN
+             3           2.  FEB
+             1           3.  MAR
+             4           4.  APR
+             5           5.  MAY
+            22           6.  JUN
+            20           7.  JUL
+            19           8.  AUG
+            11           9.  SEP
+            12          10.  OCT
+            18          11.  NOV
+             1          12.  DEC
+
+
+==========================================================================================
+
+         ASSIGN: A501_CurDateYear := A500_CurDate.YEAR:IF (Init.A120_UPDATER > 0) OR 
+         Init.A503_REFRESH <> EMPTY THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPA501                        DATE OF INTERVIEW - YEAR
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: Init.A501_CurDateYear
+
+         *
+
+         .................................................................................
+           121               2016-2017.  Actual Year
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.StartInterview.A155_SelfPrxy 
+
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+
+         IF (piPreload_RVarsZ095_SelfPrxyIw_V <> SLF) AND (piPreload_RVarsZ076_ReIwR_V = 
+         REIWR) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPA010                        CURRENT WAVE PROXY - SAME AS LAST WAVE
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.StartInterview.A010_CurrWavePrxy
+
+         [IWER: The name or relationship of the proxy at the previous interview is not
+         recorded. Unless you learn from the current wave proxy that s/he also did the
+         previous interview, enter code 3 below./  Previous wave proxy was [Prev Wave
+         Proxy Name][Prev Wave Proxy Relationship]]
+                 
+         IWER:  Is current wave proxy the same person or someone else?
+
+         .................................................................................
+           101           1.  SAME PERSON AS IN PRIOR-WAVE
+            18           2.  DIFFERENT/NEW PERSON
+             2           3.  NOT KNOWN
+
+
+==========================================================================================
+
+         ASSIGN: A103_PrxyRTR := piPreload_RVarsZ096_PrxyRTR_V.ORD:IF 
+         (Preload_HH.X024_ReIwHH_V = YES) OR ((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (SecA.StartInterview.A007TRAlive_A = YES)) THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> PXYSPISREPORTER THEN 
+         IF NOT((piPreload_RVarsZ096_PrxyRTR_V = EMPTY OR (piPreload_RVarsZ096_PrxyRTR_V 
+         = UNKNOWN)) OR (SecA.StartInterview.A010_CurrWavePrxy <> 
+         SAMEPERSONASINPRIORWAVE)) THEN 
+         IF piPreload_RVarsZ096_PrxyRTR_V <> EMPTY AND 
+         (SecA.StartInterview.A010_CurrWavePrxy = SAMEPERSONASINPRIORWAVE) THEN 
+         OR{PREVIOUS ASK} SecA.StartInterview.A103_PrxyRTR 
+         IF piPreload_RVarsZ096_PrxyRTR_V <> EMPTY AND 
+         (SecA.StartInterview.A010_CurrWavePrxy = SAMEPERSONASINPRIORWAVE) THEN 
+         ASSIGN: A103_PrxyRTR := SPOUSEPARTNER:IF (Preload_HH.X024_ReIwHH_V = YES) OR 
+         ((Preload_HH.X024_ReIwHH_V <> YES) AND (SecA.StartInterview.A007TRAlive_A = 
+         YES)) THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+         IF NOT(SecA.StartInterview.A009_SelfPrxy <> PXYSPISREPORTER) THEN 
+         IF SecA.StartInterview.A009_SelfPrxy = PXYSPISREPORTER THEN 
+         OR{PREVIOUS ASK} SecA.StartInterview.A155_SelfPrxy 
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+         IF NOT(SecA.StartInterview.A009_SelfPrxy <> PXYSPISREPORTER) THEN 
+         IF SecA.StartInterview.A009_SelfPrxy = PXYSPISREPORTER THEN 
+         {PREVIOUS ASK} SecA.StartInterview.A155_SelfPrxy 
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> PXYSPISREPORTER THEN 
+         IF (piPreload_RVarsZ096_PrxyRTR_V = EMPTY OR (piPreload_RVarsZ096_PrxyRTR_V = 
+         UNKNOWN)) OR (SecA.StartInterview.A010_CurrWavePrxy <> SAMEPERSONASINPRIORWAVE) 
+         THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPA103                        PROXY RELATIONSHIP TO R
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.StartInterview.A103_PrxyRTR
+
+         IWER: Designate the Proxy Reporter's Relationship to [First Name]
+
+         .................................................................................
+            19           2.  SPOUSE/PARTNER
+            29           3.  SON
+                         4.  STEPSON OR SON OF PARTNER
+                         5.  SPOUSE/PARTNER OF DAUGHTER
+            49           6.  DAUGHTER
+                         7.  STEPDAUGHTER OR DAUGHTER OF PARTNER
+             3           8.  SPOUSE/PARTNER OF SON
+             4           9.  GRANDCHILD OF R OR SP/P
+                        15.  BROTHER
+                        17.  SISTER
+            10          19.  OTHER RELATIVE
+             7          20.  OTHER INDIVIDUAL
+                        23.  PAID HELPER
+                        24.  PROFESSIONAL
+                        33.  SP/P OF GRANDCHILD
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+                     Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.StartInterview.A155_SelfPrxy 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPA012                        SELECT LANGUAGE
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.StartInterview.A012_LangSwitch
+
+         IWER:  Select English or Spanish
+
+         .................................................................................
+           121           1.  ENGLISH
+                         2.  SPANISH
+
+
+==========================================================================================
+
+         IF (Preload_HH.X024_ReIwHH_V = YES) OR ((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (SecA.StartInterview.A007TRAlive_A = YES)) THEN 
+
+         IF (piPreload_HHX024_ReIwHH_V = YES) OR ((piPreload_HHX024_ReIwHH_V <> YES) AND 
+         (SecA.StartInterview.A007TRAlive_A = YES)) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPA165                        INTRO CONFIDENTIALITY 1
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.ContinuInterview.A165_A013_
+
+         (As you may know, [R's First Name] was a part of the Health and Retirement
+         Study, an important study about issues of aging.)  About two years ago, after
+         [R's First Name] (died/passed away), we spoke [with [Last Wave Proxy's First
+         Name]] about [R's First Name]'s death and the health conditions surrounding
+         [his/her] death.  At that time, final settlement of the estate had not taken
+         place, and we would like to ask a few questions now about the final estate
+         settlement.
+         
+         This interview is completely voluntary. If we should come to any question that
+         you don't want to answer, just let me know and I will go on to the next
+         question. [R's First Name]'s identity as a participant and any personally
+         identifying information you provide will be kept confidential.
+         
+         We may report to state or local officials evidence of harm or abuse to any
+         vulnerable person, but we will not ask you any questions about such topics.
+         
+         A Department of Health and Human Services Certificate of Confidentiality covers
+         this research in order to help ensure [R's First Name]'s privacy. This
+         certificate can help protect the investigators from being forced to release any
+         research information that identifies [R's First Name].
+         
+         IWER:  Press 1 to continue
+
+         .................................................................................
+           121           1.  CONTINUE
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.ContinuInterview.A165_A013_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPA013                        INTRO CONFIDENTIALITY 2
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.ContinuInterview.A013_Continue
+
+         This interview may be recorded so that my supervisor can evaluate my
+         performance.
+         
+         IWER:  Press 1 or 5 as appropriate to confirm that you have read the above
+         statement to the respondent
+
+         .................................................................................
+           121           1.  CONTINUE
+                         5.  CONTINUE WITHOUT RECORDING
+
+
+==========================================================================================
+
+ZPVDATE                       2016 DATA MODEL VERSION
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+         .................................................................................
+                         1.  Version 1
+                         2.  Version 2
+                         3.  Version 3
+            27           4.  Version 4
+            39           5.  Version 5
+             3           6.  Version 6
+            25           7.  Version 7
+             7           8.  Version 8
+             4           9.  Version 9
+            16          10.  Version 10
+
+
+==========================================================================================
+
+ZPVERSN                       2016 POST-EXIT RELEASE VERSION NUMBER
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+           121           1.  HRS 2016 Post-Exit Final Release
+
+
+==========================================================================================
+
+Section T: WILLS AND LIFE INSURANCE  (Respondent)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: T     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+           121           000003-916532.  Household Identifier
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+            79         010.  Person Identifier
+             1         011.  Person Identifier
+            24         020.  Person Identifier
+             1         021.  Person Identifier
+             6         030.  Person Identifier
+            10         040.  Person Identifier
+
+
+==========================================================================================
+
+ZPSUBHH                       2016 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: T     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           116           3.  1st deceased respondent from a household
+             5           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+OSUBHH                        2014 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: T     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           116           3.  1st deceased respondent from a household
+             5           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+ZPPN_SP                       2016 SPOUSE PERSON IDENTIFICATION NUMBER
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+             9         010.  Person Identifier
+            18         020.  Person Identifier
+             3         040.  Person Identifier
+            91       Blank.  No Spouse
+
+
+==========================================================================================
+
+ZPEXITIW                      YEAR OF EXIT INTERVIEW
+         Section: T     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+
+         .................................................................................
+             8        2010.  Year of Exit Interview
+            20        2012.  Year of Exit Interview
+            93        2014.  Year of Exit Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.T047_AssistT 
+
+         IF ((((piRvarsZ145_TypeExit_V = NEWPOSTEXIT) OR (piRvarsZ145_TypeExit_V = 
+         FIRSTREPEATPOST)) OR (piRvarsZ145_TypeExit_V = SECREPEATPOST)) AND 
+         ((piRvarsZ146_HomeWillTrust_V = ASKABTHOMEONLY) OR (piRvarsZ146_HomeWillTrust_V 
+         = ASKBTHHOMEANDWILL_TRUST))) OR (((((piRvarsZ145_TypeExit_V <> NEWPOSTEXIT) AND 
+         (piRvarsZ145_TypeExit_V <> FIRSTREPEATPOST)) AND (piRvarsZ145_TypeExit_V <> 
+         SECREPEATPOST)) AND (piSecAStartInterviewA007TRAlive_A = NO)) AND 
+         (piHHX079_OwnRent_V = OWN)) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT101                        EX R OWN MAIN RESIDENCE WHEN DIED
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T101_OwnedMainRes
+
+         Our records show that [[First Name]/you and [First Name]/[First Name] and
+         [his/her] [husband/wife/partner]] owned a home in [City],[State] in [[Prev Wave
+         IW Month][Prev Wave IW Year]/[Prev Wave IW Year]/the last two years].
+                 
+         Please, let me confirm, did [First Name] still own that home when [he/she]
+         (died/passed away)?
+
+         .................................................................................
+            76           1.  YES
+             1           2.  [VOL]RECORDS INCORRECT
+             4           5.  NO
+             2           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+            37       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T101_OwnedMainRes 
+
+         IF (SecT.EXITHOUSE.T101_OwnedMainRes = NO) OR (SecT.EXITHOUSE.T101_OwnedMainRes 
+         = RECORDSINCORRECT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT066                        EX EVER OWN MAIN RESIDENCE
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T066_EvrOwnedMainRes
+
+         Did [R's First Name] ever own it?
+
+         .................................................................................
+             3           1.  YES
+             2           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           116       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T066_EvrOwnedMainRes 
+
+         IF SecT.EXITHOUSE.T066_EvrOwnedMainRes = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT102                        EX WHAT HAPPENED MAIN RESIDENCE - 1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T102_DispoMainRes
+
+         What happened to that home -- did [R's First Name] sell it, give it to someone,
+         or what?
+
+         .................................................................................
+             2           1.  GAVE TO SOMEONE
+             1           2.  SOLD
+                         7.  OTHER
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           118       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T103_ 
+
+         IF (SecT.EXITHOUSE.T102_DispoMainRes = GAVETOSOMEONE) OR 
+         (SecT.EXITHOUSE.T102_DispoMainRes = SOLD) THEN 
+
+         IF SecT.EXITHOUSE.T102_DispoMainRes = GAVETOSOMEONE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT104M1                      EX MAIN RESIDENCE GAVE TO RELATIVE - 1 -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T104_GaveMainRes[1]
+
+         To whom did [he/she] give the house, that is, what was their relationship to
+         [First Name]?
+         
+         IWER: CHOOSE all that apply
+
+         .................................................................................
+                         1.  SPOUSE/PARTNER
+             2           2.  CHILD/CHILD-IN-LAW
+                         3.  OTHER RELATIVE
+                         4.  FRIEND
+                         5.  CHARITY
+                         6.  GRANDCHILD
+                         7.  SOMEONE ELSE
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           119       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T103_ 
+
+         IF (SecT.EXITHOUSE.T102_DispoMainRes = GAVETOSOMEONE) OR 
+         (SecT.EXITHOUSE.T102_DispoMainRes = SOLD) THEN 
+
+         IF SecT.EXITHOUSE.T102_DispoMainRes = GAVETOSOMEONE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT104M2                      EX MAIN RESIDENCE GAVE TO RELATIVE - 1 -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T104_GaveMainRes[2]
+
+         To whom did [he/she] give the house, that is, what was their relationship to
+         [First Name]?
+         
+         IWER: CHOOSE all that apply
+
+         .................................................................................
+                         1.  SPOUSE/PARTNER
+                         2.  CHILD/CHILD-IN-LAW
+                         3.  OTHER RELATIVE
+                         4.  FRIEND
+                         5.  CHARITY
+                         6.  GRANDCHILD
+                         7.  SOMEONE ELSE
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         IF (CHILDCHILDLAW IN T104_GaveMainRes) OR (GRANDCHILD IN T104_GaveMainRes) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT105M1                      EX MAIN RESIDENCE WHICH CHILD - 1 -1
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecT.EXITHOUSE.T105_[1]
+
+         IF CHILD in PT104:
+         (Which child is that?)
+         
+         IF GRANDCHILD in PT104:
+         Which child is the parent of that grandchild?
+         
+         IWER: CHOOSE ALL THAT APPLY
+
+         .................................................................................
+                               041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+             2                     993.  ALL CHILDREN
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           119                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         IF (CHILDCHILDLAW IN T104_GaveMainRes) OR (GRANDCHILD IN T104_GaveMainRes) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT105M2                      EX MAIN RESIDENCE WHICH CHILD - 1 -2
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecT.EXITHOUSE.T105_[2]
+
+         IF CHILD in PT104:
+         (Which child is that?)
+         
+         IF GRANDCHILD in PT104:
+         Which child is the parent of that grandchild?
+         
+         IWER: CHOOSE ALL THAT APPLY
+
+         .................................................................................
+                               041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           121                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T103_ 
+
+         IF (SecT.EXITHOUSE.T102_DispoMainRes = GAVETOSOMEONE) OR 
+         (SecT.EXITHOUSE.T102_DispoMainRes = SOLD) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT107                        EX MAIN RESIDENCE VALUE - 1
+         Section: T     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecT.EXITHOUSE.T107_MainResValue
+
+         What was the [selling price?/value of that house? I mean, what would it have
+         brought if it had been sold?]
+         
+         IWER: Do not probe DK/RF
+
+         .................................................................................
+             2            24000-140000.  Actual Value
+             1                  999998.  DK (Don't Know); NA (Not Ascertained)
+                                999999.  RF (Refused)
+           118                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPT108                        EX VALUE MAIN RESIDENCE VALUE - MIN - 1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T108_
+
+         Did it amount to a total of less than $____ , more than $____ , or what?
+         
+         PROCEDURES: 1Up1Down, 2Down
+         BREAKPOINTS: $15,000, $50,000, $200,000
+         RANDOM ENTRY POINTS:  $50,000, $200,000
+         ENTRY POINT ASSIGNMENT 1 or {NOT 1} AT X502
+
+         .................................................................................
+             1           0.  Value of Breakpoint
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPT109                        EX VALUE MAIN RESIDENCE VALUE - MAX - 1
+         Section: T     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecT.EXITHOUSE.T109_
+
+         *
+
+         .................................................................................
+             1       49999.  Value of Breakpoint
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPT110                        EX VALUE MAIN RESIDENCE VALUE - RESULT - 1
+         Section: T     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecT.EXITHOUSE.T110_
+
+         *
+
+         .................................................................................
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T066_EvrOwnedMainRes 
+
+         IF SecT.EXITHOUSE.T101_OwnedMainRes = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT111                        EX WHAT HAPPENED MAIN RESIDENCE - 2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T111_DispMainRes2
+
+         What happened to that home after [R's First Name]'s death:
+         [Do you own it now, w/ Does [his/her] [husband/wife/partner] own it now, w/W] as
+         it sold, was it inherited by someone else, has it not yet been disposed of, or
+         what?
+
+         .................................................................................
+             2           1.  SURVIVING SPOUSE OR PARTNER STILL OWNS IT
+            28           2.  SOLD
+            21           3.  INHERITED
+            16           4.  NOT YET DISPOSED
+             6           6.  Home was foreclosed
+             1           7.  OTHER (SPECIFY)
+             2           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+            45       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T112_ 
+
+         IF SecT.EXITHOUSE.T111_DispMainRes2 = INHERITED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT113M1                      EX MAIN RESIDENCE GAVE TO RELATIVE - 2 -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T113_GaveMainRes2[1]
+
+         Who inherited the house, (that is, what was their relationship to [First Name])?
+         
+         IWER: CHOOSE all that apply
+
+         .................................................................................
+             1           1.  SPOUSE/PARTNER
+            16           2.  CHILD/CHILD-IN-LAW
+             1           3.  OTHER RELATIVE
+                         4.  FRIEND
+                         5.  CHARITY
+                         6.  GRANDCHILD
+             2           7.  SOMEONE ELSE
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           100       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T112_ 
+
+         IF SecT.EXITHOUSE.T111_DispMainRes2 = INHERITED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT113M2                      EX MAIN RESIDENCE GAVE TO RELATIVE - 2 -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T113_GaveMainRes2[2]
+
+         Who inherited the house, (that is, what was their relationship to [First Name])?
+         
+         IWER: CHOOSE all that apply
+
+         .................................................................................
+                         1.  SPOUSE/PARTNER
+                         2.  CHILD/CHILD-IN-LAW
+                         3.  OTHER RELATIVE
+                         4.  FRIEND
+                         5.  CHARITY
+                         6.  GRANDCHILD
+                         7.  SOMEONE ELSE
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T114_[1] :=  DONTKNOW:{PREVIOUS ASK} SecT.EXITHOUSE.T055_T114MTemp 
+         IF NOT(SecT.EXITHOUSE.T055_T114MTemp <> NONRESPONSE) THEN 
+         IF SecT.EXITHOUSE.T055_T114MTemp = DONTKNOW THEN 
+         ASSIGN: T114_[1] :=  REFUSAL:{PREVIOUS ASK} SecT.EXITHOUSE.T055_T114MTemp 
+         IF NOT(SecT.EXITHOUSE.T055_T114MTemp <> NONRESPONSE) THEN 
+         IF NOT(SecT.EXITHOUSE.T055_T114MTemp = DONTKNOW) THEN 
+         IF SecT.EXITHOUSE.T055_T114MTemp = REFUSAL THEN 
+         ASSIGN: T114_[cnt] := aArrayInteger[T055_T114MTemp[cnt.ORD]:{PREVIOUS ASK} 
+         SecT.EXITHOUSE.T055_T114MTemp 
+         IF SecT.EXITHOUSE.T055_T114MTemp <> NONRESPONSE THEN 
+         IF SecT.EXITHOUSE.cnt <= T055_T114MTemp.CARDINAL THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT114M1                      EX MAIN RESIDENCE WHICH CHILD - 2 -1
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecT.EXITHOUSE.T114_[1]
+
+         IF CHILD in PT113:
+         (Which child is that?)
+         
+         IF GRANDCHILD in PT113:
+         Which child is the parent of that grandchild?
+         
+         IWER: CHOOSE ALL THAT APPLY
+
+         .................................................................................
+                               041-990.  Other Person Number
+             2                     992.  DECEASED CHILD
+             9                     993.  ALL CHILDREN
+             5                     997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           105                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T114_[1] :=  DONTKNOW:{PREVIOUS ASK} SecT.EXITHOUSE.T055_T114MTemp 
+         IF NOT(SecT.EXITHOUSE.T055_T114MTemp <> NONRESPONSE) THEN 
+         IF SecT.EXITHOUSE.T055_T114MTemp = DONTKNOW THEN 
+         ASSIGN: T114_[1] :=  REFUSAL:{PREVIOUS ASK} SecT.EXITHOUSE.T055_T114MTemp 
+         IF NOT(SecT.EXITHOUSE.T055_T114MTemp <> NONRESPONSE) THEN 
+         IF NOT(SecT.EXITHOUSE.T055_T114MTemp = DONTKNOW) THEN 
+         IF SecT.EXITHOUSE.T055_T114MTemp = REFUSAL THEN 
+         ASSIGN: T114_[cnt] := aArrayInteger[T055_T114MTemp[cnt.ORD]:{PREVIOUS ASK} 
+         SecT.EXITHOUSE.T055_T114MTemp 
+         IF SecT.EXITHOUSE.T055_T114MTemp <> NONRESPONSE THEN 
+         IF SecT.EXITHOUSE.cnt <= T055_T114MTemp.CARDINAL THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT114M2                      EX MAIN RESIDENCE WHICH CHILD - 2 -2
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecT.EXITHOUSE.T114_[2]
+
+         IF CHILD in PT113:
+         (Which child is that?)
+         
+         IF GRANDCHILD in PT113:
+         Which child is the parent of that grandchild?
+         
+         IWER: CHOOSE ALL THAT APPLY
+
+         .................................................................................
+                               041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           121                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T111_DispMainRes2 
+
+         IF (SecT.EXITHOUSE.T111_DispMainRes2 = SOLD) OR 
+         (SecT.EXITHOUSE.T111_DispMainRes2 = INHERITED) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT116                        EX MAIN RESIDENCE VALUE - 2
+         Section: T     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecT.EXITHOUSE.T116_MainResValue2
+
+         What was the [selling price?/value of that house? I mean, what would it have
+         brought if it had been sold?]
+         
+         IWER: Do not probe DK/RF
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             32        0      500000     177043.75     147776.05      72
+         -----------------------------------------------------------------
+            14      999998.  DK (Don't Know); NA (Not Ascertained)
+             3      999999.  RF (Refused)
+
+
+==========================================================================================
+
+ZPT117                        EX MAIN RESIDENCE VALUE - 2 MIN - 2
+         Section: T     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecT.EXITHOUSE.T117_
+
+         Did it amount to a total of less than $____ , more than $____ , or what?
+         
+         PROCEDURES: 1Up1Down, 2Down
+         BREAKPOINTS: $15,000, $50,000, $200,000
+         RANDOM ENTRY POINTS:  $50,000, $200,000
+         ENTRY POINT ASSIGNMENT 1 or {NOT 1} AT X503
+
+         .................................................................................
+             6           0.  Value of Breakpoint
+             1       15000.  Value of Breakpoint
+             2       15001.  Value of Breakpoint
+             4       50001.  Value of Breakpoint
+             3      200001.  Value of Breakpoint
+           105       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPT118                        EX MAIN RESIDENCE VALUE - 2 MAX - 2
+         Section: T     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecT.EXITHOUSE.T118_
+
+         *
+
+         .................................................................................
+             1       15000.  Value of Breakpoint
+             2       49999.  Value of Breakpoint
+             4      199999.  Value of Breakpoint
+             9    99999996.  Greater than Maximum Breakpoint
+           105       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPT119                        EX MAIN RESIDENCE VALUE - 2 RESULT - 2
+         Section: T     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecT.EXITHOUSE.T119_
+
+         *
+
+         .................................................................................
+             1          97.  Data Not Available
+             4          98.  DK (Don't Know); NA (Not Ascertained)
+             3          99.  RF (Refused)
+           113       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T116_MainResValue2 
+
+         IF SecT.EXITHOUSE.T111_DispMainRes2 = NOTYETDISPOSED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT120                        EX MAIN RESIDENCE - OCCUPIED
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T120_
+
+         Is that home now vacant, or is someone living there?
+
+         .................................................................................
+            10           1.  VACANT
+             5           5.  OCCUPIED
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           105       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T120_ 
+
+         IF SecT.EXITHOUSE.T120_ = OCCUPIED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT121M1                      EX MAIN RESIDENCE - WHO OCCUPIED -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T121_[1]
+
+         Who lives in the house, (that is, what was their relationship to [First Name])?
+         
+         CHOOSE all that apply
+
+         .................................................................................
+             1           1.  SPOUSE/PARTNER
+             3           2.  CHILD/CHILD-IN-LAW
+                         3.  OTHER RELATIVE
+                         4.  FRIEND
+                         5.  CHARITY
+             1           6.  GRANDCHILD
+                         7.  SOMEONE ELSE
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           116       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T120_ 
+
+         IF SecT.EXITHOUSE.T120_ = OCCUPIED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT121M2                      EX MAIN RESIDENCE - WHO OCCUPIED -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T121_[2]
+
+         Who lives in the house, (that is, what was their relationship to [First Name])?
+         
+         CHOOSE all that apply
+
+         .................................................................................
+                         1.  SPOUSE/PARTNER
+             1           2.  CHILD/CHILD-IN-LAW
+                         3.  OTHER RELATIVE
+                         4.  FRIEND
+                         5.  CHARITY
+                         6.  GRANDCHILD
+                         7.  SOMEONE ELSE
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T120_ 
+
+         IF SecT.EXITHOUSE.T120_ = OCCUPIED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT121M3                      EX MAIN RESIDENCE - WHO OCCUPIED -3
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T121_[3]
+
+         Who lives in the house, (that is, what was their relationship to [First Name])?
+         
+         CHOOSE all that apply
+
+         .................................................................................
+                         1.  SPOUSE/PARTNER
+                         2.  CHILD/CHILD-IN-LAW
+                         3.  OTHER RELATIVE
+                         4.  FRIEND
+                         5.  CHARITY
+                         6.  GRANDCHILD
+             1           7.  SOMEONE ELSE
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T120_ 
+
+         IF SecT.EXITHOUSE.T120_ = OCCUPIED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT121M4                      EX MAIN RESIDENCE - WHO OCCUPIED -4
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T121_[4]
+
+         Who lives in the house, (that is, what was their relationship to [First Name])?
+         
+         CHOOSE all that apply
+
+         .................................................................................
+                         1.  SPOUSE/PARTNER
+                         2.  CHILD/CHILD-IN-LAW
+                         3.  OTHER RELATIVE
+                         4.  FRIEND
+                         5.  CHARITY
+                         6.  GRANDCHILD
+                         7.  SOMEONE ELSE
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T122_[1] :=  DONTKNOW:{PREVIOUS ASK} SecT.EXITHOUSE.T056_T122MTemp 
+         IF NOT(SecT.EXITHOUSE.T056_T122MTemp <> NONRESPONSE) THEN 
+         IF SecT.EXITHOUSE.T056_T122MTemp = DONTKNOW THEN 
+         ASSIGN: T122_[1] :=  REFUSAL:{PREVIOUS ASK} SecT.EXITHOUSE.T056_T122MTemp 
+         IF NOT(SecT.EXITHOUSE.T056_T122MTemp <> NONRESPONSE) THEN 
+         IF NOT(SecT.EXITHOUSE.T056_T122MTemp = DONTKNOW) THEN 
+         IF SecT.EXITHOUSE.T056_T122MTemp = REFUSAL THEN 
+         ASSIGN: T122_[cnt] := aArrayInteger[T056_T122MTemp[cnt.ORD]:{PREVIOUS ASK} 
+         SecT.EXITHOUSE.T056_T122MTemp 
+         IF SecT.EXITHOUSE.T056_T122MTemp <> NONRESPONSE THEN 
+         IF SecT.EXITHOUSE.cnt <= T056_T122MTemp.CARDINAL THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT122M1                      EX WHICH CHILD HOUSE-1 -1
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecT.EXITHOUSE.T122_[1]
+
+         IF CHILD in PT121:
+         (Which child is that?)
+         
+         IF GRANDCHILD in PT121:
+         Which child is the parent of that grandchild?
+         
+         IWER: CHOOSE all that apply
+
+         .................................................................................
+                               041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+             5                     997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           116                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T122_[1] :=  DONTKNOW:{PREVIOUS ASK} SecT.EXITHOUSE.T056_T122MTemp 
+         IF NOT(SecT.EXITHOUSE.T056_T122MTemp <> NONRESPONSE) THEN 
+         IF SecT.EXITHOUSE.T056_T122MTemp = DONTKNOW THEN 
+         ASSIGN: T122_[1] :=  REFUSAL:{PREVIOUS ASK} SecT.EXITHOUSE.T056_T122MTemp 
+         IF NOT(SecT.EXITHOUSE.T056_T122MTemp <> NONRESPONSE) THEN 
+         IF NOT(SecT.EXITHOUSE.T056_T122MTemp = DONTKNOW) THEN 
+         IF SecT.EXITHOUSE.T056_T122MTemp = REFUSAL THEN 
+         ASSIGN: T122_[cnt] := aArrayInteger[T056_T122MTemp[cnt.ORD]:{PREVIOUS ASK} 
+         SecT.EXITHOUSE.T056_T122MTemp 
+         IF SecT.EXITHOUSE.T056_T122MTemp <> NONRESPONSE THEN 
+         IF SecT.EXITHOUSE.cnt <= T056_T122MTemp.CARDINAL THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT122M2                      EX WHICH CHILD HOUSE-1 -2
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecT.EXITHOUSE.T122_[2]
+
+         IF CHILD in PT121:
+         (Which child is that?)
+         
+         IF GRANDCHILD in PT121:
+         Which child is the parent of that grandchild?
+         
+         IWER: CHOOSE all that apply
+
+         .................................................................................
+                               041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           121                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.T047_AssistT 
+
+         IF ((piSecAStartInterviewA007TRAlive_A = NO) AND NOT (piRvarsZ145_TypeExit_V IN 
+         [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST])) OR ((piRvarsZ145_TypeExit_V IN 
+         [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND 
+         ((piRvarsZ146_HomeWillTrust_V = ASKABTWILL_TRUSTONLY) OR 
+         (piRvarsZ146_HomeWillTrust_V = ASKBTHHOMEANDWILL_TRUST))) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT155                        EX ASSETS INTO TRUST
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T155_
+
+         Sometimes people make provisions to leave things to specific family members if
+         something happens to them, others do not. Because we are trying to get a
+         complete picture of family situations, I have a few questions about inheritance.
+         
+         Before [his/her] death, had [R's First Name] put any of [his/her] assets into a
+         trust?
+
+         .................................................................................
+             5           1.  YES
+            51           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+             2           9.  RF (Refused)
+            62       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T155_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT156                        EX WILL
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T156_HaveWill
+
+         [In addition to the trust, did/Did] [R's First Name] have a will that was
+         written and witnessed?
+
+         .................................................................................
+            52           1.  YES
+             6           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+            62       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T156_HaveWill 
+
+         IF SecT.EXITWILLANDDEATH.T156_HaveWill = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT157                        EX WILL PROBATED
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T157_WillProbated
+
+         Has [his/her] will been probated?
+
+         .................................................................................
+            17           1.  YES
+             9           2.  [VOL]NO: PROBATE NOT NEEDED
+                         3.  [VOL]NO: NO ASSETS REMAINED TO BE PROBATED
+             2           4.  [VOL]NO: ALL ASSETS WERE HELD IN JOINT TENANCY OR IN A TRUST
+            19           5.  NO
+                         7.  [VOL] R DISPUTES RECORD
+             3           8.  DK (Don't Know); NA (Not Ascertained)
+             2           9.  RF (Refused)
+            69       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T158_StateProbate :=  DONTKNOW:{PREVIOUS ASK} 
+         SecT.EXITWILLANDDEATH.puT158_StateProbate 
+         IF SecT.EXITWILLANDDEATH.puT158_StateProbate = DONTKNOW THEN 
+         ASSIGN: T158_StateProbate :=  REFUSAL:{PREVIOUS ASK} 
+         SecT.EXITWILLANDDEATH.puT158_StateProbate 
+         IF NOT(SecT.EXITWILLANDDEATH.puT158_StateProbate = DONTKNOW) THEN 
+         IF SecT.EXITWILLANDDEATH.puT158_StateProbate = REFUSAL THEN 
+         ASSIGN: T158_StateProbate := StateList.StateCodeNum:{PREVIOUS ASK} 
+         SecT.EXITWILLANDDEATH.puT158_StateProbate 
+         IF NOT(SecT.EXITWILLANDDEATH.puT158_StateProbate = DONTKNOW) THEN 
+         IF NOT(SecT.EXITWILLANDDEATH.puT158_StateProbate = REFUSAL) THEN 
+         IF SecT.EXITWILLANDDEATH.StateList.StateCodeNum <> EMPTY THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT158M                       EX STATE PROBATED-MASKED
+         Section: T     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T158_StateProbate
+
+         In what state was it probated?
+         
+         State:
+         
+         County:
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+                         1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+             2           2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+             3           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+             1           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+             5           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+             1           6.  South Region: East South Central Division (KY, TN, AL, MS)
+             2           7.  South Region: West South Central Division (AR, LA, OK, TX)
+             1           8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+             2           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+                        11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (refused)
+           104       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T156_HaveWill 
+
+         IF (SecT.EXITWILLANDDEATH.T155_ <> YES) AND 
+         (SecT.EXITWILLANDDEATH.T157_WillProbated <> YES) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT161                        EX HAPPENED TO ESTATE
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T161_
+
+         The next questions are about [R's First Name]'s assets and possessions,
+         excluding any life insurance. Have they been divided up among the heirs, have
+         they not yet been distributed, was there nothing of much value to distribute, or
+         what?
+
+         .................................................................................
+            20           1.  DIVIDED AMONG THE HEIRS, OR RETAINED BY THOSE WITH JOINT
+                             TENANCY
+             5           2.  NOT YET DISTRIBUTED
+             7           3.  NOTHING MUCH OF VALUE
+             2           7.  OTHER (SPECIFY)
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+             2           9.  RF (Refused)
+            84       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T156_HaveWill 
+
+         IF (((SecT.EXITWILLANDDEATH.T155_ = YES) OR 
+         (SecT.EXITWILLANDDEATH.T157_WillProbated = YES)) OR 
+         (SecT.EXITWILLANDDEATH.T161_ = DIVIDED)) OR (SecT.EXITWILLANDDEATH.T161_ = 
+         OTHERSPECIFY) THEN 
+
+         IF (piRespondents1X065ACouplenss = MARRIED) OR (piRespondents1X065ACouplenss = 
+         PARTNERED_VOL) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT163                        EX WILL/INS PROVIDE - SPOUSE/PARTNER
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T163_WillSpouseP
+
+         [Did [he/she] make provisions in [either the trust or the will/the trust/the
+         will] for]/Were any of [his/her] possessions or assets left to] [you?/[his/her]
+         [husband/wife/partner]?]
+
+         .................................................................................
+            13           1.  YES
+             3           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           105       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T163_WillSpouseP 
+
+         IF SecT.EXITWILLANDDEATH.T163_WillSpouseP = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9002                       EX WILL/INS AMOUNT - INDIVIDUAL -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T902_WillInsAmt
+
+         [Excluding any life insurance, [how much did you receive/how much did [his/her]
+         [husband/wife/partner] receive] from [his/her] estate?]
+         
+         IWER: Accept either a dollar amount or a percentage
+         IWER: Do not probe DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+             6                0-500000.  Actual Value
+             4                  999998.  DK (Don't Know); NA (Not Ascertained)
+             1                  999999.  RF (Refused)
+           110                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_1.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_1.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9003                       EX WILL/INS PERCENT - INDIVIDUAL -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T903_WillInsPercent
+
+         [Excluding any life insurance, [how much did you receive/how much did [his/her]
+         [husband/wife/partner] receive] from [his/her] estate?]
+         
+         IWER: Accept either a dollar amount or a percentage
+         IWER: Do not probe DK/RF 
+         
+         Amount:
+         Percent:
+
+         .................................................................................
+             2         100.  Actual Value
+                       998.  DK (Don't Know); NA (Not Ascertained)
+                       999.  RF (Refused)
+           119       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_1.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_1.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_1.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9004                       EX MORE THAN HALF -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T904_Half
+
+         Was it more than half of [his/her] estate?
+
+         .................................................................................
+             1           1.  YES
+             1           5.  NO
+             2           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+           116       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_1.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_1.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9005                       EX MORE THAN 75 PERCENT -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T905_More75
+
+         Was it more than 75 percent of [his/her] estate?
+
+         .................................................................................
+             1           1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_1.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_1.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9006                       EX MORE THAN 90 PERCENT -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T906_More90
+
+         Was it more than 90 percent of [his/her] estate?
+
+         .................................................................................
+             1           1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_1.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_1.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9007                       EX MORE THAN 25 PERCENT -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T907_More25
+
+         Was it more than 25 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+             1           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_1.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_1.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9008                       EX MORE THAN 10 PERCENT -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T908_More10
+
+         Was it more than 10 percent of [his/her] estate?
+
+         .................................................................................
+             1           1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T156_HaveWill 
+
+         IF (((SecT.EXITWILLANDDEATH.T155_ = YES) OR 
+         (SecT.EXITWILLANDDEATH.T157_WillProbated = YES)) OR 
+         (SecT.EXITWILLANDDEATH.T161_ = DIVIDED)) OR (SecT.EXITWILLANDDEATH.T161_ = 
+         OTHERSPECIFY) THEN 
+
+         IF (piInitA101_TotalKids > 0) OR ((piE046orZ114_NumGKids > 0) AND 
+         (piE046orZ114_NumGKids < 81)) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT164                        EX WILL PROVIDE - CHILD/FAMILY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T164_WillChildren
+
+         (Again,) excluding any life insurance, [did [he/she] make provisions in [either
+         the trust or the will/the trust/the will] for]/were any of [his/her] possessions
+         or assets left to] any of [his/her] [children or grandchildren (or
+         great-grandchildren)?/children?/grandchildren (or great-grandchildren)?]
+
+         .................................................................................
+            10           1.  YES
+            31           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+            80       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T164_WillChildren 
+
+         IF SecT.EXITWILLANDDEATH.T164_WillChildren = YES THEN 
+
+         IF piInitA101_TotalKids > 1 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT165                        EX WILL SAME AMT - CHILD/FAMILY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T165_WillSameAmtChld
+
+         Did [R's First Name] will provide equally for all of [his/her] children and
+         their families?
+         
+         IWER:  We are interested in the total amount given to each of R's children and
+         their spouses and children.
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T166_WillSameAmtGChld := YES:{PREVIOUS ASK} 
+         SecT.EXITWILLANDDEATH.T165_WillSameAmtChld 
+         IF (piE046orZ114_NumGKids = 1) AND (piInitA101_TotalKids = 0) THEN 
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T165_WillSameAmtChld 
+         IF NOT((piE046orZ114_NumGKids = 1) AND (piInitA101_TotalKids = 0)) THEN 
+         IF (piE046orZ114_NumGKids > 1) AND (piInitA101_TotalKids = 0) THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT166                        EX WILL SAME AMT - GRCHILDREN
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T166_WillSameAmtGChld
+
+         Did [he/she] leave the same amount to each of [his/her] grandchildren?
+
+         .................................................................................
+             9           1.  YES
+             1           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           111       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T164_WillChildren 
+
+         IF SecT.EXITWILLANDDEATH.T164_WillChildren = YES THEN 
+
+         IF (((piInitA101_TotalKids = 1) OR (SecT.EXITWILLANDDEATH.T165_WillSameAmtChld 
+         = YES)) OR (SecT.EXITWILLANDDEATH.T166_WillSameAmtGChld = RESPONSE)) OR 
+         SecT.EXITWILLANDDEATH.T166_WillSameAmtGChld = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9012                       EX WILL/INS AMOUNT - INDIVIDUAL -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T902_WillInsAmt
+
+         [Altogether, how much did [he/she] leave for [his/her] [children and their
+         families/child and (his/her) family/(grandchild/grandchildren)]]?
+         
+         IWER: Accept either a dollar amount or a percentage
+         IWER: Do not probe DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+             5             1000-312000.  Actual Value
+             4                  999998.  DK (Don't Know); NA (Not Ascertained)
+             1                  999999.  RF (Refused)
+           111                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_2.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_2.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9013                       EX WILL/INS PERCENT - INDIVIDUAL -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T903_WillInsPercent
+
+         [Altogether, how much did [he/she] leave for [his/her] [children and their
+         families/child and (his/her) family/(grandchild/grandchildren)]]?
+         
+         IWER: Accept either a dollar amount or a percentage
+         IWER: Do not probe DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+                       998.  DK (Don't Know); NA (Not Ascertained)
+                       999.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_2.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_2.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_2.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9014                       EX MORE THAN HALF -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T904_Half
+
+         Was it more than half of [his/her] estate?
+
+         .................................................................................
+             1           1.  YES
+             2           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+           116       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_2.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_2.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9015                       EX MORE THAN 75 PERCENT -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T905_More75
+
+         Was it more than 75 percent of [his/her] estate?
+
+         .................................................................................
+             1           1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_2.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_2.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9016                       EX MORE THAN 90 PERCENT -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T906_More90
+
+         Was it more than 90 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+             1           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_2.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_2.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9017                       EX MORE THAN 25 PERCENT -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T907_More25
+
+         Was it more than 25 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+             1           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           119       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_2.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_2.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9018                       EX MORE THAN 10 PERCENT -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T908_More10
+
+         Was it more than 10 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+             1           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         IF (T165_WillSameAmtChld = NO) OR T165_WillSameAmtChld = NONRESPONSE THEN 
+
+         IF SecT.EXITWILLANDDEATH.icurr <> 0 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9020_1                     PNDX OF CHILD IF APPLICABLE -3 -1
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T900_
+
+         *
+
+         .................................................................................
+                               041-990.  Child Person Number
+           121                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T164_WillChildren 
+
+         IF SecT.EXITWILLANDDEATH.T164_WillChildren = YES THEN 
+
+         IF NOT((((piInitA101_TotalKids = 1) OR 
+         (SecT.EXITWILLANDDEATH.T165_WillSameAmtChld = YES)) OR 
+         (SecT.EXITWILLANDDEATH.T166_WillSameAmtGChld = RESPONSE)) OR 
+         SecT.EXITWILLANDDEATH.T166_WillSameAmtGChld = NONRESPONSE) THEN 
+
+         IF (SecT.EXITWILLANDDEATH.T165_WillSameAmtChld = NO) OR 
+         SecT.EXITWILLANDDEATH.T165_WillSameAmtChld = NONRESPONSE THEN 
+
+         IF SecT.EXITWILLANDDEATH.icurr <> 0 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9022_1                     EX WILL/INS AMOUNT - INDIVIDUAL -3 -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T902_WillInsAmt
+
+         [(Excluding any life insurance,) how much did [he/she] leave for [Child Name]
+         and (his/her) family?]
+         
+         IWER: Accept either a dollar amount or a percentage
+         
+         IWER: Do not probe DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+                     99998.  DK (Don't Know); NA (Not Ascertained)
+                     99999.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9023_1                     EX WILL/INS PERCENT - INDIVIDUAL -3 -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T903_WillInsPercent
+
+         [(Excluding /any life insurance,) how much did [he/she] leave for [Child Name]
+         and (his/her) family?]
+         
+         IWER: Accept either a dollar amount or a percentage
+         
+         IWER: Do not probe DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+                       998.  DK (Don't Know); NA (Not Ascertained)
+                       999.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9024_1                     EX MORE THAN HALF -3 -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T904_Half
+
+         Was it more than half of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9025_1                     EX MORE THAN 75 PERCENT -3 -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T905_More75
+
+         Was it more than 75 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9026_1                     EX MORE THAN 90 PERCENT -3 -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T906_More90
+
+         Was it more than 90 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9027_1                     EX MORE THAN 25 PERCENT -3 -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T907_More25
+
+         Was it more than 25 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9028_1                     EX MORE THAN 10 PERCENT -3 -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T908_More10
+
+         Was it more than 10 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T156_HaveWill 
+
+         IF (((SecT.EXITWILLANDDEATH.T155_ = YES) OR 
+         (SecT.EXITWILLANDDEATH.T157_WillProbated = YES)) OR 
+         (SecT.EXITWILLANDDEATH.T161_ = DIVIDED)) OR (SecT.EXITWILLANDDEATH.T161_ = 
+         OTHERSPECIFY) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT168                        EX WILL PROVIDE - CHARITIES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T168_WillCharity
+
+         (Excluding any life insurance,) [did [he/she] make provisions in [either the
+         trust or the will/the trust/the will] for]/were any of [his/her] possessions or
+         assets left to] charities?
+
+         .................................................................................
+             3           1.  YES
+            40           5.  NO
+             2           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+            76       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T168_WillCharity 
+
+         IF SecT.EXITWILLANDDEATH.T168_WillCharity = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9032                       AMOUNT TRANSFER -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T902_WillInsAmt
+
+         [How much did charities receive from [his/her] estate?]
+         
+         IWER: Accept either a dollar amount or a percentage
+         IWER: Do not probe DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+             1       20000.  Actual Value
+             1       99998.  DK (Don't Know); NA (Not Ascertained)
+                     99999.  RF (Refused)
+           119       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_4.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_4.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9033                       PERCENT TRANSFER -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T903_WillInsPercent
+
+         [How much did charities receive from [his/her] estate?]
+         
+         IWER: Accept either a dollar amount or a percentage
+         IWER: Do not probe DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+             1          20.  Actual Value
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_4.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_4.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_4.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9034                       MORE THAN HALF ESTATE -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T904_Half
+
+         Was it more than half of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_4.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_4.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9035                       MORE THAN 75PCT ESTATE -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T905_More75
+
+         Was it more than 75 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_4.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_4.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9036                       MORE THAN 90PCT ESTATE -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T906_More90
+
+         Was it more than 90 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_4.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_4.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9037                       MORE THAN 25PCT ESTATE -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T907_More25
+
+         Was it more than 25 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_4.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_4.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9038                       MORE THAN 10PCT ESTATE -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T908_More10
+
+         Was it more than 10 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T168_WillCharity 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT169                        EX WILL PROVIDE - SIBLINGS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T169_WillSibs
+
+         (Excluding any life insurance,) [did [he/she] make provisions in [either the
+         trust or the will/the trust/the will] for]/were any of [his/her] possessions or
+         assets left to] any of [his/her] brothers or sisters?
+
+         .................................................................................
+                         1.  YES
+            44           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+            76       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T169_WillSibs 
+
+         IF SecT.EXITWILLANDDEATH.T169_WillSibs = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9042                       AMOUNT TRANSFER - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T902_WillInsAmt
+
+         [Altogether, how much did [his/her] brothers and sisters receive from [his/her]
+         estate?]
+         
+         IWER: Accept either a dollar amount or a percentage
+         IWER: Do not probe DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+                     99998.  DK (Don't Know); NA (Not Ascertained)
+                     99999.  RF (Refused)
+           121       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_5.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_5.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9043                       PERCENT TRANSFER - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T903_WillInsPercent
+
+         [Altogether, how much did [his/her] brothers and sisters receive from [his/her]
+         estate?]
+         
+         IWER: Accept either a dollar amount or a percentage
+         IWER: Do not probe DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+                       998.  DK (Don't Know); NA (Not Ascertained)
+                       999.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_5.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_5.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_5.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9044                       MORE THAN HALF ESTATE - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T904_Half
+
+         Was it more than half of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_5.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_5.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9045                       MORE THAN 75PCT ESTATE - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T905_More75
+
+         Was it more than 75 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_5.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_5.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9046                       MORE THAN 90PCT ESTATE - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T906_More90
+
+         Was it more than 90 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_5.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_5.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9047                       MORE THAN 25PCT ESTATE - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T907_More25
+
+         Was it more than 25 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_5.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_5.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9048                       MORE THAN 10PCT ESTATE - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T908_More10
+
+         Was it more than 10 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T169_WillSibs 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT170                        EX WILL PROVIDE - RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T170_WillRelative
+
+         (Excluding any life insurance,) [did [he/she] make provisions in [either the
+         trust or the will/the trust/the will] for]/Were any of [his/her] possessions or
+         assets left to] any other of [his/her] relatives?
+
+         .................................................................................
+            10           1.  YES
+            34           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+            76       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T170_WillRelative 
+
+         IF SecT.EXITWILLANDDEATH.T170_WillRelative = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9052                       AMOUNT TRANSFER - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T902_WillInsAmt
+
+         [Altogether, how much did these other relatives receive from [his/her] estate?]
+         
+         IWER: Accept either a dollar amount or a percentage
+         IWER: Do not probe DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+             6                0-400000.  Actual Value
+             2                  999998.  DK (Don't Know); NA (Not Ascertained)
+                                999999.  RF (Refused)
+           113                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_6.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_6.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9053                       PERCENT TRANSFER - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T903_WillInsPercent
+
+         [Altogether, how much did these other relatives receive from [his/her] estate?] 
+         
+         IWER: Accept either a dollar amount or a percentage
+         IWER: Do not probe DK/RF 
+         
+         Amount:
+         Percent:
+
+         .................................................................................
+             1         100.  Actual Value
+             1         998.  DK (Don't Know); NA (Not Ascertained)
+                       999.  RF (Refused)
+           119       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_6.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_6.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_6.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9054                       MORE THAN HALF ESTATE - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T904_Half
+
+         Was it more than half of [his/her] estate?
+
+         .................................................................................
+             1           1.  YES
+             1           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           118       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_6.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_6.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9055                       MORE THAN 75PCT ESTATE - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T905_More75
+
+         Was it more than 75 percent of [his/her] estate?
+
+         .................................................................................
+             1           1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_6.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_6.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9056                       MORE THAN 90PCT ESTATE - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T906_More90
+
+         Was it more than 90 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+             1           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_6.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_6.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9057                       MORE THAN 25PCT ESTATE - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T907_More25
+
+         Was it more than 25 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+             1           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_6.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_6.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9058                       MORE THAN 10PCT ESTATE - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T908_More10
+
+         Was it more than 10 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+             1           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T170_WillRelative 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT171                        EX WILL PROVIDE - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T171_WillFriends
+
+         (Excluding any life insurance,) [did [he/she] make provisions in [either the
+         trust or the will/the trust/the will] for]/were any of [his/her] possessions or
+         assets left to] any of [his/her] friends?
+
+         .................................................................................
+             4           1.  YES
+            40           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+            76       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T171_WillFriends 
+
+         IF SecT.EXITWILLANDDEATH.T171_WillFriends = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9062                       AMOUNT TRANSFER - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T902_WillInsAmt
+
+         [Altogether, how much did [his/her] friends receive from [his/her] estate?]
+         
+         IWER: Accept either a dollar amount or a percentage
+         IWER: Do not probe DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+             3             10000-15000.  Actual Value
+                                 99998.  DK (Don't Know); NA (Not Ascertained)
+                                 99999.  RF (Refused)
+           118                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_7.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_7.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9063                       PERCENT TRANSFER - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T903_WillInsPercent
+
+         [Altogether, how much did [his/her] friends receive from [his/her] estate?]
+         
+         IWER: Accept either a dollar amount or a percentage
+         IWER: Do not probe DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+             1          50.  Actual Value
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_7.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_7.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_7.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9064                       MORE THAN HALF ESTATE - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T904_Half
+
+         Was it more than half of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_7.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_7.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9065                       MORE THAN 75PCT ESTATE - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T905_More75
+
+         Was it more than 75 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_7.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_7.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9066                       MORE THAN 90PCT ESTATE - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T906_More90
+
+         Was it more than 90 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_7.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_7.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9067                       MORE THAN 25PCT ESTATE - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T907_More25
+
+         Was it more than 25 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_7.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_7.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9068                       MORE THAN 10PCT ESTATE - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T908_More10
+
+         Was it more than 10 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T171_WillFriends 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT172                        EX WILL PROVIDE - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T172_WillOthers
+
+         (Excluding any life insurance,) [did [he/she] make provisions in [either the
+         trust or the will/the trust/the will] for]/were any of [his/her] possessions or
+         assets left to] anyone else or anything else that we have not yet listed?
+
+         .................................................................................
+             1           1.  YES
+            43           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+            76       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T172_WillOthers 
+
+         IF SecT.EXITWILLANDDEATH.T172_WillOthers = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9072                       AMOUNT TRANSFER - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T902_WillInsAmt
+
+         [Altogether, how much did those others receive from [his/her] estate?]
+         
+         IWER:  Accept either a dollar amount or a percentage
+         IWER:  Do not probe DK/RF
+
+         .................................................................................
+                     99998.  DK (Don't Know); NA (Not Ascertained)
+                     99999.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_8.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_8.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9073                       PERCENT TRANSFER - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T903_WillInsPercent
+
+         [Altogether, how much did those others receive from [his/her] estate?]
+         
+         IWER:  Accept either a dollar amount or a percentage
+         IWER:  Do not probe DK/RF
+
+         .................................................................................
+             1          20.  Actual Value
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           120       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_8.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_8.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_8.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9074                       MORE THAN HALF ESTATE - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T904_Half
+
+         Was it more than half of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_8.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_8.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9075                       MORE THAN 75PCT ESTATE - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T905_More75
+
+         Was it more than 75 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_8.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_8.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9076                       MORE THAN 90PCT ESTATE - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T906_More90
+
+         Was it more than 90 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_8.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_8.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9077                       MORE THAN 25PCT ESTATE - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T907_More25
+
+         Was it more than 25 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_8.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_8.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT9078                       MORE THAN 10PCT ESTATE - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T908_More10
+
+         Was it more than 10 percent of [his/her] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.T047_AssistT 
+
+         IF (SecT.EXITWILLANDDEATH.T155_ <> EMPTY AND ((((SecT.EXITWILLANDDEATH.T155_ = 
+         YES) OR (SecT.EXITWILLANDDEATH.T157_WillProbated = YES)) OR 
+         (SecT.EXITWILLANDDEATH.T161_ = DIVIDED)) OR (SecT.EXITWILLANDDEATH.T161_ = 
+         OTHERSPECIFY))) OR ((piRvarsZ145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, 
+         SECREPEATPOST]) AND (piRvarsZ146_HomeWillTrust_V = ASKABTHOMEONLY)) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT173                        EX $ VALUE ESTATE
+         Section: T     Level: Respondent      Type: Numeric    Width: 7   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T173_ValueEstate
+
+         Excluding any life insurance, altogether what was the value of [his/her] total
+         estate?
+         
+         IWER:  Do not probe DK/RF
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             60        0     2500000     245860.00     408838.12      14
+         -----------------------------------------------------------------
+            36     9999998.  DK (Don't Know); NA (Not Ascertained)
+            11     9999999.  RF (Refused)
+
+
+==========================================================================================
+
+ZPT174                        EX $ VALUE ESTATE - MIN
+         Section: T     Level: Respondent      Type: Numeric    Width: 7   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T174_
+
+         Did it amount to a total of less than $____ , more than $____ , or what?
+         
+         PROCEDURES: 2Up2Down, 3Up1Down,  1Up3Down
+         BREAKPOINTS: $10,000, $25,000, $100,000, $500,000, $2,000,000
+         RANDOM ENTRY POINTS: $25,000, $100,000, $500,000
+         ENTRY POINT ASSIGNMENT [1 ($100,000)] or [2 ($25,000] or
+         [{NOT 1 and NOT 2} ($500,000)]  AT X511
+
+         .................................................................................
+            19           0.  Value of Breakpoint
+             1       10000.  Value of Breakpoint
+             2       25000.  Value of Breakpoint
+             6       25001.  Value of Breakpoint
+             1      100000.  Value of Breakpoint
+            12      100001.  Value of Breakpoint
+             5      500001.  Value of Breakpoint
+             1     2000001.  Value of Breakpoint
+            74       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPT175                        EX $ VALUE ESTATE - MAX
+         Section: T     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T175_
+
+         *
+
+         .................................................................................
+             4        9999.  Value of Breakpoint
+             1       10000.  Value of Breakpoint
+             2       25000.  Value of Breakpoint
+             5       99999.  Value of Breakpoint
+             1      100000.  Value of Breakpoint
+             8      499999.  Value of Breakpoint
+             5     1999999.  Value of Breakpoint
+            21    99999996.  Greater than Maximum Breakpoint
+            74       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPT176                        EX $ VALUE ESTATE - RESULT
+         Section: T     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T176_
+
+         *
+
+         .................................................................................
+            16          98.  DK (Don't Know); NA (Not Ascertained)
+             7          99.  RF (Refused)
+            98       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T173_ValueEstate 
+
+         IF (NOT (piRvarsZ145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, 
+         SECREPEATPOST]) AND (piHHX079_OwnRent_V = OWN)) OR ((piRvarsZ145_TypeExit_V IN 
+         [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND 
+         (piSecTEXITHOUSET101_OwnedMainRes = YES)) THEN 
+
+         IF ((piSecTEXITHOUSET101_OwnedMainRes <> RECORDSINCORRECT) OR 
+         (piSecTEXITHOUSET101_OwnedMainRes <> NO)) AND 
+         (piSecTEXITHOUSET066_EvrOwnedMainRes <> NO) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPT242                        EX INCLUDE VALUE HOUSE
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T242_IncValue
+
+         Does that include the value of the home?
+
+         .................................................................................
+            50           1.  YES
+             6           5.  NO
+            11           8.  DK (Don't Know); NA (Not Ascertained)
+             3           9.  RF (Refused)
+            51       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPVDATE                       2016 DATA MODEL VERSION
+         Section: T     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+         .................................................................................
+                         1.  Version 1
+                         2.  Version 2
+                         3.  Version 3
+            27           4.  Version 4
+            39           5.  Version 5
+             3           6.  Version 6
+            25           7.  Version 7
+             7           8.  Version 8
+             4           9.  Version 9
+            16          10.  Version 10
+
+
+==========================================================================================
+
+ZPVERSN                       2016 POST-EXIT RELEASE VERSION NUMBER
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+           121           1.  HRS 2016 Post-Exit Final Release
+
+
+==========================================================================================

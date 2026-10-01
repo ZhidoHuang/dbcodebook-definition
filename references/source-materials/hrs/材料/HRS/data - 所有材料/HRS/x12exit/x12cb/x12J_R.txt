@@ -1,0 +1,834 @@
+==========================================================================================
+
+HRS 2012 Final Exit
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section J: EMPLOYMENT  (Respondent)
+
+==========================================================================================
+
+HHID                HOUSEHOLD IDENTIFICATION NUMBER
+         Section: J     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+          1187           010004-918761.  Household Identification Number
+
+
+==========================================================================================
+
+PN                  RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: J     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           671         010.  Person Identifier
+            25         011.  Person Identifier
+             2         012.  Person Identifier
+           377         020.  Person Identifier
+            11         021.  Person Identifier
+            42         030.  Person Identifier
+             2         031.  Person Identifier
+            56         040.  Person Identifier
+             1         041.  Person Identifier
+
+
+==========================================================================================
+
+MSUBHH              2010 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: J     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+          1114           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+            32           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            21           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            15           3.  1st deceased respondent from a household
+             1           5.  Split household - one half of couple from SUBHH 1 or 2
+                         6.  Split household - one half of couple from SUBHH 1 or 2
+             4           7.  Reunited household - respondents from split household
+                             reunite
+
+
+==========================================================================================
+
+XSUBHH              2012 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: J     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+          1139           3.  1st deceased respondent from a household
+            48           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+XPN_SP              2012 SPOUSE/PARTNER PERSON NUMBER
+         Section: J     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           232         010.  Person Identifier
+            43         011.  Person Identifier
+             1         012.  Person Identifier
+           199         020.  Person Identifier
+            13         021.  Person Identifier
+            27         030.  Person Identifier
+             2         031.  Person Identifier
+            33         040.  Person Identifier
+             2         041.  Person Identifier
+           635       Blank.  R not coupled
+
+
+==========================================================================================
+
+         IF ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) AND 
+         (piRVARSZ123_CurWorkng_V = NO) THEN 
+         ASSIGN: J677YJ023BP := 1 
+         ELSEIF ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) AND 
+         (piRvarsZ136_SelfElseEmp_V <> SLF) THEN 
+         ASSIGN: J677YJ023BP := 2 
+         ELSE J677YJ023BP := 0 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ677               BRANCHPOINT FOR J677Y
+         Section: J     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecJ.WORKSTATUS.J677YJ023BP
+
+         *
+
+         .................................................................................
+            39           0.  ALL OTHERS
+          1080           1.  NOT WORKING LAST WAVE
+            68           2.  NOT SELF EMPLOYED LAST WAVE
+                     Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         IF (SecJ.WORKSTATUS.J677YJ023BP <> 1) AND (SecJ.WORKSTATUS.J677YJ023BP <> 6) 
+         THEN 
+
+         IF ((piJ023BP <> 2) AND (piJ023BP <> 3)) AND (piJ023BP <> 4) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ023               STOPPED WORKING FOR SLF-MO
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf
+
+         Now I have some questions about [FIRST NAME]'s employment before [she/he] died.
+         
+         According to our records, in [Prev Wave IW Month], [Prev Wave IW Year][she/he]
+         was self-employed. In what month and year did [she/he] stop working for
+         [herself/himself]?
+         
+         IWER: Month entered must be between [Prev Wave IW Month], [Prev Wave IW Year]
+         and [Date of Death Month], [Date of Death Year]
+         
+         Month: 
+         
+         Year:
+
+         .................................................................................
+             5           1.  JAN
+                         2.  FEB
+             2           3.  MAR
+             2           4.  APR
+             4           5.  MAY
+                         6.  JUN
+             2           7.  JUL
+             3           8.  AUG
+             3           9.  SEP
+             3          10.  OCT
+             1          11.  NOV
+             3          12.  DEC
+             8          96.  WORKED THERE UNTIL DEATH
+             1          97.  DENIES BEING SELF-EMPLOYED AT PREVIOUS IW
+             2          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1148       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         ASSIGN: J024_YrStopWrkSelf :=  REFUSAL:{PREVIOUS ASK} 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf 
+         IF (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf = STILLWORKING) 
+         OR (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf = 
+         DENYSLF_EMPATPW) THEN 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf 
+         IF NOT((SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf = 
+         STILLWORKING) OR (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf = 
+         DENYSLF_EMPATPW)) THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ024               STOPPED WORKING FOR SLF- YR
+         Section: J     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J024_YrStopWrkSelf
+
+         (According to our records, in [Prev Wave IW Month], [Prev Wave IW Year][she/he]
+         was self-employed. In what month and year did [she/he] stop working for
+         [herself/himself]?)
+         
+         IWER: Month entered must be between [Prev Wave IW Month], [Prev Wave IW Year]
+         and [Date of Death Month], [Date of Death Year]
+         
+         Month: [STOPPED WORKING FOR SLF-MO]
+         
+         Year:
+
+         .................................................................................
+            29               2005-2012.  Actual Value
+             1                    9998.  DK (Don't Know); NA (Not Ascertained)
+             9                    9999.  RF (Refused)
+          1148                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         ASSIGN: J678YJ023TOW158_2BP := 0:{PREVIOUS ASK} 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf 
+         IF NOT(SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf = 
+         DENYSLF_EMPATPW) THEN 
+         ASSIGN: J678YJ023TOW158_2BP := 1:{PREVIOUS ASK} 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf = 
+         DENYSLF_EMPATPW THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ678               BRANCHPOINT FOR J678Y
+         Section: J     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J678YJ023TOW158_2BP
+
+         *
+
+         .................................................................................
+            37           0.  ALL OTHERS
+             1           1.  R DENIES WORKING FOR SELF
+          1149       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         IF NOT (J023_MoStopWrkSelf = STILLWORKING) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ031               PAID REGULAR SALARY
+         Section: J     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_
+
+         Was [he/she] paid a regular salary or wages?
+
+         .................................................................................
+            13           1.  YES
+            20           5.  NO
+             5           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1149       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+
+         IF ((SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> DONTKNOW) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> REFUSAL)) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> NO) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ032               AMOUNT OF SALARY
+         Section: J     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J032_
+
+         How much was [she/he] paid before taxes and other deductions?
+         
+         IWER: Do not probe DK/RF
+         
+         IWER: If amount per hour, enter both dollars and cents
+         
+         Amount:
+         
+         Per:
+
+         .................................................................................
+             7               200-25000.  Actual Value
+             5                   99998.  DK (Don't Know); NA (Not Ascertained)
+             1                   99999.  RF (Refused)
+          1174                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J032_ 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J032_ <> EMPTY AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J032_ <> NONRESPONSE THEN 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J032_ <> 0 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ036               AMOUNT OF SALARY PER
+         Section: J     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J036_
+
+         (How much was [she/he] paid before taxes and other deductions?)
+         
+         IWER: PROBE if necessary: Was that per hour, week, month, or year?
+         
+         Amount: [AMOUNT OF SALARY]
+         
+         Per:
+
+         .................................................................................
+                         1.  HOUR
+             2           2.  WEEK
+                         3.  EVERY TWO WEEKS/BI-WEEKLY
+             2           4.  MONTH
+                         5.  TWICE A MONTH
+             3           6.  YEAR
+                        97.  OTHER (SPECIFY); including per visit, class, mile, job,
+                             piece
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1180       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+XJ033               AMOUNT OF SALARY - MIN
+         Section: J     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_
+
+         Did it amount to a total of less than $____ per month, more than $____ per
+         month, or what?
+         
+         PROCEDURES: 2Up1Down, 1Up2Down
+         BREAKPOINTS: $625, $1,500, $3,000, $6,500
+         RANDOM ENTRY POINTS: $1,500, $3,000
+         ENTRY POINT ASSIGNMENT: 1 OR {NOT 1} AT X510
+
+         .................................................................................
+             4           0.  Value of Breakpoint
+             1        1500.  Value of Breakpoint
+             1        3001.  Value of Breakpoint
+          1181       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+XJ034               AMOUNT OF SALARY - MAX
+         Section: J     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_
+
+         *
+
+         .................................................................................
+             1         624.  Value of Breakpoint
+             1        1500.  Value of Breakpoint
+             1        6499.  Value of Breakpoint
+             3    99999996.  Greater than Maximum Breakpoint
+          1181       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+XJ035               AMOUNT OF SALARY - RESULT
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_
+
+         *
+
+         .................................................................................
+             3          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1184       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ038               RECEIVE ANY PROFITS
+         Section: J     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J038_
+
+         Did [he/she] receive some or all of the net earnings or profits?
+         
+         Def: (Net earning or profit is total business incomes less total business
+         expenses.)
+
+         .................................................................................
+            28           1.  YES
+             7           5.  NO
+             3           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1149       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         IF ((J038_ = NO) OR J038_ = NONRESPONSE) AND (J031_ = YES) THEN 
+         ASSIGN: J681YJ038TOJ073 := 1 
+         ELSE J681YJ038TOJ073 := 0 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ681               BRANCHPOINT FOR J681Y
+         Section: J     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073
+
+         *
+
+         .................................................................................
+            32           0.  R DID NOT RECIEVE NET EARNINGS OR PROFITS AT J038 AND R WAS
+                             PAID REGULAR SALARY OR WAGE (J031)
+             5           1.  R DID NOT REPORT RECIEVING EARNINGS OR NET PROFITS AT J038
+          1150       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J038_ 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073 <> 1 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ039               AMOUNT OF NET PROFITS/EARNINGS
+         Section: J     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J039_
+
+         [What did [he/she] earn the last year [he/she] worked?/(In addition to [his/her]
+         regular salary,) How much did [he/she] receive from net earnings or profits?
+         IWER: If R has trouble giving dollar figure, ask: What did [he/she] earn the
+         last year [he/she] worked?]
+         
+         Def: (Net earning or profit is total business incomes less total business
+         expenses.)
+         
+         IWER: Do not probe DK/RF
+         
+         IWER: If amount per hour, enter both dollars and cents
+         
+         Amount:
+         
+         Per:
+
+         .................................................................................
+            11                 0-35000.  Actual Value
+            20                   99998.  DK (Don't Know); NA (Not Ascertained)
+             2                   99999.  RF (Refused)
+          1154                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J039_ 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J039_ <> EMPTY AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J039_ <> NONRESPONSE THEN 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J039_ <> 0 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ043               AMOUNT OF NET PROFITS/EARNINGS PER
+         Section: J     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J043_
+
+         ([What did [he/she] earn the last year [he/she] worked?/(In addition to
+         [his/her] regular salary,) How much did [he/she] receive from net earnings or
+         profits? IWER: If R has trouble giving dollar figure, ask: What did [he/she]
+         earn the last year [he/she] worked?])
+         
+         IWER: PROBE if necessary: Was that per hour, week, month, or year?
+         
+         Amount: [AMOUNT OF NET PROFITS/EARNINGS]
+         
+         Per:
+
+         .................................................................................
+                         1.  HOUR
+             1           2.  WEEK
+                         3.  EVERY TWO WEEKS/BI-WEEKLY
+             2           4.  MONTH
+                         5.  TWICE A MONTH
+             6           6.  YEAR
+                         7.  OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1178       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+XJ040               AMOUNT OF NET PROFITS/EARNINGS - MIN
+         Section: J     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_
+
+         Did it amount to a total of less than $____ per year, more than $____ per year,
+         or what?
+         
+         PROCEDURES: 2Up1Down, 1Up2Down
+         BREAKPOINTS: $3,300, $10,000, $30,000, $75,000
+         RANDOM ENTRY POINTS: $10,000, $30,000
+         ENTRY POINT ASSIGNMENT: 1 OR {NOT 1} AT X501
+
+         .................................................................................
+            12           0.  Value of Breakpoint
+             3        3301.  Value of Breakpoint
+             1       10000.  Value of Breakpoint
+             2       10001.  Value of Breakpoint
+             2       30001.  Value of Breakpoint
+             2       75001.  Value of Breakpoint
+          1165       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+XJ041               AMOUNT OF NET PROFITS/EARNINGS - MAX
+         Section: J     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_
+
+         *
+
+         .................................................................................
+             2        3299.  Value of Breakpoint
+             5        9999.  Value of Breakpoint
+             1       10000.  Value of Breakpoint
+             3       29999.  Value of Breakpoint
+             1       74999.  Value of Breakpoint
+            10    99999996.  Greater than Maximum Breakpoint
+          1165       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+XJ042               AMOUNT OF NET PROFITS/EARNINGS - RESULT
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_
+
+         *
+
+         .................................................................................
+            10          98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+          1176       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         ASSIGN: J682YJ045BP_TOJ073 := 0:{PREVIOUS ASK} 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J039_ 
+         ASSIGN: J682YJ045BP_TOJ073 := 1:{PREVIOUS ASK} 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J039_ 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ682               BRANCHPOINT FOR J682Y
+         Section: J     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J682YJ045BP_TOJ073
+
+         *
+
+         .................................................................................
+             5           0.  ALL OTHERS
+            32           1.  J681 NOT EQUAL 1
+          1150       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         IF (SecJ.WORKSTATUS.J677YJ023BP <> 1) AND (SecJ.WORKSTATUS.J677YJ023BP <> 6) 
+         THEN 
+
+         IF (((((((SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J678YJ023TOW158_2BP <> 1) 
+         AND (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J679YJ028TOW158_2BP <> 1)) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J680YJ031BP_TOW158_2BP <> 1)) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073 <> 1)) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J682YJ045BP_TOJ073 <> 1)) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J683YJ045TOW158_2BP <> 1)) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J684YJ058BP_TOJ167BP < 1)) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J686YJ063BP <> 1) THEN 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J686YJ063BP <> 2 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ063               STOP/RETIRE WORK PREV WAVE EMPLOYER-MO
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J063_MoStopWrkPrevEmp
+
+         Now I have some questions about [FIRST NAME]'s employment before [she/he] died.
+         
+         IF R'S LAST IW EMPLOYER IS KNOWN BUT R NO LONGER THERE:
+         In what month and year did [she/he] stop working there?
+         
+         IF R'S LAST IW EMPLOYER IS KNOWN BUT R RETIRED FROM THERE:
+         In what month and year did [she/he] retire?
+         
+         IF R'S LAST IW EMPLOYER IS KNOWN BUT STATUS UNCERTAIN:
+         According to our records, [she/he] was working for [Prev Wave Employer Name] in
+         [Prev Wave IW Month] [Prev Wave IW Year]/[Prev Wave Iw Yr]. In what month and
+         year did [she/he] stop working for [Prev Wave Employer Name] or was [she/he]
+         still working there when [she/he] died?
+         
+         OTHERWISE:
+         According to our records, [she/he] was working for someone else when we last
+         talked to [her/him] in [Prev Wave IW Month] [Prev Wave Iw Yr]. In what month and
+         year did [she/he] stop working for that employer?
+         
+         IWER: Month entered must be between [PREV WAVE FIRST R IW MONTH]/[/PREV WAVE IW
+         MO], [PREV WAVE FIRST R IW YEAR]/[PREV WAVE IW YR] AND [SYSTEM MONTH], [SYSTEM
+         DATE]
+                 
+         Month:
+                 
+         Year:
+
+         .................................................................................
+             4           1.  JAN
+             3           2.  FEB
+             4           3.  MAR
+             2           4.  APR
+             4           5.  MAY
+                         6.  JUN
+             3           7.  JUL
+             3           8.  AUG
+             4           9.  SEP
+             2          10.  OCT
+             2          11.  NOV
+             1          12.  DEC
+            17          96.  WORKED THERE UNTIL DEATH
+             6          97.  DENIES WORKING FOR SOMEONE ELSE, OR FOR NAMED EMPLOYER, AT
+                             LAST INTERVIEW
+            12          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1120       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J063_MoStopWrkPrevEmp 
+
+         IF (SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J687YJ063TOW158_2BP <> 1) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J063_MoStopWrkPrevEmp <> 
+         STILLWORKING) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ064               STOP/RETIRE WORK PREV WAVE EMPLOYER-YR
+         Section: J     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J064_YrStopWrkPrevEmp
+
+         (Now I have some questions about [FIRST NAME]'s employment before [she/he] died.
+         
+         IF R'S LAST IW EMPLOYER IS KNOWN BUT R NO LONGER THERE:
+         In what month and year did [she/he] stop working there?)
+         
+         IF R'S LAST IW EMPLOYER IS KNOWN BUT R RETIRED FROM THERE:
+         In what month and year did [she/he] retire?)
+         
+         IF R'S LAST IW EMPLOYER IS KNOWN BUT STATUS UNCERTAIN:
+         According to our records, [she/he] was working for [Prev Wave Employer Name] in
+         [Prev Wave IW Month] [Prev Wave IW Year]/[Prev Wave Iw Yr]. In what month and
+         year did [she/he] stop working for [Prev Wave Employer Name] or was [she/he]
+         still working there when [she/he] died?
+                 
+         OTHERWISE:
+         According to our records, [she/he] was working for someone else when we last
+         talked to [her/him] in [Prev Wave IW Month] [Prev Wave Iw Yr]. In what month and
+         year did [she/he] stop working for that employer?
+         
+         IWER: Month entered must be between [PREV WAVE FIRST R IW MONTH] /[/PREV WAVE IW
+         MO], [PREV WAVE FIRST R IW YEAR]/[PREV WAVE IW YR] AND [SYSTEM MONTH], [SYSTEM
+         DATE]
+                 
+         Month:
+                 
+         Year:
+
+         .................................................................................
+            37               2002-2012.  Actual Value
+             7                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+          1143                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         IF (SecJ.WORKSTATUS.J677YJ023BP <> 1) AND (SecJ.WORKSTATUS.J677YJ023BP <> 6) 
+         THEN 
+
+         IF (((((((SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J678YJ023TOW158_2BP <> 1) 
+         AND (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J679YJ028TOW158_2BP <> 1)) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J680YJ031BP_TOW158_2BP <> 1)) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073 <> 1)) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J682YJ045BP_TOJ073 <> 1)) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J683YJ045TOW158_2BP <> 1)) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J684YJ058BP_TOJ167BP < 1)) AND 
+         (SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J686YJ063BP <> 1) THEN 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J687YJ063TOW158_2BP <> 1 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ067               AMOUNT EARNING WHEN LEFT
+         Section: J     Level: Respondent      Type: Numeric    Width: 11  Decimals: 2
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J067_
+
+         [What was [she/he] earning, before deductions, at the time of [her/his]
+         death?/What was [she/he] earning, before deductions, when [she/he] left that
+         employer?]
+         
+         IWER: If amount per hour, enter both dollars and cents
+         
+         IWER: Do not probe DK/RF
+         
+         Amount:
+         
+         Per:
+
+         .................................................................................
+            30              2.3-125000.  Actual Value
+            30                99999998.  DK (Don't Know); NA (Not Ascertained)
+             1                99999999.  RF (Refused)
+          1126                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J067_ 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J067_ <> EMPTY AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J067_ <> NONRESPONSE THEN 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J067_ <> 0 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XJ071               AMOUNT EARNING WHEN LEFT - PER
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J071_
+
+         IWER: PROBE if necessary: Was that per hour, week, month, or year?
+         
+         Amount: [AMOUNT EARNING WHEN LEFT]
+         
+         Per:
+
+         .................................................................................
+            15           1.  HOUR
+             2           2.  WEEK
+             3           3.  EVERY TWO WEEKS/BI-WEEKLY
+             2           4.  MONTH
+                         5.  TWICE A MONTH
+             8           6.  YEAR
+                        97.  OTHER (SPECIFY); including per visit, class, mile, job,
+                             piece
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1157       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+XJ068               AMOUNT EARNING WHEN LEFT - MIN
+         Section: J     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_
+
+         Did it amount to a total of less than $____ per month, more than $____ per
+         month, or what?
+         
+         PROCEDURES: 2Up1Down, 1Up2Down
+         BREAKPOINTS: $200, $800, $1,500, $3,000
+         RANDOM ENTRY POINTS: $800, $1,500
+         ENTRY POINT ASSIGNMENT: 1 OR {NOT 1} AT X502
+
+         .................................................................................
+             7           0.  Value of Breakpoint
+             1         200.  Value of Breakpoint
+             5         201.  Value of Breakpoint
+             2         800.  Value of Breakpoint
+             6         801.  Value of Breakpoint
+             4        1500.  Value of Breakpoint
+             5        1501.  Value of Breakpoint
+             1        3001.  Value of Breakpoint
+          1156       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+XJ069               AMOUNT EARNING WHEN LEFT - MAX
+         Section: J     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_
+
+         *
+
+         .................................................................................
+             1         200.  Value of Breakpoint
+             5         799.  Value of Breakpoint
+             2         800.  Value of Breakpoint
+             5        1499.  Value of Breakpoint
+             4        1500.  Value of Breakpoint
+             5        2999.  Value of Breakpoint
+             9    99999996.  Greater than Maximum Breakpoint
+          1156       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+XJ070               AMOUNT EARNING WHEN LEFT - RESULT
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_
+
+         *
+
+         .................................................................................
+             7          98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+          1179       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+XVDATE              2012 DATA MODEL VERSION
+         Section: J     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         User Note:  This variable identifies which data model was used to interview the
+         household.  Please reference the data description for a summary of changes in
+         each data model.
+
+         .................................................................................
+            99           1.  Version 1
+            75           2.  Version 2
+           344           3.  Version 3
+           669           4.  Version 4
+
+
+==========================================================================================
+
+XVERSION            2012 DATA RELEASE VERSION
+         Section: J     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+          1187           1.  HRS 2012 Exit Final Release
+
+
+==========================================================================================

@@ -1,0 +1,700 @@
+==========================================================================================
+
+HRS 2014 Final Exit
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section E: FAMILY STRUCTURE AND TRANSFERS  (Respondent)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: E     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+          1242           000003-920555.  Household Identification Number
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           724         010.  Person Identifier
+            46         011.  Person Identifier
+             3         012.  Person Identifier
+           337         020.  Person Identifier
+            19         021.  Person Identifier
+            66         030.  Person Identifier
+             1         031.  Person Identifier
+            43         040.  Person Identifier
+             3         041.  Person Identifier
+
+
+==========================================================================================
+
+YSUBHH                        2014 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: E     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+          1195           3.  1st deceased respondent from a household
+            47           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+NSUBHH                        2012 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: E     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+          1143           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+            51           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            31           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+             6           3.  1st deceased respondent from a household
+             2           4.  2nd deceased respondent from a household
+             1           5.  Split household - one half of couple from SUBHH 1 or 2
+                         6.  Split household - one half of couple from SUBHH 1 or 2
+             8           7.  Reunited household - respondents from split household
+                             reunite
+
+
+==========================================================================================
+
+YPN_SP                        2014 SPOUSE/PARTNER PERSON NUMBER
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           187         010.  Person Identifier
+            50         011.  Person Identifier
+             6         012.  Person Identifier
+           239         020.  Person Identifier
+            10         021.  Person Identifier
+            28         030.  Person Identifier
+             1         031.  Person Identifier
+            41         040.  Person Identifier
+             2         041.  Person Identifier
+             3         811.  Spouse of Non-Original Respondent
+           675       Blank.  R not coupled
+
+
+==========================================================================================
+
+         ASSIGN: E046_NumGKids := 95:IF (piRTab1X007AFinFam = FAMILYR) OR 
+         (piRTab1X007AFinFam = FINANCIAL_FAMILYR) THEN 
+         (piInitA101_TotalKids > 0)) OR (SecE.KidStatus.E022_NumNewGKids <> YES) THEN 
+         IF (((piHHX024_ReIwHH_V = YES) AND (piRVarsZ114_NumGKids_V <> EMPTY AND 
+         ((piRVarsZ114_NumGKids_V < 1) OR (piRVarsZ114_NumGKids_V = 95)))) AND 
+         (pi022_NumNewGKids <> YES)) AND (SecE.E154_AddedKids < 1) THEN 
+         IF (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR) 
+         THEN 
+         (piInitA101_TotalKids > 0)) OR (SecE.KidStatus.E022_NumNewGKids <> YES) THEN 
+         IF NOT((((piHHX024_ReIwHH_V = YES) AND (piRVarsZ114_NumGKids_V <> EMPTY AND 
+         ((piRVarsZ114_NumGKids_V < 1) OR (piRVarsZ114_NumGKids_V = 95)))) AND 
+         (pi022_NumNewGKids <> YES)) AND (SecE.E154_AddedKids < 1)) THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE046                         # GRANDCHILDREN TOTAL
+         Section: E     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecE.GrandKids.E046_NumGKids
+
+         Families and friends often help one another in different ways. Part of our
+         research is finding out how they do that, so we have some questions about
+         family. (Please remind me ...)
+         
+         Altogether, how many grandchildren did [First Name] [or you/or [his/her]
+         [husband/wife/partner]] [or [his/her]] [late husband/late wife/late partner]
+         have?
+         
+         (Include as grandchildren any children of [his/her] [late/husband/wife
+         /partner]'s biological, step- or adopted children.)
+         
+         IWER: Enter 80 if R had 80 or more grandchildren
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           1036        0          70          8.06          7.92      12
+         -----------------------------------------------------------------
+                        80.  80 OR MORE GRANDCHILDREN
+           179          95.  NOT ASKED BECAUSE ASSUMED TO BE ZERO
+            14          98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+
+
+==========================================================================================
+
+         ASSIGN: E049_ := 1:{PREVIOUS ASK} SecE.GrandKids.E046_NumGKids 
+         IF (SecE.GrandKids.E046_NumGKids > 0) AND (SecE.GrandKids.E046_NumGKids <> 95) 
+         THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE049                         E049- ANY OFFSPRING R/SP
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecE.GrandKids.E049_
+
+         *
+
+         .................................................................................
+          1027           1.  YES
+           215       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         ASSIGN: E047_NumGrGKids := ASSIGNEDNO:IF (piRTab1X007AFinFam = FAMILYR) OR 
+         (piRTab1X007AFinFam = FINANCIAL_FAMILYR) THEN 
+         (piInitA101_TotalKids > 0)) OR (SecE.KidStatus.E022_NumNewGKids <> YES) THEN 
+         IF (((piHHX024_ReIwHH_V = YES) AND (piRVarsZ114_NumGKids_V <> EMPTY AND 
+         ((piRVarsZ114_NumGKids_V < 1) OR (piRVarsZ114_NumGKids_V = 95)))) AND 
+         (pi022_NumNewGKids <> YES)) AND (SecE.E154_AddedKids < 1) THEN 
+         {PREVIOUS ASK} SecE.GrandKids.E046_NumGKids 
+         IF (SecE.GrandKids.E046_NumGKids > 0) AND (SecE.GrandKids.E046_NumGKids <> 95) 
+         THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE047                         GREAT-GRANDCHILDREN
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecE.GrandKids.E047_NumGrGKids
+
+         Did [First Name] [or you/or [his/her] [husband/wife/partner]] [or [his/her]]
+         [late husband/late wife/late partner] have any great-grandchildren?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+           179           6.  ASSIGNED NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1063       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         ASSIGN: E048_ := 95:IF (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = 
+         FINANCIAL_FAMILYR) THEN 
+         (piInitA101_TotalKids > 0)) OR (SecE.KidStatus.E022_NumNewGKids <> YES) THEN 
+         IF (((piHHX024_ReIwHH_V = YES) AND (piRVarsZ114_NumGKids_V <> EMPTY AND 
+         ((piRVarsZ114_NumGKids_V < 1) OR (piRVarsZ114_NumGKids_V = 95)))) AND 
+         (pi022_NumNewGKids <> YES)) AND (SecE.E154_AddedKids < 1) THEN 
+         {PREVIOUS ASK} SecE.GrandKids.E047_NumGrGKids 
+         IF SecE.GrandKids.E047_NumGrGKids = YES THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE048                         #GREAT-GRANDCHILDREN
+         Section: E     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecE.GrandKids.E048_
+
+         Altogether, how many great-grandchildren did [First Name] [or you/or [his/her]
+         [husband/wife/partner]] [or [his/her]] [late husband/late wife/late partner]
+         have?
+         
+         IWER: Enter 80 if R has 80 or more great-grandchildren
+
+         .................................................................................
+                        80.  80 OR MORE GREAT-GRANDCHILDREN
+           179          95.  NOT ASKED BECAUSE ASSUMED TO BE ZERO
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1063       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         IF (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR) 
+         THEN 
+
+         (piInitA101_TotalKids > 0)) OR (SecE.KidStatus.E022_NumNewGKids <> YES) THEN 
+
+         IF SecE.E140_ResNonKid > 0 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE050                         INTRO TO CHILD TRANSFERS
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecE.GrandKids.E050_
+
+         Families sometimes help one another in a variety of ways, and each type of help
+         can be important.
+         
+         The next questions are about help given or received [since [Prev Wave Family R
+         IW Month], [Prev Wave Family R IW Year]/since [Prev Wave Family R IW Year]/in
+         the last two years before [his/her] death], but before [he/she] died.
+         
+         The financial help we ask about excludes shared housing and shared food, so
+         don't count that type of help.
+         
+         It also excludes anything [he/she] left to others after [he/she] died.
+
+         .................................................................................
+            45           1.  CONTINUE
+          1197       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         IF (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR) 
+         THEN 
+
+         (piInitA101_TotalKids > 0)) OR (SecE.KidStatus.E022_NumNewGKids <> YES) THEN 
+
+         IF (piInitA101_TotalKids > 0) OR ((SecE.GrandKids.E046_NumGKids > 0) AND 
+         (SecE.GrandKids.E046_NumGKids < 81)) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE059                         INTRO TO HELP GIVEN OR RECEIVED
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecE.GrandKids.E059_
+
+         The next questions are about help [First Name][or you/or [his/her]
+         [husband/wife/partner]] [or [his/her]] [late husband/late wife/late partner]
+         gave or received [since [Prev Wave Family R IW Month], [Prev Wave Family R IW
+         Year]/since [Prev Wave Family R IW Year]/in the last two years before [his/her]
+         death].
+         
+         IWER: Enter 1 to continue
+
+         .................................................................................
+          1145           1.  CONTINUE
+            97       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecE.GrandKids.E059_ 
+
+         IF (SecE.GrandKids.E046_NumGKids > 0) AND (SecE.GrandKids.E046_NumGKids <> 95) 
+         THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE060                         CARE OF GRANDKIDS- 100 OR MORE HOURS
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecE.GrandKids.E060_
+
+         Did [First Name] [or you/or [his/her] [husband/wife/partner]] [or [his/her]]
+         [late husband/late wife/late partner] spend 100 or more hours in total [since
+         [Prev Wave Family R IW Month], [Prev Wave Family R IW Year]/since [Prev Wave
+         Family R IW Year]/in the last two years before [his/her] death] taking care of
+         [grandchildren]?
+
+         .................................................................................
+           110           1.  YES
+           915           5.  NO
+             2           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           215       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         IF E060_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE061M1                       WHICH CHILD/REN IS PARENT -1
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecE.GrandKids.E061_[1]
+
+         Which of [First Name]'s children is the parent of those grandchildren (or
+         great-grandchildren)?
+         
+         IWER: Choose all that apply
+
+         .................................................................................
+            97                 041-990.  Other Person Number
+             1                     992.  DECEASED CHILD
+             8                     993.  ALL CHILDREN
+                                   994.  ALL GRANDCHILDREN
+             4                     997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+          1132                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         IF E060_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE061M2                       WHICH CHILD/REN IS PARENT -2
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecE.GrandKids.E061_[2]
+
+         Which of [First Name]'s children is the parent of those grandchildren (or
+         great-grandchildren)?
+         
+         IWER: Choose all that apply
+
+         .................................................................................
+            39                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   994.  ALL GRANDCHILDREN
+             2                     997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+          1201                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         IF E060_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE061M3                       WHICH CHILD/REN IS PARENT -3
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecE.GrandKids.E061_[3]
+
+         Which of [First Name]'s children is the parent of those grandchildren (or
+         great-grandchildren)?
+         
+         IWER: Choose all that apply
+
+         .................................................................................
+            14                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   994.  ALL GRANDCHILDREN
+             1                     997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+          1227                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         IF E060_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE061M4                       WHICH CHILD/REN IS PARENT -4
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecE.GrandKids.E061_[4]
+
+         Which of [First Name]'s children is the parent of those grandchildren (or
+         great-grandchildren)?
+         
+         IWER: Choose all that apply
+
+         .................................................................................
+             4                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   994.  ALL GRANDCHILDREN
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+          1238                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         IF E060_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE061M5                       WHICH CHILD/REN IS PARENT -5
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecE.GrandKids.E061_[5]
+
+         Which of [First Name]'s children is the parent of those grandchildren (or
+         great-grandchildren)?
+         
+         IWER: Choose all that apply
+
+         .................................................................................
+             2                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   994.  ALL GRANDCHILDREN
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+          1240                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         IF E060_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE061M6                       WHICH CHILD/REN IS PARENT -6
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecE.GrandKids.E061_[6]
+
+         Which of [First Name]'s children is the parent of those grandchildren (or
+         great-grandchildren)?
+         
+         IWER: Choose all that apply
+
+         .................................................................................
+             1                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   994.  ALL GRANDCHILDREN
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+          1241                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         IF E060_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE061M7                       WHICH CHILD/REN IS PARENT -7
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecE.GrandKids.E061_[7]
+
+         Which of [First Name]'s children is the parent of those grandchildren (or
+         great-grandchildren)?
+         
+         IWER: Choose all that apply
+
+         .................................................................................
+                               041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   994.  ALL GRANDCHILDREN
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+          1242                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecE.GrandKids.E125_E061MTemp 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE063                         R CARE FOR GRANDCHILD- # HOURS
+         Section: E     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecE.GrandKids.E063_
+
+         Roughly how many hours altogether did [First Name] [himself/herself] spend?
+         
+         IWER: Enter 9995 if grandchild lives in house, but no specific number of hours
+         given 
+         
+         IWER: Don't probe DK/RF
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             64        0        1460        180.53        294.00    1132
+         -----------------------------------------------------------------
+            20        9995.  GRANDCHILD LIVES IN HOUSE, BUT NO SPECIFIC NUMBER OF HOURS
+                             GIVEN
+            26        9998.  DK (Don't Know); NA (Not Ascertained)
+                      9999.  RF (Refused)
+
+
+==========================================================================================
+
+YE065                         R CARE FOR GRANDCHILD- MIN HOURS
+         Section: E     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecE.GrandKids.E065_
+
+         Did it amount to less than ____ hours, more than ____ hours, or
+         what?
+         
+         PROCEDURE: 1UP
+         BREAKPOINTS: 200, 500
+         ENTRY POINT: 200
+
+         .................................................................................
+            11           0.  Value of Breakpoint
+             6         200.  Value of Breakpoint
+             4         201.  Value of Breakpoint
+             5         501.  Value of Breakpoint
+          1216       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+YE066                         R CARE FOR GRANDCHILD- MAX HOURS
+         Section: E     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecE.GrandKids.E066_
+
+         *
+
+         .................................................................................
+            11         199.  Value of Breakpoint
+             6         200.  Value of Breakpoint
+             3         499.  Value of Breakpoint
+             6        5000.  Greater Than Maximum Breakpoint
+          1216       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+YE067                         R CARE FOR GRANDCHILD- RESULT
+         Section: E     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecE.GrandKids.E067_
+
+         *
+
+         .................................................................................
+             2          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1240       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         IF (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR) 
+         THEN 
+
+         (piInitA101_TotalKids > 0)) OR (SecE.KidStatus.E022_NumNewGKids <> YES) THEN 
+
+         IF ((SecE.GrandKids.E049_ = 1) OR (piInitA101_TotalKids > 0)) OR 
+         ((SecE.GrandKids.E046_NumGKids > 0) AND (SecE.GrandKids.E046_NumGKids < 81)) 
+         THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE075                         SINCE PREV WAVE TRANSFER TO KIDS
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecE.KidTransMain.E075_
+
+         Including help with education but not shared housing or shared food [or any deed
+         to a house], [since [Prev Wave Family R IW Month], [Prev Wave Family R IW
+         Year]/since [Prev Wave Family R IW Year]/in the last two years before [his/her]
+         death] did [First Name] [or you/or [his/her] [husband/wife/partner]] [or
+         [his/her]] [late husband/late wife/late partner] give financial help totaling
+         $500 or more to [[his/her] child/any children] (or grandchild(ren))?
+         
+         IWER: Include only help given before R's death
+         
+         DEF: (By financial help we mean giving money, helping pay bills, or covering
+         specific types of costs such as those for medical care OR insurance, schooling,
+         down payment for a home, rent, etc. The financial help can be considered
+         support, a gift or a loan.)
+
+         User Note: The Follow-up questions to E075 are located in the Transfer to Child
+         file (X14E_TC).
+
+         .................................................................................
+           286           1.  YES
+           825           5.  NO
+            30           8.  DK (Don't Know); NA (Not Ascertained)
+             4           9.  RF (Refused)
+            97       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecE.KidTransMain.E075_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE087                         TRANSFER FROM KIDS- PAST 2YRS
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecE.KidTransMain.E087_
+
+         [Since [Prev Wave Family R IW Month], [Prev Wave Family R IW Year]/Since [Prev
+         Wave Family R IW Year]/In the last two years before [his/her] death] did
+         [he/she] [or you/or [his/her] [husband/wife/partner]] [or [his/her]] [late
+         husband/late wife/late partner] receive financial help totaling $500 or more
+         from [[his/her] child/any children](or grandchild(ren))?
+         
+         IWER:  Include only help received before R's death
+         
+         DEF: (By financial help we mean giving money, helping pay bills, or covering
+         specific types of costs such as those for medical care OR insurance, schooling,
+         down payment for a home, rent, etc. The financial help can be considered
+         support, a gift or a loan.)
+
+         User Note: The Follow-up questions to E087 are located in the Transfer From
+         Child file (X14E_FC).
+
+         .................................................................................
+           145           1.  YES
+           981           5.  NO
+            18           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+            97       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         ASSIGN: E140_ResNonKid := 0:IF (piRTab1X007AFinFam = FAMILYR) OR 
+         (piRTab1X007AFinFam = FINANCIAL_FAMILYR) THEN 
+         ASSIGN: E140_ResNonKid := E140_ResNonKid + 1:IF (piRTab1X007AFinFam = FAMILYR) 
+         OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR) THEN 
+         IF (HHMembers[i].X054APNdx <> EMPTY AND (HHMembers[i].X067AYrBorn > (YEAR 
+         (SYSDATE) - 18))) AND (HHMembers[i].X056AresStat IN [RESIDENT, AWAY_INST, 
+         AWAY_OTHER]) THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE140                         RESIDENT NON-KIDS
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecE.E140_ResNonKid
+
+         *
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           1230        0           4          0.06          0.35      12
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+YVDATE                        2014 DATA MODEL VERSION
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         User Note:  This variable identifies which data model was used to interview the
+         household.  Please reference the data description for a summary of changes in
+         each data model.
+
+         .................................................................................
+                         1.  Version 1
+           120           2.  Version 2
+           338           3.  Version 3
+           235           4.  Version 4
+             1           5.  Version 5
+           262           6.  Version 6
+           286           7.  Version 7
+
+
+==========================================================================================
+
+YVERSION                      2014 DATA RELEASE VERSION
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+          1242           1.  HRS 2014 Exit Final Release
+
+
+==========================================================================================

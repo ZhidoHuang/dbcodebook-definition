@@ -1,0 +1,1900 @@
+==========================================================================================
+1998 HRS Exit (Final Release)
+ODBC Reference: [HRS98Exit]
+Perl script: CodebkD9.pl v5.042 Wed Jan  5 14:27:10 2005
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Surveycraft metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION R: Health Insurance (Respondent)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFIER
+          Section: R            Level: Respondent         CAI Reference: Q9002
+          Type: Character       Width: 6                  Decimals: 0
+          ................................................................................
+           1254       010433-208897. Household ID
+
+==========================================================================================
+
+PN        PERSON NUMBER
+          Section: R            Level: Respondent         CAI Reference: Q9003
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+            876       010. Person Number
+              9       011. Person Number
+            300       020. Person Number
+             33       030. Person Number
+                      031. Person Number
+             36       040. Person Number
+
+==========================================================================================
+
+QSUBHH    HRS 1998 SUB-HOUSEHOLD IDENTIFIER
+          Section: R            Level: Respondent         CAI Reference: Q9004
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+           1200         3. Deceased respondent household
+             54         4. 2ND Deceased respondent household
+
+==========================================================================================
+
+ESUBHH    HRS 1996 SUB-HOUSEHOLD IDENTIFIER
+          Section: R            Level: Respondent         CAI Reference: Q9006
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+            256         0. Intact household or previous wave spouse/partner has died
+              3         1. Split household - first half of split couple
+              5         2. Split household - second half of split couple
+              6         3. Deceased respondent household
+                        4. 2ND Deceased respondent household
+            984     Blank. AHEAD Respondent, No 1996 Subhh
+
+==========================================================================================
+
+DSUBHH    AHD 1995 SUB-HOUSEHOLD IDENTIFIER
+          Section: R            Level: Respondent         CAI Reference: Q9005
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+            958         0. Intact household or previous wave spouse/partner has died
+                        1. Split household - first half of split couple
+              1         2. Split household - second half of split couple
+             25         3. Deceased respondent household
+                        4. 2ND Deceased respondent household
+            270     Blank. HRS Respondent, No 1995 Subhh
+
+==========================================================================================
+
+QPN_SP    1998 SPOUSE/PARTNER PERSON NUMBER
+          Section: R            Level: Respondent         CAI Reference: Q9007
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+            257       010. Person Number
+              3       011. Person Number
+            287       020. Person Number
+                      021. Person Number
+             17       030. Person Number
+              1       031. Person Number
+             28       040. Person Number
+              6       210. Person Number
+              3       220. Person Number
+            652     Blank. No Spouse at Death
+
+==========================================================================================
+
+QQNR      1998 SURVEYCRAFT CASE NUMBER
+          Section: R            Level: Respondent         CAI Reference: Q9001
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+           1254              1-1255. 1998 Surveycraft Case Number
+
+==========================================================================================
+
+Q2559     R0.INTRO
+          Section: R            Level: Respondent         CAI Reference: Q2559
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R0.
+                  The next questions are about health insurance, both public and
+                  private.  Medicare is a public health insurance program for
+                  people 65 or older and for disabled persons.  (Medicaid/STATE
+                  NAME FOR MEDICAID) is a public health insurance program for people
+                  with low incomes.
+          ................................................................................
+           1254     Blank. No Data Collected; [Q456:CS CONTINUE] IS (5)
+
+==========================================================================================
+
+Q2560     R1.MEDICARE COVERAGE
+          Section: R            Level: Respondent         CAI Reference: Q2560
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R1.
+                  Was
+                  [Q685-R FIRST NAME]
+                  covered at any time by Medicare health insurance
+                  (.../or Medicaid)?
+          ................................................................................
+           1096         1. YES
+            145         5. NO
+             12         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+              1     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5)
+
+==========================================================================================
+
+Q2561     R2.MEDICARE PART B COVERAGE
+          Section: R            Level: Respondent         CAI Reference: Q2561
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R2.
+              Part A of Medicare covers most hospital expenses.  Part B covers
+              many doctors' expenses including doctor visits, and the premium
+              is usually deducted from (his/her) Social Security.
+              At the time of ^685's
+              death, was (he/she) covered by Medicare Part B?
+          ................................................................................
+            949         1. YES
+             70         5. NO
+             77         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            158     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2560:R1] IS
+                           (NE 1)
+
+==========================================================================================
+
+Q2562     R4.MEDICAID SINCE PREV WAVE?
+          Section: R            Level: Respondent         CAI Reference: Q2562
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R4.
+                  Was (he/she) covered by (Medicaid/STATE NAME FOR MEDICAID)
+                  health insurance at any time
+          IF Q684 IS (1)
+                  since
+                  [Q218-PREV WAVE IW MONTH]
+                  [Q219-PREV WAVE IW YEAR] , to when (he/she) died?
+          ELSE
+                  in the two years before (his/her) death?
+          END
+          ................................................................................
+            295         1. YES
+            927         5. NO
+             31         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+              1     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5)
+
+==========================================================================================
+
+Q2563     R5.CURRENTLY COVERED BY MEDICAID
+          Section: R            Level: Respondent         CAI Reference: Q2563
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R5.
+                  Was (he/she) currently covered by (Medicaid/STATE
+                  NAME FOR MEDICAID) at the time (he/she) died?
+          ................................................................................
+            270         1. YES
+             22         5. NO
+              3         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            959     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2562:R4] IS
+                           (NE 1)
+
+==========================================================================================
+
+Q2564     R5a.CHECKPOINT
+          Section: R            Level: Respondent         CAI Reference: Q2564
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            168         1. R HAD NURSING HOME STAY 1 OR MORE TIMES SINCE PREV WAVE IW
+            127         2. ALL OTHERS
+            959     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2562:R4] IS
+                           (NE 1)
+
+==========================================================================================
+
+Q2565     R6.MEDICAID AT TIME OF NURSING HOME-FIRS
+          Section: R            Level: Respondent         CAI Reference: Q2565
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R6.
+                  Earlier you told me that
+                  [Q685-R FIRST NAME]  had (a/several)
+                  stay(.../s) at a nursing home
+          IF Q684 IS (1)
+                  from
+                  [Q218-PREV WAVE IW MONTH]
+                  [Q219-PREV WAVE IW YEAR]  to when (he/she) died.
+          ELSE
+                  in the last two years.
+          END
+                  Was
+                  [Q685-R FIRST NAME]  eligible for Medicaid at the
+                  time (his/her) (.../first) nursing home stay started?
+          ................................................................................
+            128         1. YES
+             37         5. NO
+              3         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1086     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2562:R4] IS
+                           (NE 1); [Q2564:R5a] IS (2)
+
+==========================================================================================
+
+Q2566     R7.MEDICAID DURING NURSING HOME-FIRST
+          Section: R            Level: Respondent         CAI Reference: Q2566
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R7.
+                  Did (he/she) become eligible for Medicaid during
+                  (his/her) (first) nursing home stay?
+          ................................................................................
+             28         1. YES
+              6         5. NO
+              3         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1217     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2562:R4] IS
+                           (NE 1); [Q2564:R5a] IS (2); [Q2565:R6] IS (1); [Q2565:R6] IS
+                           (DK OR RF)
+
+==========================================================================================
+
+Q2568     R8a.CHECKPOINT
+          Section: R            Level: Respondent         CAI Reference: Q2568
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             18         1. R HAD MORE THAN 1 STAY IN NURSING HOME SINCE PREV WAVE IW
+            150         2. ALL OTHERS
+           1086     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2562:R4] IS
+                           (NE 1); [Q2564:R5a] IS (2)
+
+==========================================================================================
+
+Q2569     R8aa.MEDICAID AT TIME OF NURSING HOME-LA
+          Section: R            Level: Respondent         CAI Reference: Q2569
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R8aa.
+                  Was (he/she) eligible for Medicaid at the time of
+                  (his/her) (current/last) nursing home stay started?
+          ................................................................................
+             17         1. YES
+              1         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1236     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2562:R4] IS
+                           (NE 1); [Q2564:R5a] IS (2); [Q2568:R8a] IS (2)
+
+==========================================================================================
+
+Q2570     R8b.MEDICAID DURING NURSING HOME-LAST
+          Section: R            Level: Respondent         CAI Reference: Q2570
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R8b.
+                  Did (he/she) become eligible for Medicaid during (his/her)
+                  (current/last) nursing home stay?
+          ................................................................................
+                        1. YES
+              1         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1253     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2562:R4] IS
+                           (NE 1); [Q2564:R5a] IS (2); [Q2568:R8a] IS (2); [Q2569:R8aa]
+                           IS (1); [Q2569:R8aa] IS (DK OR RF)
+
+==========================================================================================
+
+Q2571     R8c.LOSE ELIGIBILITY DISCHARGE-LAST
+          Section: R            Level: Respondent         CAI Reference: Q2571
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R8c.
+                  Did (he/she) lose (his/her) eligibility for Medicaid when
+                  (he/she) was discharged from (his/her) last nursing home stay?
+          ................................................................................
+                        1. YES
+              2         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1252     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2562:R4] IS
+                           (NE 1); [Q2564:R5a] IS (2); [Q2568:R8a] IS (2); [Q2569:R8aa]
+                           IS (DK OR RF); [Q2570:R8b] IS (5 OR DK OR RF) OR [Q519:CS11]
+                           IS (1) OR [Q491:CS2cx] IS (2)
+
+==========================================================================================
+
+Q2572     R9.CHAMPUS/CHAMPVA COVERAGE
+          Section: R            Level: Respondent         CAI Reference: Q2572
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R9.
+                  At the time of (his/her) death,
+                  Was (he/she) covered by CHAMPUS, CHAMP-VA, or any other
+                  military health care plan?
+
+                  PROBES:  CHAMPUS is a health care program for active or retired
+                           military personnel and their dependents or survivors.
+                           CHAMP-VA provides medical care for veterans and their
+                           dependents or survivors of veterans who had a service-
+                           connected disability.
+
+                           "VA" is not a health insurance program.
+          ................................................................................
+             28         1. YES
+           1212         5. NO
+             13         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+              1     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5)
+
+==========================================================================================
+
+Q2573     R9a.CHECKPOINT
+          Section: R            Level: Respondent         CAI Reference: Q2573
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+           1096         1. R IS COVERED BY MEDICARE OR MEDICARE/MEDICAID
+             41         2. R IS COVERED ONLY BY MEDICAID
+            116         3. ALL OTHERS
+              1     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5)
+
+==========================================================================================
+
+Q2574     R10.INTRO
+          Section: R            Level: Respondent         CAI Reference: Q2574
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R10.
+                  Now I'm going to ask you about how (his/her) health insurance
+                  worked.
+          ................................................................................
+           1254     Blank. No Data Collected; [Q456:CS CONTINUE] IS (5); [Q2573:R9a] IS
+                           (2); [Q2573:R9a] IS (3)
+
+==========================================================================================
+
+Q2575     R11.MEDICARE/MEDICAID THROUGH HMO
+          Section: R            Level: Respondent         CAI Reference: Q2575
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R11.
+                  First we are interested in how (his/her) (Medicare/Medicare or
+          Medicaid)
+                  health insurance worked for routine care.
+
+                  Did
+                  [Q685-R FIRST NAME]  receive (his/her) Medicare (.../or Medicaid)
+                  benefits through an HMO, that is a Health Maintenance Organization?
+
+                  DEF: With an HMO, the cost of the physician visit is typically
+                       covered in full or one pays only a small amount.  All
+                       routine care must be provided by an HMO physician.
+          ................................................................................
+            187         1. YES
+            851         5. NO
+             58         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            158     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2573:R9a] IS
+                           (2); [Q2573:R9a] IS (3)
+
+==========================================================================================
+
+Q2576     R11a.HOW LONG-YEARS
+          Section: R            Level: Respondent         CAI Reference: Q2576
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          R11a.
+                  At the time of (his/her) death,
+                  about how long had (he/she) been receiving (his/her)
+                  Medicare benefits through this HMO?
+
+                  YEARS:
+                     OR
+                  MONTHS:
+          ................................................................................
+            143                0-25. Actual Value
+             27                  98. DK (Don't Know); NA (Not Ascertained)
+                                 99. RF (Refused)
+           1084               Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5);
+                                     [Q2573:R9a] IS (2); [Q2573:R9a] IS (3); [Q2575:R11]
+                                     IS (NE 1)
+
+==========================================================================================
+
+Q2577     R11a.HOW LONG-MONTHS
+          Section: R            Level: Respondent         CAI Reference: Q2577
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+             16                0-48. Actual Value
+             28                  98. DK (Don't Know); NA (Not Ascertained)
+                                 99. RF (Refused)
+           1210               Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5);
+                                     [Q2573:R9a] IS (2); [Q2573:R9a] IS (3); [Q2575:R11]
+                                     IS (NE 1); [Q2576:R11a] IS (1-25)
+
+==========================================================================================
+
+Q2579     R11b.AMOUNT PAY FOR PLAN
+          Section: R            Level: Respondent         CAI Reference: Q2579
+          Type: Numeric         Width: 4                  Decimals: 0
+
+          R11b.
+              Not including co-pays or deductions from (his/her) Social Security,
+              how much did (he/she), (him/her)self, pay for this plan?
+
+                  AMOUNT:
+                  PER:
+          ................................................................................
+            128              0-9996. Actual Value
+             58                9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+           1068               Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5);
+                                     [Q2573:R9a] IS (2); [Q2573:R9a] IS (3); [Q2575:R11]
+                                     IS (NE 1)
+
+==========================================================================================
+
+Q2580     R11b.AMT PAY FOR PLAN - PER
+          Section: R            Level: Respondent         CAI Reference: Q2580
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            168         1. MONTH
+              6         2. QUARTER (EVERY 3 MONTHS)
+              2         3. SEMI-ANNUALLY (EVERY 6 MONTHS/TWICE A YEAR)
+              4         4. YEAR
+              1         7. OTHER (SPECIFY)
+              3         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1070     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2573:R9a] IS
+                           (2); [Q2573:R9a] IS (3); [Q2575:R11] IS (NE 1)
+
+==========================================================================================
+
+Q2581     R12.MEDICAID THROUGH HMO
+          Section: R            Level: Respondent         CAI Reference: Q2581
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R12.
+                  We are interested in how (his/her) Medicaid health insurance
+                  worked for routine care.
+
+                  Did (he/she) receive (his/her) Medicaid benefits through
+                  an HMO, that is a Health Maintenance Organization?
+
+                  DEF: With an HMO, the cost of the physician visit is typically
+                       covered in full or one pays only a small amount.  All
+                       routine care must be provided by an HMO physician.
+          ................................................................................
+              6         1. YES
+             33         5. NO
+              2         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1213     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2573:R9a] IS
+                           (3); [Q2575:R11] IS (NE 1); [Q2562:R4] IS (NE 1); [Q2563:R5]
+                           IS (A AND NE 1); [Q2563:R5] IS (1) AND [Q2560:R1] IS (1)
+
+==========================================================================================
+
+Q2582     R12a.HOW LONG-YEARS
+          Section: R            Level: Respondent         CAI Reference: Q2582
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          R12a.
+                  About how long had (he/she) been receiving (his/her)
+                  Medicaid benefits through this HMO?
+
+                    YEARS       OR        MONTHS
+          ................................................................................
+              3                1-20. Actual Value
+              2                  98. DK (Don't Know); NA (Not Ascertained)
+                                 99. RF (Refused)
+           1249               Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5);
+                                     [Q2573:R9a] IS (3); [Q2575:R11] IS (NE 1);
+                                     [Q2562:R4] IS (NE 1); [Q2563:R5] IS (A AND NE 1);
+                                     [Q2563:R5] IS (1) AND [Q2560:R1] IS (1);
+                                     [Q2581:R12] IS (NE 1)
+
+==========================================================================================
+
+Q2583     R12a.HOW LONG-MONTHS
+          Section: R            Level: Respondent         CAI Reference: Q2583
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+              1                1-48. Actual Value
+              1                  98. DK (Don't Know); NA (Not Ascertained)
+                                 99. RF (Refused)
+           1252               Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5);
+                                     [Q2573:R9a] IS (3); [Q2575:R11] IS (NE 1);
+                                     [Q2562:R4] IS (NE 1); [Q2563:R5] IS (A AND NE 1);
+                                     [Q2563:R5] IS (1) AND [Q2560:R1] IS (1);
+                                     [Q2581:R12] IS (NE 1)
+
+==========================================================================================
+
+Q2584     R12b.CHECKPOINT
+          Section: R            Level: Respondent         CAI Reference: Q2584
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+                        1. R IS CURRENTLY SELF-EMPLOYED
+           1253         2. ALL OTHERS
+              1     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5)
+
+==========================================================================================
+
+Q2585     R13.ANY INSURANCE FOR HOSP/DR BILLS
+          Section: R            Level: Respondent         CAI Reference: Q2585
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R13.
+                  At the time of (his/her) death,
+                  (not including Medicare/Medicaid/CHAMPUS/CHAMP-VA)
+                  Was
+                  [Q685-R FIRST NAME]
+                  covered by any employer-provided health insurance?
+          ................................................................................
+            352         1. YES
+            874         5. NO
+             25         8. DK (Don't Know); NA (Not Ascertained)
+              2         9. RF (Refused)
+              1     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5)
+
+==========================================================================================
+
+Q2586     R14.NUMBER OF PLANS
+          Section: R            Level: Respondent         CAI Reference: Q2586
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R14.
+                  How many different employer-provided health insurance
+                  plans was
+                  [Q685-R FIRST NAME]  covered by
+                  when (he/she) died?
+
+                  ENTER NUMBER OF PLANS:
+
+                      IWER: ENTER 7 FOR MORE THAN 6 PLANS
+          ................................................................................
+            343         1. ONE
+              7         2. TWO
+                        3. THREE
+              1         4. FOUR
+                        5. FIVE
+                        6. SIX
+                        7. SEVEN
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            902     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1)
+
+==========================================================================================
+
+Q2590     R15b.CHECKPOINT
+          Section: R            Level: Respondent         CAI Reference: Q2590
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+                        1. R15=SPOUSE AND R IS MARRIED, DIVORCED, OR SEPARATED
+                        2. R15=SOMEPLACE ELSE
+            352         3. ALL OTHERS
+            902     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2584:R12b] IS (1)
+
+==========================================================================================
+
+Q2591     R16.PAY COSTS FOR HEALTH INSURANCE
+          Section: R            Level: Respondent         CAI Reference: Q2591
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R16.
+          IF Q483 IS (NE2)
+                  Did (he/she) (or (his/her) husband/or (his/her) wife/or (his/her)
+          partner/...) pay all of the costs, some
+          ELSE
+                  Did (he/she) or you pay all of the costs, some
+          END
+                  of the costs, or none of the costs of the premium for this
+                  health insurance coverage?
+          ................................................................................
+             58         1. ALL
+            110         2. SOME
+            165         3. NONE
+             19         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            902     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2590:R15b] IS (1)
+
+==========================================================================================
+
+Q2592     R17.AMT PAID
+          Section: R            Level: Respondent         CAI Reference: Q2592
+          Type: Numeric         Width: 4                  Decimals: 0
+
+          R17.
+                  How much was (he/she) paying for this health insurance
+                  coverage?
+
+                   PROBE:  Include all amounts deducted from (his/her) pay check but
+                           not the amount paid by the employer.
+
+                  AMOUNT:
+                  PER:
+          ................................................................................
+            107              1-9996. Actual Value
+             59                9998. DK (Don't Know); NA (Not Ascertained)
+              2                9999. RF (Refused)
+           1086               Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5);
+                                     [Q2585:R13] IS (NE 1); [Q2590:R15b] IS (1);
+                                     [Q2591:R16] IS (3 OR DK OR RF)
+
+==========================================================================================
+
+Q2593     R17.AMT PAID FOR HEALTH INS-PER
+          Section: R            Level: Respondent         CAI Reference: Q2593
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+             10         1. YEAR
+              4         2. QUARTERLY/EVERY 3 MONTHS
+                        3. BIMONTHLY/EVERY 2 MONTHS
+             81         4. MONTH
+              8         5. WEEK
+              2         6. BIWEEKLY/EVERY 2 WEEKS
+                        7. SEMI-ANNUALLY/2 TIMES PER YEAR
+                        8. SEMI-MONTHLY/2 TIMES PER MONTH
+                       97. OTHER (SPECIFY)
+              2        98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1147     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2590:R15b] IS (1); [Q2591:R16] IS (3 OR DK OR RF);
+                           [Q2592:R17] IS (DK OR RF)
+
+==========================================================================================
+
+Q2594     R18a.CHECKPOINT-MEDICARE
+          Section: R            Level: Respondent         CAI Reference: Q2594
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            284         1. R IS COVERED BY MEDICARE
+             68         2. ALL OTHERS
+            902     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2590:R15b] IS (1)
+
+==========================================================================================
+
+Q2595     R19a.MEDICARE SUPP/MEDIGAP PLAN
+          Section: R            Level: Respondent         CAI Reference: Q2595
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R19a.
+          IF Q2586 IS (GT1)
+                  Were any of these plans a Medicare Supplement or Medigap plan?
+          ELSE
+                  Was this plan a Medicare Supplement or Medigap plan?
+          END
+          ................................................................................
+            140         1. YES
+            124         5. NO
+             20         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            970     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2590:R15b] IS (1); [Q2594:R18a] IS (2)
+
+==========================================================================================
+
+Q2596     R19b.PLAN LETTER
+          Section: R            Level: Respondent         CAI Reference: Q2596
+          Type: Character       Width: 2                  Decimals: 0
+
+          R19b.
+                  Many Medicare Supplemental or Medigap Plans are referred to by a
+                  Plan Letter.  Do you know the Plan Letter for (his/her) plan?
+
+                  IWER: IF MORE THAN ONE PLAN, ENTER ADDITIONAL LETTER IN F2 NOTE
+
+                   PROBE: What is it?
+
+                  ENTER LETTER (A-J):
+          ................................................................................
+             10        01. A
+              1        02. B
+                       03. C
+                       04. D
+                       05. E
+                       06. F
+              1        07. J
+              1        08. H
+              3        09. Z
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1238     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2590:R15b] IS (1); [Q2594:R18a] IS (2); [Q2595:R19a]
+                           IS (NE 1)
+
+==========================================================================================
+
+Q2597     R20.MEDICARE SUPP/MEDIGAP AN HMO?
+          Section: R            Level: Respondent         CAI Reference: Q2597
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R20.
+                  I'd like to ask you a few questions about how (his/her) health
+                  insurance worked for non-emergency care.
+
+          IF Q2586 IS (GT1)
+                  Thinking of the most important of these plans,
+          END
+                  Was (his/her) plan an HMO, that is, a Health Maintenance
+          Organization?
+
+                  DEF: With an HMO, the cost of the physician visit is typically
+                       covered in full or one pays only a small amount.  All
+                       routine care must be provided by an HMO physician.
+          ................................................................................
+             26         1. YES
+            111         5. NO
+              7         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1110     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2590:R15b] IS (1); [Q2594:R18a] IS (2); [Q2596:R19b]
+                           IS (A OR DK OR RF)
+
+==========================================================================================
+
+Q2598     R21.IF LIST OF DOCTORS
+          Section: R            Level: Respondent         CAI Reference: Q2598
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R21.
+                  Did this health insurance plan have a list or book of doctors
+                  that (he/she) was encouraged or required to use?
+          ................................................................................
+             16         1. YES
+             95         5. NO
+              7         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1136     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2590:R15b] IS (1); [Q2594:R18a] IS (2); [Q2596:R19b]
+                           IS (A OR DK OR RF); [Q2597:R20] IS (1)
+
+==========================================================================================
+
+Q2599     R22.PLAN PAY FOR DOCTORS NOT ON LIST
+          Section: R            Level: Respondent         CAI Reference: Q2599
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R22.
+                  Did this health insurance plan pay any of the costs for
+                  routine care if (he/she) saw a doctor who was not on this list?
+          ................................................................................
+              8         1. YES
+              4         2. YES, WITH A REFERRAL
+              3         5. NO
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1238     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2590:R15b] IS (1); [Q2594:R18a] IS (2); [Q2596:R19b]
+                           IS (A OR DK OR RF); [Q2597:R20] IS (1); [Q2598:R21] IS (NE 1)
+
+==========================================================================================
+
+Q2600     R25.HMO: IF R PAYS FOR DR VISITS
+          Section: R            Level: Respondent         CAI Reference: Q2600
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R25.
+                  Under this health insurance plan, did
+                  [Q685-R FIRST NAME]
+                  pay a percentage of the doctor's charge, the same dollar
+                  amount each time (he/she) visited a doctor, or did
+                  (he/she) not pay anything at all for doctor visits?
+          ................................................................................
+              1         1. PERCENT
+             17         2. DOLLAR AMOUNT/COPAY
+              6         3. R DIDN'T PAY ANYTHING
+                        7. OTHER (SPECIFY)
+              2         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1228     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2590:R15b] IS (1); [Q2594:R18a] IS (2); [Q2596:R19b]
+                           IS (A OR DK OR RF); [Q2597:R20] IS (NE 1)
+
+==========================================================================================
+
+Q2601     R26.NON HMO:IF PLAN PAYS DR VISITS
+          Section: R            Level: Respondent         CAI Reference: Q2601
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R26.
+                  (After all deductibles were met,) Did this plan pay any
+                  of the costs of routine visits to the doctor?
+          ................................................................................
+             89         1. YES
+             22         5. NO
+              7         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1136     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2590:R15b] IS (1); [Q2594:R18a] IS (2); [Q2596:R19b]
+                           IS (A OR DK OR RF); [Q2597:R20] IS (1)
+
+==========================================================================================
+
+Q2602     R27.PLAN COVER PRESCRIPTIONS
+          Section: R            Level: Respondent         CAI Reference: Q2602
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R27.
+                  Did this health insurance pay any part of the cost of
+                  prescription medicines?
+          ................................................................................
+            237         1. YES
+             40         5. NO
+              7         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            970     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2590:R15b] IS (1); [Q2594:R18a] IS (2)
+
+==========================================================================================
+
+Q2604     R28a.CHECKPOINT
+          Section: R            Level: Respondent         CAI Reference: Q2604
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            237         1. R'S HEALTH INSURANCE PAID FOR PRESCRIPTIONS OR ROUTINE DENTAL
+                           CARE
+             47         2. ALL OTHERS
+            970     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2590:R15b] IS (1); [Q2594:R18a] IS (2)
+
+==========================================================================================
+
+Q2608     R45b.CHECKPOINT
+          Section: R            Level: Respondent         CAI Reference: Q2608
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            956         1. R IS COVERED BY MEDICARE AND NO MEDIGAP INSURANCE
+            297         2. ALL OTHERS
+              1     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5)
+
+==========================================================================================
+
+Q2609     R46.OTHER INSURANCE
+          Section: R            Level: Respondent         CAI Reference: Q2609
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R46.
+                  Not counting long-term care insurance or Medicare,
+                  (or Medicaid/or any other insurance we've discussed),
+                  did (he/she) have any other insurance that paid any part of
+                  hospital or doctor bills?  Sometimes this is called a
+                  Medigap or Medicare Supplement policy.
+          ................................................................................
+            288         1. YES
+            636         5. NO
+             31         8. DK (Don't Know); NA (Not Ascertained)
+              1         9. RF (Refused)
+            298     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2608:R45b]
+                           IS (2)
+
+==========================================================================================
+
+Q2610     R46a.PLAN LETTER
+          Section: R            Level: Respondent         CAI Reference: Q2610
+          Type: Character       Width: 2                  Decimals: 0
+
+          R46a.
+                  Many Medicare Supplemental or Medigap Plans are referred
+                  to by a Plan Letter.  Do you know the Plan Letter for
+                  (his/her) plan?
+
+                  PROBE:  What was it?
+
+                  ENTER LETTER (A-J):
+          ................................................................................
+             21        01. A
+              6        02. B
+             11        03. C
+              1        04. D
+              2        05. E
+              5        06. F
+              1        07. J
+                       08. H
+             11        09. Z
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1196     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2585:R13] IS
+                           (NE 1); [Q2590:R15b] IS (1); [Q2594:R18a] IS (2); [Q2595:R19a]
+                           IS (NE 1)
+
+==========================================================================================
+
+Q2611     R46b.PAY ALL/SOME/NONE OF PREMIUM
+          Section: R            Level: Respondent         CAI Reference: Q2611
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R46b.
+                  Did (he/she) pay all of the costs, some of the costs,
+                  or none of the costs of the premium for this health
+                  insurance coverage?
+          ................................................................................
+            250         1. ALL
+             13         2. SOME
+             16         3. NONE
+              9         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            966     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2608:R45b]
+                           IS (2); [Q2609:R46] IS (NE 1)
+
+==========================================================================================
+
+Q2612     R46c.AMT PAY OTHER HEALTH INS
+          Section: R            Level: Respondent         CAI Reference: Q2612
+          Type: Numeric         Width: 6                  Decimals: 0
+
+          R46c.
+                  About how much was (he/she) paying for this health insurance?
+
+                  AMOUNT:
+                  PER:
+          ................................................................................
+            176            0-999996. Actual Value
+             86              999998. DK (Don't Know); NA (Not Ascertained)
+              1              999999. RF (Refused)
+            991               Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5);
+                                     [Q2608:R45b] IS (2); [Q2609:R46] IS (NE 1);
+                                     [Q2611:R46b] IS (3 OR DK OR RF)
+
+==========================================================================================
+
+Q2613     R46ca.OTHER HEALTH INS-PER
+          Section: R            Level: Respondent         CAI Reference: Q2613
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            198         1. MONTH
+             37         2. QUARTER (EVERY 3 MONTHS)
+              2         3. SEMI-ANNUALLY (EVERY 6 MONTHS/TWICE A YEAR)
+             22         4. YEAR
+              3         7. OTHER (SPECIFY)
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            991     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2608:R45b]
+                           IS (2); [Q2609:R46] IS (NE 1); [Q2611:R46b] IS (3 OR DK OR RF)
+
+==========================================================================================
+
+Q2615     R46e.OTHER PLAN PAY PART PRESCRIPTION DR
+          Section: R            Level: Respondent         CAI Reference: Q2615
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R46e.
+                  Did this health insurance plan pay any part of the
+                  cost of prescription medicines?
+          ................................................................................
+             92         1. YES
+            182         5. NO
+             14         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            966     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2608:R45b]
+                           IS (2); [Q2609:R46] IS (NE 1)
+
+==========================================================================================
+
+Q2617     R46ff.CHECKPOINT-OTHER PLAN PRESCRIPTION
+          Section: R            Level: Respondent         CAI Reference: Q2617
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             92         1. R'S HEALTH INSURANCE PAID PART OF PRESCRIPTION
+            196         2. ALL OTHERS
+            966     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2608:R45b]
+                           IS (2); [Q2609:R46] IS (NE 1)
+
+==========================================================================================
+
+Q2621     R48.ANY OTHER PURCHASED HEALTH INSUR
+          Section: R            Level: Respondent         CAI Reference: Q2621
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R48.
+                  Did (he/she) have any basic health insurance coverage
+                  purchased directly from an insurance company or
+                  through a membership organization?
+
+                  INSURANCE FROM ORGANIZATIONS SUCH AS AARP OR
+                  PROFESSIONAL ORGANIZATIONS, OR FROM STATE OR HEALTH
+                  ALLIANCES ARE EXAMPLES OF SUCH INSURANCE.
+          ................................................................................
+             25         1. YES
+             77         5. NO
+              6         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1146     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2560:R1] IS
+                           (1) OR [Q2563:R5] IS (1) OR [Q2572:R9] IS (1)
+
+==========================================================================================
+
+Q2622     R50.COVER HOSPITAL/PHYSICAL VISITS
+          Section: R            Level: Respondent         CAI Reference: Q2622
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R50.
+                  Did this insurance cover the costs for hospital care?
+          ................................................................................
+             20         1. YES
+              4         5. NO
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1229     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2560:R1] IS
+                           (1) OR [Q2563:R5] IS (1) OR [Q2572:R9] IS (1); [Q2621:R48] IS
+                           (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2624     R52.AMT PAY FOR PURCHASED HEALTH INSURAN
+          Section: R            Level: Respondent         CAI Reference: Q2624
+          Type: Numeric         Width: 6                  Decimals: 0
+
+          R52.
+                  How much was (he/she) paying for this health insurance?
+
+                  PROBE: Include the amount deducted from (his/her) pay
+                  check but not the amount paid by the employer.
+
+                  AMOUNT:
+                  PER:
+          ................................................................................
+             14            1-999996. Actual Value
+             11              999998. DK (Don't Know); NA (Not Ascertained)
+                             999999. RF (Refused)
+           1229               Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5);
+                                     [Q2560:R1] IS (1) OR [Q2563:R5] IS (1) OR
+                                     [Q2572:R9] IS (1); [Q2621:R48] IS (5 OR DK OR RF);
+                                     [Q2623:R51] IS (3 OR DK OR RF)
+
+==========================================================================================
+
+Q2625     R52a.PURCHASED HEALTH INS - PER
+          Section: R            Level: Respondent         CAI Reference: Q2625
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             19         1. MONTH
+              3         2. QUARTER (EVERY 3 MONTHS)
+              1         3. SEMI-ANNUALLY (EVERY 6 MONTHS/TWICE A YEAR)
+              1         4. YEAR
+                        7. OTHER (SPECIFY)
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1229     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2560:R1] IS
+                           (1) OR [Q2563:R5] IS (1) OR [Q2572:R9] IS (1); [Q2621:R48] IS
+                           (5 OR DK OR RF); [Q2623:R51] IS (3 OR DK OR RF)
+
+==========================================================================================
+
+Q2630     R55.IF PURCHASED HEALTH INS -  HMO
+          Section: R            Level: Respondent         CAI Reference: Q2630
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R55.
+                  I'd like to ask you a few questions about how this health
+                  insurance worked for non-emergency care.
+
+                  Was this plan an HMO, that is, a Health Maintenance Organization?
+
+                  DEF: With an HMO, the cost of the physician visit is typically
+                       covered in full or one pays only a small amount.  All
+                       routine care must be provided by an HMO physician.
+          ................................................................................
+              6         1. YES
+             18         5. NO
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1229     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2560:R1] IS
+                           (1) OR [Q2563:R5] IS (1) OR [Q2572:R9] IS (1); [Q2621:R48] IS
+                           (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2631     R55a.IF PURCHASED INS HAD A LIST OF DOCT
+          Section: R            Level: Respondent         CAI Reference: Q2631
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R55a.
+                  Did this health insurance plan have a list or book of doctors
+                  that one is encouraged or required to use?
+          ................................................................................
+              8         1. YES
+              9         5. NO
+              2         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1235     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2560:R1] IS
+                           (1) OR [Q2563:R5] IS (1) OR [Q2572:R9] IS (1); [Q2621:R48] IS
+                           (5 OR DK OR RF); [Q2630:R55] IS (1)
+
+==========================================================================================
+
+Q2632     R55b.PAY ROUTINE CARE
+          Section: R            Level: Respondent         CAI Reference: Q2632
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R55b.
+                  Did this health insurance plan pay any of the costs of
+                  routine care if one sees a doctor who is not on this list?
+          ................................................................................
+              5         1. YES
+              1         2. YES, WITH A REFERRAL
+              1         5. NO
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1246     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2560:R1] IS
+                           (1) OR [Q2563:R5] IS (1) OR [Q2572:R9] IS (1); [Q2621:R48] IS
+                           (5 OR DK OR RF); [Q2630:R55] IS (1); [Q2631:R55a] IS (5 OR DK
+                           OR RF)
+
+==========================================================================================
+
+Q2633     R55d.PURCH HMO:IF R PAYS FOR DR VISITS
+          Section: R            Level: Respondent         CAI Reference: Q2633
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R55d.
+                  Under this health insurance plan, did (he/she) pay a percentage
+                  of the doctor's charge, the same dollar amount each time
+                  (he/she) visited the doctor, or did (he/she) not pay
+                  anything at all for doctor visits?
+          ................................................................................
+              1         1. PERCENT
+              5         2. DOLLAR AMOUNT/COPAY
+                        3. R DIDN'T PAY ANYTHING
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1248     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2560:R1] IS
+                           (1) OR [Q2563:R5] IS (1) OR [Q2572:R9] IS (1); [Q2621:R48] IS
+                           (5 OR DK OR RF); [Q2630:R55] IS (NE 1)
+
+==========================================================================================
+
+Q2634     R55e.PURCH NON HMO:IF PLAN PAYS DR VISIT
+          Section: R            Level: Respondent         CAI Reference: Q2634
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R55e.
+                  Did this plan pay any of the costs of routine
+                  visits to the doctor?
+          ................................................................................
+             10         1. YES
+              6         5. NO
+              3         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1235     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2560:R1] IS
+                           (1) OR [Q2563:R5] IS (1) OR [Q2572:R9] IS (1); [Q2621:R48] IS
+                           (5 OR DK OR RF); [Q2630:R55] IS (1)
+
+==========================================================================================
+
+Q2635     R55f.PAY PERSCRIPTION DRUGS
+          Section: R            Level: Respondent         CAI Reference: Q2635
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R55f.
+                  Did this health insurance plan pay any part of the cost
+                  of prescription medicines?
+          ................................................................................
+             16         1. YES
+              7         5. NO
+              2         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1229     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2560:R1] IS
+                           (1) OR [Q2563:R5] IS (1) OR [Q2572:R9] IS (1); [Q2621:R48] IS
+                           (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2637     R56a.CHECKPOINT
+          Section: R            Level: Respondent         CAI Reference: Q2637
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             16         1. R ANSWERED YES TO R55f
+              9         2. ALL OTHERS
+           1229     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2560:R1] IS
+                           (1) OR [Q2563:R5] IS (1) OR [Q2572:R9] IS (1); [Q2621:R48] IS
+                           (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2639     R57a.LIMITS ON HEALTH INSUR
+          Section: R            Level: Respondent         CAI Reference: Q2639
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R57a.
+                  Are there any limits or restrictions on this health
+                  insurance plan due to a preexisting condition?
+          ................................................................................
+              3         1. YES
+             18         5. NO
+              4         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1229     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2560:R1] IS
+                           (1) OR [Q2563:R5] IS (1) OR [Q2572:R9] IS (1); [Q2621:R48] IS
+                           (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2641     R57b.CHECKPOINT
+          Section: R            Level: Respondent         CAI Reference: Q2641
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+           1229         1. R IS COVERED BY MEDICARE, MEDICAID, CHAMPUS/CHAMPVA OR OTHER
+                           INSURANCE
+             24         2. ALL OTHERS
+              1     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5)
+
+==========================================================================================
+
+Q2642     R58.WITHOUT INSUR
+          Section: R            Level: Respondent         CAI Reference: Q2642
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R58.
+                  Was
+                  [Q685-R FIRST NAME]  ever without health insurance
+                  coverage at any time
+          IF Q684 IS (1)
+                  from
+                  [Q218-PREV WAVE IW MONTH]
+                  [Q219-PREV WAVE IW YEAR]  until (his/her) death?
+          ELSE
+                  ?
+          END
+          ................................................................................
+             18         1. YES
+           1206         5. NO
+              4         8. DK (Don't Know); NA (Not Ascertained)
+              1         9. RF (Refused)
+             25     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2641:R57b]
+                           IS (2)
+
+==========================================================================================
+
+Q2646     R61.EXPENSES WITHOUT COVERAGE
+          Section: R            Level: Respondent         CAI Reference: Q2646
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R61.
+                  During the time (he/she) was not covered by health
+                  insurance, did (he/she) have any medical expenses for
+                  which (he/she) had to pay $100 or more?
+          ................................................................................
+             14         1. YES
+              4         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1236     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2641:R57b]
+                           IS (2); [Q2642:R58] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2651     R67.NOT COVERED BY GOVT/PRIV HEALTH INSU
+          Section: R            Level: Respondent         CAI Reference: Q2651
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R67.
+                  According to my information, at the time of (his/her) death,
+                  (he/she) was not covered by any government or private
+                  health insurance plans that provide for medical care.
+                  Is that correct?
+          ................................................................................
+             17         1. YES
+              2         5. NO
+              5         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1230     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2641:R57b]
+                           IS (1)
+
+==========================================================================================
+
+Q2653     R78.WITHDRAWN FROM HMO SINCE PREV WAVE
+          Section: R            Level: Respondent         CAI Reference: Q2653
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R78.
+          IF Q684 IS (1)
+                  Since
+                  [Q218-PREV WAVE IW MONTH]
+                  [Q219-PREV WAVE IW YEAR]  until (his/her) death
+          ELSE
+                  In the last two years
+          END
+                  had (he/she) withdrawn from an HMO?
+          ................................................................................
+             13         1. YES
+            560         5. NO
+             14         8. DK (Don't Know); NA (Not Ascertained)
+              1         9. RF (Refused)
+            666     Blank. INAP (Inapplicable):[Q456:CS CONTINUE] IS (5); [Q2563:R5] IS
+                           (1) OR [Q2572:R9] IS (1) OR [Q2585:R13] IS (1) OR [Q2621:R48]
+                           IS (1); [Q2560:R1] IS (NE 1) AND [Q2563:R5] IS (NE 1) AND
+                           [Q2572:R9] IS (NE 1) AND [Q2621:R48] IS (NE 1); [Q2651:R67] IS
+                           (1 OR DK OR RF)
+
+==========================================================================================
+
+Q2654     R79.VOLUNTARILY LEAVE
+          Section: R            Level: Respondent         CAI Reference: Q2654
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R79.
+                  Did (he/she) voluntarily leave that HMO?
+          ................................................................................
+             10         1. YES
+              2         5. NO
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1241     Blank. INAP (Inapplicable):[Q456:CS CONTINUE] IS (5); [Q2563:R5] IS
+                           (1) OR [Q2572:R9] IS (1) OR [Q2585:R13] IS (1) OR [Q2621:R48]
+                           IS (1); [Q2560:R1] IS (NE 1) AND [Q2563:R5] IS (NE 1) AND
+                           [Q2572:R9] IS (NE 1) AND [Q2621:R48] IS (NE 1); [Q2651:R67] IS
+                           (1 OR DK OR RF); [Q2653:R78] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2655M1   R80.WHY LEAVE HMO-1
+          Section: R            Level: Respondent         CAI Reference: Q2655
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R80.
+                  Why did (he/she) leave that HMO?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+              1         1. OWN PHYSICIAN LEFT PLAN
+              5         2. HMO DIDN'T PROVIDE NEEDED SERVICES
+              1         3. HMO COSTS INCREASED
+                        4. HMO ENCOURAGED TO LEAVE
+              3         6. Too far away from HMO; R moved and HMO not in new region
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1244     Blank. INAP (Inapplicable):[Q456:CS CONTINUE] IS (5); [Q2563:R5] IS
+                           (1) OR [Q2572:R9] IS (1) OR [Q2585:R13] IS (1) OR [Q2621:R48]
+                           IS (1); [Q2560:R1] IS (NE 1) AND [Q2563:R5] IS (NE 1) AND
+                           [Q2572:R9] IS (NE 1) AND [Q2621:R48] IS (NE 1); [Q2651:R67] IS
+                           (1 OR DK OR RF); [Q2653:R78] IS (5 OR DK OR RF); [Q2654:R79]
+                           IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2655M2   R80.WHY LEAVE HMO-2
+          Section: R            Level: Respondent         CAI Reference: Q2655
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R80.
+                  Why did (he/she) leave that HMO?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                        1. OWN PHYSICIAN LEFT PLAN
+              1         2. HMO DIDN'T PROVIDE NEEDED SERVICES
+                        3. HMO COSTS INCREASED
+              1         4. HMO ENCOURAGED TO LEAVE
+                        6. Too far away from HMO; R moved and HMO not in new region
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1252     Blank. INAP (Inapplicable):[Q456:CS CONTINUE] IS (5); [Q2563:R5] IS
+                           (1) OR [Q2572:R9] IS (1) OR [Q2585:R13] IS (1) OR [Q2621:R48]
+                           IS (1); [Q2560:R1] IS (NE 1) AND [Q2563:R5] IS (NE 1) AND
+                           [Q2572:R9] IS (NE 1) AND [Q2621:R48] IS (NE 1); [Q2651:R67] IS
+                           (1 OR DK OR RF); [Q2653:R78] IS (5 OR DK OR RF); [Q2654:R79]
+                           IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2655M3   R80.WHY LEAVE HMO-3
+          Section: R            Level: Respondent         CAI Reference: Q2655
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R80.
+                  Why did (he/she) leave that HMO?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                        1. OWN PHYSICIAN LEFT PLAN
+                        2. HMO DIDN'T PROVIDE NEEDED SERVICES
+                        3. HMO COSTS INCREASED
+                        4. HMO ENCOURAGED TO LEAVE
+                        6. Too far away from HMO; R moved and HMO not in new region
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1254     Blank. INAP (Inapplicable):[Q456:CS CONTINUE] IS (5); [Q2563:R5] IS
+                           (1) OR [Q2572:R9] IS (1) OR [Q2585:R13] IS (1) OR [Q2621:R48]
+                           IS (1); [Q2560:R1] IS (NE 1) AND [Q2563:R5] IS (NE 1) AND
+                           [Q2572:R9] IS (NE 1) AND [Q2621:R48] IS (NE 1); [Q2651:R67] IS
+                           (1 OR DK OR RF); [Q2653:R78] IS (5 OR DK OR RF); [Q2654:R79]
+                           IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2656     R81.HOW LONG BEFORE COVERED-MONTHS
+          Section: R            Level: Respondent         CAI Reference: Q2656
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          R81.
+                  From the time (he/she) left that HMO, about how long was it
+                  before (he/she) was fully covered by (his/her) new health
+                  insurance plan?
+
+                  ENTER "0" MONTHS IF NO GAP.
+
+                  MONTHS:
+                    OR
+                  YEARS:
+                    OR
+
+          ................................................................................
+             10                0-50. Actual Value
+              1                  98. DK (Don't Know); NA (Not Ascertained)
+                                 99. RF (Refused)
+           1243               Blank. INAP (Inapplicable):[Q456:CS CONTINUE] IS (5);
+                                     [Q2563:R5] IS (1) OR [Q2572:R9] IS (1) OR
+                                     [Q2585:R13] IS (1) OR [Q2621:R48] IS (1);
+                                     [Q2560:R1] IS (NE 1) AND [Q2563:R5] IS (NE 1) AND
+                                     [Q2572:R9] IS (NE 1) AND [Q2621:R48] IS (NE 1);
+                                     [Q2651:R67] IS (1 OR DK OR RF); [Q2653:R78] IS (5
+                                     OR DK OR RF)
+
+==========================================================================================
+
+Q2657     R81.HOW LONG BEFORE COVERED-YEARS
+          Section: R            Level: Respondent         CAI Reference: Q2657
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+                               0-50. Actual Value
+                                 98. DK (Don't Know); NA (Not Ascertained)
+                                 99. RF (Refused)
+           1254               Blank. INAP (Inapplicable):[Q456:CS CONTINUE] IS (5);
+                                     [Q2563:R5] IS (1) OR [Q2572:R9] IS (1) OR
+                                     [Q2585:R13] IS (1) OR [Q2621:R48] IS (1);
+                                     [Q2560:R1] IS (NE 1) AND [Q2563:R5] IS (NE 1) AND
+                                     [Q2572:R9] IS (NE 1) AND [Q2621:R48] IS (NE 1);
+                                     [Q2651:R67] IS (1 OR DK OR RF); [Q2653:R78] IS (5
+                                     OR DK OR RF); [Q2656:R81] IS (0 AND NE ``!``)
+
+==========================================================================================
+
+Q2658     R81.NO NEW HEALTH INSURANCE PLAN
+          Section: R            Level: Respondent         CAI Reference: Q2658
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+              2         1. NO NEW HEALTH INSURANCE PLAN
+           1252     Blank. INAP (Inapplicable):[Q456:CS CONTINUE] IS (5); [Q2563:R5] IS
+                           (1) OR [Q2572:R9] IS (1) OR [Q2585:R13] IS (1) OR [Q2621:R48]
+                           IS (1); [Q2560:R1] IS (NE 1) AND [Q2563:R5] IS (NE 1) AND
+                           [Q2572:R9] IS (NE 1) AND [Q2621:R48] IS (NE 1); [Q2651:R67] IS
+                           (1 OR DK OR RF); [Q2653:R78] IS (5 OR DK OR RF); [Q2656:R81]
+                           IS (0 AND NE ``!``); [Q2656:R81] IS (NE ``!``) AND [Q2657:R81]
+                           IS (NE ``!``)
+
+==========================================================================================
+
+Q2660     R82.OTHER CHANGES SINCE PREV WAVE
+          Section: R            Level: Respondent         CAI Reference: Q2660
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R82.
+          IF Q2560 IS (1)
+                  (Other than the changes you've already told me about,)
+          END
+          IF Q684 IS (1)
+                  Since
+                  [Q218-PREV WAVE IW MONTH]
+                  [Q219-PREV WAVE IW YEAR]  until (his/her) death,
+          ELSE
+                  In the last two years,
+          END
+                  were there any (other) changes in the type, cost, or
+                  in the services or doctors covered by (his/her) health insurance?
+          ................................................................................
+            109         1. YES
+           1070         5. NO
+             50         8. DK (Don't Know); NA (Not Ascertained)
+              2         9. RF (Refused)
+             23     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2651:R67] IS
+                           (1 OR DK OR RF)
+
+==========================================================================================
+
+Q2661M1   R83.WHAT CHANGED IN HEALTH INSURANCE-1
+          Section: R            Level: Respondent         CAI Reference: Q2661
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          R83.
+                  What changed about (his/her) health insurance?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+             66         1. COST BECAME HIGHER
+              2         2. COST BECAME LOWER
+              7         3. FEWER SERVICES COVERED
+              6         4. MORE SERVICES COVERED
+              5         5. LESS CHOICE OF PHYSICIANS
+                        6. MORE CHOICE OF PHYSICIANS
+                        7. MORE CONVENIENT
+              2         8. LOST PLAN
+             20         9. CHANGED TO A COMPLETELY DIFFERENT PLAN; Provider
+                       97. OTHER (SPECIFY)
+              1        98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1145     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2651:R67] IS
+                           (1 OR DK OR RF); [Q2660:R82] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2661M2   R83.WHAT CHANGED IN HEALTH INSURANCE-2
+          Section: R            Level: Respondent         CAI Reference: Q2661
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          R83.
+                  What changed about (his/her) health insurance?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                        1. COST BECAME HIGHER
+              1         2. COST BECAME LOWER
+              2         3. FEWER SERVICES COVERED
+              1         4. MORE SERVICES COVERED
+              1         5. LESS CHOICE OF PHYSICIANS
+              1         6. MORE CHOICE OF PHYSICIANS
+                        7. MORE CONVENIENT
+                        8. LOST PLAN
+              2         9. CHANGED TO A COMPLETELY DIFFERENT PLAN; Provider
+                       97. OTHER (SPECIFY)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1246     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2651:R67] IS
+                           (1 OR DK OR RF); [Q2660:R82] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2661M3   R83.WHAT CHANGED IN HEALTH INSURANCE-3
+          Section: R            Level: Respondent         CAI Reference: Q2661
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          R83.
+                  What changed about (his/her) health insurance?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                        1. COST BECAME HIGHER
+                        2. COST BECAME LOWER
+                        3. FEWER SERVICES COVERED
+                        4. MORE SERVICES COVERED
+                        5. LESS CHOICE OF PHYSICIANS
+                        6. MORE CHOICE OF PHYSICIANS
+              1         7. MORE CONVENIENT
+                        8. LOST PLAN
+                        9. CHANGED TO A COMPLETELY DIFFERENT PLAN; Provider
+                       97. OTHER (SPECIFY)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1253     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2651:R67] IS
+                           (1 OR DK OR RF); [Q2660:R82] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2661M4   R83.WHAT CHANGED IN HEALTH INSURANCE-4
+          Section: R            Level: Respondent         CAI Reference: Q2661
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          R83.
+                  What changed about (his/her) health insurance?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                        1. COST BECAME HIGHER
+                        2. COST BECAME LOWER
+                        3. FEWER SERVICES COVERED
+                        4. MORE SERVICES COVERED
+              1         5. LESS CHOICE OF PHYSICIANS
+                        6. MORE CHOICE OF PHYSICIANS
+                        7. MORE CONVENIENT
+                        8. LOST PLAN
+                        9. CHANGED TO A COMPLETELY DIFFERENT PLAN; Provider
+                       97. OTHER (SPECIFY)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1253     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2651:R67] IS
+                           (1 OR DK OR RF); [Q2660:R82] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2661M5   R83.WHAT CHANGED IN HEALTH INSURANCE-5
+          Section: R            Level: Respondent         CAI Reference: Q2661
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          R83.
+                  What changed about (his/her) health insurance?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                        1. COST BECAME HIGHER
+                        2. COST BECAME LOWER
+                        3. FEWER SERVICES COVERED
+                        4. MORE SERVICES COVERED
+                        5. LESS CHOICE OF PHYSICIANS
+                        6. MORE CHOICE OF PHYSICIANS
+                        7. MORE CONVENIENT
+                        8. LOST PLAN
+              1         9. CHANGED TO A COMPLETELY DIFFERENT PLAN; Provider
+                       97. OTHER (SPECIFY)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1253     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2651:R67] IS
+                           (1 OR DK OR RF); [Q2660:R82] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2661M6   R83.WHAT CHANGED IN HEALTH INSURANCE-5
+          Section: R            Level: Respondent         CAI Reference: Q2661
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          R83.
+                  What changed about (his/her) health insurance?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                        1. COST BECAME HIGHER
+                        2. COST BECAME LOWER
+                        3. FEWER SERVICES COVERED
+                        4. MORE SERVICES COVERED
+                        5. LESS CHOICE OF PHYSICIANS
+                        6. MORE CHOICE OF PHYSICIANS
+                        7. MORE CONVENIENT
+                        8. LOST PLAN
+                        9. CHANGED TO A COMPLETELY DIFFERENT PLAN; Provider
+                       97. OTHER (SPECIFY)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1254     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2651:R67] IS
+                           (1 OR DK OR RF); [Q2660:R82] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2662     R84.CHOICE IN CHANGING INSURANCE
+          Section: R            Level: Respondent         CAI Reference: Q2662
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R84.
+                  Did
+                  [Q685-R FIRST NAME]  choose to change (his/her) health
+                  insurance or provider, or did (he/she) not have a choice
+                  in the change?
+          ................................................................................
+             21         1. R MADE CHANGE
+             87         5. R HAD NO CHOICE
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1145     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2651:R67] IS
+                           (1 OR DK OR RF); [Q2660:R82] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2664     R85.LTC INSURANCE
+          Section: R            Level: Respondent         CAI Reference: Q2664
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R85.
+              Not including government programs, did
+                  [Q685-R FIRST NAME]
+              have any insurance which specifically covered any part of personal
+              or medical care in (his/her) home or in a nursing home for a
+              year or more?
+          ................................................................................
+             66         1. YES
+           1137         5. NO
+             49         8. DK (Don't Know); NA (Not Ascertained)
+              1         9. RF (Refused)
+              1     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5)
+
+==========================================================================================
+
+Q2665     R87.COVER NURSING HOME/IN-HOME CARE
+          Section: R            Level: Respondent         CAI Reference: Q2665
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R87.
+                  Did this plan cover care in a nursing home facility only,
+                  personal or long-term care at home, or both in-home and
+                  nursing home care?
+          ................................................................................
+             22         1. NURSING HOME CARE ONLY
+              6         2. IN-HOME CARE ONLY
+             35         3. BOTH
+                        7. OTHER (SPECIFY)
+              3         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1188     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2664:R85] IS
+                           (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2666     R88.RECD BENEFITS UNDER LTC
+          Section: R            Level: Respondent         CAI Reference: Q2666
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R88.
+              Had
+                  [Q685-R FIRST NAME]  ever received benefits under (his/her)
+              long-term care policy?
+          ................................................................................
+             25         1. YES
+             40         5. NO
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1188     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2664:R85] IS
+                           (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2667     R89.PAYMENTS INCREASE WITH INFLATION
+          Section: R            Level: Respondent         CAI Reference: Q2667
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R89.
+                  Did this plan increase payments with inflation?
+          ................................................................................
+             23         1. YES
+             24         5. NO
+             19         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1188     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2664:R85] IS
+                           (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2668     R90.AMT PAY FOR LTC
+          Section: R            Level: Respondent         CAI Reference: Q2668
+          Type: Numeric         Width: 6                  Decimals: 0
+
+          R90.
+                  About how much was (he/she) paying for this plan
+                  before (his/her) death?
+
+                  AMOUNT:
+                  PER:
+
+                  IWER: ENTER "0" IF NO PAYMENTS WERE MADE
+          ................................................................................
+             16         0. NO PAYMENTS WERE MADE
+             24  1-999996. Actual Value
+             26    999998. DK (Don't Know); NA (Not Ascertained)
+                   999999. RF (Refused)
+           1188     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2664:R85] IS
+                           (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2669     R90.PAY FOR LONG TERM CARE - PER
+          Section: R            Level: Respondent         CAI Reference: Q2669
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+              9         1. YEAR
+                        2. QUARTER (EVERY 3 MONTHS)
+             15         4. MONTH
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1230     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2664:R85] IS
+                           (5 OR DK OR RF); [Q2668:R90] IS (0 OR DK OR RF OR Over Limit)
+
+==========================================================================================
+
+Q2671     R91.HOW LONG HAVE LTC-MONTHS
+          Section: R            Level: Respondent         CAI Reference: Q2671
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          R91.
+                  About how long did (he/she) have this long-term care insurance?
+
+                  MONTHS:
+                    OR
+                  YEARS:
+          ................................................................................
+              7                0-50. Actual Value
+             13                  98. DK (Don't Know); NA (Not Ascertained)
+                                 99. RF (Refused)
+           1234               Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5);
+                                     [Q2664:R85] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2672     R91.HOW LONG HAVE LTC-YEARS
+          Section: R            Level: Respondent         CAI Reference: Q2672
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+             44                1-50. Actual Value
+              3                  98. DK (Don't Know); NA (Not Ascertained)
+                                 99. RF (Refused)
+           1207               Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5);
+                                     [Q2664:R85] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2674     R92.LTC CANCELED/LAPSED
+          Section: R            Level: Respondent         CAI Reference: Q2674
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R92.
+                  Was (he/she) ever covered by any long-term care
+                  insurance that (he/she) cancelled or let lapse?
+          ................................................................................
+             19         1. YES
+           1195         5. NO
+             37         8. DK (Don't Know); NA (Not Ascertained)
+              2         9. RF (Refused)
+              1     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5)
+
+==========================================================================================
+
+Q2675     R93.WHY LTC COVERAGE LAPSE
+          Section: R            Level: Respondent         CAI Reference: Q2675
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R93.
+                  Did (his/her) coverage lapse because the premiums were too
+                  high, because (he/she) didn't think (he/she) needed
+                  to carry it any longer, or what?
+          ................................................................................
+             11         1. PREMIUMS TOO HIGH
+              3         5. DIDN'T NEED IT
+              4         7. OTHER (SPECIFY)
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1235     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q2674:R92] IS
+                           (5 OR DK OR RF)
+
+==========================================================================================
+
+Q2681     R117.MEDICARE NUMBER RECORDED?
+          Section: R            Level: Respondent         CAI Reference: Q2681
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          R117.
+              We would like to understand how people's medical history affects
+              their financial status, and how use of health care may change as
+              people age.  To do that, we need to obtain information about health
+              care costs and diagnoses for statistical purposes.  The best place
+              to get this information without taking up a lot more of your time
+              is in the Medicare files.  Could you give me (his/her) Medicare
+              number for this purpose?
+
+              (Under the Privacy Act of 1974, providing (his/her) number is a
+              voluntary decision.  The benefits (he/she) may be receiving
+              under this program will not be affected in any way by your decision.)
+
+              NUMBER AVAILABLE:
+
+              COPY MEDICARE NUMBER: ---
+
+              PROBE: Is there a letter included as part of (his/her) Medicare number?
+          ................................................................................
+            104         1. NUMBER RECORDED
+            136         5. NO NUMBER RECORDED
+             10         8. DK (Don't Know); NA (Not Ascertained)
+              6         9. RF (Refused)
+            998     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q247:PREV
+                           WAVE GAVE MED NUMBER] IS (1) OR [Q2560:R1] IS (NE 1)
+
+==========================================================================================
+
+QVERSION  1998 EXIT RELEASE VERSION NUMBER
+          Section: R            Level: Respondent         CAI Reference: Q9008
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+           1254         1. First Final Release
+

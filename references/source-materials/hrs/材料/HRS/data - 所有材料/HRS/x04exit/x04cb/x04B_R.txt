@@ -1,0 +1,2177 @@
+==========================================================================================
+2004 HRS Exit (Final Release)
+ODBC Reference: [HRS2004x]
+Perl script: CodebkD11.pl v6.161 Tue Feb  6 13:58:12 2007
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION B: Demographics (Respondent)
+
+==========================================================================================
+
+HHID       HOUSEHOLD IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+        ..................................................................................
+         1227           010240-213434. Household Identifier
+
+==========================================================================================
+
+PN         RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+          861         010. Person Identifier
+           19         011. Person Identifier
+          274         020. Person Identifier
+           39         030. Person Identifier
+            1         031. Person Identifier
+           33         040. Person Identifier
+
+==========================================================================================
+
+TSUBHH     2004 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+         1176           3. 1st deceased respondent from a household
+           51           4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+HSUBHH     2002 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+         1180           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+           21           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           21           2. Split household - other half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+            4           3. 1st deceased respondent from a household
+                        5. Split household - one half of couple from SUBHH 1 or 2
+                        6. Split household - one half of couple from SUBHH 1 or 2
+            1           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+TPN_SP     2004 SPOUSE PERSON IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+          184         010. Person Identifier
+           16         011. Person Identifier
+          233         020. Person Identifier
+            5         021. Person Identifier
+           21         030. Person Identifier
+            2         031. Person Identifier
+           22         040. Person Identifier
+            3         041. Person Identifier
+            1         811. New Spouse of Non-Original Respondent
+          740       Blank. R not coupled
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB001      INTRO-DEMOGRAPHICS
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.B001_
+
+        Now I have some questions about [FIRST NAME OF INDIVIDUAL]'s background.
+        ..................................................................................
+         1227           1. CONTINUE
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB002      BORN IN US
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Born.B002_
+
+        Was[she/he] born in the United States?
+        ..................................................................................
+            5           1. YES
+                        5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1222       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR
+          OR piRvarsZ076_ReIwR_V <> REIWR
+          OR piRvarsZ076_ReIwR_V <> REIWR)
+         AND ((B002_ = YES) AND (piSecAHousingLocationA078_YrsCurRes <> 95)
+          OR (B002_ = YES) AND (piSecAHousingLocationA078_YrsCurRes <> 95)
+          OR (B002_ = YES) AND (piSecAHousingLocationA078_YrsCurRes <> 95))
+         AND (B076_B003_.puState = 98
+          OR NOT (B076_B003_.puState = 98)
+          OR NOT (B076_B003_.puState = 98))
+         AND (B076_B003_.puState = 99
+          OR NOT (B076_B003_.puState = 99))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB003M     STATE BORN - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Born.B003_
+
+        In what state was[she/he] born?
+        INTERVIEWER: TYPE 'OT' TO ENTER COUNTRY
+        STATE:
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+                        1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+            1           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+            1           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+                        4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+                        5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+            1           6. South Region: East South Central Division (KY, TN, AL, MS)
+            1           7. South Region: West South Central Division (AR, LA, OK, TX)
+                        8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+            1           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+                       11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1222       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+TB005M     COUNTRY BORN - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Born.B005_
+
+        In what country was [she/he] born?
+        COUNTRY:
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+                       11. Foreign Country: Not in a Census Division (includes U.S.
+                           territories)
+                       97. OTHER (SPECIFY)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND ((B002_ = NO) OR (B003_ = OTHERCOUNTRY))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB006      ARRIVE IN US-YEAR
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecB.Born.B006_
+
+        ([/Now a few questions about[her/his] background...])
+        In about what year did[she/he] first come to live in the United States?
+        INTERVIEWER: USE 9996 IN YEAR IF R SAYS HE/SHE WAS NOT BORN OUTSIDE OF THE
+        U.S.
+        YEAR:
+         OR
+        YEARS AGO:
+         OR
+        AT AGE:
+        ..................................................................................
+                     9996. NOT BORN OUTSIDE OF THE U.S.
+                     9998. DK (Don't Know); NA (Not Ascertained)
+                     9999. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND ((B002_ = NO) OR (B003_ = OTHERCOUNTRY))
+         AND (B006_ = EMPTY OR (B006_ = DONTKNOW))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB007      ARRIVE IN US-YEARS AGO
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Born.B007_
+
+        ([Now a few questions about [her/his] background...])
+        (In about what year did [she/he] first come to live in the United States?)
+        YEAR:
+         OR
+        YEARS AGO:
+         OR
+        AT AGE:
+        ..................................................................................
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND ((B002_ = NO) OR (B003_ = OTHERCOUNTRY))
+         AND (B006_ = EMPTY OR (B006_ = DONTKNOW))
+         AND (B007_ = EMPTY OR (B007_ = DONTKNOW))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB008      ARRIVE IN US-AT AGE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Born.B008_
+
+        ([/Now a few questions about[her/his] background...])
+        (In about what year did[she/he] first come to live in the United States?)
+        YEAR:
+         OR
+        YEARS AGO:
+         OR
+        AT AGE:
+        ..................................................................................
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND ((B002_ = NO) OR (B003_ = OTHERCOUNTRY))
+         AND (B006_ <> 9996)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB009      EVER LEAVE US
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Born.B009_
+
+        Did [she/he] ever leave the U.S. after that for a period of a year or more?
+        INTERVIEWER: IF R ASKS, EXCLUDE ANY TIME SPENT OUT OF THE COUNTRY FOR U.S.
+        MILITARY SERVICE
+        ..................................................................................
+                        1. YES
+                        5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND ((B002_ = NO) OR (B003_ = OTHERCOUNTRY))
+         AND (B006_ <> 9996)
+         AND (B009_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB010      RETURNED TO US-YEAR
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecB.Born.B010_
+
+        What is the most recent year [she/he] returned to live in the U.S.?
+        YEAR:
+         OR
+        YEARS AGO:
+         OR
+        AT AGE:
+        ..................................................................................
+                     9998. DK (Don't Know); NA (Not Ascertained)
+                     9999. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND ((B002_ = NO) OR (B003_ = OTHERCOUNTRY))
+         AND (B006_ <> 9996)
+         AND (B009_ = YES)
+         AND (B010_ = EMPTY OR (B010_ = DONTKNOW))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB011      RETURNED TO US-YEARS AGO
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Born.B011_
+
+        (What is the most recent year[she/he] returned to live in the U.S.?)
+        YEAR:
+         OR
+        YEARS AGO:
+         OR
+        AT AGE:
+        ..................................................................................
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND ((B002_ = NO) OR (B003_ = OTHERCOUNTRY))
+         AND (B006_ <> 9996)
+         AND (B009_ = YES)
+         AND (B010_ = EMPTY OR (B010_ = DONTKNOW))
+         AND (B011_ = EMPTY OR (B011_ = DONTKNOW))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB012      RETURNED TO US-AT AGE
+         Section: B     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         CAI: SecB.Born.B012_
+
+        (What is the most recent year [she/he] returned to live in the U.S.?)
+        YEAR:
+         OR
+        YEARS AGO:
+         OR
+        AT AGE:
+        ..................................................................................
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND ((B002_ = NO) OR (B003_ = OTHERCOUNTRY))
+         AND (B006_ <> 9996)
+         AND (B009_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB013      NUMBER YEARS OUTSIDE OF US
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Born.B013_
+
+        Altogether, for how many years after [she/he] first came to live in the United
+        States had [she/he] lived outside of this country?
+        NUMBER YEARS LIVED OUTSIDE US:
+        ..................................................................................
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB014      R HIGHEST LEVEL OF EDUCATION
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.School.B014_
+
+        What is the highest grade of school or year of college[she/he] completed?
+        0......FOR NO FORMAL EDUCATION
+        1-11.....GRADES
+        12.......HIGH SCHOOL
+        13-15....SOME COLLEGE
+        16.......COLLEGE GRAD
+        17.......POST COLLEGE (17+ YEARS)
+        97.......OTHER
+        ..................................................................................
+            5                    8-15. Actual Value
+                                   97. OTHER (Specify)
+                                   98. DK (Don't Know); NA (Not Ascertained)
+                                   99. RF (Refused)
+         1222                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND (((((B014_ >= 0) AND (B014_ <= 12)) OR (B014_ = DONTKNOW)) OR (B014_ =
+        REFUSAL)) OR (B014_ = 97))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB015      R EARN HIGH SCHOOL DIPLOMA/GED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.School.B015_
+
+        Did [she/he] get a high school diploma or pass a high school equivalency test?
+        ..................................................................................
+            1           1. YES, DIPLOMA
+                        2. YES, EQUIVALENCY [GED]
+            2           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1224       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND ((((0 > B014_) OR (B014_ > 12)) AND (B014_ <> DONTKNOW)) AND (B014_ <>
+        REFUSAL))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB016      R COLLEGE DEGREE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.School.B016_
+
+        (Did[she/he] get a college degree?)
+        ..................................................................................
+            1           1. YES
+            1           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1225       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND ((((0 > B014_) OR (B014_ > 12)) AND (B014_ <> DONTKNOW)) AND (B014_ <>
+        REFUSAL))
+         AND (B016_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB017M     R HIGHEST DEGREE - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.School.B017_
+
+        (What is the highest degree[she/he] earned?)
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+            1           1. LESS THAN BACHELORS
+                        2. BACHELORS
+                        3. MASTERS/MBA
+                        4. LAW, PHD, MD
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1226       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB019      RATE HEALTH AS CHILD
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Health.B019_
+
+        Consider[her/his] health while[she/he] was growing up, from birth to age 16.
+        Would[she/he] have said that[her/his] health during that time was excellent,
+        very good, good, fair, or poor?
+        ..................................................................................
+           23           1. EXCELLENT
+            3           2. VERY GOOD
+            4           3. GOOD
+            1           4. FAIR
+            1           5. POOR
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1194       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB020      RATE FAMILY FINANCIAL SITUATION - SES
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Health.B020_
+
+        Now think about [her/his] family when [she/he] was growing up, from birth to
+        age 16. Would [she/he] have said [her/his] family during that time was pretty
+        well off financially, about average, or poor?
+        ..................................................................................
+            1           1. PRETTY WELL OFF FINANCIALLY
+           16           3. ABOUT AVERAGE
+           15           5. POOR
+                        6. IT VARIED (VOL)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1194       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB021      MOVE DUE TO FINANCIAL DIFFICULTY
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Health.B021_
+
+        While [she/he] was growing up, before age 16, did financial difficulties ever
+        cause [her/him] or [her/his] family to move to a different place?
+        ..................................................................................
+            9           1. YES
+           21           5. NO
+            3           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1194       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB022      FAMILY GET FINANCIAL HELP  IN CHILDHOOD
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Health.B022_
+
+        Before age 16, was there a time when [she/he] or [her/his] family received
+        help from relatives because of financial difficulties?
+        ..................................................................................
+            5           1. YES
+           21           5. NO
+            7           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1194       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB023      FATHER UNEMPLOYED DURING CHILDHOOD
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Health.B023_
+
+        Before age 16, was there a time of several months or more when [her/his]
+        father had no job?
+        INTERVIEWER: IF R MENTIONS NEVER LIVING WITH FATHER WHEN GROWING UP, CHOOSE
+        CODE 7
+        IF R MENTIONS THAT FATHER NEVER WORKED OR WAS ALWAYS DISABLED, CHOOSE CODE 6
+        ..................................................................................
+            6           1. YES
+           15           5. NO
+                        6. FATHER NEVER WORKED/ALWAYS DISABLED (VOL)
+            2           7. NEVER LIVED WITH FATHER/FATHER WAS NOT ALIVE (VOL)
+           10           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1194       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+         AND ((B023_ <> FANVRWORKALWYSDISABLVOL) AND (B023_ <> NVRLVDWFAFANOTALIVEVOL))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB024M     FATHERS USUAL OCC-MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Health.B024_
+        ..................................................................................
+                        1. Managerial specialty operation (003-037)
+            2           2. Professional specialty operation and technical support (043-
+                           235)
+            1           3. Sales (243-285)
+            3           4. Clerical, administrative support (303-389)
+                        5. Service: private household, cleaning and building services
+                           (403-407)
+                        6. Service: protection (413-427)
+                        7. Service: food preparation (433-444)
+                        8. Health services (445-447)
+                        9. Personal services (448-469)
+            7          10. Farming, forestry, fishing (473-499)
+                       11. Mechanics and repair (503-549)
+            4          12. Construction trade and extractors (553-617)
+            2          13. Precision production (633-699)
+            1          14. Operators: machine (703-799)
+                       15. Operators: transport, etc
+                       16. Operators: handlers, etc
+                       17. Member of Armed Forces (900)
+            6          98. DK (don't know); NA (not ascertained)
+            3          99. RF (Refused)
+         1198       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 2002))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB025      LIVE WITH GRANDPARENTS DURING CHILDHOOD
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.LiveWithRelatives.B025_
+
+        Did [FIRST NAME OF INDIVIDUAL] ever live in the same household with a
+        grandparent for a year or more before age 17?
+        INTERVIEWER: INCLUDE R LIVING WITH A GRANDPARENT OR A GRANDPARENT LIVING WITH
+        R
+        ..................................................................................
+            4           1. YES
+           23           5. NO
+            6           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1194       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 2002))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 2002))
+         AND (piRTab1X014AMaLivWith_V <> YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB078      LIVE W/ MOTHER 6 MONTHS OR MORE AS ADULT
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.LiveWithRelatives.B078_
+
+        Did [she/he] ever live with [her/his] mother for a period of 6 months or more
+        as an adult, that is, at age 25 or older?
+        ..................................................................................
+           28           1. YES
+           88           5. NO
+            5           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1106       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 2002))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 2002))
+         AND (piRTab1X014AMaLivWith_V <> YES)
+         AND (B078_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB079      DID MOVE HELP YOU- YOUR MOTHER- OR BOTH
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.LiveWithRelatives.B079_
+
+        Would [she/he] have said that living with her was mainly to help [her/his]
+        mother out, to help [herself/himself] out, or because it would be helpful to
+        both of them?
+        INTERVIEWER: USE CODE 3, HELP BOTH IF R LIVED WITH MOTHER MORE THAN ONCE AND
+        BOTH R AND MOTHER WERE HELPED AT DIFFERENT TIMES
+        ..................................................................................
+           10           1. HELP MOTHER
+            3           2. HELP R
+           11           3. HELP BOTH
+            3           4. HELP NEITHER
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1199       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 2002))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 2002))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB080      SIBS LIVE W/ MOTH 6 MO OR MORE AS ADULT
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.LiveWithRelatives.B080_
+
+        Did any of [FIRST NAME OF INDIVIDUAL]'s brothers or sisters ever live with
+        their mother for a period of 6 months or more as an adult, that is, at age 25
+        or older?
+        ..................................................................................
+           21           1. YES
+           79           5. NO
+            8           6. R HAD NO SIBLINGS
+           13           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1106       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 2002))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 2002))
+         AND (B080_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB081      MOVE MADE TO HELP MOTHER-SIBLINGS-BOTH
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.LiveWithRelatives.B081_
+
+        Would [she/he] have said that living with her was mainly to help [her/his]
+        mother out, to help the sibling out, or because it would be helpful to all of
+        them?
+        INTERVIEWER: USE CODE 3, HELP ALL, IF MORE THAN ONE BROTHER OR SISTER HAS
+        LIVED WITH MOTHER AND IN SOME CASES IT WAS TO HELP OUT THE MOTHER AND IN
+        OTHERS TO HELP THE SIBLING
+        ..................................................................................
+            9           1. HELP MOTHER
+            5           2. HELP SIBLING
+            6           3. HELP ALL
+            1           4. HELP NEITHER
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1206       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+         AND (piHealthB023_ <> NVRLVDWFAFANOTALIVEVOL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB026      FATHER EDUCATION- HIGHEST GRADE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.OtherBackground.B026_
+
+        What is the highest grade of school [her/his] father completed?
+        0......FOR NO FORMAL EDUCATION
+        1-11.....GRADES
+        12.......HIGH SCHOOL
+        13-15....SOME COLLEGE
+        16.......COLLEGE GRAD
+        17.......POST COLLEGE (17+ YEARS)
+        97.......OTHER
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             13        0          16          8.15          4.45    1196
+         -----------------------------------------------------------------
+                       97. OTHER
+           18          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB027      MOTHER EDUCATION- HIGHEST GRADE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.OtherBackground.B027_
+
+        And what is the highest grade of school[her/his] mother completed?
+        0......FOR NO FORMAL EDUCATION
+        1-11.....GRADES
+        12.......HIGH SCHOOL
+        13-15....SOME COLLEGE
+        16.......COLLEGE GRAD
+        17.......POST COLLEGE (17+ YEARS)
+        97.......OTHER
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             14        0          15          8.71          5.34    1194
+         -----------------------------------------------------------------
+                       97. OTHER
+           19          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB028      R HISPANIC/LATINO
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.OtherBackground.B028_
+
+         Did [FIRST NAME OF INDIVIDUAL] consider [herself/himself] Hispanic or Latino?
+        ..................................................................................
+                        1. YES
+            5           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1222       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND (B028_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB029M1M   TYPE HISPANIC - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.OtherBackground.B029M[1]
+
+        Would[she/he] have said[she/he] was Mexican American, Puerto Rican, Cuban
+        American or something else?
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+                        1. MEXICAN AMERICAN/CHICANO
+                        7. OTHER (SPECIFY) masked version includes Puerto Rican, Cuban
+                           American
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB031M     R RACE - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.OtherBackground.B031_
+
+         Did[she/he] consider[herself/himself] primarily White or Caucasian, Black or
+        African American, American Indian, or Asian, or something else?
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+            5           1. WHITE/CAUCASIAN
+                        2. BLACK/AFRICAN AMERICAN
+                        7. OTHER (SPECIFY); AMERICAN INDIAN OR ALASKAN NATIVE, ASIAN OR
+                           PACIFIC ISLANDER
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1222       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB033      NUMBER CHILDREN EVER
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.OtherBackground.B033_NumKids
+
+        How many children did [he father/she give birth to]?  Please don't count
+        miscarriages or still-births, or adopted or step-children for this question.
+        ..................................................................................
+            5                     0-4. Actual Value
+                                    8. DK (Don't Know); NA (Not Ascertained)
+                                    9. RF (Refused)
+         1222                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND (B033_NumKids > 0)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB034      NUMBER LIVING CHILDREN
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.OtherBackground.B034_
+
+        [/Is that child alive today?
+        INTERVIEWER: IF R RESPONDS YES TYPE 1 AND PRESS [ENTER]. TYPE 0 IF R RESPONDS
+        NO/How many of them are still living?]
+        NUMBER LIVING:
+        ..................................................................................
+            4                     2-4. Actual Value
+                                    8. DK (Don't Know); NA (Not Ascertained)
+                                    9. RF (Refused)
+         1223                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB035      R SERVED IN MILITARY
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.OtherBackground.B035_
+
+         Did [she/he] ever serve in the active military of the United States?
+        ..................................................................................
+            2           1. YES
+            3           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1222       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND (B035_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB036      YEAR MILITARY BEGIN
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecB.OtherBackground.B036_
+
+        During what years was [she/he] in active service?
+        FROM:
+        TO:
+        ..................................................................................
+            2               1942-1960. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1225                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND (B035_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB037      YEAR MILITARY END
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecB.OtherBackground.B037_
+
+        (During what years was [she/he] in active service?)
+        FROM: [YEAR MILITARY BEGIN]
+        TO:
+        ..................................................................................
+            2               1946-1980. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1225                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1998))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND (B035_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB038      MILITARY RELATED DISABILITY
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.OtherBackground.B038_
+
+        Did[she/he] have a disability connected with military service?
+        ..................................................................................
+            1           1. YES
+            1           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1225       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piSecARelationsA028_RInNHome <> YES) OR
+        (piSecAHousingLocationNursingHomeA070_NHOwnRent = YES))
+         AND ((piHHX033_HHMoved <> RDIDNTMOVE) OR
+        (piSecAHousingLocationA071_SameMainRes <> YES))
+         AND (piRvarsZ076_ReIwR_V = REIWR)
+         AND (piSCVXR1_R2 <> SECOND)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB039      YEAR MOVED TO MAIN RESIDENCE
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecB.LivedArea.B039_YrMoveMainRes
+
+        In what year did [she/he] move to [her/his] home in [CURRENT RESIDENCE
+        CITY/STATE] / [OTHER RESIDENCE CITY/STATE]?
+        YEAR:
+        ..................................................................................
+          122               1944-2004. Actual Value
+            6                    9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1099                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piSecARelationsA028_RInNHome <> YES) OR
+        (piSecAHousingLocationNursingHomeA070_NHOwnRent = YES))
+         AND ((piHHX033_HHMoved <> RDIDNTMOVE) OR
+        (piSecAHousingLocationA071_SameMainRes <> YES))
+         AND (piRvarsZ076_ReIwR_V = REIWR)
+         AND (piSCVXR1_R2 <> SECOND)
+         AND (B039_YrMoveMainRes >= (Today.YEAR - 2))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB040      MONTH MOVED TO MAIN RESIDENCE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.LivedArea.B040_MoMoveMainRes
+
+        In what month was that?
+        MONTH:
+        ..................................................................................
+            5           1. JAN
+            5           2. FEB
+            2           3. MAR
+            2           4. APR
+                        5. MAY
+            8           6. JUN
+            2           7. JUL
+            5           8. AUG
+            5           9. SEP
+            4          10. OCT
+            5          11. NOV
+            5          12. DEC
+            6          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1173       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piSecARelationsA028_RInNHome <> YES) OR
+        (piSecAHousingLocationNursingHomeA070_NHOwnRent = YES))
+         AND ((piHHX033_HHMoved <> RDIDNTMOVE) OR
+        (piSecAHousingLocationA071_SameMainRes <> YES))
+         AND (piRvarsZ076_ReIwR_V = REIWR)
+         AND (((piHHX033_HHMoved = MOVEDOUTAREA) OR (B039_YrMoveMainRes = DONTKNOW)) OR
+        (B039_YrMoveMainRes = REFUSAL))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB044      LIVE GEN AREA BEFORE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.LivedArea.B044_
+
+        IF KNOW YEAR R MOVED TO CURRENT RESIDENCE (A25/B039):
+        Before [he/she] moved to  MAIN RESIDENCE [CITY/CITY & STATE]  in  YEAR
+        (A25/B039) did [he/she] ever live there before?
+
+        IF KNOW HOW MANY YEARS R LIVED AT CURRENT RESIDENCE (CS33A/A078):
+        Before [he/she] moved to  MAIN RESIDENCE [CITY/CITY & STATE]  YEARS AT CURRENT
+        RESIDENCE (CS33A/A078)  years ago, had [he/she] ever lived there before?
+
+        OTHERWISE:
+        Before [he/she] moved to  MAIN RESIDENCE [CITY/CITY & STATE]  had [he/she]
+        ever lived there before?
+        ..................................................................................
+           27           1. YES
+           48           5. NO
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1151       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((((B044_ = YES) OR (B044_ = DONTKNOW)) OR (B044_ = REFUSAL)) OR
+        (((piHHX024_ReIwHH_V <> YES) AND (piSecAHousingLocationA078_YrsCurRes <> 95))
+        AND ((piSCVXR1_R2 <> SECOND) AND (piSecARelationsA028_RInNHome <> YES))))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB045      NUMBER YEARS LIVING IN AREA
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.LivedArea.B045_
+
+        Altogether, about how many years did [he/she] live in or around  MAIN
+        RESIDENCE CITY, STATE (STATE ABBREVIATION)?        96 ALWAYS LIVED AROUND
+        HERE/THERE
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             21        1          65         24.43         20.34    1199
+         -----------------------------------------------------------------
+            6          96. ALWAYS LIVED AROUND HERE/THERE
+            1          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((((B044_ = YES) OR (B044_ = DONTKNOW)) OR (B044_ = REFUSAL)) OR
+        (((piHHX024_ReIwHH_V <> YES) AND (piSecAHousingLocationA078_YrsCurRes <> 95))
+        AND ((piSCVXR1_R2 <> SECOND) AND (piSecARelationsA028_RInNHome <> YES))))
+         AND (B045_ = EMPTY OR B045_ = NONRESPONSE)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB046      SINCE YEAR LIVING IN MAIN AREA
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecB.LivedArea.B046_
+
+        Altogether, about how many years did [he/she] live in or around  MAIN
+        RESIDENCE CITY, STATE (STATE ABBREVIATION)?     9996 ALWAYS LIVED AROUND
+        HERE/THERE
+        ..................................................................................
+            1        1994. Actual Value
+                     9996. ALWAYS LIVED AROUND HERE/THERE
+                     9998. DK (Don't Know); NA (Not Ascertained)
+                     9999. RF (Refused)
+         1226       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((piRvarsZ076_ReIwR_V <> REIWR) AND (piSecAHousingLocationA078_YrsCurRes
+        <> 95)) OR (piRvarsZ093_IwYr_V < 1995)
+          OR ((piRvarsZ076_ReIwR_V <> REIWR) AND (piSecAHousingLocationA078_YrsCurRes
+        <> 95)) OR (piRvarsZ093_IwYr_V < 1995)
+          OR ((piRvarsZ076_ReIwR_V <> REIWR) AND (piSecAHousingLocationA078_YrsCurRes
+        <> 95)) OR (piRvarsZ093_IwYr_V < 1995))
+         AND ((B045_ <> 96) AND (B046_ <> 9996)
+          OR (B045_ <> 96) AND (B046_ <> 9996)
+          OR (B045_ <> 96) AND (B046_ <> 9996))
+         AND (B078_B047_.puState = 98
+          OR NOT (B078_B047_.puState = 98)
+          OR NOT (B078_B047_.puState = 98))
+         AND (B078_B047_.puState = 99
+          OR NOT (B078_B047_.puState = 99))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB047M     ST/COUNTRY LIVED DURING SCHOOL - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.LivedArea.B047_
+
+        IF {HIGHEST GRADE OF SCHOOL COMPLETED WAS 10TH GRADE OR LESS or R DID NOT SAY}
+        (B014={1-10 or DK or RF}):
+        In what state or country did [he/she] live most of the time [he/she] was in
+        grade school?
+
+        IF R {COMPLETED AT LEAST LATE HIGH SCHOOL or HAD ANOTHER TYPE OF SCHOOLING}
+        (B014={11-17 or 97}):
+        In what state or country did [he/she] live most of the time [he/she] was in
+        high school?
+
+        IF R DID NOT HAVE FORMAL SCHOOLING (B014=0):
+        In what state or country did [he/she] live most of the time [he/she] was about
+        age 10?
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+            1           1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+            5           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+            2           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+            1           4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+            3           5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+            3           6. South Region: East South Central Division (KY, TN, AL, MS)
+                        7. South Region: West South Central Division (AR, LA, OK, TX)
+                        8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+            3           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+            3          11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+                       97. OTHER SPECIFY
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1206       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB049      LIVED RURAL AREA DURING SCHOOL
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.LivedArea.B049_
+
+        Was[she/he] living in a rural area most of the time when[she/he] was [in grade
+        school/in high school/about age 10]?
+        ..................................................................................
+            4           1. YES
+            1           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1222       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB050      R RELIGIOUS PREFERENCE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.LivedArea.B050_
+
+        What was [her/his] religious preference; Was it Protestant, Catholic, Jewish,
+        some other religion, or did [she/he] have no preference?
+        ..................................................................................
+            2           1. PROTESTANT
+            1           2. CATHOLIC
+            1           3. JEWISH
+            1           4. NO PREFERENCE
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1222       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piRvarsZ076_ReIwR_V <> REIWR)
+         AND (B050_ = PROTESTANT)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB052M     DENOMINATION - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecB.LivedArea.B052_
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+            1           1. PROTESTANT: REFORMATION ERA (Congregational; Episcopalian,
+                           Anglican, Church of England; Evangelical and Reformed;
+                           Lutheran; Presbyterian; Reformed, Dutch Reformed or Christian
+                           Reformed; United Church of Christ)
+                       11. PROTESTANT: PIETISTIC (African Methodist Episcopal; AME Zion;
+                           Baptist--NA type; Disciples of Christ; Methodist; United
+                           Brethren or Evangelical Brethren; Mennonite, Amish; Church of
+                           the Brethren; 'Christian'
+                       21. PROTESTANT: FUNDAMENTALIST (Church of Christ; Church of God,
+                           'Holiness', Church of Living; God, Church of God in Prophecy;
+                           Church of God in Christ; Fundamentalist Baptist: include
+                           Primitive Baptist, Free Will Baptist, Missionary Baptist,
+                           Gospel Baptist; Nazarene or Free Methodist; Pentecostal or
+                           Assembly of God; Plymouth Brethren; Salvation Army;
+                           Sanctified; Seventh Day Adventist; Southern Baptist; United
+                           Missionary or Protestant Missionary; Christian and Missionary
+                           Alliance; Missouri Synod Lutheran; Other Fundamentalist;
+                           'Apostolic'--NFS; 'Charismatic' --NFS; Bible Church, Word of
+                           Faith, Foursquare
+                       41. PROTESTANT: GENERAL (Protestant, no denomination given; Non-
+                           denominational Protestant church; Community church--no
+                           denominational basis; 'Born again Christian'--NFS;
+                           'Evangelical'--NFS; Other Protestant--not listed above;
+                           Berean,AZUA, United Church of Canada
+                       51. CATHOLIC; EASTERN ORTHODOX (ROMAN CATHOLIC; 'Catholic'--NFS;
+                           Greek Rite Catholic; Orthodox; Eastern Orthodox;
+                           Greek/Russian; Orthodox; other Orthodox
+                       61. NON-TRADITIONAL CHRISTIAN (Christian Scientist; Jehovah's
+                           Witnesses Latter Day Saints, Mormons Quakers; Spiritualists;
+                           Unitarian or Universalist; Unity; Other non-traditional
+                           Christian
+                       71. JEWISH
+                       81. NON-JUDEO-CHRISTIAN (Nation of Islam; Islam; Muslim; Moslem;
+                           Mohammedan; World Community of Islam in the West; Buddhist;
+                           Hindu; Bahai; Other non-Judeo-Christian religion)
+                       91. NO RELIGION; NONE; NO PREFERENCE; Atheist; agnostic; OTHER
+                           (include Mason, New Age, RC and Jewish, RC in summer/Lutheran
+                           in winter, Mile-High Church of Rel. Science, Science of Mind,
+                           Yeshuan)
+            1          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1225       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB082      ATTEND RELIGIOUS SERV- FREQ
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.B082_OftReligServices
+
+        About how often did [she/he] attend religious services during the last year
+        [she/he] was alive?
+        PROBE IF NECESSARY: (Would you say more than once a week, once a week, two or
+        three times a month, one or more times a year, or not at all?)
+        ..................................................................................
+           93           1. MORE THAN ONCE A WEEK
+          254           2. ONCE A WEEK
+          112           3. TWO OR THREE TIMES A MONTH
+          204           4. ONE OR MORE TIMES A YEAR
+          542           5. NOT AT ALL
+           21           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) OR (piRvarsZ093_IwYr_V < 1995))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB054      ENGLISH USUALLY SPOKEN IN HOME
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.B054_
+
+        Was English the language[she/he] usually spoke at home?
+        ..................................................................................
+           19           1. YES
+            2           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1206       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V = REIWR) AND (piSCVXR1_R2 <> SECOND))
+         AND ((piSecARelationsA020TSameSpP_A <> YESANDSPPTRISLIVING) AND
+        ((piSecARelationsA023_PWSpPAlive <> NO) OR (piSecARelationsA026_Rmarried <>
+        NO)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB055      NEW MARRIAGE SINCE PREVIOUS WAVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Marriage2.B055_
+
+        Sometimes marital situations are not entirely clear from what we've asked so
+        far.
+        Please bear with me for a few more questions on this.
+        Did [she/he] have a marriage start after [Last IW Month], [PREV WAVE FIRST R
+        IW YEAR]?
+        ..................................................................................
+            2           1. YES
+          719           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          506       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V = REIWR) AND (piSCVXR1_R2 <> SECOND))
+         AND ((piSecARelationsA020TSameSpP_A <> YESANDSPPTRISLIVING) AND
+        ((piSecARelationsA023_PWSpPAlive <> NO) OR (piSecARelationsA026_Rmarried <>
+        NO)))
+         AND (B055_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB056      BETWEEN WAVE MARRAIGE START-MONTH
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Marriage2.B056_
+
+        In what month and year was[she/he] married?
+        MONTH:
+        YEAR:
+        ..................................................................................
+                        1. JAN
+                        2. FEB
+                        3. MAR
+                        4. APR
+            1           5. MAY
+                        6. JUN
+                        7. JUL
+                        8. AUG
+                        9. SEP
+                       10. OCT
+                       11. NOV
+                       12. DEC
+            1          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1225       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V = REIWR) AND (piSCVXR1_R2 <> SECOND))
+         AND ((piSecARelationsA020TSameSpP_A <> YESANDSPPTRISLIVING) AND
+        ((piSecARelationsA023_PWSpPAlive <> NO) OR (piSecARelationsA026_Rmarried <>
+        NO)))
+         AND (B055_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB057      BETWEEN WAVE MARRIAGE START-YEAR
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecB.Marriage2.B057_
+
+        (In what month and year was [she/he] married?)
+        MONTH: [BETWEEN WAVE MARRAIGE START-MONTH]
+        YEAR:
+        ..................................................................................
+            2               1992-2003. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1225                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V = REIWR) AND (piSCVXR1_R2 <> SECOND))
+         AND ((piSecARelationsA020TSameSpP_A <> YESANDSPPTRISLIVING) AND
+        ((piSecARelationsA023_PWSpPAlive <> NO) OR (piSecARelationsA026_Rmarried <>
+        NO)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB058      DIVORCE/WIDOW SINCE PREVIOUS WAVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Marriage2.B058_DivWidSincePW
+
+        Did [she/he] divorce or become widowed since [Last IW Month], [PREV WAVE FIRST
+        R IW YEAR]?
+        ..................................................................................
+            4           1. YES, DIVORCED/ANNULLED
+           31           2. YES, WIDOWED
+          686           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          506       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V = REIWR) AND (piSCVXR1_R2 <> SECOND))
+         AND ((piSecARelationsA020TSameSpP_A <> YESANDSPPTRISLIVING) AND
+        ((piSecARelationsA023_PWSpPAlive <> NO) OR (piSecARelationsA026_Rmarried <>
+        NO)))
+         AND ((B058_DivWidSincePW = YESDIVORCED_ANNULLED) OR (B058_DivWidSincePW =
+        YESWIDOWED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB059      BETWEEN WAVE DIVORCE/WIDOW-MONTH
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Marriage2.B059_
+
+        In what month and year did[she/he][ divorce/ become widowed]?
+        MONTH:
+        YEAR:
+        ..................................................................................
+            5           1. JAN
+            3           2. FEB
+            1           3. MAR
+            1           4. APR
+            2           5. MAY
+            3           6. JUN
+            1           7. JUL
+            1           8. AUG
+                        9. SEP
+            2          10. OCT
+            1          11. NOV
+            3          12. DEC
+           12          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1192       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V = REIWR) AND (piSCVXR1_R2 <> SECOND))
+         AND ((piSecARelationsA020TSameSpP_A <> YESANDSPPTRISLIVING) AND
+        ((piSecARelationsA023_PWSpPAlive <> NO) OR (piSecARelationsA026_Rmarried <>
+        NO)))
+         AND ((B058_DivWidSincePW = YESDIVORCED_ANNULLED) OR (B058_DivWidSincePW =
+        YESWIDOWED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB060      BETWEEN WAVE DIVORCE/WIDOW-YEAR
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecB.Marriage2.B060_
+
+        (In what month and year did[she/he] [divorce/become widowed]?)
+        MONTH: [BETWEEN WAVE DIVORCE/WIDOW-MONTH]
+        YEAR:
+        ..................................................................................
+           20               1992-2003. Actual Value
+           14                    9998. DK (Don't Know); NA (Not Ascertained)
+            1                    9999. RF (Refused)
+         1192                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((piRvarsZ076_ReIwR_V <> REIWR) OR (piSCVXR1_R2 = SECOND)) OR
+        ((piSecARelationsA020TSameSpP_A = YESANDSPPTRISLIVING) OR
+        ((piSecARelationsA023_PWSpPAlive = NO) AND NOT (piSecARelationsA026_Rmarried =
+        NO)))) OR (((B058_DivWidSincePW = NO) OR (B058_DivWidSincePW = DONTKNOW)) OR
+        (B058_DivWidSincePW = REFUSAL))) AND ((piRespondents1X065ACouplenss <> MARRIED)
+        AND (piSecARelationsA034_RMarSep <> SEPARATED)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB061      MARITAL STATUS IF UNMARRIED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Marriage2.B061_AskMarStat
+
+        Just to clarify, at the time of [her/his] death was [she/he] separated,
+        divorced, widowed, or had [she/he] never been married?
+        INTERVIEWER: IF R REPORTS BEING PARTNERED, READ: For this question, we are
+        interested in knowing [her/his] legal marital status. Would you say [she/he]
+        was married, separated, divorced, widowed, or never married?
+        ..................................................................................
+            2           1. MARRIED (VOL)
+                        2. ANULLED (VOL)
+           16           3. SEPARATED
+          114           4. DIVORCED
+          504           5. WIDOWED
+           51           6. NEVER MARRIED
+            1           7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          539       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRvarsZ076_ReIwR_V <> REIWR) AND (B061_AskMarStat <> NEVERMARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB065      NUMBER OF MARRIAGES
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Marriage2.B065_
+
+        Altogether, how many times had [she/he] been married [including [FIRST NAME OF
+        INDIVIDUAL]`s current marriage]?
+        ..................................................................................
+                        0. NEVER BEEN MARRIED (VOL)
+            2           1. ONCE
+            2           2. TWICE
+            1           3. THREE TIMES
+                        4. FOUR OR MORE
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1222       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB066_1    FIRST MARRIAGE YEAR BEGAN
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[1].B066_YrMarBegan
+
+        In what year did [her/his] [current/most recent/first/second/third] marriage
+        begin?
+        YEAR:
+        ..................................................................................
+            2               1919-1948. Actual Value
+            1                    9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1224                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+         AND (B066_YrMarBegan <> REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB067_1    FIRST MARRIAGE MONTH BEGAN
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[1].B067_MoMarBegan
+
+        In what month was that?
+        MONTH:
+        ..................................................................................
+                        1. JAN
+                        2. FEB
+                        3. MAR
+                        4. APR
+                        5. MAY
+                        6. JUN
+                        7. JUL
+                        8. AUG
+                        9. SEP
+                       10. OCT
+                       11. NOV
+            1          12. DEC
+            2          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1224       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+         AND (((SecA.Relations.A038TCouplenss_A <> MARRIED) AND
+        (SecA.Relations.A038TCouplenss_A <> REMARRIED)) OR
+        (((SecA.Relations.A038TCouplenss_A = MARRIED) OR
+        (SecA.Relations.A038TCouplenss_A = REMARRIED)) AND piM <> piI))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB068_1    FIRST MARRIAGE END DIVORCE/WIDOW
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[1].B068_HowMarEnd
+
+        IWER ASK IF NECESSARY
+        (Did that marriage end in divorce or was [she/he] widowed?)
+        ..................................................................................
+            1           4. DIVORCED
+            2           5. WIDOWED
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1224       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+         AND (((SecA.Relations.A038TCouplenss_A <> MARRIED) AND
+        (SecA.Relations.A038TCouplenss_A <> REMARRIED)) OR
+        (((SecA.Relations.A038TCouplenss_A = MARRIED) OR
+        (SecA.Relations.A038TCouplenss_A = REMARRIED)) AND piM <> piI))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB070_1    FIRST MARRIAGE-YEARS MARRIAGE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[1].B070_NumYrsMar
+
+        About how many years did that marriage last?
+        ..................................................................................
+            3                    3-25. Actual Value
+                                   98. DK (Don't Know); NA (Not Ascertained)
+                                   99. RF (Refused)
+         1224                   Blank. INAP (Innapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB066_2    SECOND MARRIAGE YEAR BEGAN
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[2].B066_YrMarBegan
+
+        In what year did [her/his] [current/most recent/first/second/third] marriage
+        begin?
+        YEAR:
+        ..................................................................................
+            1        1978. Actual Value
+            2        9998. DK (Don't Know); NA (Not Ascertained)
+                     9999. RF (Refused)
+         1224       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+         AND (B066_YrMarBegan <> REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB067_2    SECOND MARRIAGE MONTH BEGAN
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[2].B067_MoMarBegan
+
+        In what month was that?
+        MONTH:
+        ..................................................................................
+                        1. JAN
+                        2. FEB
+                        3. MAR
+                        4. APR
+                        5. MAY
+                        6. JUN
+                        7. JUL
+                        8. AUG
+            1           9. SEP
+                       10. OCT
+                       11. NOV
+                       12. DEC
+            2          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1224       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+         AND (((SecA.Relations.A038TCouplenss_A <> MARRIED) AND
+        (SecA.Relations.A038TCouplenss_A <> REMARRIED)) OR
+        (((SecA.Relations.A038TCouplenss_A = MARRIED) OR
+        (SecA.Relations.A038TCouplenss_A = REMARRIED)) AND piM <> piI))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB068_2    SECOND MARRIAGE END DIVORCE/WIDOW
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[2].B068_HowMarEnd
+
+        IWER ASK IF NECESSARY
+        (Did that marriage end in divorce or was[she/he] widowed?)
+        ..................................................................................
+            1           4. DIVORCED
+            1           5. WIDOWED
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1225       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+         AND (((SecA.Relations.A038TCouplenss_A <> MARRIED) AND
+        (SecA.Relations.A038TCouplenss_A <> REMARRIED)) OR
+        (((SecA.Relations.A038TCouplenss_A = MARRIED) OR
+        (SecA.Relations.A038TCouplenss_A = REMARRIED)) AND piM <> piI))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB070_2    SECOND MARRIAGE-YEARS MARRIAGE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[2].B070_NumYrsMar
+
+        About how many years did that marriage last?
+        ..................................................................................
+            1           2. Actual Value
+            1          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1225       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB066_3    THIRD MARRIAGE YEAR BEGAN
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[3].B066_YrMarBegan
+
+        In what year did [her/his] [current/most recent/first/second/third] marriage
+        begin?
+        YEAR:
+        ..................................................................................
+            1        1968. Actual Value
+                     9998. DK (Don't Know); NA (Not Ascertained)
+                     9999. RF (Refused)
+         1226       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+         AND (B066_YrMarBegan <> REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB067_3    THIRD MARRIAGE MONTH BEGAN
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[3].B067_MoMarBegan
+
+        In what month was that?
+        MONTH:
+        ..................................................................................
+                        1. JAN
+                        2. FEB
+                        3. MAR
+                        4. APR
+                        5. MAY
+                        6. JUN
+            1           7. JUL
+                        8. AUG
+                        9. SEP
+                       10. OCT
+                       11. NOV
+                       12. DEC
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1226       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+         AND (((SecA.Relations.A038TCouplenss_A <> MARRIED) AND
+        (SecA.Relations.A038TCouplenss_A <> REMARRIED)) OR
+        (((SecA.Relations.A038TCouplenss_A = MARRIED) OR
+        (SecA.Relations.A038TCouplenss_A = REMARRIED)) AND piM <> piI))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB068_3    THIRD MARRIAGE END DIVORCE/WIDOW
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[3].B068_HowMarEnd
+
+        IWER ASK IF NECESSARY
+        (Did that marriage end in divorce or was [she/he] widowed?)
+        ..................................................................................
+                        4. DIVORCED
+                        5. WIDOWED
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+         AND (((SecA.Relations.A038TCouplenss_A <> MARRIED) AND
+        (SecA.Relations.A038TCouplenss_A <> REMARRIED)) OR
+        (((SecA.Relations.A038TCouplenss_A = MARRIED) OR
+        (SecA.Relations.A038TCouplenss_A = REMARRIED)) AND piM <> piI))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB070_3    THIRD MARRIAGE-YEARS MARRIAGE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[3].B070_NumYrsMar
+
+        About how many years did that marriage last?
+        ..................................................................................
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB066_4    MARRIAGE YEAR BEGAN -4
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[4].B066_YrMarBegan
+
+        In what year did[her/his][current/most recent/first/second/third] marriage
+        begin?
+        YEAR:
+        ..................................................................................
+                     9998. DK (Don't Know); NA (Not Ascertained)
+                     9999. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+         AND (B066_YrMarBegan <> REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB067_4    MARRIAGE MONTH BEGAN -4
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[4].B067_MoMarBegan
+
+        In what month was that?
+        MONTH:
+        ..................................................................................
+                        1. JAN
+                        2. FEB
+                        3. MAR
+                        4. APR
+                        5. MAY
+                        6. JUN
+                        7. JUL
+                        8. AUG
+                        9. SEP
+                       10. OCT
+                       11. NOV
+                       12. DEC
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+         AND (((SecA.Relations.A038TCouplenss_A <> MARRIED) AND
+        (SecA.Relations.A038TCouplenss_A <> REMARRIED)) OR
+        (((SecA.Relations.A038TCouplenss_A = MARRIED) OR
+        (SecA.Relations.A038TCouplenss_A = REMARRIED)) AND piM <> piI))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB068_4    MARRIAGE END DIVORCE/WIDOW -4
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[4].B068_HowMarEnd
+
+        IWER ASK IF NECESSARY
+        (Did that marriage end in divorce or was[she/he] widowed?)
+        ..................................................................................
+                        4. DIVORCED
+                        5. WIDOWED
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((((B065_ = TWICE) OR (B065_ = THREETIMES)) OR (B065_ = FOURORMORE)) OR
+        B065_ = NONRESPONSE) OR ((piHHX024_ReIwHH_V <> YES) AND (B065_ = ONCE)))
+         AND (M <= i)
+         AND ((piM <= 4) OR (piSecARelationsA034_RMarSep = MARRIED))
+         AND (((SecA.Relations.A038TCouplenss_A <> MARRIED) AND
+        (SecA.Relations.A038TCouplenss_A <> REMARRIED)) OR
+        (((SecA.Relations.A038TCouplenss_A = MARRIED) OR
+        (SecA.Relations.A038TCouplenss_A = REMARRIED)) AND piM <> piI))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB070_4    MARRIAGE-YEARS MARRIED -4
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecB.Marriage2.MarriageA[4].B070_NumYrsMar
+
+        About how many years did that marriage last?
+        ..................................................................................
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRespondents1X065ACouplenss = MARRIED) OR (piMarriage2B061_AskMarStat =
+        MARRIED)
+          OR NOT ((piRespondents1X065ACouplenss = MARRIED) OR
+        (piMarriage2B061_AskMarStat = MARRIED))
+          OR NOT ((piRespondents1X065ACouplenss = MARRIED) OR
+        (piMarriage2B061_AskMarStat = MARRIED))
+          OR NOT ((piRespondents1X065ACouplenss = MARRIED) OR
+        (piMarriage2B061_AskMarStat = MARRIED))
+          OR NOT ((piRespondents1X065ACouplenss = MARRIED) OR
+        (piMarriage2B061_AskMarStat = MARRIED))
+          OR NOT ((piRespondents1X065ACouplenss = MARRIED) OR
+        (piMarriage2B061_AskMarStat = MARRIED))
+          OR NOT ((piRespondents1X065ACouplenss = MARRIED) OR
+        (piMarriage2B061_AskMarStat = MARRIED))
+          OR NOT ((piRespondents1X065ACouplenss = MARRIED) OR
+        (piMarriage2B061_AskMarStat = MARRIED))
+          OR NOT ((piRespondents1X065ACouplenss = MARRIED) OR
+        (piMarriage2B061_AskMarStat = MARRIED)))
+         AND ((piSecARelationsA034_RMarSep = SEPARATED) OR (piMarriage2B061_AskMarStat
+        = SEPARATED)
+          OR NOT ((piSecARelationsA034_RMarSep = SEPARATED) OR
+        (piMarriage2B061_AskMarStat = SEPARATED))
+          OR NOT ((piSecARelationsA034_RMarSep = SEPARATED) OR
+        (piMarriage2B061_AskMarStat = SEPARATED))
+          OR NOT ((piSecARelationsA034_RMarSep = SEPARATED) OR
+        (piMarriage2B061_AskMarStat = SEPARATED))
+          OR NOT ((piSecARelationsA034_RMarSep = SEPARATED) OR
+        (piMarriage2B061_AskMarStat = SEPARATED))
+          OR NOT ((piSecARelationsA034_RMarSep = SEPARATED) OR
+        (piMarriage2B061_AskMarStat = SEPARATED))
+          OR NOT ((piSecARelationsA034_RMarSep = SEPARATED) OR
+        (piMarriage2B061_AskMarStat = SEPARATED))
+          OR NOT ((piSecARelationsA034_RMarSep = SEPARATED) OR
+        (piMarriage2B061_AskMarStat = SEPARATED)))
+         AND ((piMarriage2B061_AskMarStat = DIVORCED) OR (Marriage2.B058_DivWidSincePW
+        = YESDIVORCED_ANNULLED)
+          OR NOT ((piMarriage2B061_AskMarStat = DIVORCED) OR
+        (Marriage2.B058_DivWidSincePW = YESDIVORCED_ANNULLED))
+          OR NOT ((piMarriage2B061_AskMarStat = DIVORCED) OR
+        (Marriage2.B058_DivWidSincePW = YESDIVORCED_ANNULLED))
+          OR NOT ((piMarriage2B061_AskMarStat = DIVORCED) OR
+        (Marriage2.B058_DivWidSincePW = YESDIVORCED_ANNULLED))
+          OR NOT ((piMarriage2B061_AskMarStat = DIVORCED) OR
+        (Marriage2.B058_DivWidSincePW = YESDIVORCED_ANNULLED))
+          OR NOT ((piMarriage2B061_AskMarStat = DIVORCED) OR
+        (Marriage2.B058_DivWidSincePW = YESDIVORCED_ANNULLED))
+          OR NOT ((piMarriage2B061_AskMarStat = DIVORCED) OR
+        (Marriage2.B058_DivWidSincePW = YESDIVORCED_ANNULLED)))
+         AND (NOT (piMarriage2B061_AskMarStat = ANULLED)
+          OR NOT (piMarriage2B061_AskMarStat = ANULLED)
+          OR NOT (piMarriage2B061_AskMarStat = ANULLED)
+          OR NOT (piMarriage2B061_AskMarStat = ANULLED)
+          OR NOT (piMarriage2B061_AskMarStat = ANULLED)
+          OR piMarriage2B061_AskMarStat = ANULLED)
+         AND ((piMarriage2B061_AskMarStat = WIDOWED) OR (Marriage2.B058_DivWidSincePW =
+        YESWIDOWED)
+          OR NOT ((piMarriage2B061_AskMarStat = WIDOWED) OR
+        (Marriage2.B058_DivWidSincePW = YESWIDOWED))
+          OR NOT ((piMarriage2B061_AskMarStat = WIDOWED) OR
+        (Marriage2.B058_DivWidSincePW = YESWIDOWED))
+          OR NOT ((piMarriage2B061_AskMarStat = WIDOWED) OR
+        (Marriage2.B058_DivWidSincePW = YESWIDOWED))
+          OR NOT ((piMarriage2B061_AskMarStat = WIDOWED) OR
+        (Marriage2.B058_DivWidSincePW = YESWIDOWED)))
+         AND ((piSecARelationsA023_PWSpPAlive = NO) AND (piSecARelationsA026_Rmarried
+        <> YES)
+          OR NOT ((piSecARelationsA023_PWSpPAlive = NO) AND
+        (piSecARelationsA026_Rmarried <> YES))
+          OR NOT ((piSecARelationsA023_PWSpPAlive = NO) AND
+        (piSecARelationsA026_Rmarried <> YES))
+          OR NOT ((piSecARelationsA023_PWSpPAlive = NO) AND
+        (piSecARelationsA026_Rmarried <> YES)))
+         AND (NOT (piMarriage2B061_AskMarStat = NEVERMARRIED)
+          OR NOT (piMarriage2B061_AskMarStat = NEVERMARRIED)
+          OR piMarriage2B061_AskMarStat = NEVERMARRIED)
+         AND (NOT (piMarriage2B061_AskMarStat = OTH_SPECIFY)
+          OR piMarriage2B061_AskMarStat = OTH_SPECIFY)
+         AND (((piRespondents1X065ACouplenss = PARTNERED_VOL) OR
+        (piRespondents1X065ACouplenss = OTHER)) AND (piMarriage2B061_AskMarStat = EMPTY
+        OR piMarriage2B061_AskMarStat = NONRESPONSE))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TB063      MARITAL STATUS ASSIGNED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecB.B063_MarStatAssign
+        ..................................................................................
+          473           1. MARRIED (VOL)
+                        2. ANULLED (VOL)
+           25           3. SEPARATED
+          118           4. DIVORCED
+          559           5. WIDOWED
+           51           6. NEVER MARRIED
+            1           7. OTHER (SPECIFY)
+
+==========================================================================================
+
+TVDATE     2004 DATA MODEL VERSION
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        User Note:  This variable identifies which data model was used to interview
+        the household.  Please reference the data description for a summary of changes
+        in each data model.
+        ..................................................................................
+           14           1. Version 1
+           79           2. Version 2
+          153           3. Version 3
+          150           4. Version 4
+           92           5. Version 5
+          200           6. Version 6
+          515           7. Version 7
+           24           8. Version 8
+
+==========================================================================================
+
+TVERSION   2004 EXIT FINAL RELEASE VERSION NUMBER
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+         1227           1. HRS 2004 Exit Final Release #1
+

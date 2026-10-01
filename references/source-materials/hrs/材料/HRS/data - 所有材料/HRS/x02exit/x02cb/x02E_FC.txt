@@ -1,0 +1,338 @@
+==========================================================================================
+2002 HRS Exit (Final Release)
+ODBC Reference: [HRS2002x]
+Perl script: CodebkD11.pl v6.132 Mon Dec 11 11:20:43 2006
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION E: Family Structure - Transfers from Children (FromChild)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFICATION NUMBER
+          Section: E      Level: FromChild   Type: Character   Width: 6    Decimals: 0
+
+        ..................................................................................
+          141           000002-213399. Household Identifier
+
+==========================================================================================
+
+SSUBHH    2002 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+          Section: E      Level: FromChild   Type: Character   Width: 1    Decimals: 0
+
+        ..................................................................................
+          136           3. 1st deceased respondent from a household
+            5           4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+OPN       OTHER PERSON NUMBER
+          Section: E      Level: FromChild   Type: Character   Width: 3    Decimals: 0
+
+        ..................................................................................
+          128                 041-990. Other Person Number
+            1                     992. DECEASED CHILD
+            4                     993. ALL CHILDREN EQUALLY
+            3                     994. ALL GRANDCHILDREN EQUALLY
+            1                     995. ALL CHILDREN AND GRANDCHILDREN EQUALLY
+            4                     997. OTHER (SPECIFY)
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+
+==========================================================================================
+
+SFC_NDX   BLOCK BE_TRANSFROMKID INSTANCE NUMBER
+          Section: E      Level: FromChild   Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BE_TransFromKid.BE_TransFromKidInstance
+        ..................................................................................
+          112           1. First Transfer Mentioned
+           17           2. Second Transfer Mentioned
+            7           3. Third Transfer Mentioned
+            4           4. Fourth Transfer Mentioned
+            1           5. Fifth Transfer Mentioned
+
+==========================================================================================
+
+GSUBHH    2000 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+          Section: E      Level: FromChild   Type: Character   Width: 1    Decimals: 0
+
+        ..................................................................................
+          138           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+            1           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+            1           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+            1           3. 1st deceased respondent from a household
+                        4. 2nd deceased respondent from a household
+                        7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST);
+        (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR);
+        (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA106_NumContactKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES);
+        ((GrandKids.E049_ = 1) OR (Init.A106_NumContactKids > 0)) OR
+        ((GrandKids.E046_NumGKids > 0) AND (GrandKids.E046_NumGKids < 81)); E087_ =
+        YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SE088     WHICH CHILD GAVE LARGEST AMT
+          Section: E      Level: FromChild   Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BE_TransFromKid.E088_
+
+        Which child gave [RESPONDENT'S FIRST NAME] (or (you/(his/her)
+        (husband/wife/partner))) the (next) largest amount?
+
+        INTERVIEWER: IF GRANDCHILD: (Which of [RESPONDENT FIRST NAME]'s children is
+        the parent Of that grandchild?)
+        ..................................................................................
+          128                 041-990. Other Person Number
+            1                     992. DECEASED CHILD
+            4                     993. ALL CHILDREN EQUALLY
+            3                     994. ALL GRANDCHILDREN EQUALLY
+            1                     995. ALL CHILDREN AND GRANDCHILDREN EQUALLY
+            4                     997. OTHER (SPECIFY)
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+                                Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST);
+        (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR);
+        (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA106_NumContactKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES);
+        ((GrandKids.E049_ = 1) OR (Init.A106_NumContactKids > 0)) OR
+        ((GrandKids.E046_NumGKids > 0) AND (GrandKids.E046_NumGKids < 81)); E087_ =
+        YES; puE088_Temp = DONTKNOW;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SE090     RECEIVE SAME FROM MORE THAN ONE CHILD
+          Section: E      Level: FromChild   Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BE_TransFromKid.E090_
+
+        Did more than one child give (Did more than one child give [RESPONDENT FIRST
+        NAME] about the same amount?) about the same amount?
+        ..................................................................................
+            1           1. YES
+                        5. NO
+            4           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          136       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST);
+        (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR);
+        (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA106_NumContactKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES);
+        ((GrandKids.E049_ = 1) OR (Init.A106_NumContactKids > 0)) OR
+        ((GrandKids.E046_NumGKids > 0) AND (GrandKids.E046_NumGKids < 81)); E087_ =
+        YES; TransFromKid[i - 1].E099_ = YES; puE088_Temp = DONTKNOW; E090_ = YES; cnt
+        <= puE091MTemp.CARDINAL;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SE091M01  WHICH CHILD/REN GAVE SAME AMOUNT- 1
+          Section: E      Level: FromChild   Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BE_TransFromKid.E091_
+
+        (Which children?)
+
+        INTERVIEWER: IF GRANDCHILD: (Which of [RESPONDENT FIRST NAME]'s children is
+        the parent of those grandchildren?)
+        ..................................................................................
+                              041-990. Other Person Number
+                                  992. DECEASED CHILD
+                                  993. ALL CHILDREN EQUALLY
+                                  994. ALL GRANDCHILDREN EQUALLY
+                                  995. ALL CHILDREN AND GRANDCHILDREN EQUALLY
+            1                     997. OTHER (SPECIFY)
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+          140                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST);
+        (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR);
+        (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA106_NumContactKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES);
+        ((GrandKids.E049_ = 1) OR (Init.A106_NumContactKids > 0)) OR
+        ((GrandKids.E046_NumGKids > 0) AND (GrandKids.E046_NumGKids < 81)); E087_ =
+        YES; TransFromKid[i - 1].E099_ = YES; puE088_Temp = DONTKNOW; E090_ = YES; cnt
+        <= puE091MTemp.CARDINAL;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SE091M02  WHICH CHILD/REN GAVE SAME AMOUNT- 2
+          Section: E      Level: FromChild   Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BE_TransFromKid.E091_
+
+        (Which children?)
+
+        INTERVIEWER: IF GRANDCHILD: (Which of [RESPONDENT FIRST NAME]'s children is
+        the parent of those grandchildren?)
+        ..................................................................................
+                              041-990. Other Person Number
+                                  992. DECEASED CHILD
+                                  993. ALL CHILDREN EQUALLY
+                                  994. ALL GRANDCHILDREN EQUALLY
+                                  995. ALL CHILDREN AND GRANDCHILDREN EQUALLY
+                                  997. OTHER (SPECIFY)
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+          141                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST);
+        (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR);
+        (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA106_NumContactKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES);
+        ((GrandKids.E049_ = 1) OR (Init.A106_NumContactKids > 0)) OR
+        ((GrandKids.E046_NumGKids > 0) AND (GrandKids.E046_NumGKids < 81)); E087_ =
+        YES; TransFromKid[i - 1].E099_ = YES; (((((puE088_Temp <> REFUSAL) AND
+        (puE088_Temp <> C97)) AND (puE088_Temp <> DONTKNOW)) AND (puE091MTemp <>
+        DONTKNOW)) AND (puE091MTemp <> REFUSAL)) AND NOT (97 IN puE091MTemp);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SE093     DOLLARS TRANSFER FROM CHILD
+          Section: E      Level: FromChild   Type: Numeric     Width: 6    Decimals: 0
+         CAI Reference: BE_TransFromKid.E093_
+
+        About how much did that amount to from ( (her/his) deceased child/ each child/
+        each grandchild/ each child and grandchild/ OTHER (SPECIFY)/[CHILD NAME]
+        ([RELATIONSHIP TO R])) ( (since [PREV WAVE IW MONTH], [PREV WAVE IW
+        YEAR]/since [PREV WAVE IW YEAR]/in the last two years before (her/his)
+        death))?
+
+        INTERVIEWER: DO NOT PROBE DK/RF
+
+        AMOUNT:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+             60        500      60000       5335.33      10173.48      10
+         -----------------------------------------------------------------
+           69      999998. DK (Don't Know); NA (Not Ascertained)
+            2      999999. RF (Refused)
+
+==========================================================================================
+
+SE095     TRANSFER FROM CHILD - MIN
+          Section: E      Level: FromChild   Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BE_TransFromKid.E095_
+
+        E095_-E097_   Unfolding Sequence
+        Did it amount to a total of less than $___, more than $___, or what?
+
+        BREAKPOINTS: 1000, 2000, 5000
+
+        PROCEDURE(S): UNFM_1up1down
+        ENTRY POINT(S): 2000
+        ..................................................................................
+           27           0. Value of Breakpoint
+            4        1000. Value of Breakpoint
+           10        1001. Value of Breakpoint
+            7        2000. Value of Breakpoint
+           12        2001. Value of Breakpoint
+            3        5000. Value of Breakpoint
+            8        5001. Value of Breakpoint
+           70       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SE096     TRANSFER FROM CHILD - MAX
+          Section: E      Level: FromChild   Type: Numeric     Width: 5    Decimals: 0
+         CAI Reference: BE_TransFromKid.E096_
+        ..................................................................................
+           16         999. Value of Breakpoint
+            4        1000. Value of Breakpoint
+           10        1999. Value of Breakpoint
+            7        2000. Value of Breakpoint
+           11        4999. Value of Breakpoint
+            3        5000. Value of Breakpoint
+           20       50000. Value of Breakpoint
+           70       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SE097     TRANSFER FROM CHILD - RESULT
+          Section: E      Level: FromChild   Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BE_TransFromKid.E097_
+        ..................................................................................
+                       97. Data Not Available
+            8          98. DK (Don't Know); NA (Not Ascertained)
+            4          99. RF (Refused)
+          129       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST);
+        (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR);
+        (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA106_NumContactKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES);
+        ((GrandKids.E049_ = 1) OR (Init.A106_NumContactKids > 0)) OR
+        ((GrandKids.E046_NumGKids > 0) AND (GrandKids.E046_NumGKids < 81)); E087_ =
+        YES; (((((puE088_Temp <> REFUSAL) AND (puE088_Temp <> C97)) AND (puE088_Temp <>
+        DONTKNOW)) AND (puE091MTemp <> DONTKNOW)) AND (puE091MTemp <> REFUSAL)) AND NOT
+        (97 IN puE091MTemp); (((E093_ = DONTKNOW) OR (E093_ = REFUSAL)) OR (E093_ >=
+        500)) AND NOT ((E088_ = 96) OR (96 IN puE091MTemp)); NOT ((E088_ = 94) OR (94
+        IN puE091MTemp)) AND NOT ((E088_ = 95) OR (95 IN puE091MTemp)); piIndex <
+        piInitA101_TotalKids;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SE099     TRANSFER FROM OTHER CHILD
+          Section: E      Level: FromChild   Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BE_TransFromKid.E099_
+
+        (Since [PREV WAVE IW MONTH], [PREV WAVE IW YEAR]/Since [PREV WAVE IW YEAR]/In
+        the last two years before (her/his) death), did [RESPONDENT FIRST NAME] (or
+        (you/(his/her) (husband/wife/partner))) receive financial help totaling $500
+        or more from any other child (or grandchild)?
+
+        DEFINITION: (By financial help we mean giving money, helping pay bills, or
+        covering specific types of costs such as those for medical care OR insurance,
+        schooling, down payment for a home, rent, etc. The financial help can be
+        considered support, a gift or a loan.)
+        ..................................................................................
+           29           1. YES
+           73           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           39       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SVDATE    2002 DATA MODEL VERSION
+          Section: E      Level: FromChild   Type: Numeric     Width: 1    Decimals: 0
+
+
+        User Note:  This variable identifies which data model was used to interview
+        the proxy respondent.  Please reference the data description for a summary of
+        changes in each data model.
+        ..................................................................................
+           52           1. Version 1
+           33           2. Version 2
+           46           3. Version 3
+           10           4. Version 4
+
+==========================================================================================
+
+SVERSION  2002 EXIT FINAL RELEASE VERSION NUMBER
+          Section: E      Level: FromChild   Type: Numeric     Width: 1    Decimals: 0
+
+        ..................................................................................
+          141           1. HRS 2002 Exit Final Release #1
+
+==========================================================================================
+
+SQNR      BLAISE IDENTIFICATION NUMBER
+          Section: E      Level: FromChild   Type: Character   Width: 11   Decimals: 0
+
+        ..................................................................................
+          141 00000200010-21339900010. Blaise Identifier
+

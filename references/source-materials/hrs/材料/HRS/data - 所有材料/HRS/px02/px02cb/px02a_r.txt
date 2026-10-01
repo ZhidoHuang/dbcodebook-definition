@@ -1,0 +1,379 @@
+==========================================================================================
+2002 HRS Post-Exit (Early Release)
+ODBC Reference: [HRS2002px]
+Perl script: CodebkD11.pl v6.163 Thu Aug 31  9:15:37 2006
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION A: Coverscreen (Respondent)
+
+==========================================================================================
+
+HHID     HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+         CAI: .
+        ..................................................................................
+          486           010003-213425. Household Identifier
+
+==========================================================================================
+
+PN       RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         CAI: .
+        ..................................................................................
+          331         010. Person Identifier
+          123         020. Person Identifier
+            1         021. Person Identifier
+           15         030. Person Identifier
+           16         040. Person Identifier
+
+==========================================================================================
+
+SPSUBHH  2002 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+         CAI: .
+        ..................................................................................
+          470           3. 2002 Sub-Household Identifier
+           16           4. 2002 Sub-Household Identifier
+
+==========================================================================================
+
+SPPN_SP  2002 SPOUSE PERSON IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         CAI: .
+        ..................................................................................
+          101         010. Person Identifier
+            2         011. Person Identifier
+          124         020. Person Identifier
+            2         021. Person Identifier
+            7         030. Person Identifier
+           10         040. Person Identifier
+          240       Blank. INAP (Inapplicable); Missing
+
+==========================================================================================
+
+SPEXITIW WAVE OF EXIT INTERVIEW
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: .
+        ..................................................................................
+           26        1995. Wave of Exit Interview
+            6        1996. Wave of Exit Interview
+           45        1998. Wave of Exit Interview
+          409        2000. Wave of Exit Interview
+
+==========================================================================================
+
+SPPX98   HRS 1998 POST EXIT INTERVIEW
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: .
+        ..................................................................................
+                        1. YES
+          486           5. NO
+
+==========================================================================================
+
+SPPX00   HRS 2000 POST EXIT INTERVIEW
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: .
+        ..................................................................................
+           24           1. YES
+          462           5. NO
+
+==========================================================================================
+
+        Assign:
+         IF ((A120_UPDATER > 0) OR A503_REFRESH <> EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SPA500   DATE OF INTERVIEW - MONTH
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: B_Init.A500_CurDate
+        ..................................................................................
+            8           1. JAN
+            1           2. FEB
+                        3. MAR
+                        4. APR
+                        5. MAY
+                        6. JUN
+                        7. JUL
+          186           8. AUG
+          172           9. SEP
+           70          10. OCT
+           38          11. NOV
+           11          12. DEC
+                    Blank. INAP (Inapplicable); Missing
+
+==========================================================================================
+
+        Assign:
+         IF ((A120_UPDATER > 0) OR A503_REFRESH <> EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SPA501   DATE OF INTERVIEW - YEAR
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: B_Init.A501_CurDateYear
+         2000 Link: R770  2002 Link: SA501
+        ..................................................................................
+          477        2002. Year of Interview
+            9        2003. Year of Interview
+                    Blank. INAP (Inapplicable); Missing
+
+==========================================================================================
+
+        Assign:
+         IF ((A120_UPDATER > 0) OR A503_REFRESH <> EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SPA114   PREV WAVE IW YEAR
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: B_Init.A114_PrevWaveYear
+        ..................................................................................
+          486        2000. Last IW Year
+                    Blank. INAP (Inapplicable); Missing
+
+==========================================================================================
+
+        Ask:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES) AND
+        (StartInterview.A007TRAlive_A = YES)))
+         AND (HH.X024_ReIwHH_V = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SPA013   INTRO CONFIDENTIALITY
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: BA_ContinuInterview.A013_Continue
+
+        (As I mentioned,) the study appreciates the contribution that  R’s FIRST NAME
+        has made.  It is important to understand what happened in the time period
+        between the last interview and when [he/she] died.
+
+        A major focus is on  R’s FIRST NAME's  health and health-related costs, and in
+        the disposition of [his/her] assets.  We will also update general information
+        about  R’s FIRST NAME.
+
+        This interview is completely voluntary.  If we should come to any question
+        that you don't want to answer, just let me know and we will go on to the next
+        question. The answers you give will be kept confidential.
+
+        We are required to report to State officials credible evidence of serious harm
+        or abuse to any person, but we will not ask you any questions about such
+        topics.
+        ..................................................................................
+          486           1. CONTINUE
+                    Blank. INAP (Inapplicable); Missing
+
+==========================================================================================
+
+        Ask:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES) AND
+        (StartInterview.A007TRAlive_A = YES)))
+         AND (((piBA_RVarsZ145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST,
+        SECREPEATPOST]) AND piBA_RVarsZ131_YrDeath_V <> EMPTY) OR
+        (piBA_RVarsZ131_YrDeath_V = EMPTY AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN))))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SPA121   DATE OF DEATH- MONTH
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: BA_ContinuInterview.A121_MoDeath
+         2000 Link: R520  2002 Link: SA121
+
+        What was the date on which [RESPONDENT FIRST NAME] died?
+
+        MONTH:
+        ..................................................................................
+           48           1. JAN
+           45           2. FEB
+           42           3. MAR
+           31           4. APR
+           33           5. MAY
+           41           6. JUN
+           26           7. JUL
+           37           8. AUG
+           36           9. SEP
+           44          10. OCT
+           26          11. NOV
+           53          12. DEC
+           24          98. DK (Don't Know)
+                       99. RF (Refused)
+                    Blank. INAP (Inapplicable); Missing
+
+==========================================================================================
+
+        Ask:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES) AND
+        (StartInterview.A007TRAlive_A = YES)))
+         AND (((piBA_RVarsZ145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST,
+        SECREPEATPOST]) AND piBA_RVarsZ131_YrDeath_V <> EMPTY) OR
+        (piBA_RVarsZ131_YrDeath_V = EMPTY AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN))))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SPA123   DATE OF DEATH- YEAR
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: BA_ContinuInterview.A123_YrDeath
+         2000 Link: R522  2002 Link: SA123
+
+        What was the date on which [RESPONDENT FIRST NAME] died?
+
+        YEAR:
+        ..................................................................................
+          472               1987-2002. Actual Value
+           14                    9998. DK (Don't Know)
+                                 9999. RF (Refused)
+
+==========================================================================================
+
+        Assign:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES) AND (A007TRAlive_A
+        = YES)))
+         AND (NOT (piBA_Respondents1X060ASex = EMPTY))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SPA008   R SEX
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: BA_STARTINTERVIEW.A008ASex_A
+
+        INTERVIEWER: WAS [RESPONDENT FIRST NAME] MALE OR FEMALE?
+        ..................................................................................
+          248           1. MALE
+          238           2. FEMALE
+
+==========================================================================================
+
+        Ask:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES) AND (A007TRAlive_A
+        = YES)))
+         AND (A009_SelfPrxy <> SLF)
+         AND ((piBA_RVarsZ095_SelfPrxyIw_V <> SLF) AND (piBA_RVarsZ076_ReIwR_V =
+        REIWR))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SPA010   CURRENT - WAVE PROXY
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: BA_STARTINTERVIEW.A010_CurrWavePrxy
+         2000 Link: R515  2002 Link: SA010
+
+        INTERVIEWER: PREVIOUS WAVE (EXIT/POST-EXIT) PROXY WAS [PROXY
+        NAME], [PROXY RELATIONSHIP TO R].
+
+        IS CURRENT WAVE PROXY THE SAME PERSON OR SOMEONE ELSE?
+
+        INTERVIEWER:  THE NAME OR RELATIONSHIP OF THE PROXY AT THE PREVIOUS INTERVIEW
+        IS NOT RECORDED.  UNLESS YOU LEARN FROM THE CURRENT WAVE PROXY THAT S/HE ALSO
+        DID THE PREVIOUS INTERVIEW, ENTER CODE 3 BELOW.
+        ..................................................................................
+          378           1. SAME PERSON AS IN PRIOR-WAVE
+           61           2. DIFFERENT/NEW PERSON
+           47           3. NOT KNOWN IF SAME OR DIFFERENT AS IN PRIOR WAVE
+
+==========================================================================================
+
+        Assign:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES) AND (A007TRAlive_A
+        = YES)))
+         AND (A009_SelfPrxy <> SLF)
+         AND (NOT ((A009_SelfPrxy <> PXYSPISREPORTER) AND ((A010_CurrWavePrxy <>
+        SAMEPERSONASINPRIORWAVE) OR (FLA010 <> ''))))
+         AND (NOT (A009_SelfPrxy = PXYSPISREPORTER))
+         AND (((A010_CurrWavePrxy = SAMEPERSONASINPRIORWAVE) AND
+        piBA_RVarsZ094_PrxyName_V <> EMPTY) AND piBA_RVarsZ096_PrxyRTR_V <> EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SPA103   PROXY RELATIONSHIP TO R
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: BA_STARTINTERVIEW.A103_PrxyRTR
+
+        INTERVIEWER: DESIGNATE THE PROXY REPORTER'S RELATIONSHIP TO [RESPONDENT FIRST
+        NAME]
+        ..................................................................................
+          170           2. SPOUSE/PARTNER
+           79           3. SON
+            1           4. STEPSON OR SON OF PARTNER
+            1           5. SPOUSE/PARTNER OF DAUGHTER
+          139           6. DAUGHTER
+            3           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+            9           8. SPOUSE/PARTNER OF SON
+            4           9. GRANDCHILD OF R OR SP/P
+            9          15. BROTHER
+            7          17. SISTER
+           43          19. OTHER RELATIVE
+           20          20. OTHER INDIVIDUAL
+            1          23. PAID HELPER
+                       24. PROFESSIONAL
+                       33. SP/P OF GRANDCHILD
+                       98. DK (Don't Know)
+                       99. RF (Refused)
+
+==========================================================================================
+
+SPA152   INTRO TO POST EXIT
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: BA_STARTINTERVIEW.A152_IntroPostExit
+
+        As you may know, [RESPONDENT FIRST NAME] was a part of the Health and
+        Retirement Study, an important study about issues of aging. About two years
+        ago, after [RESPONDENT FIRST NAME] died,(we spoke with you about [RESPONDENT
+        FIRST NAME]'s death/we obtained some information about [RESPONDENT FIRST
+        NAME]'s death) and the health conditions surrounding [RESPONDENT FIRST NAME]'s
+        death.
+
+        At that time, final settlement of the estate had not taken place, and we would
+        like to ask a few questions now about the final estate settlement.
+        ..................................................................................
+          486           1. CONTINUE
+
+==========================================================================================
+
+        Ask:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES) AND (A007TRAlive_A
+        = YES)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SPA012   CHANGE LANGUAGE
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: BA_STARTINTERVIEW.A012_LangSwitch
+         2000 Link: R518  2002 Link: SA012
+
+        INTERVIEWER: SELECT ENGLISH OR SPANISH
+        ..................................................................................
+          483           1. ENGLISH
+            3           2. SPANISH
+
+==========================================================================================
+
+        Assign:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES) AND (A007TRAlive_A
+        = YES))
+          OR (HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES) AND (A007TRAlive_A
+        = YES)))
+         AND (A009_SelfPrxy = EMPTY
+          OR A009_SelfPrxy = EMPTY)
+         AND (A155_SelfPrxy = PXYSPISREPORTERNOTSAME
+          OR NOT (A155_SelfPrxy = PXYSPISREPORTERNOTSAME))
+         AND (A155_SelfPrxy <> EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SPA009   PROXY/SELF INTERVIEW
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: BA_STARTINTERVIEW.A009_SelfPrxy
+         2000 Link: R514  2002 Link: SA009
+
+        INTERVIEWER: DESIGNATE TYPE OF INTERVIEW
+        ..................................................................................
+                        1. SELF
+          170           2. PROXY IS SURVIVING SPOUSE
+          316           3. PROXY IS NON-SPOUSE
+
+==========================================================================================
+
+SPQNR    BLAISE IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 11  Decimals: 0
+         CAI: BA_AskBirthdate.Blaisekey
+        ..................................................................................
+          486 01000330020-21342530010. Blaise Identifier
+
+==========================================================================================
+
+SPVERSN  2002 POST EXIT VERSION NUMBER
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: .
+        ..................................................................................
+          486           1. HRS 2002 Post Exit Early Release #1
+

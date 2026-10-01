@@ -1,0 +1,3314 @@
+==========================================================================================
+
+HRS 2020 Final Release
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section S: WIDOWHOOD AND DIVORCE  (Respondent)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: S     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+         15723           010003-959738.  Household Identification Number
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: S     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+          8840         010.  Person Identifier
+           679         011.  Person Identifier
+            33         012.  Person Identifier
+             1         013.  Person Identifier
+          5000         020.  Person Identifier
+           190         021.  Person Identifier
+            20         022.  Person Identifier
+             1         023.  Person Identifier
+           310         030.  Person Identifier
+            36         031.  Person Identifier
+             4         032.  Person Identifier
+           549         040.  Person Identifier
+            53         041.  Person Identifier
+             5         042.  Person Identifier
+             2         043.  Person Identifier
+
+
+==========================================================================================
+
+RSUBHH                        2020 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: S     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+         13984           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+           907           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+           636           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            77           5.  Split household - one half of couple from SUBHH 1 or 2
+            10           6.  Split household - one half of couple from SUBHH 1 or 2
+           108           7.  Reunited household - respondents from split household
+                             reunite
+             1           8.  Split household - one half of couple from SUBHH 1 or 2
+
+
+==========================================================================================
+
+QSUBHH                        2018 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: S     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+         14179           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+           781           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+           583           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            63           5.  Split household - one half of couple from SUBHH 1 or 2
+             9           6.  Split household - one half of couple from SUBHH 1 or 2
+           107           7.  Reunited household - respondents from split household
+                             reunite
+             1           8.  Split household - one half of couple from SUBHH 1 or 2
+
+
+==========================================================================================
+
+RPN_SP                        2020 SPOUSE/PARTNER PERSON NUMBER
+         Section: S     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+          4245         010.  Person Identifier
+           567         011.  Person Identifier
+            29         012.  Person Identifier
+             2         013.  Person Identifier
+          3870         020.  Person Identifier
+           172         021.  Person Identifier
+            17         022.  Person Identifier
+           156         030.  Person Identifier
+            28         031.  Person Identifier
+             3         032.  Person Identifier
+             1         033.  Person Identifier
+           311         040.  Person Identifier
+            42         041.  Person Identifier
+             4         042.  Person Identifier
+             3         043.  Person Identifier
+            47         811.  Spouse of Non-Original Respondent
+             2         812.  Spouse of Non-Original Respondent
+             7         821.  Spouse of Non-Original Respondent
+             1         822.  Spouse of Non-Original Respondent
+             3         831.  Spouse of Non-Original Respondent
+             1         832.  Spouse of Non-Original Respondent
+             6         841.  Spouse of Non-Original Respondent
+          6206       Blank.  Single Respondent Household
+
+
+==========================================================================================
+
+RCSR                          2020 WHETHER COVERSHEET RESPONDENT
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+         11485           1.  Yes
+           106           3.  2nd Coverscreen R, answers not retained
+          4132           5.  No
+
+
+==========================================================================================
+
+RFAMR                         2020 WHETHER FAMILY RESPONDENT
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+         11043           1.  Family R
+            19           3.  2nd Family R, answers not retained
+          4661           5.  Non-Family R
+
+
+==========================================================================================
+
+RFINR                         2020 WHETHER FINANCIAL RESPONDENT
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+         11208           1.  Financial R
+            40           3.  2nd Financial R, answers not retained
+          4475           5.  Non-Financial R
+
+
+==========================================================================================
+
+         IF HH.X024_ReIwHH_V = YES THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO OR SecB.Marriage2.B058_DivWidSincePW = 
+         YESDIVORCED_ANNULLED OR SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+         For SecS.S002AIncChgLoopCtr := 1 to 4 do 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS003_1                       SOC SEC INCOME CHANGE SP DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecS.IncomeTypes[1].S003AIncDifferent
+
+         IF FIRST LOOP:
+         
+         IF R's SPOUSE/PARTNER IS DEAD AND THEY WERE STILL COUPLED AT THE TIME OF
+         SPOUSE's/PARTNER's DEATH (A202=1 or B058=2):
+         Financial situations often change with the death of a [husband/wife/partner].
+                 
+         Thinking back to the time surrounding your [husband/wife/partner]'s death, did
+         any income from [Social Security] start, stop or change because of
+         [his/her] death?
+                 
+         IF R {IS NO LONGER COUPLED WITH LAST IW's SPOUSE/PARTNER AND SPOUSE/ PARTNER {IS
+         STILL LIVING OR DIED AFTER THE SPLIT}} (A023=1 or A202=5 or B058=1):
+                 
+         IF R {IS DIVORCED OR HAD AN ANNULMENT} SINCE LAST IW (X065=1):
+         Financial situations may change with divorce.
+                 
+         Thinking back to the time surrounding your divorce, did any income from [Social
+         Security] start, stop or change because of it?
+                 
+         IF R SPLIT FROM PARTNER SINCE LAST IW (X065=3):
+         Financial situations may change with separation from a partner.
+                 
+         Thinking back to the time surrounding your separation, did any income from
+         [Social Security] start, stop or change because of it?
+         
+         FOR SECOND, THIRD AND FOURTH LOOPS ASK ABOUT:
+         Did any income from
+         LOOP 2: Supplemental Security Income
+         LOOP 3: Veterans benefits
+         LOOP 4: other retirement pensions or annuities
+         start, stop or change because of [[his/her] death/the divorce/the separation]?
+
+         .................................................................................
+            12           1.  START
+           171           2.  STOP
+           127           3.  CHANGE
+           399           5.  NO
+            13           8.  DK (Don't Know); NA (Not Ascertained)
+            10           9.  RF (Refused)
+         14991       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S003AIncDifferent 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = STOP OR 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = CHANGE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS004_1                       SOC SEC AMT BEFORE SP DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecS.IncomeTypes[1].S004A
+
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount before [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+         
+         INSTR: Do not probe DK/RF
+         
+         Amount:
+         
+         Per:
+         
+         WEB-ADMINISTERED TEXT:
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount before [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+
+         .................................................................................
+            11                      -8.  Web non-response
+           239               160-20000.  Actual Value
+            37                   99998.  DK (Don't Know); NA (Not Ascertained)
+            11                   99999.  RF (Refused)
+         15425                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S004A 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S004A = Response AND 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S004A <> 0 AND ActiveMode = 'IWERADMIN' OR 
+         ActiveMode = 'SELFADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS008_1                       SOC SEC AMT BEFORE SP DEATH/DIV - PER
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[1].S008A
+
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount before [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+         
+         Amount: S004_1 [BENEFITS AMT BEFORE SP DEATH/DIV]
+         
+         Per:
+
+         .................................................................................
+             8          -8.  Web non-response
+                         2.  WEEK
+                         3.  EVERY TWO WEEKS/BI-WEEKLY
+           235           4.  MONTH
+             3           6.  YEAR
+             1           7.  OTHER (SPECIFY)
+             4           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+         15472       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS005_1                       SOC SEC AMT BEFORE SP DEATH/DIV - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecS.IncomeTypes[1].S005A
+
+         (Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] before [your
+         [husband/wife/partner]'s death/the divorce/the separation]:)
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+         
+         
+         UNFOLDING PROCEDURE: 2UP1DOWN
+         
+         INCOME STOPPED:
+         BREAKPOINTS: $250, $500, $750, $1,000
+         ENTRY POINT: $500
+         
+         INCOME CHANGED:
+         BREAKPOINTS: $100, $350, $650, $1,000
+         ENTRY POINT: $350
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] before [your
+         [husband/wife/partner]'s death/the divorce/the separation]:
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+            18           0.  Value of Breakpoint
+             1         100.  Value of Breakpoint
+             2         101.  Value of Breakpoint
+             2         251.  Value of Breakpoint
+             8         351.  Value of Breakpoint
+             2         500.  Value of Breakpoint
+             3         501.  Value of Breakpoint
+             1         650.  Value of Breakpoint
+             3         651.  Value of Breakpoint
+             2         750.  Value of Breakpoint
+             6         751.  Value of Breakpoint
+             3        1000.  Value of Breakpoint
+             8        1001.  Value of Breakpoint
+         15664       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS006_1                       SOC SEC AMT BEFORE SP DEATH/DIV - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.IncomeTypes[1].S006A
+
+         *
+
+         .................................................................................
+             1         100.  Value of Breakpoint
+             2         349.  Value of Breakpoint
+             2         499.  Value of Breakpoint
+             2         500.  Value of Breakpoint
+             3         649.  Value of Breakpoint
+             1         650.  Value of Breakpoint
+             3         749.  Value of Breakpoint
+             2         750.  Value of Breakpoint
+             8         999.  Value of Breakpoint
+             3        1000.  Value of Breakpoint
+            32    99999996.  Greater than Maximum Breakpoint
+         15664       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS007_1                       SOC SEC AMT BEFORE SP DEATH/DIV - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[1].S007A
+
+         *
+
+         .................................................................................
+             3           0.  No Breakpoint values given during interview
+            12          98.  DK (Don't Know); NA (Not Ascertained)
+             9          99.  RF (Refused)
+         15699       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S003AIncDifferent 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = START OR 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = CHANGE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS010_1                       SOC SEC START AMT AFTER DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecS.IncomeTypes[1].S010A
+
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount after [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount after [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+
+         .................................................................................
+             5                      -8.  Web non-response
+           119                 0-24000.  Actual Value
+             9                   99998.  DK (Don't Know); NA (Not Ascertained)
+             6                   99999.  RF (Refused)
+         15584                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S010A 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S010A = Response AND 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S010A <> 0 AND ActiveMode = 'IWERADMIN' OR 
+         ActiveMode = 'SELFADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS014_1                       SOC SEC START AMT AFTER DEATH/DIV - PER
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[1].S014A
+
+         What was the usual amount after [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?
+         
+         Amount: S010_1 [BENEFITS START AMT AFTER DEATH/DIV]
+         
+         Per:
+
+         .................................................................................
+             5          -8.  Web non-response
+                         2.  WEEK
+                         3.  EVERY TWO WEEKS/BI-WEEKLY
+           112           4.  MONTH
+             2           6.  YEAR
+                         7.  OTHER (SPECIFY)
+                        95.  LUMP SUM
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15604       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS011_1                       SOC SEC START AMT AFTER DEATH/DIV - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecS.IncomeTypes[1].S011A
+
+         (Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/ Veterans Benefits/Other Retirement Pensions or Annuities]  after
+         [your [husband/wife/partner]'s death/the divorce/the separation]:)
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+         
+         UNFOLDING PROCEDURE: 2UP1DOWN
+         
+         INCOME STARTED:
+         BREAKPOINTS: $250, $500, $750, $1,000
+         ENTRY POINT: $500
+         
+         INCOME CHANGED:
+         BREAKPOINTS: $100, $200, $500, $750
+         ENTRY POINT: $200
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/ Veterans Benefits/Other Retirement Pensions or Annuities]  after
+         [your [husband/wife/partner]'s death/the divorce/the separation]:
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+            10           0.  Value of Breakpoint
+             1         201.  Value of Breakpoint
+             1         251.  Value of Breakpoint
+             1         500.  Value of Breakpoint
+             1         501.  Value of Breakpoint
+             5         751.  Value of Breakpoint
+         15704       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS012_1                       SOC SEC START AMT AFTER DEATH/DIV - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.IncomeTypes[1].S012A
+
+         *
+
+         .................................................................................
+             1          99.  Value of Breakpoint
+             2         499.  Value of Breakpoint
+             1         500.  Value of Breakpoint
+            15    99999996.  Greater than Maximum Breakpoint
+         15704       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS013_1                       SOC SEC START AMT AFTER DEATH/DIV - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[1].S013A
+
+         *
+
+         .................................................................................
+             1           0.  No Breakpoint values given during interview
+             1          97.  Data Not Available
+             4          98.  DK (Don't Know); NA (Not Ascertained)
+             5          99.  RF (Refused)
+         15712       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF HH.X024_ReIwHH_V = YES THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO OR SecB.Marriage2.B058_DivWidSincePW = 
+         YESDIVORCED_ANNULLED OR SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+         For SecS.S002AIncChgLoopCtr := 1 to 4 do 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS003_2                       SUP SEC INCOME CHANGE SP DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[2].S003AIncDifferent
+
+         IF FIRST LOOP:
+         
+         IF R's SPOUSE/PARTNER IS DEAD AND THEY WERE STILL COUPLED AT THE TIME OF
+         SPOUSE's/PARTNER's DEATH (A202=1 or B058=2):
+         Financial situations often change with the death of a [husband/wife/partner].
+                 
+         Thinking back to the time surrounding your [husband/wife/partner]'s death, did
+         any income from [Social Security] start, stop or change because of
+         [his/her] death?
+                 
+         IF R {IS NO LONGER COUPLED WITH LAST IW's SPOUSE/PARTNER AND SPOUSE/ PARTNER {IS
+         STILL LIVING OR DIED AFTER THE SPLIT}} (A023=1 or A202=5 or B058=1):
+                 
+         IF R {IS DIVORCED OR HAD AN ANNULMENT} SINCE LAST IW (X065=1):
+         Financial situations may change with divorce.
+                 
+         Thinking back to the time surrounding your divorce, did any income from [Social
+         Security] start, stop or change because of it?
+                 
+         IF R SPLIT FROM PARTNER SINCE LAST IW (X065=3):
+         Financial situations may change with separation from a partner.
+                 
+         Thinking back to the time surrounding your separation, did any income from
+         [Social Security] start, stop or change because of it?
+         
+         FOR SECOND, THIRD AND FOURTH LOOPS ASK ABOUT:
+         Did any income from
+         LOOP 2: Supplemental Security Income
+         LOOP 3: Veterans benefits
+         LOOP 4: other retirement pensions or annuities
+         start, stop or change because of [[his/her] death/the divorce/the separation]?
+
+         .................................................................................
+             2          -8.  Web non-response
+             8           1.  START
+            29           2.  STOP
+            16           3.  CHANGE
+           638           5.  NO
+            29           8.  DK (Don't Know); NA (Not Ascertained)
+            10           9.  RF (Refused)
+         14991       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S003AIncDifferent 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = STOP OR 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = CHANGE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS004_2                       SUP SEC AMT BEFORE SP DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecS.IncomeTypes[2].S004A
+
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount before [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount before [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+
+         .................................................................................
+             6                      -8.  Web non-response
+            32                  0-4500.  Actual Value
+             7                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+         15678                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S004A 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S004A = Response AND 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S004A <> 0 AND ActiveMode = 'IWERADMIN' OR 
+         ActiveMode = 'SELFADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS008_2                       SUP SEC AMT BEFORE SP DEATH/DIV - PER
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[2].S008A
+
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount before [your (husband/wife/partner)'s death?/the
+         divorce?/the separation?]
+         
+         Amount: S004_2 [BENEFITS AMT BEFORE SP DEATH/DIV]
+         
+         Per:
+
+         .................................................................................
+             8          -8.  Web non-response
+                         2.  WEEK
+             1           3.  EVERY TWO WEEKS/BI-WEEKLY
+            29           4.  MONTH
+                         6.  YEAR
+             1           7.  OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+         15684       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS005_2                       SUP SEC AMT BEFORE SP DEATH/DIV - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecS.IncomeTypes[2].S005A
+
+         (Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] before [your
+         [husband/wife/partner]'s death/the divorce/the separation]:)
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+         
+         UNFOLDING PROCEDURE: 1UP1DOWN
+         
+         INCOME STOPPED:
+         BREAKPOINTS: $100, $300, $800
+         ENTRY POINT: $300
+         
+         INCOME CHANGED:
+         BREAKPOINTS: $100, $300, $800
+         ENTRY POINT: $300
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] before [your
+         [husband/wife/partner]'s death/the divorce/the separation]:
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+             9           0.  Value of Breakpoint
+             1         101.  Value of Breakpoint
+             2         301.  Value of Breakpoint
+             1         801.  Value of Breakpoint
+         15710       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS006_2                       SUP SEC AMT BEFORE SP DEATH/DIV - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.IncomeTypes[2].S006A
+
+         *
+
+         .................................................................................
+             3          99.  Value of Breakpoint
+             1         299.  Value of Breakpoint
+             2         799.  Value of Breakpoint
+             7    99999996.  Greater than Maximum Breakpoint
+         15710       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS007_2                       SUP SEC AMT BEFORE SP DEATH/DIV - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[2].S007A
+
+         *
+
+         .................................................................................
+             5           0.  No Breakpoint values given during interview
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15717       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S003AIncDifferent 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = START OR 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = CHANGE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS010_2                       SUP SEC START AMT AFTER DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecS.IncomeTypes[2].S010A
+
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount after [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount after [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+
+         .................................................................................
+             3                      -8.  Web non-response
+            18                  0-1400.  Actual Value
+             2                    9998.  DK (Don't Know); NA (Not Ascertained)
+             1                    9999.  RF (Refused)
+         15699                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S010A 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S010A = Response AND 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S010A <> 0 AND ActiveMode = 'IWERADMIN' OR 
+         ActiveMode = 'SELFADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS014_2                       SUP SEC START AMT AFTER DEATH/DIV - PER
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[2].S014A
+
+         What was the usual amount [after your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+         
+         Amount: S010_2 [BENEFITS START AMT AFTER DEATH/DIV]
+         
+         Per:
+
+         .................................................................................
+             3          -8.  Web non-response
+                         2.  WEEK
+                         3.  EVERY TWO WEEKS/BI-WEEKLY
+            17           4.  MONTH
+                         6.  YEAR
+                         7.  OTHER (SPECIFY)
+                        95.  LUMP SUM
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15703       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS011_2                       SUP SEC START AMT AFTER DEATH/DIV - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecS.IncomeTypes[2].S011A
+
+         (Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] after [your
+         [husband/wife/partner]'s death/the divorce/the separation]:)
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+         
+         UNFOLDING PROCEDURE: 2UP1DOWN
+         INCOME STARTED:
+         BREAKPOINTS: $150, $200, $300, $500
+         ENTRY POINT: $200
+         
+         UNFOLDING PROCEDURE: 1UP1DOWN
+         INCOME CHANGED:
+         BREAKPOINTS: $100, $200, $600
+         ENTRY POINT: $200
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] after [your
+         [husband/wife/partner]'s death/the divorce/the separation]:
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+             4           0.  Value of Breakpoint
+             1         200.  Value of Breakpoint
+             1         201.  Value of Breakpoint
+         15717       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS012_2                       SUP SEC START AMT AFTER DEATH/DIV - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.IncomeTypes[2].S012A
+
+         *
+
+         .................................................................................
+             1          99.  Value of Breakpoint
+             1         200.  Value of Breakpoint
+             1         599.  Value of Breakpoint
+             3    99999996.  Greater than Maximum Breakpoint
+         15717       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS013_2                       SUP SEC START AMT AFTER DEATH/DIV - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[2].S013A
+
+         *
+
+         .................................................................................
+             2           0.  No Breakpoint values given during interview
+                        98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+         15720       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF HH.X024_ReIwHH_V = YES THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO OR SecB.Marriage2.B058_DivWidSincePW = 
+         YESDIVORCED_ANNULLED OR SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+         For SecS.S002AIncChgLoopCtr := 1 to 4 do 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS003_3                       VETERANS BENEFITS CHANGE SP DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[3].S003AIncDifferent
+
+         IF FIRST LOOP:
+         
+         IF R's SPOUSE/PARTNER IS DEAD AND THEY WERE STILL COUPLED AT THE TIME OF
+         SPOUSE's/PARTNER's DEATH (A202=1 or B058=2):
+         Financial situations often change with the death of a [husband/wife/partner].
+                 
+         Thinking back to the time surrounding your [husband/wife/partner]'s death, did
+         any income from [Social Security] start, stop or change because of
+         [his/her] death?
+                 
+         IF R {IS NO LONGER COUPLED WITH LAST IW's SPOUSE/PARTNER AND SPOUSE/ PARTNER {IS
+         STILL LIVING OR DIED AFTER THE SPLIT}} (A023=1 or A202=5 or B058=1):
+                 
+         IF R {IS DIVORCED OR HAD AN ANNULMENT} SINCE LAST IW (X065=1):
+         Financial situations may change with divorce.
+                 
+         Thinking back to the time surrounding your divorce, did any income from [Social
+         Security] start, stop or change because of it?
+                 
+         IF R SPLIT FROM PARTNER SINCE LAST IW (X065=3):
+         Financial situations may change with separation from a partner.
+                 
+         Thinking back to the time surrounding your separation, did any income from
+         [Social Security] start, stop or change because of it?
+         
+         FOR SECOND, THIRD AND FOURTH LOOPS ASK ABOUT:
+         Did any income from
+         LOOP 2: Supplemental Security Income
+         LOOP 3: Veterans benefits
+         LOOP 4: other retirement pensions or annuities
+         start, stop or change because of [[his/her] death/the divorce/the separation]?
+
+         .................................................................................
+             5          -8.  Web non-response
+            10           1.  START
+            29           2.  STOP
+            10           3.  CHANGE
+           658           5.  NO
+            11           8.  DK (Don't Know); NA (Not Ascertained)
+             9           9.  RF (Refused)
+         14991       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S003AIncDifferent 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = STOP OR 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = CHANGE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS004_3                       VET BENEFITS AMT BEFORE SP DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecS.IncomeTypes[3].S004A
+
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount before [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount before [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+
+         .................................................................................
+             2                      -8.  Web non-response
+            30                  0-5000.  Actual Value
+             5                    9998.  DK (Don't Know); NA (Not Ascertained)
+             2                    9999.  RF (Refused)
+         15684                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S004A 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S004A = Response AND 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S004A <> 0 AND ActiveMode = 'IWERADMIN' OR 
+         ActiveMode = 'SELFADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS008_3                       VET BENS AMT BEFORE SP DEATH/DIV - PER
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[3].S008A
+
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount before [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+         
+         Amount: S004_3 [BENEFITS AMT BEFORE SP DEATH/DIV]
+         
+         Per:
+
+         .................................................................................
+             2          -8.  Web non-response
+                         2.  WEEK
+                         3.  EVERY TWO WEEKS/BI-WEEKLY
+            29           4.  MONTH
+                         6.  YEAR
+                         7.  OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+         15692       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS005_3                       VET BENS AMT BEFORE SP DEATH/DIV - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecS.IncomeTypes[3].S005A
+
+         (Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] before [your
+         [husband/wife/partner]'s death/the divorce/the separation]:)
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+         
+         UNFOLDING PROCEDURE: 1UP1DOWN
+         
+         INCOME STOPPED:
+         BREAKPOINTS: $80, $200, $300
+         ENTRY POINT: $200
+         
+         INCOME CHANGED:
+         BREAKPOINTS: $500, $1,000, $1,500
+         ENTRY POINT: $1,000
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] before [your
+         [husband/wife/partner]'s death/the divorce/the separation]:
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+             6           0.  Value of Breakpoint
+             1         201.  Value of Breakpoint
+             1         301.  Value of Breakpoint
+             1        1500.  Value of Breakpoint
+         15714       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS006_3                       VET BENS AMT BEFORE SP DEATH/DIV - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.IncomeTypes[3].S006A
+
+         *
+
+         .................................................................................
+             1         299.  Value of Breakpoint
+             1        1500.  Value of Breakpoint
+             7    99999996.  Greater than Maximum Breakpoint
+         15714       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS007_3                       VET BENS AMT BEFORE SP DEATH/DIV - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[3].S007A
+
+         *
+
+         .................................................................................
+             2           0.  No Breakpoint values given during interview
+             2          98.  DK (Don't Know); NA (Not Ascertained)
+             2          99.  RF (Refused)
+         15717       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S003AIncDifferent 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = START OR 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = CHANGE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS010_3                       VETERANS BENEFITS AMT AFTER DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecS.IncomeTypes[3].S010A
+
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount after [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount after [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+
+         .................................................................................
+             2                      -8.  Web non-response
+            16                  0-3000.  Actual Value
+             2                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+         15703                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S010A 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S010A = Response AND 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S010A <> 0 AND ActiveMode = 'IWERADMIN' OR 
+         ActiveMode = 'SELFADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS014_3                       VET BENEFITS AMT AFTER DEATH/DIV - PER
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[3].S014A
+
+         What was the usual amount after [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+         
+         Amount: S010_3 [BENEFITS START AMT AFTER DEATH/DIV]
+         
+         Per:
+
+         .................................................................................
+             1          -8.  Web non-response
+                         2.  WEEK
+                         3.  EVERY TWO WEEKS/BI-WEEKLY
+            15           4.  MONTH
+             1           6.  YEAR
+                         7.  OTHER (SPECIFY)
+                        95.  LUMP SUM
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15706       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS011_3                       VET BENEFITS AMT AFTER DEATH/DIV - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecS.IncomeTypes[3].S011A
+
+         (Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] after [your
+         [husband/wife/partner]'s death/the divorce/the separation]:)
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+         
+         UNFOLDING PROCEDURE: 1UP1DOWN
+         
+         INCOME STARTED:
+         BREAKPOINTS: $300, $500, $700
+         ENTRY POINT: $500
+         
+         INCOME CHANGED:
+         BREAKPOINTS: $200, $400, $700
+         ENTRY POINT: $400
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] after [your
+         [husband/wife/partner]'s death/the divorce/the separation]:
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+             3           0.  Value of Breakpoint
+             1         701.  Value of Breakpoint
+         15719       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS012_3                       VET BENEFITS AMT AFTER DEATH/DIV - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.IncomeTypes[3].S012A
+
+         *
+
+         .................................................................................
+             4    99999996.  Greater than Maximum Breakpoint
+         15719       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS013_3                       VET BENEFITS AMT AFTER DEATH/DIV - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[3].S013A
+
+         *
+
+         .................................................................................
+             2           0.  No Breakpoint values given during interview
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15720       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF HH.X024_ReIwHH_V = YES THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO OR SecB.Marriage2.B058_DivWidSincePW = 
+         YESDIVORCED_ANNULLED OR SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+         For SecS.S002AIncChgLoopCtr := 1 to 4 do 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS003_4                       OTHER PENSIONS CHANGE SP DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[4].S003AIncDifferent
+
+         IF FIRST LOOP:
+         
+         IF R's SPOUSE/PARTNER IS DEAD AND THEY WERE STILL COUPLED AT THE TIME OF
+         SPOUSE's/PARTNER's DEATH (A202=1 or B058=2):
+         Financial situations often change with the death of a [husband/wife/partner].
+                 
+         Thinking back to the time surrounding your [husband/wife/partner]'s death, did
+         any income from [Social Security] start, stop or change because of
+         [his/her] death?
+                 
+         IF R {IS NO LONGER COUPLED WITH LAST IW's SPOUSE/PARTNER AND SPOUSE/ PARTNER {IS
+         STILL LIVING OR DIED AFTER THE SPLIT}} (A023=1 or A202=5 or B058=1):
+                 
+         IF R {IS DIVORCED OR HAD AN ANNULMENT} SINCE LAST IW (X065=1):
+         Financial situations may change with divorce.
+                 
+         Thinking back to the time surrounding your divorce, did any income from [Social
+         Security] start, stop or change because of it?
+                 
+         IF R SPLIT FROM PARTNER SINCE LAST IW (X065=3):
+         Financial situations may change with separation from a partner.
+                 
+         Thinking back to the time surrounding your separation, did any income from
+         [Social Security] start, stop or change because of it?
+         
+         FOR SECOND, THIRD AND FOURTH LOOPS ASK ABOUT:
+         Did any income from
+         LOOP 2: Supplemental Security Income
+         LOOP 3: Veterans benefits
+         LOOP 4: other retirement pensions or annuities
+         start, stop or change because of [[his/her] death/the divorce/the separation]?
+
+         .................................................................................
+             6          -8.  Web non-response
+            11           1.  START
+            48           2.  STOP
+            43           3.  CHANGE
+           596           5.  NO
+            17           8.  DK (Don't Know); NA (Not Ascertained)
+            11           9.  RF (Refused)
+         14991       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S003AIncDifferent 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = STOP OR 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = CHANGE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS004_4                       OTHER PENSIONS AMT BEFORE SP DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecS.IncomeTypes[4].S004A
+
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount before [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount before [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+
+         .................................................................................
+             2                      -8.  Web non-response
+            74                 0-90000.  Actual Value
+            11                   99998.  DK (Don't Know); NA (Not Ascertained)
+             4                   99999.  RF (Refused)
+         15632                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S004A 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S004A = Response AND 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S004A <> 0 AND ActiveMode = 'IWERADMIN' OR 
+         ActiveMode = 'SELFADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS008_4                       OTH PENS AMT BEFORE SP DEATH/DIV - PER
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[4].S008A
+
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount after [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+         
+         Amount: S004_4 [BENEFITS AMT BEFORE SP DEATH/DIV]
+         
+         Per:
+
+         .................................................................................
+             2          -8.  Web non-response
+                         2.  WEEK
+             1           3.  EVERY TWO WEEKS/BI-WEEKLY
+            66           4.  MONTH
+             2           5.  Lump Sum
+             4           6.  YEAR
+                         7.  OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+         15648       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS005_4                       OTH PENS AMT BEFORE SP DEATH/DIV - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecS.IncomeTypes[4].S005A
+
+         (Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] before [your
+         [husband/wife/partner]'s death/the divorce/the separation]:)
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+         
+         UNFOLDING PROCEDURE: 1UP1DOWN
+         
+         INCOME STOPPED:
+         BREAKPOINTS: $250, $400, $1,000
+         ENTRY POINT: $400
+         
+         INCOME CHANGED:
+         BREAKPOINTS: $300, $700, $1,000
+         ENTRY POINT: $700
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] before [your
+         [husband/wife/partner]'s death/the divorce/the separation]:
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+            10           0.  Value of Breakpoint
+             1         251.  Value of Breakpoint
+             1         301.  Value of Breakpoint
+             1         401.  Value of Breakpoint
+             1         700.  Value of Breakpoint
+             3        1001.  Value of Breakpoint
+         15706       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS006_4                       OTH PENS AMT BEFORE SP DEATH/DIV - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.IncomeTypes[4].S006A
+
+         *
+
+         .................................................................................
+             1         399.  Value of Breakpoint
+             1         699.  Value of Breakpoint
+             1         700.  Value of Breakpoint
+             1         999.  Value of Breakpoint
+            13    99999996.  Greater than Maximum Breakpoint
+         15706       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS007_4                       OTH PENS AMT BEFORE SP DEATH/DIV - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[4].S007A
+
+         *
+
+         .................................................................................
+             1           0.  No Breakpoint values given during interview
+             5          98.  DK (Don't Know); NA (Not Ascertained)
+             4          99.  RF (Refused)
+         15713       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S003AIncDifferent 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = START OR 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S003AIncDifferent = CHANGE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS010_4                       OTHER PENSIONS AMT AFTER DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecS.IncomeTypes[4].S010A
+
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount after [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         [Income from Social Security/Supplemental Security Income/Veterans
+         Benefits/Other Retirement Pension or Annuities]
+         
+         What was the usual amount after [your [husband/wife/partner]'s death?/the
+         divorce?/the separation?]
+
+         .................................................................................
+             1                      -8.  Web non-response
+            45                 0-68664.  Actual Value
+             5                   99998.  DK (Don't Know); NA (Not Ascertained)
+             3                   99999.  RF (Refused)
+         15669                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.IncomeTypes[].S010A 
+
+         IF SecS.IncomeTypes[S002AIncChgLoopCtr].S010A = Response AND 
+         SecS.IncomeTypes[S002AIncChgLoopCtr].S010A <> 0 AND ActiveMode = 'IWERADMIN' OR 
+         ActiveMode = 'SELFADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS014_4                       OTHER PENS AMT AFTER DEATH/DIV - PER
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[4].S014A
+
+         What was the usual amount after [your (husband/wife/partner)'s death?/the
+         divorce?/the separation?]
+         
+         Amount: S010_4 [BENEFITS START AMT AFTER DEATH/DIV]
+         
+         Per:
+
+         .................................................................................
+             2          -8.  Web non-response
+                         2.  WEEK
+                         3.  EVERY TWO WEEKS/BI-WEEKLY
+            36           4.  MONTH
+             3           6.  YEAR
+             1           7.  OTHER (SPECIFY)
+             1          95.  LUMP SUM
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15680       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS011_4                       OTHER PENS AMT AFTER DEATH/DIV - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecS.IncomeTypes[4].S011A
+
+         (Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] after [your
+         [husband/wife/partner]'s death/the divorce/the separation]:)
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+         
+         UNFOLDING PROCEDURE: 1UP1DOWN
+         
+         INCOME STARTED:
+         BREAKPOINTS: $150, $300, $750
+         ENTRY POINT: $300
+         
+         INCOME CHANGED:
+         BREAKPOINTS: $200, $400, $600
+         ENTRY POINT: $400
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the usual amount of [Social Security/Supplemental Security
+         Income/Veterans Benefits/Other Retirement Pensions or Annuities] after [your
+         [husband/wife/partner]'s death/the divorce/the separation]:
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+             7           0.  Value of Breakpoint
+             1         401.  Value of Breakpoint
+             1         601.  Value of Breakpoint
+         15714       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS012_4                       OTHER PENS AMT AFTER DEATH/DIV - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.IncomeTypes[4].S012A
+
+         *
+
+         .................................................................................
+             9    99999996.  Greater than Maximum Breakpoint
+         15714       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS013_4                       OTHER PENS AMT AFTER DEATH/DIV - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.IncomeTypes[4].S013A
+
+         *
+
+         .................................................................................
+             2           0.  No Breakpoint values given during interview
+             4          98.  DK (Don't Know); NA (Not Ascertained)
+             2          99.  RF (Refused)
+         15715       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF HH.X024_ReIwHH_V = YES THEN 
+
+         IF SecA.Relations.A020TSameSpP_A = NO OR SecB.Marriage2.B058_DivWidSincePW = 
+         YESDIVORCED_ANNULLED OR SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS016                         R EARNINGS/WRK CHANGE AFTER DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Earnings.S016_PayHRSDifferent
+
+         Did your work hours, or earnings from your own work, start, stop, or change
+         after [your [husband/wife/partner]'s death/the divorce/the separation]?
+
+         .................................................................................
+             3          -8.  Web non-response
+             4           1.  START
+            21           2.  STOP
+            26           3.  CHANGE
+           658           5.  NO
+            11           8.  DK (Don't Know); NA (Not Ascertained)
+             9           9.  RF (Refused)
+         14991       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings.S016_PayHRSDifferent 
+
+         IF SecS.Earnings.S016_PayHRSDifferent = STOP OR 
+         SecS.Earnings.S016_PayHRSDifferent = CHANGE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS017                         R EARNINGS/WRK AMT BEFORE DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecS.Earnings.S017_
+
+         What was the usual amount of your work earnings before [your
+         [husband/wife/partner]'s death/the divorce/the separation]?
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         What was the usual amount of your work earnings before [your
+         [husband/wife/partner]'s death/the divorce/the separation]?
+
+         .................................................................................
+            33              143-140000.  Actual Value
+            11                  999998.  DK (Don't Know); NA (Not Ascertained)
+             3                  999999.  RF (Refused)
+         15676                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings.S017_ 
+
+         IF SecS.Earnings.S017_ = Response AND SecS.Earnings.S017_ <> 0 AND ActiveMode = 
+         'IWERADMIN' OR ActiveMode = 'SELFADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS021                         R EARNINGS BEFORE DEATH/DIV PER
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecS.Earnings.S021_
+
+         What was the usual amount of your work earnings before [your
+         [husband/wife/partner]'s death/the divorce/the separation]?
+         
+         Amount: S017 [R EARNINGS/WRK AMT BEFORE DEATH/DIV]
+         
+         Per:
+
+         .................................................................................
+                         1.  Hour
+             8           2.  WEEK
+             4           3.  EVERY TWO WEEKS/BI-WEEKLY
+             9           4.  MONTH
+            12           6.  YEAR
+                         7.  OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+         15690       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS018                         R EARNINGS AMT BEFORE DEATH/DIV - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecS.Earnings.S018_
+
+         (Thinking about the usual amount of your earnings before [your
+         [husband/wife/partner]'s death/the divorce/the separation]:)
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+         
+         INCOME STOPPED AND INCOME CHANGED
+         PROCEDURE: 1UP1DOWN
+         BREAKPOINTS: $400, $600, $1,000
+         ENTRY POINT: $600
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the usual amount of your earnings before [your
+         [husband/wife/partner]'s death/the divorce/the separation]:
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+             9           0.  Value of Breakpoint
+             1         400.  Value of Breakpoint
+             2         601.  Value of Breakpoint
+             1        1000.  Value of Breakpoint
+             1        1001.  Value of Breakpoint
+         15709       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS019                         R EARNINGS AMT BEFORE DEATH/DIV - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.Earnings.S019_
+
+         *
+
+         .................................................................................
+             4         399.  Value of Breakpoint
+             1         400.  Value of Breakpoint
+             1         999.  Value of Breakpoint
+             1        1000.  Value of Breakpoint
+             7    99999996.  Greater than Maximum Breakpoint
+         15709       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS020                         R EARNINGS AMT BEFORE DEATH/DIV - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Earnings.S020_
+
+         *
+
+         .................................................................................
+             3          98.  DK (Don't Know); NA (Not Ascertained)
+             3          99.  RF (Refused)
+         15717       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings.S016_PayHRSDifferent 
+
+         IF SecS.Earnings.S016_PayHRSDifferent = STOP OR 
+         SecS.Earnings.S016_PayHRSDifferent = CHANGE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS023                         R HRS WORK BEFORE DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Earnings.S023_
+
+         And how many hours per week did you usually work before [your
+         [husband/wife/partner]'s death/the divorce/the separation]?
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         And how many hours per week did you usually work before [your
+         [husband/wife/partner]'s death/the divorce/the separation]?
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             42        3          70         33.69         16.12   15676
+         -----------------------------------------------------------------
+             5          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+RS024                         R HRS WORK BEFORE DEATH/DIV - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Earnings.S024_
+
+         (Thinking about the usual amount of hours per week you worked before
+         [your [husband/wife/partner]'s death/the divorce/the separation]:)
+         
+         Did it amount to less than ___ hours per month, more than ___ hours per month,
+         or what?
+         
+         WORK HOURS STOPPED AND WORK HOURS CHANGED:
+         PROCEDURE: 1Up
+         BREAKPOINTS: 20, 40
+         ENTRY POINT: 20
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the usual amount of hours per week you worked before
+         [your [husband/wife/partner]'s death/the divorce/the separation]:
+         
+         Did it amount to less than ___ hours per month, more than ___ hours per month,
+         or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+             3           0.  Value of Breakpoint
+             1          21.  Value of Breakpoint
+             1          40.  Value of Breakpoint
+         15718       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS025                         R HRS WORK BEFORE DEATH/DIV - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecS.Earnings.S025_
+
+         *
+
+         .................................................................................
+             1          19.  Value of Breakpoint
+             1          39.  Value of Breakpoint
+             1          40.  Value of Breakpoint
+             2         400.  Greater than Maximum Breakpoint
+         15718       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS026                         R HRS WORK BEFORE DEATH/DIV - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Earnings.S026_
+
+         *
+
+         .................................................................................
+             2          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15721       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings.S016_PayHRSDifferent 
+
+         IF SecS.Earnings.S016_PayHRSDifferent = START OR 
+         SecS.Earnings.S016_PayHRSDifferent = CHANGE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS027                         R EARNINGS AFTER DEATH/DIV AMOUNT
+         Section: S     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecS.Earnings.S027_
+
+         What was the usual amount of your work earnings after [your
+         [husband/wife/partner]'s death/the divorce/the separation]?
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         What was the usual amount of your work earnings after your
+         [husband/wife/partner]'s death/the divorce/the separation]?
+
+         .................................................................................
+            22                 0-65000.  Actual Value
+             6                   99998.  DK (Don't Know); NA (Not Ascertained)
+             2                   99999.  RF (Refused)
+         15693                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings.S027_ 
+
+         IF SecS.Earnings.S027_ = Response AND SecS.Earnings.S027_ <> 0 AND ActiveMode = 
+         'IWERADMIN' OR ActiveMode = 'SELFADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS031                         R EARN AFTER DEATH/DIV AMOUNT PER
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Earnings.S031_
+
+         What was the usual amount of your work earnings after [your
+         [husband/wife/partner]'s death/the divorce/the separation]?
+         
+         Amount: S027 [R EARNINGS AFTER DEATH/DIV AMOUNT]
+         
+         Per:
+
+         .................................................................................
+                         1.  Hour
+             6           2.  WEEK
+             5           3.  EVERY TWO WEEKS/BI-WEEKLY
+             4           4.  MONTH
+             3           6.  YEAR
+             1           7.  OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+                        11.  Day
+         15704       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS028                         R EARN AFTER DEATH/DIV AMOUNT - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecS.Earnings.S028_
+
+         (Thinking about the usual amount of your earnings after [your
+         [husband/wife/partner]'s death/the divorce/the separation]:)
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+         
+         INCOME STARTED
+         PROCEDURE: 1UP1DOWN
+         BREAKPOINTS: $300, $500, $1,000
+         ENTRY POINT: $500
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the usual amount of your earnings after [your
+         [husband/wife/partner]'s death/the divorce/the separation]:
+         
+         Did it amount to less than $___ per month, more than $___ per month, or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+             4           0.  Value of Breakpoint
+             1         300.  Value of Breakpoint
+             1         501.  Value of Breakpoint
+             2        1001.  Value of Breakpoint
+         15715       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS029                         R EARN AFTER DEATH/DIV AMOUNT - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.Earnings.S029_
+
+         *
+
+         .................................................................................
+             1         299.  Value of Breakpoint
+             1         300.  Value of Breakpoint
+             1         999.  Value of Breakpoint
+             5    99999996.  Greater than Maximum Breakpoint
+         15715       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS030                         R EARN AFTER DEATH/DIV AMOUNT - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Earnings.S030_
+
+         *
+
+         .................................................................................
+             2          98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+         15720       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings.S016_PayHRSDifferent 
+
+         IF SecS.Earnings.S016_PayHRSDifferent = START OR 
+         SecS.Earnings.S016_PayHRSDifferent = CHANGE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS033                         WRK START HR AMT AFTER DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Earnings.S033_
+
+         And how many hours per week did you usually work after [your
+         [husband/wife/partner]'s death/the divorce/the separation]?
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         And how many hours per week did you usually work after [your
+         [husband/wife/partner]'s death/the divorce/the separation]?
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             25        3          68         30.84         16.97   15693
+         -----------------------------------------------------------------
+             5          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+RS034                         WRK START HR AMT AFTER DEATH/DIV - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Earnings.S034_
+
+         (Thinking about the number of hours per week you usually worked after [your
+         [husband/wife/partner]'s death/the divorce/the separation]:)
+         
+         Did it amount to less than ___ hours per month, more than ___ hours per month,
+         or what?
+         
+         WORK HOURS STARTED AND WORK HOURS CHANGED
+         PROCEDURE: 1Up
+         BREAKPOINTS: 20, 40
+         ENTRY POINT: 20
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the number of hours per week you usually worked after [your
+         [husband/wife/partner]'s death/the divorce/the separation]:
+         
+         Did it amount to less than ___ hours per month, more than ___ hours per month,
+         or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+             4           0.  Value of Breakpoint
+             1          21.  Value of Breakpoint
+         15718       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS035                         WRK START HR AMT AFTER DEATH/DIV - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecS.Earnings.S035_
+
+         *
+
+         .................................................................................
+             1          19.  Value of Breakpoint
+             1          39.  Value of Breakpoint
+             3         400.  Greater than Maximum Breakpoint
+         15718       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS036                         WRK START HR AMT AFTER DEATH/DIV - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Earnings.S036_
+
+         *
+
+         .................................................................................
+             3          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15720       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS037                         R HEALTH INS CHANGE WITH SP DEATH/DIV
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S037_
+
+         Did the type, cost, or coverage of your health insurance change as a result of
+         [your [husband/wife/partner]'s death/the divorce/the separation]?
+
+         .................................................................................
+             3          -8.  Web non-response
+           109           1.  YES
+           599           5.  NO
+            14           8.  DK (Don't Know); NA (Not Ascertained)
+             7           9.  RF (Refused)
+         14991       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Insurance_Pensions.S037_ 
+
+         IF SecS.Insurance_Pensions.S037_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS038M1                       HOW R HEALTH INS CHANGE W/ SP DTH/DIV - 1
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S038M
+
+         What changed about your health insurance?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+            17           1.  COST BECAME HIGHER
+            55           2.  COST BECAME LOWER
+                         3.  FEWER SERVICES COVERED
+                         4.  MORE SERVICES COVERED
+                         5.  LESS CHOICE OF PHYSICIANS
+                         6.  MORE CHOICE OF PHYSICIANS
+                         7.  MORE CONVENIENT
+            23           8.  LOST PLAN
+             5           9.  Changed to a completely different plan/provider
+             8          97.  OTHER (SPECIFY)
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15614       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Insurance_Pensions.S037_ 
+
+         IF SecS.Insurance_Pensions.S037_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS038M2                       HOW R HEALTH INS CHANGE W/ SP DTH/DIV - 2
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S038M
+
+         What changed about your health insurance?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  COST BECAME HIGHER
+             2           2.  COST BECAME LOWER
+             3           3.  FEWER SERVICES COVERED
+             1           4.  MORE SERVICES COVERED
+                         5.  LESS CHOICE OF PHYSICIANS
+             1           6.  MORE CHOICE OF PHYSICIANS
+             1           7.  MORE CONVENIENT
+             1           8.  LOST PLAN
+             5           9.  Changed to a completely different plan/provider
+                        97.  OTHER (SPECIFY)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15709       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Insurance_Pensions.S037_ 
+
+         IF SecS.Insurance_Pensions.S037_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS038M3                       HOW R HEALTH INS CHANGE W/ SP DTH/DIV - 3
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S038M
+
+         What changed about your health insurance?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  COST BECAME HIGHER
+                         2.  COST BECAME LOWER
+                         3.  FEWER SERVICES COVERED
+                         4.  MORE SERVICES COVERED
+             2           5.  LESS CHOICE OF PHYSICIANS
+                         6.  MORE CHOICE OF PHYSICIANS
+                         7.  MORE CONVENIENT
+             1           8.  LOST PLAN
+             1           9.  Changed to a completely different plan/provider
+                        97.  OTHER (SPECIFY)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15719       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS038M4                       HOW R HEALTH INS CHANGE W/ SP DTH/DIV - 4
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+         What changed about your health insurance?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  COST BECAME HIGHER
+                         2.  COST BECAME LOWER
+                         3.  FEWER SERVICES COVERED
+                         4.  MORE SERVICES COVERED
+                         5.  LESS CHOICE OF PHYSICIANS
+                         6.  MORE CHOICE OF PHYSICIANS
+                         7.  MORE CONVENIENT
+             1           8.  LOST PLAN
+                         9.  Changed to a completely different plan/provider
+                        97.  OTHER (SPECIFY)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15722       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS038M5                       HOW R HEALTH INS CHANGE W/ SP DTH/DIV - 5
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+         What changed about your health insurance?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  COST BECAME HIGHER
+                         2.  COST BECAME LOWER
+                         3.  FEWER SERVICES COVERED
+                         4.  MORE SERVICES COVERED
+                         5.  LESS CHOICE OF PHYSICIANS
+                         6.  MORE CHOICE OF PHYSICIANS
+                         7.  MORE CONVENIENT
+                         8.  LOST PLAN
+                         9.  Changed to a completely different plan/provider
+                        97.  OTHER (SPECIFY)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15723       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Insurance_Pensions.S037_ 
+
+         IF SecA.Relations.A202_CoupledatDeath = YES OR 
+         SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS040                         R RECEIVE LIFE INSURANCE SETTLEMENT
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S040_
+
+         Did you receive a life insurance settlement?
+         
+         (Please include any that you may have already mentioned.)
+         
+         WEB-ADMINISTERED TEXT:
+         Did you receive a life insurance settlement?
+         
+         Please include any that you may have already mentioned.
+
+         .................................................................................
+           177           1.  YES
+           246           5.  NO
+             6           8.  DK (Don't Know); NA (Not Ascertained)
+             3           9.  RF (Refused)
+         15291       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Insurance_Pensions.S040_ 
+
+         IF SecS.Insurance_Pensions.S040_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS041                         R RECEIVE LIFE INS SETTLEMENT - AMT
+         Section: S     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S041_
+
+         [Life Insurance Settlement]
+         
+         How much did it amount to?
+         
+         INSTR: Include only settlement related to spouse/partner's death
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         [Life Insurance Settlement]
+         
+         How much did it amount to? 
+         
+         INSTR: Please include only settlements related to spouse or partner's death.
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            153        0      536000      40375.89      71846.93   15546
+         -----------------------------------------------------------------
+            12      999998.  DK (Don't Know); NA (Not Ascertained)
+            12      999999.  RF (Refused)
+
+
+==========================================================================================
+
+RS061                         AMT INSURANCE SETTLEMENT - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S061_
+
+         (Thinking about the life insurance settlement you received:)
+         
+         Did it amount to a total of less than $___ , more than $___ , or what?
+         
+         UNFOLDING PROCEDURE: 2Up1Down
+         BREAKPOINTS: $5,000, $10,000, $25,000, $50,000
+         ENTRY POINT: $10,000
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the life insurance settlement you received:
+         
+         Did it amount to a total of less than $___ , more than $___ , or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+            10           0.  Value of Breakpoint
+             2        5000.  Value of Breakpoint
+             2        5001.  Value of Breakpoint
+             2       10000.  Value of Breakpoint
+             1       10001.  Value of Breakpoint
+             2       25000.  Value of Breakpoint
+             1       25001.  Value of Breakpoint
+             2       50000.  Value of Breakpoint
+             2       50001.  Value of Breakpoint
+         15699       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS062                         AMT INSURANCE SETTLEMENT - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S062_
+
+         *
+
+         .................................................................................
+             3        4999.  Value of Breakpoint
+             2        5000.  Value of Breakpoint
+             2        9999.  Value of Breakpoint
+             2       10000.  Value of Breakpoint
+             2       25000.  Value of Breakpoint
+             2       50000.  Value of Breakpoint
+            11    99999996.  Greater than Maximum Breakpoint
+         15699       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS063                         AMT INSURANCE SETTLEMENT - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S063_
+
+         *
+
+         .................................................................................
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+             8          99.  RF (Refused)
+         15714       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Insurance_Pensions.S040_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS042                         R RECV LUMP PENSION SETTLEMENT FROM SP
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S042_
+
+         Did you receive a lump-sum pension settlement?
+
+         .................................................................................
+             4          -8.  Web non-response
+            38           1.  YES
+           380           5.  NO
+             6           8.  DK (Don't Know); NA (Not Ascertained)
+             4           9.  RF (Refused)
+         15291       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Insurance_Pensions.S040_ 
+
+         IF SecS.Insurance_Pensions.S042_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS043                         R RECV PENSION SETTLEMENT FROM SP AMT
+         Section: S     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S043_
+
+         [Lump-Sum Pension Settlement]
+         
+         How much did it amount to?
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         [Lump-Sum Pension Settlement]
+         
+         How much did it amount to?
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             28      300      200000      27504.64      47063.45   15685
+         -----------------------------------------------------------------
+             7      999998.  DK (Don't Know); NA (Not Ascertained)
+             3      999999.  RF (Refused)
+
+
+==========================================================================================
+
+RS064                         AMT PENSION SETTLEMENT - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S064_
+
+         (Thinking about the lump-sum pension settlement you received:)
+         
+         Did it amount to a total of less than $___ , more than $___ , or what?
+         
+         PROCEDURE: 2Up1Down
+         BREAKPOINTS: $2,000, $8,000, $30,000, $45,000
+         ENTRY POINT: $8,000
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the lump-sum pension settlement you received:
+         
+         Did it amount to a total of less than $___ , more than $___ , or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+             5           0.  Value of Breakpoint
+             1        2001.  Value of Breakpoint
+             1        8000.  Value of Breakpoint
+             2        8001.  Value of Breakpoint
+         15714       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS065                         AMT PENSION SETTLEMENT - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S065_
+
+         *
+
+         .................................................................................
+             2        1999.  Value of Breakpoint
+             2        7999.  Value of Breakpoint
+             1        8000.  Value of Breakpoint
+             2       29999.  Value of Breakpoint
+             2    99999996.  Greater than Maximum Breakpoint
+         15714       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS066                         AMT PENSION SETTLEMENT - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S066_
+
+         *
+
+         .................................................................................
+             1          97.  Data Not Available
+             3          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+         15719       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Insurance_Pensions.S040_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS044                         R EXPENSES ASSOCIATED W/SP DEATH
+         Section: S     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S044_
+
+         Not counting what was covered by insurance or your [husband/wife/partner]'s
+         estate, what were the expenses associated with the death, that is, for funeral
+         expenses, legal fees, etc.?
+         
+         INSTR: Do not probe DK/RF
+         
+         INSTR: ENTER [Ctrl-D] if not settled yet
+         
+         WEB-ADMINISTERED TEXT:
+         Not counting what was covered by insurance or your [husband/wife/partner]'s
+         estate, what were the expenses associated with the death, that is, for funeral
+         expenses, legal fees, etc.?
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            350        0       32000       6560.16       6200.09   15291
+         -----------------------------------------------------------------
+             6          -8.  Web non-response
+            66       99998.  DK (Don't Know); NA (Not Ascertained)
+            10       99999.  RF (Refused)
+
+
+==========================================================================================
+
+RS045                         R EXPENSES ASSOC W/SP DEATH - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S045_
+
+         (Thinking about the expenses associated with the death, that were not covered by
+         insurance or your [husband/wife/partner]'s estate:)
+         
+         Would it amount to less than $___ , more than $___ , or what?
+         
+         PROCEDURE: 2Up1Down
+         BREAKPOINTS: $2,000, $5,000, $7,000, $10,000
+         ENTRY POINT: $5,000
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the expenses associated with the death, that were not covered by
+         insurance or your [husband/wife/partner]'s estate:
+         
+         Would it amount to less than $___ , more than $___ , or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+            42           0.  Value of Breakpoint
+             3        2000.  Value of Breakpoint
+             9        2001.  Value of Breakpoint
+             6        5000.  Value of Breakpoint
+             3        5001.  Value of Breakpoint
+             2        7000.  Value of Breakpoint
+             3        7001.  Value of Breakpoint
+             1       10000.  Value of Breakpoint
+             4       10001.  Value of Breakpoint
+         15650       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS046                         R EXPENSES ASSOC W/SP DEATH - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S046_
+
+         *
+
+         .................................................................................
+             8        1999.  Value of Breakpoint
+             3        2000.  Value of Breakpoint
+            11        4999.  Value of Breakpoint
+             6        5000.  Value of Breakpoint
+             2        6999.  Value of Breakpoint
+             2        7000.  Value of Breakpoint
+             3        9999.  Value of Breakpoint
+             1       10000.  Value of Breakpoint
+            37    99999996.  Greater than Maximum Breakpoint
+         15650       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS047                         R EXPENSES ASSOC W/SP DEATH - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Insurance_Pensions.S047_
+
+         *
+
+         .................................................................................
+             4           0.  No Breakpoint values given during interview
+             9          97.  Data Not Available
+            25          98.  DK (Don't Know); NA (Not Ascertained)
+             6          99.  RF (Refused)
+         15679       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings 
+
+         IF SecA.Relations.A202_CoupledatDeath = YES OR 
+         SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS048M1                       R SELL ASSETS ASSOC W/SP DEATH - 1
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecS.DeathExpense.S048M
+
+         To pay the expenses associated with [his/her] death and any illness that led to
+         [his/her] death, did you have to sell assets, withdraw money that normally would
+         not be touched, get help from a relative, or from a church or other institution,
+         or do anything else special to find the money?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+            10           1.  YES, SELL ASSETS
+            53           2.  YES, WITHDRAW MONEY
+            31           3.  YES, GOT HELP FROM A RELATIVE/friend
+             6           4.  INSTITUTION OR CHARITY
+           321           5.  DID NOT DO ANYTHING SPECIAL
+             4           6.  Borrowed money, NFS
+             3           7.  YES, OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+             3           9.  RF (Refused)
+         15292       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings 
+
+         IF SecA.Relations.A202_CoupledatDeath = YES OR 
+         SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS048M2                       R SELL ASSETS ASSOC W/SP DEATH - 2
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecS.DeathExpense.S048M
+
+         To pay the expenses associated with [his/her] death and any illness that led to
+         [his/her] death, did you have to sell assets, withdraw money that normally would
+         not be touched, get help from a relative, or from a church or other institution,
+         or do anything else special to find the money?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  YES, SELL ASSETS
+             6           2.  YES, WITHDRAW MONEY
+             5           3.  YES, GOT HELP FROM A RELATIVE/friend
+             3           4.  INSTITUTION OR CHARITY
+                         5.  DID NOT DO ANYTHING SPECIAL
+             1           6.  Borrowed money, NFS
+                         7.  YES, OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+         15708       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings 
+
+         IF SecA.Relations.A202_CoupledatDeath = YES OR 
+         SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS048M3                       R SELL ASSETS ASSOC W/SP DEATH - 3
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecS.DeathExpense.S048M
+
+         To pay the expenses associated with [his/her] death and any illness that led to
+         [his/her] death, did you have to sell assets, withdraw money that normally would
+         not be touched, get help from a relative, or from a church or other institution,
+         or do anything else special to find the money?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  YES, SELL ASSETS
+                         2.  YES, WITHDRAW MONEY
+                         3.  YES, GOT HELP FROM A RELATIVE/friend
+                         4.  INSTITUTION OR CHARITY
+                         5.  DID NOT DO ANYTHING SPECIAL
+             1           6.  Borrowed money, NFS
+                         7.  YES, OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+         15722       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings 
+
+         IF SecA.Relations.A202_CoupledatDeath = YES OR 
+         SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS048M4                       R SELL ASSETS ASSOC W/SP DEATH - 4
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.DeathExpense.S048M
+
+         To pay the expenses associated with [his/her] death and any illness that led to
+         [his/her] death, did you have to sell assets, withdraw money that normally would
+         not be touched, get help from a relative, or from a church or other institution,
+         or do anything else special to find the money?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  YES, SELL ASSETS
+                         2.  YES, WITHDRAW MONEY
+                         3.  YES, GOT HELP FROM A RELATIVE/friend
+                         4.  INSTITUTION OR CHARITY
+                         5.  DID NOT DO ANYTHING SPECIAL
+                         6.  Borrowed money, NFS
+                         7.  YES, OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+         15723       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings 
+
+         IF SecA.Relations.A202_CoupledatDeath = YES OR 
+         SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+
+         IF YESGOTHELPFROMARELATIVE IN SecS.DeathExpense.S048M THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS050                         WHO HELP PAY EXPENSES ASSOC W/SP DEATH
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecS.DeathExpense.S050_
+
+         [Final Illness and Death Expenses: Help From a Relative]
+         
+         Was that a child or grandchild of yours or your [husband/wife/partner], or was
+         it some other relative who helped?
+
+         .................................................................................
+            21           1.  CHILD/CHILD-IN-LAW
+             9           2.  OTHER RELATIVE
+             1           3.  SOMEONE ELSE
+                         6.  GRANDCHILD
+             3           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+         15688       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD <> SpecialAnswer THEN 
+         For SecS.DeathExpense.cnt := 1 to 50 do 
+         IF SecS.DeathExpense.cnt <= Cardinal(SecS.DeathExpense.S070M_WHOHELPEDCHILD ) 
+         THEN 
+         ASSIGN: SecS.DeathExpense.S051M [cnt] := SecS.DeathExpense.aArrayInteger 
+         [OrdEnum(SetElement(S070M_WHOHELPEDCHILD,cnt))] 
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD = DontKnow THEN 
+         ASSIGN: SecS.DeathExpense.S051M [1] := DontKnow 
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD = Refusal THEN 
+         ASSIGN: SecS.DeathExpense.S051M [1] := Refusal 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS051M1                       WHICH CHILD HELP PAY SP DEATH COSTS - 1
+         Section: S     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecS.DeathExpense.S051M
+
+         [Final Illness and Death Expenses: Help From a Relative]
+         
+         (Which child is that?)
+         
+         INSTR: Select all that apply
+         
+         INSTR:  If grandchild: Which child of yours or your [husband/wife/partner] is
+         the parent of that grandchild?
+         
+         WEB-ADMINISTERED TEXT:
+         [Final Illness and Death Expenses: Help From a Relative]
+         
+         Which child is that? 
+         
+         INSTR: Please select all that apply. 
+         
+         INSTR: If grandchild: Which child of yours or your [husband/wife/partner] is the
+         parent of that grandchild?
+
+         .................................................................................
+            14                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+             7                     993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+         15702                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD <> SpecialAnswer THEN 
+         For SecS.DeathExpense.cnt := 1 to 50 do 
+         IF SecS.DeathExpense.cnt <= Cardinal(SecS.DeathExpense.S070M_WHOHELPEDCHILD ) 
+         THEN 
+         ASSIGN: SecS.DeathExpense.S051M [cnt] := SecS.DeathExpense.aArrayInteger 
+         [OrdEnum(SetElement(S070M_WHOHELPEDCHILD,cnt))] 
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD = DontKnow THEN 
+         ASSIGN: SecS.DeathExpense.S051M [1] := DontKnow 
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD = Refusal THEN 
+         ASSIGN: SecS.DeathExpense.S051M [1] := Refusal 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS051M2                       WHICH CHILD HELP PAY SP DEATH COSTS - 2
+         Section: S     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecS.DeathExpense.S051M
+
+         [Final Illness and Death Expenses: Help From a Relative]
+         
+         (Which child is that?)
+         
+         INSTR: Select all that apply
+         
+         INSTR:  If grandchild: Which child of yours or your [husband/wife/partner] is
+         the parent of that grandchild?
+         
+         WEB-ADMINISTERED TEXT:
+         [Final Illness and Death Expenses: Help From a Relative]
+         
+         Which child is that? 
+         
+         INSTR: Please select all that apply. 
+         
+         INSTR: If grandchild: Which child of yours or your [husband/wife/partner] is the
+         parent of that grandchild?
+
+         .................................................................................
+             5                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+         15718                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD <> SpecialAnswer THEN 
+         For SecS.DeathExpense.cnt := 1 to 50 do 
+         IF SecS.DeathExpense.cnt <= Cardinal(SecS.DeathExpense.S070M_WHOHELPEDCHILD ) 
+         THEN 
+         ASSIGN: SecS.DeathExpense.S051M [cnt] := SecS.DeathExpense.aArrayInteger 
+         [OrdEnum(SetElement(S070M_WHOHELPEDCHILD,cnt))] 
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD = DontKnow THEN 
+         ASSIGN: SecS.DeathExpense.S051M [1] := DontKnow 
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD = Refusal THEN 
+         ASSIGN: SecS.DeathExpense.S051M [1] := Refusal 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS051M3                       WHICH CHILD HELP PAY SP DEATH COSTS - 3
+         Section: S     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecS.DeathExpense.S051M
+
+         [Final Illness and Death Expenses: Help From a Relative]
+         
+         (Which child is that?)
+         
+         INSTR: Select all that apply
+         
+         INSTR:  If grandchild: Which child of yours or your [husband/wife/partner] is
+         the parent of that grandchild?
+         
+         WEB-ADMINISTERED TEXT:
+         [Final Illness and Death Expenses: Help From a Relative]
+         
+         Which child is that? 
+         
+         INSTR: Please select all that apply. 
+         
+         INSTR: If grandchild: Which child of yours or your [husband/wife/partner] is the
+         parent of that grandchild?
+
+         .................................................................................
+             3                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+         15720                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD <> SpecialAnswer THEN 
+         For SecS.DeathExpense.cnt := 1 to 50 do 
+         IF SecS.DeathExpense.cnt <= Cardinal(SecS.DeathExpense.S070M_WHOHELPEDCHILD ) 
+         THEN 
+         ASSIGN: SecS.DeathExpense.S051M [cnt] := SecS.DeathExpense.aArrayInteger 
+         [OrdEnum(SetElement(S070M_WHOHELPEDCHILD,cnt))] 
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD = DontKnow THEN 
+         ASSIGN: SecS.DeathExpense.S051M [1] := DontKnow 
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD = Refusal THEN 
+         ASSIGN: SecS.DeathExpense.S051M [1] := Refusal 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS051M4                       WHICH CHILD HELP PAY SP DEATH COSTS - 4
+         Section: S     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecS.DeathExpense.S051M
+
+         [Final Illness and Death Expenses: Help From a Relative]
+         
+         (Which child is that?)
+         
+         INSTR: Select all that apply
+         
+         INSTR:  If grandchild: Which child of yours or your [husband/wife/partner] is
+         the parent of that grandchild?
+         
+         WEB-ADMINISTERED TEXT:
+         [Final Illness and Death Expenses: Help From a Relative]
+         
+         Which child is that? 
+         
+         INSTR: Please select all that apply. 
+         
+         INSTR: If grandchild: Which child of yours or your [husband/wife/partner] is the
+         parent of that grandchild?
+
+         .................................................................................
+                               041-990.  Other Person Number
+             1                     992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+         15722                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD <> SpecialAnswer THEN 
+         For SecS.DeathExpense.cnt := 1 to 50 do 
+         IF SecS.DeathExpense.cnt <= Cardinal(SecS.DeathExpense.S070M_WHOHELPEDCHILD ) 
+         THEN 
+         ASSIGN: SecS.DeathExpense.S051M [cnt] := SecS.DeathExpense.aArrayInteger 
+         [OrdEnum(SetElement(S070M_WHOHELPEDCHILD,cnt))] 
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD = DontKnow THEN 
+         ASSIGN: SecS.DeathExpense.S051M [1] := DontKnow 
+         {PREVIOUS ASK} SecS.DeathExpense.S070M_WHOHELPEDCHILD 
+         IF SecS.DeathExpense.S070M_WHOHELPEDCHILD = Refusal THEN 
+         ASSIGN: SecS.DeathExpense.S051M [1] := Refusal 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS051M5                       WHICH CHILD HELP PAY SP DEATH COSTS - 5
+         Section: S     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecS.DeathExpense.S051M
+
+         [Final Illness and Death Expenses: Help From a Relative]
+         
+         (Which child is that?)
+         
+         INSTR: Select all that apply
+         
+         INSTR:  If grandchild: Which child of yours or your [husband/wife/partner] is
+         the parent of that grandchild?
+         
+         WEB-ADMINISTERED TEXT:
+         [Final Illness and Death Expenses: Help From a Relative]
+         
+         Which child is that? 
+         
+         INSTR: Please select all that apply. 
+         
+         INSTR: If grandchild: Which child of yours or your [husband/wife/partner] is the
+         parent of that grandchild?
+
+         .................................................................................
+                               041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+         15723                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings 
+
+         IF SecA.Relations.A202_CoupledatDeath = YES OR 
+         SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS052M                        WHICH STATE DID H/W/P DIE - MASKED
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.DeathExpense.S052_
+
+         In which state or country did your [husband/wife/partner] die?
+         
+         INSTR: Type 'OT' to enter Other Country.
+         
+         State:
+         
+         WEB-ADMINISTERED TEXT:
+         In which state or country did your [husband/wife/partner] die?
+         
+         INSTR: If your [husband/wife/partner] died outside of the U.S., please select
+         "Other country" from the bottom of the list below and enter the name of the
+         country.
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+             4          -8.  Web non-response
+            15           1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+            35           2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+            63           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+            23           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+           123           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+            31           6.  South Region: East South Central Division (KY, TN, AL, MS)
+            59           7.  South Region: West South Central Division (AR, LA, OK, TX)
+            27           8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+            46           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+             4          11.  Foreign Country: Not in a Census Division (includes U.S.
+                             territories)
+                        97.  OTHER
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+         15291       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings 
+
+         IF SecA.Relations.A202_CoupledatDeath = YES OR 
+         SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS054M1M                      CAUSE OF DEATH - SPECIFY - 1 - MASKED
+         Section: S     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecS.DeathExpense.S054S
+
+         What was the cause of [his/her] death?
+
+         User Note:  See Health Conditions Master Code for detailed codes.  Some
+         categories have been collapsed to protect respondent confidentiality:  113-
+         118=119, 181-183=189, 191-197=997, 602-608=601.
+
+         .................................................................................
+           103                 101-103.  Cancers and tumors; skin conditions
+             3                 111-119.  Musculoskeletal system and connective tissue
+           128                 121-129.  Heart, circulatory and blood conditions
+            36                 131-139.  Allergies; hay fever; sinusitis; tonsillitis
+            12                 141-149.  Endocrine, metabolic and nutritional conditions
+            19                 151-159.  Digestive system (stomach, liver, gallbladder,
+                                         kidney, bladder)
+            14                 161-169.  Neurological and sensory conditions
+                               171-179.  Reproductive system and prostate conditions
+             2                 181-189.  Emotional and psychological conditions
+                               191-197.  Miscellaneous
+            29                 590-599.  Other symptoms
+            11                 601-609.  Not a health condition
+                                   996.  None
+            43                     997.  Other health condition
+            25                     998.  DK (Don't Know); NA (Not Ascertained)
+             4                     999.  RF (Refused)
+         15294                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings 
+
+         IF SecA.Relations.A202_CoupledatDeath = YES OR 
+         SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS054M2M                      CAUSE OF DEATH - SPECIFY - 2 - MASKED
+         Section: S     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecS.DeathExpense.S054S
+
+         What was the cause of [his/her] death?
+
+         User Note:  See Health Conditions Master Code for detailed codes.  Some
+         categories have been collapsed to protect respondent confidentiality:  113-
+         118=119, 181-183=189, 191-197=997, 602-608=601.
+
+         .................................................................................
+             3                 101-103.  Cancers and tumors; skin conditions
+             3                 111-119.  Musculoskeletal system and connective tissue
+            15                 121-129.  Heart, circulatory and blood conditions
+            16                 131-139.  Allergies; hay fever; sinusitis; tonsillitis
+             5                 141-149.  Endocrine, metabolic and nutritional conditions
+            10                 151-159.  Digestive system (stomach, liver, gallbladder,
+                                         kidney, bladder)
+             4                 161-169.  Neurological and sensory conditions
+                               171-179.  Reproductive system and prostate conditions
+             1                 181-189.  Emotional and psychological conditions
+                               191-197.  Miscellaneous
+             5                 590-599.  Other symptoms
+             2                 601-609.  Not a health condition
+                                   996.  None
+            11                     997.  Other health condition
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+         15648                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings 
+
+         IF SecA.Relations.A023_PWSpPAlive <> NO AND SecB.Marriage2.B058_DivWidSincePW 
+         <> YESWIDOWED AND SecA.StartInterview.A009_SelfPrxy = SLF THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS055                         EXPECT LESS LIFE INS AFTER DEATH/EX - SP
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Benefits.S055_
+
+         Because of [divorce/separation], do you expect to receive less in the way of
+         life insurance benefits if your former [husband/wife/partner] dies?
+
+         .................................................................................
+             3          -8.  Web non-response
+            39           1.  YES
+           224           5.  NO
+            12           8.  DK (Don't Know); NA (Not Ascertained)
+             5           9.  RF (Refused)
+         15440       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS056                         LOSE PART OF PENSION CLAIM AT SP DIV/DTH
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Benefits.S056_
+
+         Did you lose any part of your claim on your [late/former]
+         [husband/wife/partner]'s pension?
+
+         .................................................................................
+             8          -8.  Web non-response
+           102           1.  YES
+           581           5.  NO
+            27           8.  DK (Don't Know); NA (Not Ascertained)
+            14           9.  RF (Refused)
+         14991       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Benefits.S056_ 
+
+         IF SecS.Benefits.S056_ = YES THEN 
+
+         IF SecA.Relations.A023_PWSpPAlive <> NO AND SecB.Marriage2.B058_DivWidSincePW 
+         <> YESWIDOWED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS057                         REC PROPERTY TO COMP LOSS OF PENSION
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecS.Benefits.S057_
+
+         Did you receive any money or property from your former [husband/wife/partner] to
+         compensate for the loss of your claim on your former [husband/wife/partner]'s
+         pension?
+
+         .................................................................................
+             2           1.  YES
+            28           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+         15693       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Benefits.S056_ 
+
+         IF SecA.Relations.A202_CoupledatDeath <> YES AND 
+         SecB.Marriage2.B058_DivWidSincePW <> YESWIDOWED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS058                         R EXPENSES ASSOC WITH DIVORCE
+         Section: S     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecS.Benefits.S058_
+
+         All in all, what were your expenses associated with [the divorce/the
+         separation], that is, legal fees and costs?
+         
+         INSTR: Do not probe DK/RF
+         
+         WEB-ADMINISTERED TEXT:
+         All in all, what were your expenses associated with [the divorce/the
+         separation], that is, legal fees and costs?
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            256        0      227000       4070.01      16685.63   15423
+         -----------------------------------------------------------------
+             2          -8.  Web non-response
+            24      999998.  DK (Don't Know); NA (Not Ascertained)
+            18      999999.  RF (Refused)
+
+
+==========================================================================================
+
+RS067                         EXPENSES W/ DIVORCE - MIN
+         Section: S     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecS.Benefits.S067_
+
+         (Thinking about the total expenses associated with [divorce/separation], that
+         is, legal fees and costs:)
+         
+         Does it amount to a total of less than $___ , more than $___ , or what?
+         
+         PROCEDURE: 2Up1Down
+         BREAKPOINTS: $500, $1,500, $5,000, $15,000
+         ENTRY POINT: $1,500
+         
+         WEB-ADMINISTERED TEXT:
+         Thinking about the total expenses associated with [divorce/separation], that is,
+         legal fees and costs:
+         
+         Does it amount to a total of less than $___ , more than $___ , or what?
+
+         User Note: The procedures apply to both the interviewer-administered and
+         web-administered text.
+
+         .................................................................................
+            33           0.  Value of Breakpoint
+             3         500.  Value of Breakpoint
+             4         501.  Value of Breakpoint
+             3        1501.  Value of Breakpoint
+         15680       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS068                         EXPENSES W/ DIVORCE - MAX
+         Section: S     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecS.Benefits.S068_
+
+         *
+
+         .................................................................................
+             5         499.  Value of Breakpoint
+             3         500.  Value of Breakpoint
+             5        1499.  Value of Breakpoint
+             2        4999.  Value of Breakpoint
+            28    99999996.  Greater than Maximum Breakpoint
+         15680       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RS069                         EXPENSES W/ DIVORCE - RESULT
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecS.Benefits.S069_
+
+         *
+
+         .................................................................................
+             3           0.  No Breakpoint values given during interview
+             1          97.  Data Not Available
+            10          98.  DK (Don't Know); NA (Not Ascertained)
+            16          99.  RF (Refused)
+         15693       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecS.Earnings 
+
+         IF ActiveMode = 'IWERADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RS059                         SECTION S ASSIST WIDOWHOOD/DIVORCE
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecS.S059_AssistS
+
+         INSTR: How often did R receive assistance with answers in section S -
+         widowhood/divorce?
+
+         User Note:  Interviewer-administered item.
+
+         .................................................................................
+           642           1.  NEVER
+             5           2.  A FEW TIMES
+             7           3.  MOST OR ALL OF THE TIME
+                         4.  THE SECTION WAS DONE BY A PROXY REPORTER
+         15069       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RCOVFLAG                      RCOVFLAG
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+          3266           1.  In 2020 HRS COVID-19 Project
+         12457       Blank.  Not in 2020 HRS COVID-19 Project
+
+
+==========================================================================================
+
+RSMODE                        ENDING MODE - SECTION S
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         User Note:  This variable identifies the mode at completion of this section.
+
+         .................................................................................
+           650           1.  PHONE
+             7           2.  FTF
+            66           3.  WEB
+            12           4.  WEB-SMALL
+         14988       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+RVDATE                        2020 DATA MODEL VERSION
+         Section: S     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+         User Note:  This variable identifies which data model was used to interview the
+         household.  Please reference the data description for a summary of changes in
+         each data model.
+
+         .................................................................................
+           911           1.  Version 1
+           463           2.  Version 2
+           630           3.  Version 3
+           961           4.  Version 4
+           374           5.  Version 5
+           585           6.  Version 6
+          3777           7.  Version 7
+          1239           8.  Version 8
+          1208           9.  Version 9
+          1091          10.  Version 10
+          1298          11.  Version 11
+          1895          12.  Version 12
+          1291          13.  Version 13
+
+
+==========================================================================================
+
+RVERSION                      2020 DATA RELEASE VERSION
+         Section: S     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+         15723           1.  HRS 2020 Final Release
+
+
+==========================================================================================

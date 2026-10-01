@@ -1,0 +1,593 @@
+==========================================================================================
+
+HRS 2016 Final Post Exit
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section PR: PRELOAD  (Respondent)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+           121           000003-916532.  Household Identifier
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+            79         010.  Person Identifier
+             1         011.  Person Identifier
+            24         020.  Person Identifier
+             1         021.  Person Identifier
+             6         030.  Person Identifier
+            10         040.  Person Identifier
+
+
+==========================================================================================
+
+ZPSUBHH                       2016 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           116           3.  1st deceased respondent from a household
+             5           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+OSUBHH                        2014 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           116           3.  1st deceased respondent from a household
+             5           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+ZPPN_SP                       2016 SPOUSE PERSON IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+             9         010.  Person Identifier
+            18         020.  Person Identifier
+             3         040.  Person Identifier
+            91       Blank.  No Spouse
+
+
+==========================================================================================
+
+ZPEXITIW                      YEAR OF EXIT INTERVIEW
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+
+         .................................................................................
+             8        2010.  Year of Exit Interview
+            20        2012.  Year of Exit Interview
+            93        2014.  Year of Exit Interview
+
+
+==========================================================================================
+
+ZPZ004                        R MONTH BORN
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: RTab[1].X004AmoBorn
+
+         R MONTH BORN
+
+         .................................................................................
+            13           1.  JAN
+            14           2.  FEB
+             9           3.  MAR
+             9           4.  APR
+             8           5.  MAY
+             8           6.  JUN
+             9           7.  JUL
+            11           8.  AUG
+             8           9.  SEP
+             7          10.  OCT
+            12          11.  NOV
+            13          12.  DEC
+                     Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPX067_R                      YEAR BORN-UPDATED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: Respondents[1].X067AYrBorn
+
+         (What year FNAME born)?
+
+         .................................................................................
+           121               1912-1955.  Actual Value
+                                 Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPZ023                        PREV WAVE WHICH COHORT
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: HH.X023_Cohort_V
+
+         PREV WAVE WHICH COHORT
+
+         .................................................................................
+            38           1.  AHEAD (born before 1924)
+            13           2.  CODA (1924-1930)
+            56           3.  HRS (1931-1941)
+             6           4.  WAR BABY (1942-1947)
+             6           5.  EARLY BABY BOOMER (1948-1953)
+             2           6.  MID BABY BOOMER (1954-1959)
+
+
+==========================================================================================
+
+ZPX026M                       1ST ADDRESS STATE-MASKED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: HH.X026_MainST
+
+         1ST ADDRESS STATE
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+             1           1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+             8           2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+            18           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+             7           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+            26           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+             6           6.  South Region: East South Central Division (KY, TN, AL, MS)
+            15           7.  South Region: West South Central Division (AR, LA, OK, TX)
+             2           8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+            13           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+             1          11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+            24       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: HH.X027_Has2ndRes := HASOTHRES:{PREVIOUS ASK} 
+         SecA.HousingLocation.A085_WhichMainRes 
+         ORIF ((((SecA.ContinuInterview.A218_AgeGreaterThan17 > 17) OR 
+         (SecA.ContinuInterview.A019_RAge > 17)) AND (Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT)) AND (Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST)) AND 
+         (Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST) THEN 
+         IF (Preload_HH.X024_ReIwHH_V = YES) OR (((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (SecA.StartInterview.A007TRAlive_A = YES)) AND (SecA.A158_NewCohortNotEligable 
+         <> CASEINELIGIBLE)) THEN 
+         IF (SCV.XR1_R2 = FIRST) AND (SecA.HousingLocation.A084_NumRes = TWORES) THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPX027                        HAS 2ND RESIDENCE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: HH.X027_Has2ndRes
+
+         HAS 2ND RESIDENCE
+
+         .................................................................................
+            10           1.  HAS OTHER RESIDENCE
+            81           5.  NO OTHER RESIDENCE
+            30       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPX030M                       2ND ADDRESS STATE-MASKED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: HH.X030_2ndResST
+
+         2ND ADDRESS STATE
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+                         1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+                         2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+             1           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+             1           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+             2           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+                         6.  South Region: East South Central Division (KY, TN, AL, MS)
+             4           7.  South Region: West South Central Division (AR, LA, OK, TX)
+                         8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+             2           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+                        11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           111       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPX060_R                      SEX OF INDIVIDUAL-UPDATED -1
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: Respondents[1].X060ASex
+
+         (What is FNAME Sex?)
+         
+         INTERVIEWER: VERIFY SPELLING OF FIRST AND LAST NAME AND SEX. IF NECESSARY, USE
+         "YEAR BORN" TO CLARIFY IDENTITY OF R AND SPOUSE/PARTNER. PLEASE CHECK THAT
+         RELATION TO R AND WHETHER LIVING ARE CORRECT.
+
+         .................................................................................
+            52           1.  MALE
+            69           2.  FEMALE
+
+
+==========================================================================================
+
+ZPX065_R                      COUPLENESS STATUS OF INDIVIDUAL-UPDATED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: Respondents[1].X065ACouplenss
+
+         Is NAME married or living with a partner?
+         COUPLENESS STATUS OF INDIVIDUAL
+
+         .................................................................................
+            33           1.  MARRIED
+                         2.  REMARRIED
+             1           3.  PARTNERED (VOLUNTEERED)
+                         4.  REPARTNERED (VOLUNTEERED)
+            87           6.  OTHER
+                     Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+ZPZ077                        PREV WAVE R ORIG SAMP MEMBER
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z077_OrigSamp_V
+
+         PREV WAVE R ORIG SAMP MEMBER
+
+         .................................................................................
+           119           1.  ORIGINAL SAMPLE MEMBER
+             2           5.  NOT AN ORIGINAL SAMPLE MEMBER
+
+
+==========================================================================================
+
+ZPZ080                        PREV WAVE R MARITAL STATUS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z080_MarStat_V
+
+         PREV WAVE R MARITAL STATUS
+
+         .................................................................................
+             5           0.  UNKNOWN
+            26           1.  MARRIED
+                         2.  MARRIED SP ABSENT (IN INSTITUTION)
+             5           3.  MARRIED SP ABSENT (NOT IN INSTITUTION)
+            16           4.  DIVORCED/SEPARATED
+            63           5.  WIDOWED
+             6           6.  NEVER MARRIED
+                     Blank.  Data from prior wave not available
+
+
+==========================================================================================
+
+         ASSIGN: RVARS.Z092_IwMo_V := Preload_HH.X034_1stRIwMo_V:IF (Init.A120_UPDATER > 
+         0) OR Init.A503_REFRESH <> EMPTY THEN 
+         IF Preload_RVARS.Z092_IwMo_V = EMPTY AND Preload_RVARS.Z093_IwYr_V = EMPTY THEN 
+         IF Preload_HH.X034_1stRIwMo_V <> EMPTY AND Preload_HH.X035_1stRIwYr_V <> EMPTY 
+         THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPZ092                        PREV WAVE IW MONTH
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: RVARS.Z092_IwMo_V
+
+         PREV WAVE IW MONTH
+
+         .................................................................................
+             6           1.  JAN
+             1           2.  FEB
+             7           3.  MAR
+            19           4.  APR
+            38           5.  MAY
+            21           6.  JUN
+             7           7.  JUL
+             5           8.  AUG
+             5           9.  SEP
+             4          10.  OCT
+             3          11.  NOV
+             5          12.  DEC
+                     Blank.  Data from prior wave not available
+
+
+==========================================================================================
+
+         ASSIGN: RVARS.Z093_IwYr_V := A062T2YrsAgo_A:IF (Init.A120_UPDATER > 0) OR 
+         Init.A503_REFRESH <> EMPTY THEN 
+         IF Preload_RVARS.Z092_IwMo_V = EMPTY AND Preload_RVARS.Z093_IwYr_V = EMPTY THEN 
+         IF NOT(Preload_HH.X034_1stRIwMo_V <> EMPTY AND Preload_HH.X035_1stRIwYr_V <> 
+         EMPTY) THEN 
+         ASSIGN: RVARS.Z093_IwYr_V := Preload_HH.X035_1stRIwYr_V:IF (Init.A120_UPDATER > 
+         0) OR Init.A503_REFRESH <> EMPTY THEN 
+         IF Preload_RVARS.Z092_IwMo_V = EMPTY AND Preload_RVARS.Z093_IwYr_V = EMPTY THEN 
+         IF Preload_HH.X034_1stRIwMo_V <> EMPTY AND Preload_HH.X035_1stRIwYr_V <> EMPTY 
+         THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ZPZ093                        PREV WAVE IW YEAR
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: RVARS.Z093_IwYr_V
+
+         PREV WAVE IW YEAR
+
+         .................................................................................
+           121               2010-2015.  Actual Value
+
+
+==========================================================================================
+
+ZPZ096                        PREV WAVE PROXY RTR
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: RVARS.Z096_PrxyRTR_V
+
+         PREV WAVE PROXY RTR
+
+         .................................................................................
+                         1.  SELF
+            24           2.  SPOUSE/PARTNER
+            29           3.  SON
+                         4.  STEPSON
+                         5.  SPOUSE/PARTNER OF DAUGHTER (SON-IN-LAW)
+            51           6.  DAUGHTER
+                         7.  STEPDAUGHTER
+                         8.  SPOUSE/PARTNER OF SON (DAUGHTER-IN-LAW)
+             3           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+                        14.  R'S PARENTS
+                        15.  BROTHER
+                        16.  BROTHER OF SPOUSE/PARTNER (BROTHER-IN-LAW)
+             1          17.  SISTER
+                        18.  SISTER OF SPOUSE/PARTNER (SISTER-IN-LAW)
+             9          19.  OTHER RELATIVE
+             4          20.  OTHER INDIVIDUAL
+                        21.  ORGANIZATION
+                        22.  EMPLOYEE OF INSTITUTION
+                        23.  PAID HELPER
+                        24.  PROFESSIONAL
+                        25.  PROFESSIONAL (SPECIFY)
+                        26.  LATE SPOUSE/PARTNER
+                        27.  EX-SPOUSE/PARTNER
+                        28.  UNLISTED CHILD OR CHILD-IN-LAW
+                        29.  NOT PROXY INTERVIEW
+                        30.  FORMER STEP-CHILD
+                        31.  FORMER CHILD-IN-LAW
+                        32.  RELATIONSHIP UNKNOWN
+                        33.  SPOUSE/PARTNER OF GRANDCHILD
+                        34.  NOT A SIBLING
+                        90.  AMBIGUOUS CHILD RELATIONSHIP
+                        91.  AMBIGUOUS CHILD-IN-LAW RELATIONSHIP
+                     Blank.  Data from prior wave not available
+
+
+==========================================================================================
+
+ZPZ129                        PREV WAVE MONTH OF DEATH
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: RVARS.Z129_MoDeath_V
+
+         PREV WAVE MONTH OF DEATH
+
+         .................................................................................
+            14           1.  JAN
+            12           2.  FEB
+            10           3.  MAR
+            10           4.  APR
+             7           5.  MAY
+            10           6.  JUN
+             6           7.  JUL
+             9           8.  AUG
+            13           9.  SEP
+             7          10.  OCT
+            14          11.  NOV
+             9          12.  DEC
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+                     Blank.  INAP (Inapplicable); Data Missing
+
+
+==========================================================================================
+
+ZPZ131                        PREV WAVE YEAR OF DEATH
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: RVARS.Z131_YrDeath_V
+
+         PREV WAVE YEAR OF DEATH
+
+         .................................................................................
+           121               2008-2014.  Actual Value
+                                  9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+                                 Blank.  INAP (Inapplicable); Data Missing
+
+
+==========================================================================================
+
+ZPZ145                        TYPE POST EXIT INTERVIEW
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z145_TypeExit_V
+
+         PREV WAVE TYPE POST EXIT INTERVIEW
+
+         .................................................................................
+            97           2.  NEW POST EXIT
+            19           3.  FIRST REPEAT POST EXIT
+             5           4.  SECOND REPEAT POST EXIT
+
+
+==========================================================================================
+
+ZPZ146                        ASK HOME/WILL/TRUST
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z146_HomeWillTrust_V
+
+         PREV WAVE ASK HOME/WILL/TRUST
+
+         .................................................................................
+            62           1.  ASK ABOUT HOME ONLY
+            37           2.  ASK ABOUT WILL/TRUST ONLY
+            22           3.  ASK BOTH HOME AND WILL/TRUST
+                     Blank.  Data not available
+
+
+==========================================================================================
+
+ZPX502                        PREASSIGNED RANDOM VALUE -1
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X502_2Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+            59           1.  RANDOM ASSIGNMENT 1
+            62           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+ZPX503                        PREASSIGNED RANDOM VALUE -2
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X503_3Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+            51           1.  RANDOM ASSIGNMENT 1
+            70           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+ZPX505                        PREASSIGNED RANDOM VALUE -3
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X505_5Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+            62           1.  RANDOM ASSIGNMENT 1
+            59           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+ZPX511                        PREASSIGNED RANDOM VALUE -4
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X511_1Random1_3
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+            35           1.  RANDOM ASSIGNMENT 1
+            39           2.  RANDOM ASSIGNMENT 2
+            47           3.  RANDOM ASSIGNMENT 3
+
+
+==========================================================================================
+
+ZPZ274                        R HAS DISCUSSED MEDICAL CARE WITH OTHERS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z274_DiscussedCare
+
+         *
+
+         .................................................................................
+            48           1.  YES
+            73           5.  NO
+                     Blank.  INAP (Inapplicable); Data Missing
+
+
+==========================================================================================
+
+ZPZ275                        CARE ARRANGEMENTS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z275_CareArrangements
+
+         *
+
+         .................................................................................
+             8           1.  DPOA ONLY
+             6           2.  LIVING WILL ONLY
+            37           3.  BOTH TYPE
+            29           5.  NEITHER
+            41       Blank.  Data Not Available; Non-reinterview respondent
+
+
+==========================================================================================
+
+ZPZ276                        R HAS CONFIRMED PENSIONS IN A PRIOR WAVE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z276_PensionsConfirmed
+
+         *
+
+         .................................................................................
+            80           1.  YES
+            41           5.  NO
+                     Blank.  INAP (Inapplicable); Data Missing
+
+
+==========================================================================================
+
+ZPVDATE                       2016 DATA MODEL VERSION
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+         .................................................................................
+                         1.  Version 1
+                         2.  Version 2
+                         3.  Version 3
+            27           4.  Version 4
+            39           5.  Version 5
+             3           6.  Version 6
+            25           7.  Version 7
+             7           8.  Version 8
+             4           9.  Version 9
+            16          10.  Version 10
+
+
+==========================================================================================
+
+ZPVERSN                       2016 POST-EXIT RELEASE VERSION NUMBER
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+           121           1.  HRS 2016 Post-Exit Final Release
+
+
+==========================================================================================

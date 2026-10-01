@@ -1,0 +1,490 @@
+==========================================================================================
+
+HRS 2018 Final Exit
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section B: DEMOGRAPHICS  (Respondent)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+           980           010475-919959.  Household Identification Number
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           557         010.  Person Identifier
+            39         011.  Person Identifier
+             1         012.  Person Identifier
+           293         020.  Person Identifier
+             9         021.  Person Identifier
+            32         030.  Person Identifier
+             2         031.  Person Identifier
+            44         040.  Person Identifier
+             2         041.  Person Identifier
+             1         042.  Person Identifier
+
+
+==========================================================================================
+
+XQSUBHH                       2018 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           948           3.  1st deceased respondent from a household
+            32           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+PSUBHH                        2016 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           895           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+            33           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            34           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+             5           3.  1st deceased respondent from a household
+             1           4.  2nd deceased respondent from a household
+             2           5.  Split household - one half of couple from SUBHH 1 or 2
+                         6.  Split household - one half of couple from SUBHH 1 or 2
+            10           7.  Reunited household - respondents from split household
+                             reunite
+
+
+==========================================================================================
+
+XQPN_SP                       2018 SPOUSE/PARTNER PERSON NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           150         010.  Person Identifier
+            38         011.  Person Identifier
+             3         012.  Person Identifier
+           145         020.  Person Identifier
+            11         021.  Person Identifier
+            12         030.  Person Identifier
+             3         031.  Person Identifier
+            32         040.  Person Identifier
+             4         041.  Person Identifier
+             1         811.  Spouse of Non-Original Respondent
+           581       Blank.  R not coupled
+
+
+==========================================================================================
+
+         IF ActiveMode = 'IWERADMIN' THEN 
+         IF NOT(ActiveMode = 'IWERADMIN') THEN 
+         ASSIGN: SecB.B084_IwMode := '3' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQB084                        IW MODE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.B084_IwMode
+
+         IWER: ENTER current mode of interview:
+
+         .................................................................................
+           862           1.  TELEPHONE
+           118           2.  FACE-TO-FACE
+
+
+==========================================================================================
+
+         IF SecA.relations.A028_RInNHome <> YES OR 
+         SecA.HousingLocation.NursingHome.A070_NHOwnRent = YES THEN 
+
+         IF RVARS.Z076_ReIwR_V = REIWR AND (hh.X033_HHMoved <> RDIDNTMOVE OR 
+         SecA.HousingLocation.A071_SameMainRes <> YES) AND SCV.XR1_R2 <> SECOND OR 
+         RVARS.Z076_ReIwR_V <> REIWR THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQB039                        YEAR MOVED TO MAIN RESIDENCE
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecB.LivedArea.B039_YrMoveMainRes
+
+         In what year did [Respondent's First Name] move to [his/her] home in [Main
+         Residence City, State (State Abbreviation)]?
+         
+         Year:
+
+         .................................................................................
+            71               1952-2018.  Actual Value
+             4                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           905                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.LivedArea.B039_YrMoveMainRes 
+
+         IF SecB.LivedArea.B039_YrMoveMainRes >= Year(SecB.LivedArea.Today ) - 2 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQB040                        MONTH MOVED TO MAIN RESIDENCE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecB.LivedArea.B040_MoMoveMainRes
+
+         In what month was that?
+         
+         Month:
+
+         .................................................................................
+             3           1.  JAN
+             1           2.  FEB
+             4           3.  MAR
+             3           4.  APR
+             2           5.  MAY
+             2           6.  JUN
+             6           7.  JUL
+             1           8.  AUG
+             4           9.  SEP
+             3          10.  OCT
+             2          11.  NOV
+             2          12.  DEC
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           946       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQB082                        ATTEND RELIGIOUS SERV- FREQ
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.B082_OftReligServices
+
+         About how often did [he/she] attend religious services during the last year
+         [he/she] was alive?
+         
+         INSTR: PROBE if necessary: (Would you say more than once a week, once a week,
+         two or three times a month, one or more times a year, or not at all?)
+
+         .................................................................................
+            60           1.  MORE THAN ONCE A WEEK
+           199           2.  ONCE A WEEK
+           111           3.  TWO OR THREE TIMES A MONTH
+           156           4.  ONE OR MORE TIMES A YEAR
+           440           5.  NOT AT ALL
+            14           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+                     Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF RVARS.Z076_ReIwR_V = REIWR AND SCV.XR1_R2 <> SECOND THEN 
+         IF SecA.relations.A020TSameSpP_A <> YESANDSPPTRISLIVING AND 
+         (SecA.relations.A023_PWSpPAlive <> NO OR SecA.relations.A202_CoupledatDeath <> 
+         YES OR SecA.relations.A026_Rmarried <> NO) THEN 
+         IF Preload_Respondents[iDM].X065ACouplenss <> MARRIED AND 
+         Preload_Respondents[iDM].X065ACouplenss <> REMARRIED AND 
+         (Respondents[iDM].X065ACouplenss = MARRIED OR Respondents[iDM].X065ACouplenss = 
+         REMARRIED) THEN 
+         ASSIGN: SecB.Marriage2.B055_ := 'YES' 
+         IF RVARS.Z076_ReIwR_V = REIWR AND SCV.XR1_R2 <> SECOND THEN 
+         IF SecA.relations.A020TSameSpP_A <> YESANDSPPTRISLIVING AND 
+         (SecA.relations.A023_PWSpPAlive <> NO OR SecA.relations.A202_CoupledatDeath <> 
+         YES OR SecA.relations.A026_Rmarried <> NO) THEN 
+         IF NOT(piRespondents1X066ACouplenss_V <> MARRIED AND 
+         piRespondents1X066ACouplenss_V <> REMARRIED AND (piRespondents1X065ACouplenss = 
+         MARRIED OR piRespondents1X065ACouplenss = REMARRIED)) THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQB055                        NEW MARRIAGE SINCE PREVIOUS WAVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.Marriage2.B055_
+
+         Sometimes marital situations are not entirely clear from what we've asked so
+         far.
+         
+         Please bear with me for a few more questions on this.
+         
+         Was [he/she] married at any time since [Prev Wave IW Month], [Prev Wave IW
+         Year]?
+
+         .................................................................................
+            24           1.  YES
+           581           5.  NO
+             3           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           372       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF RVARS.Z076_ReIwR_V = REIWR AND SCV.XR1_R2 <> SECOND THEN 
+
+         IF SecA.relations.A020TSameSpP_A <> YESANDSPPTRISLIVING AND 
+         (SecA.relations.A023_PWSpPAlive <> NO OR SecA.relations.A202_CoupledatDeath <> 
+         YES OR SecA.relations.A026_Rmarried <> NO) THEN 
+
+         IF SecB.Marriage2.B055_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQB056                        BETWEEN WAVE MARRIAGE START-MONTH
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecB.Marriage2.B056_
+
+         [You told us earlier that [he/she] was married since [[Prev Wave IW Month],
+         [Prev Wave IW Year]./ ]]
+         
+         In what month and year was [he/she] married?
+         
+         Month:
+         
+         Year:
+
+         .................................................................................
+             1           1.  JAN
+                         2.  FEB
+                         3.  MAR
+             1           4.  APR
+             1           5.  MAY
+             5           6.  JUN
+             4           7.  JUL
+             1           8.  AUG
+                         9.  SEP
+             1          10.  OCT
+             1          11.  NOV
+             1          12.  DEC
+             8          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           956       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.Marriage2.B056_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQB057                        BETWEEN WAVE MARRIAGE START-YEAR
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecB.Marriage2.B057_
+
+         (In what month and year was [he/she] married?)
+         
+         Month: [BETWEEN WAVE MARRIAGE START-MONTH]
+         
+         Year:
+
+         .................................................................................
+             9               1993-2017.  Actual Value
+            15                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           956                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF RVARS.Z076_ReIwR_V = REIWR AND SCV.XR1_R2 <> SECOND THEN 
+
+         IF SecA.relations.A020TSameSpP_A <> YESANDSPPTRISLIVING AND 
+         (SecA.relations.A023_PWSpPAlive <> NO OR SecA.relations.A202_CoupledatDeath <> 
+         YES OR SecA.relations.A026_Rmarried <> NO) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQB058                        DIVORCE/WIDOW SINCE PREVIOUS WAVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.Marriage2.B058_DivWidSincePW
+
+         Did [he/she] divorce or become widowed since [Prev Wave IW Month], [Prev Wave IW
+         Year]?
+
+         .................................................................................
+             2           1.  YES, DIVORCED/ANNULLED
+            24           2.  YES, WIDOWED
+           576           5.  NO
+             6           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           372       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.Marriage2.B058_DivWidSincePW 
+
+         IF SecB.Marriage2.B058_DivWidSincePW = YESDIVORCED_ANNULLED OR 
+         SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQB059                        BETWEEN WAVE DIVORCE/WIDOW-MONTH
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecB.Marriage2.B059_
+
+         In what month and year did [he/she] [divorce/become widowed]?
+         
+         Month:
+         
+         Year:
+
+         .................................................................................
+             2           1.  JAN
+             2           2.  FEB
+             1           3.  MAR
+             3           4.  APR
+             3           5.  MAY
+             1           6.  JUN
+             1           7.  JUL
+             4           8.  AUG
+             1           9.  SEP
+             2          10.  OCT
+             3          11.  NOV
+             3          12.  DEC
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           954       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.Marriage2.B059_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQB060                        BETWEEN WAVE DIVORCE/WIDOW-YEAR
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecB.Marriage2.B060_
+
+         (In what month and year did [he/she] [divorce/become widowed]?)
+         
+         Month: [B059 label]
+         
+         Year:
+
+         .................................................................................
+            26               2013-2018.  Actual Value
+                                  9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           954                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQB061                        MARITAL STATUS IF UNMARRIED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.Marriage2.B061_AskMarStat
+
+         Just to clarify, at the time of [his/her] death was [he/she] separated,
+         divorced, widowed, or had [he/she] never been married?
+         
+         IWER: If R reports being partnered, read: For this question, we are interested
+         in knowing [his/her] legal marital status. Would you say [he/she] was married,
+         separated, divorced, widowed, or never married?
+
+         .................................................................................
+             6           1.  [VOL] MARRIED
+                         2.  [VOL] ANULLED
+            15           3.  SEPARATED
+           128           4.  DIVORCED
+           408           5.  WIDOWED
+            55           6.  NEVER MARRIED
+             4           7.  OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           364       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF  <> Empty AND  <> SpecialAnswer THEN 
+         ASSIGN: SecB.B063_MarStatAssign :=   
+         IF Respondents[iDM].X065ACouplenss = MARRIED THEN 
+         ASSIGN: SecB.B063_MarStatAssign := 'MARRIED' 
+         IF SecA.relations.A034_RMarSep = SEPARATED OR SecA.relations.A231_RMarSep = 
+         SEPARATED THEN 
+         ASSIGN: SecB.B063_MarStatAssign := 'SEPARATED' 
+         IF SecB.Marriage2.B058_DivWidSincePW = YESDIVORCED_ANNULLED THEN 
+         ASSIGN: SecB.B063_MarStatAssign := 'DIVORCED' 
+         IF SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED OR 
+         SecA.relations.A202_CoupledatDeath = YES AND SecA.relations.A026_Rmarried <> 
+         YES THEN 
+         ASSIGN: SecB.B063_MarStatAssign := 'WIDOWED' 
+         IF SecA.StartInterview.A007TRAlive_A = NO AND SecA.relations.A023_PWSpPAlive = 
+         NO AND SecA.relations.A026_Rmarried <> YES THEN 
+         ASSIGN: SecB.B063_MarStatAssign := 'WIDOWED' 
+         IF  = SpecialAnswer THEN 
+         ASSIGN: SecB.B063_MarStatAssign := 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQB063                        MARITAL STATUS ASSIGNED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.B063_MarStatAssign
+
+         *
+
+         User Note: B063 is assigned using values from the following variables:  X065,
+         A007, A023, A026, A034, A202, A231, B058, and B061.
+
+         .................................................................................
+           360           1.  [VOL] MARRIED
+                         2.  [VOL] ANULLED
+            25           3.  SEPARATED
+           128           4.  DIVORCED
+           408           5.  WIDOWED
+            55           6.  NEVER MARRIED
+             4           7.  OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+                     Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQVDATE                       2018 DATA MODEL VERSION
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+         User Note:  This variable identifies which data model was used to interview the
+         household.  Please reference the data description for a summary of changes in
+         each data model.
+
+         .................................................................................
+             7           1.  Version 1
+            28           2.  Version 2
+            20           3.  Version 3
+            28           4.  Version 4
+            66           5.  Version 5
+            63           6.  Version 6
+           163           7.  Version 7
+           200           8.  Version 8
+            50           9.  Version 9
+            10          10.  Version 10
+           237          11.  Version 11
+           108          12.  Version 12
+
+
+==========================================================================================
+
+XQVERSION                     2018 DATA RELEASE VERSION
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+           980           1.  HRS 2018 Exit Final Release
+
+
+==========================================================================================

@@ -1,0 +1,686 @@
+==========================================================================================
+2000 HRS Exit (Final Release)
+ODBC Reference: [HRS2000x]
+Perl script: CodebkD9.pl v5.043 Tue Mar  1  9:49:21 2005
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Surveycraft metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION E: Health Care and Service Costs (Helper)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFIER
+          Section: E            Level: Helper             CAI Reference: Q9001
+          Type: Character       Width: 6                  Decimals: 0
+          ................................................................................
+           1941       010003-213433. Household ID
+
+==========================================================================================
+
+PN        PERSON NUMBER
+          Section: E            Level: Helper             CAI Reference: Q9002
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+           1371       010. Person Number
+             12       011. Person Number
+            447       020. Person Number
+              5       021. Person Number
+             57       030. Person Number
+                      031. Person Number
+             49       040. Person Number
+                      041. Person Number
+
+==========================================================================================
+
+OPN       OTHER PERSON NUMBER
+          Section: E            Level: Helper             CAI Reference: Q9008
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+            670             021-035. Unlisted Person
+            388                 036. SPOUSE/PARTNER
+            883             041-995. Other Person Number
+
+==========================================================================================
+
+RSUBHH    2000 SUB-HOUSEHOLD IDENTIFIER
+          Section: E            Level: Helper             CAI Reference: Q9004
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+           1852         3. 1st deceased respondent from a household
+             89         4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+FSUBHH    1998 SUB-HOUSEHOLD IDENTIFIER
+          Section: E            Level: Helper             CAI Reference: Q9003
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+           1895         0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+             19         1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+             10         2. Split household - other half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+             17         3. 1st deceased respondent from a household
+                        5. Split household - one half of couple from SUBHH 1 or 2
+                        6. Split household - one half of couple from SUBHH 1 or 2
+                        7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+RPN_SP    2000 SPOUSE/PARTNER PERSON NUMBER
+          Section: E            Level: Helper             CAI Reference: Q9005
+          Type: Character       Width: 3                  Decimals: 0
+
+          User Note:  There are 42 R's with a valid RPN_SP who are not coupled in the
+          2000 Exit.  Two reasons explain this occurrence: both members of a
+          previously intact household are part of the 2000 Exit, or there was a
+          legitimate split between the exit interview and their last core interview.
+          We have included them in the data to allow linkage back to the spouse's
+          interview.
+          ................................................................................
+            393       010. Spouse Person Number
+             20       011. Spouse Person Number
+            453       020. Spouse Person Number
+              5       021. Spouse Person Number
+             23       030. Spouse Person Number
+             46       040. Spouse Person Number
+           1001     Blank. No Spouse at Death
+
+==========================================================================================
+
+RQNR      SURVEYCRAFT CASE NUMBER
+          Section: E            Level: Helper             CAI Reference: Q9006
+          Type: Numeric         Width: 5                  Decimals: 0
+          ................................................................................
+           1471         80001-80999. AHEAD/CODA Surveycraft Case Number
+            470         90001-90348. HRS/WAR BABY Surveycraft Case Number
+
+==========================================================================================
+
+R2104     E158Y3S.(E158) HELPER WHO LOOP
+          Section: E            Level: Helper             CAI Reference: Q2104
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+            670             021-035. Unlisted Person
+            388                 036. SPOUSE/PARTNER
+            883             041-995. Other Person Number
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q2104:E158Y3S] IS (1-20) AND [Q480:CS0Y7] IS (1) AND {When Q4 is
+             (Q2104), [Q13:PR13] IS (1 OR 3)} then [R2110.E158Y4.MARRIED OR NOT] = 1
+          *   If [Q2104:E158Y3S] IS (1-20) AND [Q480:CS0Y7] IS (2) AND {When Q57 is
+             (Q2104), [Q66:PR66] IS (1 OR 3)} then [R2110.E158Y4.MARRIED OR NOT] = 1
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R2110.E158Y4.MARRIED OR NOT] = 0
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R2110     E158Y4.MARRIED OR NOT
+          Section: E            Level: Helper             CAI Reference: Q2110
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+           1386         0. NOT MARRIED/PARTNERED
+            555         1. MARRIED/PARTNERED
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R2110 [E158Y4.MARRIED OR NOT] when [Q1:PR1] IS (GE 0 OR LE 0)
+          *  Jump from R2110 [E158Y4.MARRIED OR NOT] when [Q2104:E158Y3S] IS (1-20) AND
+             [Q480:CS0Y7] IS (1) AND {When Q4 is (Q2104), [Q13:PR13] IS (1 OR 3)}
+          *  Jump from R2110 [E158Y4.MARRIED OR NOT] when [Q2104:E158Y3S] IS (1-20) AND
+             [Q480:CS0Y7] IS (2) AND {When Q57 is (Q2104), [Q66:PR66] IS (1 OR 3)}
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R2111     E158Y5. HELPER OFTEN
+          Section: E            Level: Helper             CAI Reference: Q2111
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          E158Y5.
+          IF Q2110 IS (1)
+                  (First/Next) the help from
+                  [Q1728-E0Y3.KID AND SPOUSE NAME] ,
+                  starting with
+                  [Q8.] .  If no help was
+                  given just say so.  In a typical month, on about how
+                  many days did
+                  [Q8-PR8.HH1 FIRST NAME]  help
+                  [Q754-CS22Y31.R FIRST NAME] ?
+          ELSE Q2104 IS (21-35)
+                  (First/Next) the help from
+                  [Q2104.] .  In
+                  a typical month, on about how many days did
+
+                  [Q2104-E158Y3S.(E158) HELPER WHO LOOP]  help
+                  [Q754-CS22Y31.R FIRST NAME] ?
+          ELSE Q2104 IS (36) AND Q514 IS (2)
+                  Next, the help from you, yourself.
+                  In a typical month, on about how many days did
+                  you help
+                  [Q754-CS22Y31.R FIRST NAME] ?
+          ELSE Q2104 IS (36) AND Q514 IS (NE2)
+                  Next, the help from (he/she) (husband/wife/partner/...),
+                  [Q762.] .
+                  During the last month, on about how many days did
+
+                  [Q762-CS22Y39.R SPOUSE NAME]  help (him/her)?
+          ELSE
+                  (First/Next) the help from
+                  [Q1728.] .  In
+                  a typical month, on about how many days did
+
+                  [Q1728-E0Y3.KID AND SPOUSE NAME]  help
+                  [Q754-CS22Y31.R FIRST NAME] ?
+          END
+
+                  IWER:  ENTER "96" IN "DAYS IN A TYPICAL MONTH" IF THE PERSON
+                  WAS NOT A HELPER.
+
+                  DAYS IN A TYPICAL MONTH:
+                      OR
+                  DAYS PER WEEK:
+                      OR
+
+          ................................................................................
+           1063                1-31. Actual Value
+             96                  96. NOT A HELPER
+             74                  98. DK (Don't Know); NA (Not Ascertained)
+              1                  99. RF (Refused)
+            707               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R2112     E158a.HELPER PER WEEK
+          Section: E            Level: Helper             CAI Reference: Q2112
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            312                 1-7. Actual Value
+              1                   8. DK (Don't Know); NA (Not Ascertained)
+                                  9. RF (Refused)
+           1628               Blank. INAP (Inapplicable): [Q2111] IS (1-96 OR DK OR RF)
+
+==========================================================================================
+
+R2113     E158b.HELPER EVERY DAY
+          Section: E            Level: Helper             CAI Reference: Q2113
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            394         1. EVERY DAY
+           1547     Blank. INAP (Inapplicable): [Q2111] IS (1-96 OR DK OR RF);
+                           [Q2112:E158a] IS (NE "|" OR DK OR RF)
+
+==========================================================================================
+
+R2115     E159. HELPER HOURS
+          Section: E            Level: Helper             CAI Reference: Q2115
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          E159.
+          IF Q2110 IS (1)
+                  On the days
+                  [Q8-PR8.HH1 FIRST NAME]  helped (him/her), about how many hours
+          ELSE Q2104 IS (21-35)
+                  On the days
+                  [Q2104-E158Y3S.(E158) HELPER WHO LOOP]  helped (him/her), about how
+          many hours
+          ELSE Q2104 IS (36) AND Q514 IS (2)
+                  On the days you helped (him/her), about how many hours
+          ELSE Q2104 IS (36) AND Q514 IS (NE2)
+                  On the days (his/her) (husband/wife/partner/...) helps (him/her),
+          about how many hours
+          ELSE
+                  On the days
+                  [Q1728-E0Y3.KID AND SPOUSE NAME]  helped (him/her), about how many
+          hours
+          END
+                  per day was that?
+
+                  LESS THAN AN HOUR = 1
+          ................................................................................
+           1741                1-24. Actual Value
+            102                  98. DK (Don't Know); NA (Not Ascertained)
+              2                  99. RF (Refused)
+             96               Blank. INAP (Inapplicable): [Q2111] IS (96)
+
+==========================================================================================
+
+R2116     E160.SEX HELPER
+          Section: E            Level: Helper             CAI Reference: Q2116
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          E160.
+                  AFFIRM SEX OF HELPER:
+
+          IF Q2110 IS (1)
+                  (IS
+                  [Q8-PR8.HH1 FIRST NAME] )
+          ELSE Q2104 IS (21-35)
+                  (IS
+                  [Q2104-E158Y3S.(E158) HELPER WHO LOOP] )
+          ELSE
+                  (IS
+                  [Q1728-E0Y3.KID AND SPOUSE NAME] )
+          END
+
+                  ASKED ONLY IF NECESSARY
+          ................................................................................
+            405         1. MALE
+            871         2. FEMALE
+            194         3. AGENCY/PROFESSIONAL(/EMPLOYEES OF "INSTITUTION"/...)
+             14         8. DK (Don't Know); NA (Not Ascertained)
+              1         9. RF (Refused)
+            456     Blank. INAP (Inapplicable): [Q2111] IS (96); [Q2104:E158Y3S] IS (36)
+
+==========================================================================================
+
+R2117     E161.WHICH GRANDCHILD-1
+          Section: E            Level: Helper             CAI Reference: Q2117
+          Type: Character       Width: 3                  Decimals: 0
+
+          E161.
+                  IF GRANDCHILD:  (Which of (his/her) children is the parent
+                   of that grandchild?)
+          ................................................................................
+             15       037. DECEASED CHILD
+             73   041-950. Other Person Number
+              2       998. DK (Don't Know); NA (Not Ascertained)
+              1       999. RF (Refused)
+           1850     Blank. INAP (Inapplicable): [Q2111] IS (96); [Q2104:E158Y3S] IS (36);
+                           [Q2108:E158Y2] IS (NE 4)
+
+==========================================================================================
+
+R2118     E162. HELPER PAID
+          Section: E            Level: Helper             CAI Reference: Q2118
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          E162.
+          IF Q2110 IS (1)
+                  Was
+                  [Q8-PR8.HH1 FIRST NAME]  paid to help (him/her)?
+          ELSE Q2104 IS (21-35)
+                  Was
+                  [Q2104-E158Y3S.(E158) HELPER WHO LOOP]  paid to help (him/her)?
+          ELSE
+                  Was
+                  [Q1728-E0Y3.KID AND SPOUSE NAME]  paid to help (him/her)?
+          END
+          ................................................................................
+            312         1. YES
+           1161         5. NO
+             10         8. DK (Don't Know); NA (Not Ascertained)
+              2         9. RF (Refused)
+            456     Blank. INAP (Inapplicable): [Q2111] IS (96); [Q2104:E158Y3S] IS (36)
+
+==========================================================================================
+
+R2119     E163.HELPER INS PAY
+          Section: E            Level: Helper             CAI Reference: Q2119
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          E163.
+                  Did (Medicaid/STATE NAME FOR MEDICAID) or insurance
+          IF Q2110 IS (1)
+                  help pay
+                  [Q8-PR8.HH1 FIRST NAME] ?
+          ELSE Q2104 IS (21-35)
+                  help pay
+                  [Q2104-E158Y3S.(E158) HELPER WHO LOOP] ?
+          ELSE
+                  help pay
+                  [Q1728-E0Y3.KID AND SPOUSE NAME] ?
+          END
+          ................................................................................
+            180         1. YES
+            120         5. NO
+             12         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1629     Blank. INAP (Inapplicable): [Q2111] IS (96); [Q2104:E158Y3S] IS (36);
+                           [Q2118] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+R2120     E164.HELPER $ R PAY
+          Section: E            Level: Helper             CAI Reference: Q2120
+          Type: Numeric         Width: 5                  Decimals: 0
+
+          E164.
+                  (Not counting expenses paid by (Medicaid/STATE NAME FOR MEDICAID)
+          IF Q514 IS (2)
+                  how much did (he/she) and you end up
+          ELSE
+                  how much did (he/she) (and (his/her) husband/and (his/her) wife/and
+          (his/her) partner/...) end up
+          END
+          IF Q2110 IS (1)
+                  paying
+                  [Q8-PR8.HH1 FIRST NAME]  per month?
+          ELSE Q2104 IS (21-35)
+                  paying
+                  [Q2104-E158Y3S.(E158) HELPER WHO LOOP]  per month?
+          ELSE
+                  paying
+                  [Q1728-E0Y3.KID AND SPOUSE NAME]  per month?
+          END
+
+                  IWER: DO NOT PROBE DK/RF
+
+                  AMOUNT:
+                  PER:
+          ................................................................................
+            216             0-15000. Actual Value
+             94               99998. DK (Don't Know); NA (Not Ascertained)
+              2               99999. RF (Refused)
+           1629               Blank. INAP (Inapplicable): [Q2111] IS (96);
+                                     [Q2104:E158Y3S] IS (36); [Q2118] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+R2121     E165.HELPER-PER
+          Section: E            Level: Helper             CAI Reference: Q2121
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             55         1. MONTH
+             16         2. WEEK
+             13         3. DAY
+              3         5. YEAR
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1854     Blank. INAP (Inapplicable): [Q2111] IS (96); [Q2104:E158Y3S] IS (36);
+                           [Q2118] IS (5 OR DK OR RF); [Q2120] IS (0 OR DK OR RF)
+
+==========================================================================================
+
+R2123     E166.HELPER DK-1
+          Section: E            Level: Helper             CAI Reference: Q2123
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          E166.
+                  Did it amount to less than $100 per month, more than
+                  $100 per month or what?
+          ................................................................................
+              8         1. LESS THAN $100 PER MONTH
+              3         3. ABOUT $100 PER MONTH
+             35         5. MORE THAN $100 PER MONTH
+             49         8. DK (Don't Know); NA (Not Ascertained)
+              1         9. RF (Refused)
+           1845     Blank. INAP (Inapplicable): [Q2111] IS (96); [Q2104:E158Y3S] IS (36);
+                           [Q2118] IS (5 OR DK OR RF); [Q2120] IS (NE DK AND NE RF)
+
+==========================================================================================
+
+R2124     E167.HELPER OTH $
+          Section: E            Level: Helper             CAI Reference: Q2124
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          E167.
+          IF Q514 IS (NE2)
+                  Did any other person help (him/her) (and (his/her) husband/and
+          (his/her) wife/and (his/her) partner/...)
+          ELSE
+                  Did any other person help (him/her) and you
+          END
+                  pay this cost?
+          ................................................................................
+             14         1. YES
+            164         5. NO
+              5         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1758     Blank. INAP (Inapplicable): [Q2111] IS (96); [Q2104:E158Y3S] IS (36);
+                           [Q2118] IS (5 OR DK OR RF); [Q2120] IS (0 AND NE DK AND NE RF)
+
+==========================================================================================
+
+R2125     E168.HELPER CHILD?
+          Section: E            Level: Helper             CAI Reference: Q2125
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          E168.
+                  Was that a (child or other/...) relative of
+          IF Q514 IS (NE2)
+                  (his/hers) (and (his/her) husband/and (his/her) wife/and (his/her)
+          partner/...), or was that someone else?
+          ELSE
+                  (his/hers) and yours, or was that someone else?
+          END
+          ................................................................................
+             10         1. CHILD/CHILD-IN-LAW/GRANDCHILD
+              1         2. OTHER RELATIVE
+              3         3. SOMEONE ELSE
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1927     Blank. INAP (Inapplicable): [Q2111] IS (96); [Q2104:E158Y3S] IS (36);
+                           [Q2118] IS (5 OR DK OR RF); [Q2120] IS (0 AND NE DK AND NE
+                           RF); [Q2124] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+R2126     E169.HELPER PAY-1
+          Section: E            Level: Helper             CAI Reference: Q2126
+          Type: Character       Width: 3                  Decimals: 0
+
+          E169.
+                  (Which child was that?)
+
+                  IF GRANDCHILD:
+                  (Which of (his/her) children is the parent of that grandchild?)
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL CHILDREN EQUALLY
+             10   041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1931     Blank. INAP (Inapplicable): [Q2111] IS (96); [Q2104:E158Y3S] IS (36);
+                           [Q2118] IS (5 OR DK OR RF); [Q2120] IS (0 AND NE DK AND NE
+                           RF); [Q2124] IS (5 OR DK OR RF); [Q2125] IS (2 OR 3 OR DK OR
+                           RF)
+
+==========================================================================================
+
+R2137     E158-2. HELPER OFTEN
+          Section: E            Level: Helper             CAI Reference: Q2137
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          E158-2.
+                  During a typical month, on about how many days did
+
+                  [Q15-PR15.HH1 SP NAME]  help
+                  [Q754-CS22Y31.R FIRST NAME] ?
+
+                  IWER:  ENTER "96" IN "DAYS IN LAST MONTH" IF THE PERSON WAS
+                  NOT A HELPER.
+
+                  DAYS IN A TYPICAL MONTH:
+                      OR
+                  DAYS PER WEEK:
+                      OR
+
+          ................................................................................
+            252                1-31. Actual Value
+            190                  96. NOT A HELPER
+             21                  98. DK (Don't Know); NA (Not Ascertained)
+              2                  99. RF (Refused)
+           1476               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R2138     E158a-2.HELPER PER WEEK
+          Section: E            Level: Helper             CAI Reference: Q2138
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             56                 1-7. Actual Value
+           1885               Blank. INAP (Inapplicable): [Q2137] IS (1-96 OR DK OR RF)
+
+==========================================================================================
+
+R2139     E158b-2.HELPER EVERY DAY
+          Section: E            Level: Helper             CAI Reference: Q2139
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             33         1. EVERY DAY
+           1908     Blank. INAP (Inapplicable): [Q2137] IS (1-96 OR DK OR RF);
+                           [Q2138:E158a-2] IS (NE "|" OR DK OR RF)
+
+==========================================================================================
+
+R2141     E159-2. HELPER HOURS
+          Section: E            Level: Helper             CAI Reference: Q2141
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          E159-2.
+                  On the days
+                  [Q15-PR15.HH1 SP NAME]  helped (him/her), about how many hours
+                  per day was that?
+
+                  LESS THAN AN HOUR = 1
+          ................................................................................
+            344                1-24. Actual Value
+             19                  98. DK (Don't Know); NA (Not Ascertained)
+              2                  99. RF (Refused)
+           1576               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R2142     E160-2.SEX HELPER
+          Section: E            Level: Helper             CAI Reference: Q2142
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          E160-2.
+                  AFFIRM SEX OF HELPER:
+
+                  (IS
+                  [Q15-PR15.HH1 SP NAME] )
+
+                  ASKED ONLY IF NECESSARY
+          ................................................................................
+            189         1. MALE
+            174         2. FEMALE
+                        3. AGENCY/PROFESSIONAL(/EMPLOYEES OF "INSTITUTION"/...)
+              1         8. DK (Don't Know); NA (Not Ascertained)
+              1         9. RF (Refused)
+           1576     Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R2143     E161-2.WHICH GRANDCHILD-1
+          Section: E            Level: Helper             CAI Reference: Q2143
+          Type: Character       Width: 3                  Decimals: 0
+
+          E161-2.
+                  IF GRANDCHILD:  (Which of (his/her) children is the parent
+                   of that grandchild?)
+          ................................................................................
+              1       037. DECEASED CHILD
+                      038. ALL CHILDREN EQUALLY
+                      039. ALL GRANDCHILDREN EQUALLY
+              1   041-950. Other Person Number
+                      997. OTHER
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1939     Blank. INAP (Inapplicable): [Q2108:E158Y2] IS (NE 4)
+
+==========================================================================================
+
+R2144     E162-2. HELPER PAID
+          Section: E            Level: Helper             CAI Reference: Q2144
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          E162-2.
+                  Was
+                  [Q15-PR15.HH1 SP NAME]  paid to help (him/her)?
+          ................................................................................
+              4         1. YES
+            357         5. NO
+              2         8. DK (Don't Know); NA (Not Ascertained)
+              2         9. RF (Refused)
+           1576     Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R2145     E163-2.HELPER INS PAY
+          Section: E            Level: Helper             CAI Reference: Q2145
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          E163-2.
+                  Did (Medicaid/STATE NAME FOR MEDICAID) or insurance
+                  help pay
+                  [Q15-PR15.HH1 SP NAME] ?
+          ................................................................................
+              1         1. YES
+              3         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1937     Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R2146     E164-2.HELPER $ R PAY
+          Section: E            Level: Helper             CAI Reference: Q2146
+          Type: Numeric         Width: 5                  Decimals: 0
+
+          E164-2.
+                  (Not counting expenses paid by (Medicaid/STATE NAME FOR MEDICAID)
+                  or insurance,)
+          IF Q514 IS (NE2)
+                  about how much did (he/she) (and (his/her) husband/and (his/her)
+          wife/and (his/her) partner/...) end up
+          ELSE
+                  about how much did (he/she) and you end up
+          END
+                  paying
+                  [Q15-PR15.HH1 SP NAME]  per month?
+
+                  IWER: DO NOT PROBE DK/RF
+
+                  AMOUNT:
+                  PER:
+          ................................................................................
+              3             0-99996. Actual Value
+              1               99998. DK (Don't Know); NA (Not Ascertained)
+                              99999. RF (Refused)
+           1937               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R2147     E165-2.HELPER-PER
+          Section: E            Level: Helper             CAI Reference: Q2147
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+              1         1. MONTH
+                        2. WEEK
+              1         3. DAY
+                        5. YEAR
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1939     Blank. INAP (Inapplicable): [Q2146] IS (0 OR DK OR RF)
+
+==========================================================================================
+
+R2149     E166-2.HELPER DK-1
+          Section: E            Level: Helper             CAI Reference: Q2149
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          E166-2.
+                  Did it amount to less than $100 per month, more than
+                  $100 per month, or what?
+          ................................................................................
+              1         1. LESS THAN $100 PER MONTH
+                        3. ABOUT $100 PER MONTH
+                        5. MORE THAN $100 PER MONTH
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1940     Blank. INAP (Inapplicable): [Q2146] IS (NE DK AND NE RF)
+
+==========================================================================================
+
+RVERSION  2000 EXIT FINAL RELEASE VERSION NUMBER
+          Section: E            Level: Helper             CAI Reference: Q9007
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+           1941         1. First Data Release
+

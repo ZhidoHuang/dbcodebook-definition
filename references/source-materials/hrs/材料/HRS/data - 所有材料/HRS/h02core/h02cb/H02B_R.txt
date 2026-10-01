@@ -1,0 +1,2504 @@
+==========================================================================================
+2002 HRS Core (Final Release)
+ODBC Reference: [HRS2002]
+Perl script: CodebkD11.pl v6.15 Thu Jun 15  9:28:34 2006
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION B: Demographics (Respondent)
+
+==========================================================================================
+
+HHID     HOUSEHOLD IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+        ..................................................................................
+        18167           000003-213479. Household Identification Number
+
+==========================================================================================
+
+PN       RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+        10033         010. Person Identifier
+          398         011. Person Identifier
+           10         012. Person Identifier
+         5516         020. Person Identifier
+           85         021. Person Identifier
+            5         022. Person Identifier
+          841         030. Person Identifier
+           31         031. Person Identifier
+            1         032. Person Identifier
+         1203         040. Person Identifier
+           42         041. Person Identifier
+            2         042. Person Identifier
+
+==========================================================================================
+
+HSUBHH   2002 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+        17305           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+          456           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+          339           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           17           5. Split household - one half of couple from SUBHH 1 or 2
+            2           6. Split household - one half of couple from SUBHH 1 or 2
+           48           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+GSUBHH   2000 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+        17490           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+          356           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+          275           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           11           5. Split household - one half of couple from SUBHH 1 or 2
+            1           6. Split household - one half of couple from SUBHH 1 or 2
+           34           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+HPN_SP   2002 SPOUSE/PARTNER PERSON NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+         5033         010. Person Identifier
+          371         011. Person Identifier
+            9         012. Person Identifier
+         4531         020. Person Identifier
+           78         021. Person Identifier
+            4         022. Person Identifier
+          720         030. Person Identifier
+           28         031. Person Identifier
+            2         032. Person Identifier
+         1034         040. Person Identifier
+           40         041. Person Identifier
+            3         042. Person Identifier
+            5         811. New Spouse of Non-Original Respondent
+            2         821. New Spouse of Non-Original Respondent
+            1         831. New Spouse of Non-Original Respondent
+            1         841. New Spouse of Non-Original Respondent
+         6305       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+HCSR     2002 WHETHER COVERSHEET RESPONDENT
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+        12350           1. YES
+          197           3. 2nd Coverscreen  R, answers not retained
+         5620           5. NO
+
+==========================================================================================
+
+HFAMR    2002 WHETHER FAMILY RESPONDENT
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+        12347           1. Family R
+           12           3. 2nd Family R, answers not retained
+         5808           5. Non-Family R
+
+==========================================================================================
+
+HFINR    2002 WHETHER FINANCIAL RESPONDENT
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+        12319           1. Financial R
+            9           3. 2nd Financial R, answers not retained
+         5839           5. Non-Financial R
+
+==========================================================================================
+
+HB001    INTRO-DEMOGRAPHICS
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB.B001_
+
+        Now I have some questions about your background.
+        ..................................................................................
+        18167           1. CONTINUE
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB002    BORN IN US
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Born.B002_                                     Ref 2000: G1060
+
+        Were you born in the United States?
+        ..................................................................................
+          197           1. YES
+           36           5. NO
+                        8. DK (Don't Know)
+                        9. RF (Refused)
+        17934       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+         AND ((B002_ = YES) AND (piA078_YrsCurRes <> 95))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB003M   STATE BORN - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Born.B003_                                    Ref 2000: G1061M
+
+        In what state were you born?
+
+        STATE:
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+            9           1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+           25           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+           32           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+           17           4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+           35           5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+           15           6. South Region: East South Central Division (KY, TN, AL, MS)
+           36           7. South Region: West South Central Division (AR, LA, OK, TX)
+            5           8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+           22           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+                       11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+                       97. OTHER COUNTRY
+            1          98. DK (don't know); NA (not ascertained)
+                       99. RF (refused)
+        17970       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+         AND ((B002_ = NO) OR (B003_ = OTHERCOUNTRY))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB005M   COUNTRY BORN - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Born.B005_                                    Ref 2000: G1063M
+
+        In what country were you born?
+
+        COUNTRY:
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+           36          11. Foreign Country: Not in a Census Division (includes U.S.
+                           territories)
+                       98. DK (Don't Know)
+                       99. RF (Refused)
+        18131       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+         AND ((B005_ = RESPONSE) OR B005_ = NONRESPONSE)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB006    ARRIVE IN US-YEAR
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI Reference: BB_Born.B006_                                     Ref 2000: G1064
+
+         (Now a few questions about [her /your ] background...)
+        In about what year did you first come to live in the United States?
+
+        IWER: USE 9996 IN YEAR IF R SAYS HE/SHE WAS NOT BORN OUTSIDE OF THE U.S.
+
+        YEAR:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             31     1923        2002       1970.13         21.13   18135
+         -----------------------------------------------------------------
+            1        9996. NOT BORN OUTSIDE OF THE U.S.
+                     9998. DK (Don't Know)
+                     9999. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+         AND ((B005_ = RESPONSE) OR B005_ = NONRESPONSE)
+         AND (B006_ <> 9996)
+         AND (B006_ = EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB007    ARRIVE IN US-YEARS AGO
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Born.B007_                                     Ref 2000: G1065
+
+         (Now a few questions about [her /your ] background...)
+        In about what year did you first come to live in the United States?
+
+        IWER: USE 9996 IN YEAR IF R SAYS HE/SHE WAS NOT BORN OUTSIDE OF THE U.S.
+
+
+        YEARS AGO:
+        ..................................................................................
+            3                    0-50. Years Ago
+                                   98. DK (Don't Know)
+                                   99. RF (Refused)
+        18164                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+         AND ((B005_ = RESPONSE) OR B005_ = NONRESPONSE)
+         AND (B006_ <> 9996)
+         AND (B006_ = EMPTY)
+         AND (B007_ = EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB008    ARRIVE IN US-AT AGE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Born.B008_                                     Ref 2000: G1066
+
+         (Now a few questions about [her /your ] background...)
+        In about what year did you first come to live in the United States?
+
+        AT AGE:
+        ..................................................................................
+            1          21. Actual Value
+                       98. DK (Don't Know)
+                       99. RF (Refused)
+        18166       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+         AND ((B005_ = RESPONSE) OR B005_ = NONRESPONSE)
+         AND (B006_ <> 9996)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB009    EVER LEAVE US
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Born.B009_                                     Ref 2000: G1068
+
+        Did you ever leave the U.S. after that for a period of a year or more?
+
+        IWER: IF R ASKS, EXCLUDE ANY TIME SPENT OUT OF THE COUNTRY FOR U.S. MILITARY
+        SERVICE
+        ..................................................................................
+            6           1. YES
+           27           5. NO
+            1           8. DK (Don't Know)
+            1           9. RF (Refused)
+        18132       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+         AND ((B005_ = RESPONSE) OR B005_ = NONRESPONSE)
+         AND (B006_ <> 9996)
+         AND (B009_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB010    RETURNED TO US-YEAR
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI Reference: BB_Born.B010_                                     Ref 2000: G1069
+
+        What is the most recent year you returned to live in the U.S.?
+
+        YEAR:
+        ..................................................................................
+            6               1935-1999. Year
+                                 9998. DK (Don't Know)
+                                 9999. RF (Refused)
+        18161                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+         AND ((B005_ = RESPONSE) OR B005_ = NONRESPONSE)
+         AND (B006_ <> 9996)
+         AND (B009_ = YES)
+         AND (B010_ = EMPTY OR B010_ = NONRESPONSE)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB011    RETURNED TO US-YEARS AGO
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Born.B011_                                     Ref 2000: G1070
+
+        (What is the most recent year you returned to live in the U.S.?)
+
+        YEARS AGO:
+        ..................................................................................
+                        8. DK (Don't Know)
+                        9. RF (Refused)
+        18167       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+         AND ((B005_ = RESPONSE) OR B005_ = NONRESPONSE)
+         AND (B006_ <> 9996)
+         AND (B009_ = YES)
+         AND (B010_ = EMPTY OR B010_ = NONRESPONSE)
+         AND (B011_ = EMPTY OR B011_ = NONRESPONSE)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB012    RETURNED TO US-AT AGE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Born.B012_                                     Ref 2000: G1071
+
+        (What is the most recent year you returned to live in the U.S.?)
+
+        AT AGE:
+        ..................................................................................
+                        8. DK (Don't Know)
+                        9. RF (Refused)
+        18167       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+         AND ((B005_ = RESPONSE) OR B005_ = NONRESPONSE)
+         AND (B006_ <> 9996)
+         AND (B009_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB013    NUMBER YEARS OUTSIDE OF US
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Born.B013_                                     Ref 2000: G1073
+
+        Altogether, for how many years after you first came to live in the United
+        States have you lived outside of this country?
+
+        NUMBER YEARS LIVED OUTSIDE US:
+        ..................................................................................
+            6                    0-22. Number of Years
+                                   98. DK (Don't Know)
+                                   99. RF (Refused)
+        18161                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB014    R HIGHEST LEVEL OF EDUCATION
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_School.B014_                                   Ref 2000: G1074
+
+        What is the highest grade of school or year of college you completed?
+
+        0......FOR NO FORMAL EDUCATION
+        1-11.....GRADES
+        12.......HIGH SCHOOL
+        13-15....SOME COLLEGE
+        16.......COLLEGE GRAD
+        17.......POST COLLEGE (17+ YEARS)
+        97.......OTHER
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            225        0          17         12.37          3.03   17934
+         -----------------------------------------------------------------
+            3          97. OTHER
+            2          98. DK (Don't Know)
+            3          99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB014A   R HIGHEST LEVEL OF EDUCATION -  COMBINED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_School.B014_                                   Ref 2000: G1074
+
+        What is the highest grade of school or year of college you completed?
+
+        0......FOR NO FORMAL EDUCATION
+        1-11.....GRADES
+        12.......HIGH SCHOOL
+        13-15....SOME COLLEGE
+        16.......COLLEGE GRAD
+        17.......POST COLLEGE (17+ YEARS)
+        97.......OTHER
+
+         User Note: Data from previous wave has been combined with data from HB014 to
+        create this variable.
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+          18156        0          17         12.09          3.37       1
+         -----------------------------------------------------------------
+            3          97. OTHER
+            2          98. DK (Don't Know)
+            5          99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+         AND (((((B014_ >= 0) AND (B014_ <= 12)) OR (B014_ = DONTKNOW)) OR (B014_ =
+        REFUSAL)) OR (B014_ = 97))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB015    R EARN HIGH SCHOOL DIPLOMA/GED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_School.B015_                                   Ref 2000: G1075
+
+        Did you get a high school diploma or pass a high school equivalency test?
+        ..................................................................................
+           66           1. YES, DIPLOMA
+           13           2. YES, EQUIVALENCY [GED]
+           55           5. NO
+            3           8. DK (Don't Know)
+            1           9. RF (Refused)
+        18029       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+         AND (((B014_ >= 13) AND (B014_ <= 17)) OR (B014_ = 97))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB016    R COLLEGE DEGREE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_School.B016_                                   Ref 2000: G1076
+
+        (Did you get a college degree?)
+        ..................................................................................
+           48           1. YES
+           50           5. NO
+                        8. DK (Don't Know)
+                        9. RF (Refused)
+        18069       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND (piReIwR <> REIWR)
+         AND (((B014_ >= 13) AND (B014_ <= 17)) OR (B014_ = 97))
+         AND (B016_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB017M   R HIGHEST DEGREE - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_School.B017_                                  Ref 2000: G1077M
+
+        (What is the highest degree you have earned?)
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+           12           1. LESS THAN BACHELORS
+           18           2. BACHELORS
+           12           3. MASTERS/MBA
+            6           6. LAW, PHD, MD
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+        18119       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB019    RATE HEALTH AS CHILD
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Health.B019_                                   Ref 2000: G1079
+
+        Consider your health while you were growing up, from birth to age 16. Would
+        you say that your health during that time was excellent, very good, good,
+        fair, or poor?
+        ..................................................................................
+          231           1. EXCELLENT
+          103           2. VERY GOOD
+           96           3. GOOD
+           25           4. FAIR
+            4           5. POOR
+            2           8. DK (Don't Know)
+                        9. RF (Refused)
+        17706       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB020    RATE FAMILY FINANCIAL SITUATION - SES
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Health.B020_                                   Ref 2000: G1080
+
+        Now think about your family when you were growing up, from birth to age 16.
+        Would you say your family during that time was pretty well off financially,
+        about average, or poor?
+        ..................................................................................
+           23           1. PRETTY WELL OFF FINANCIALLY
+          267           3. ABOUT AVERAGE
+          155           5. POOR
+            6           6. IT VARIED (VOL)
+            8           8. DK (Don't Know)
+            2           9. RF (Refused)
+        17706       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB021    MOVE DUE TO FINANCIAL DIFFICULTY
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Health.B021_                                   Ref 2000: G1081
+
+        While you were growing up, before age 16, did financial difficulties ever
+        cause you or your family to move to a different place?
+        ..................................................................................
+           84           1. YES
+          369           5. NO
+            6           8. DK (Don't Know)
+            2           9. RF (Refused)
+        17706       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB022    FAMILY GET FINANCIAL HELP  IN CHILDHOOD
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Health.B022_                                   Ref 2000: G1082
+
+        Before age 16, was there a time when you or your family received help from
+        relatives because of financial difficulties?
+        ..................................................................................
+           63           1. YES
+          377           5. NO
+           19           8. DK (Don't Know)
+            2           9. RF (Refused)
+        17706       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB023    FATHER UNEMPLOYED DURING CHILDHOOD
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Health.B023_                                   Ref 2000: G1083
+
+        Before age 16, was there a time of several months or more when your father had
+        no job?
+
+        IWER: IF R MENTIONS NEVER LIVING WITH FATHER WHEN GROWING UP, CHOOSE CODE 7
+
+        IF R MENTIONS THAT FATHER NEVER WORKED OR WAS ALWAYS DISABLED, CHOOSE CODE 6
+        ..................................................................................
+           76           1. YES
+          319           5. NO
+            4           6. FATHER NEVER WORKED/ALWAYS DISABLED (VOL)
+           35           7. NEVER LIVED WITH FATHER/FATHER WAS NOT ALIVE (VOL)
+           24           8. DK (Don't Know)
+            3           9. RF (Refused)
+        17706       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (piPWIWYEAR < (piInitA114_PrevWaveYear - 2)))
+         AND ((B023_ <> FANVRWORKALWYSDISABLVOL) AND (B023_ <> NVRLVDWFAFANOTALIVEVOL))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB024M   FATHER USUAL OCCUPATION - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Health.B024_                                  Ref 2000: G1084M
+
+        What was your father's occupation when you were age 16?
+
+        IWER: PROBE: What kind of work did he do? What activities did he do at work?
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+
+        User Note:  Respondents who indicated that their father was deceased during
+        the time period were coded as 'Blank. INAP (Inapplicable).
+        ..................................................................................
+           21           1. Managerial specialty operation (003-037)
+           18           2. Professional specialty operation and technical support (043-
+                           235)
+           17           3. Sales (243-285)
+           12           4. Clerical, administrative support (303-389)
+                        5. Service: private household, cleaning and building services
+                           (403-407)
+            3           6. Service: protection (413-427)
+            8           7. Service: food preparation (433-444)
+            1           8. Health services (445-447)
+            9           9. Personal services (448-469)
+           82          10. Farming, forestry, fishing (473-499)
+           23          11. Mechanics and repair (503-549)
+           41          12. Construction trade and extractors (553-617)
+           20          13. Precision production (633-699)
+           39          14. Operators: machine (703-799)
+           36          15. Operators: transport, etc
+           31          16. Operators: handlers, etc
+            6          17. Member of Armed Forces (900)
+            3          98. DK (don't know); NA (not ascertained)
+           44          99. RF (Refused)
+        17753       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piReIwR <> REIWR) OR (PWIWYEAR < piInitA114_PrevWaveYear))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB025    LIVE WITH GRANDPARENTS DURING CHILDHOOD
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_LiveWithRelatives.B025_                        Ref 2000: G1085
+
+        Did you ever live in the same household with a grandparent for a year or more
+        before age 17?
+
+        IWER: INCLUDE R LIVING WITH A GRANDPARENT OR A GRANDPARENT LIVING WITH R
+        ..................................................................................
+          208           1. YES
+          724           5. NO
+           13           8. DK (Don't Know)
+            1           9. RF (Refused)
+        17221       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piX014AMaLivWith_V <> YES) AND (iIsHHM <> 1))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB078    LIVE W/ MOTHER 6 MONTHS OR MORE AS ADULT
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_LiveWithRelatives.B078_
+
+        Did you ever live with your mother for a period of 6 months or more as an
+        adult, that is, at age 25 or older?
+        ..................................................................................
+         3309           1. YES
+        14553           5. NO
+           59           8. DK (Don't Know)
+                        9. RF (Refused)
+          246       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (B078_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB079    DID MOVE HELP YOU- YOUR MOTHER- OR BOTH
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_LiveWithRelatives.B079_
+
+        Would you say that living with her was mainly to help your mother out, to help
+        you out, or because it would be helpful to both of you?
+
+        IWER: USE CODE 3, HELP BOTH IF R LIVED WITH MOTHER MORE THAN ONCE AND BOTH R
+        AND MOTHER WERE HELPED AT DIFFERENT TIMES
+        ..................................................................................
+          703           1. HELP MOTHER
+          837           2. HELP R
+         1513           3. HELP BOTH
+          249           4. HELP NEITHER
+            7           8. DK (Don't Know)
+                        9. RF (Refused)
+        14858       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+HB080    SIBS LIVE W/ MOTH 6 MO OR MORE AS ADULT
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_LiveWithRelatives.B080_
+
+        Did any of your brothers or sisters ever live with your mother for a period of
+        6 months or more as an adult, that is, at age 25 or older?
+        ..................................................................................
+         4858           1. YES
+        12164           5. NO
+          874           6. R HAD NO SIBLINGS
+          265           8. DK (Don't Know)
+            6           9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (B080_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB081    MOVE MADE TO HELP MOTHER-SIBLINGS-BOTH
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_LiveWithRelatives.B081_
+
+        Would you say that living with her was mainly to help your mother out, to help
+        the sibling out, or because it would be helpful to all of them?
+
+        IWER: USE CODE 3, HELP ALL IF MORE THAN ONE BROTHER OR SISTER HAS LIVED WITH
+        MOTHER AND IN SOME CASES IT WAS TO HELP OUT THE MOTHER AND IN OTHERS TO HELP
+        THE SIBLING
+        ..................................................................................
+          834           1. HELP MOTHER
+         1510           2. HELP SIBLING
+         2176           3. HELP ALL
+          310           4. HELP NEITHER
+           28           8. DK (Don't Know)
+                        9. RF (Refused)
+        13309       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+         AND (piHealthB023_ <> NVRLVDWFAFANOTALIVEVOL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB026    FATHER EDUCATION- HIGHEST GRADE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_OtherBackground.B026_                          Ref 2000: G1087
+
+        What is the highest grade of school your father completed?
+
+        0 FOR NO FORMAL EDUCATION
+        1-11 GRADES
+        12 HIGH SCHOOL
+        13-15 SOME COLLEGE
+        16 COLLEGE GRAD
+        17 POST COLLEGE (17+ YEARS)
+        97 OTHER
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            299        0          20          8.78          4.38   17741
+         -----------------------------------------------------------------
+            2          97. OTHER
+          118          98. DK (Don't Know)
+            7          99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB027    MOTHER EDUCATION- HIGHEST GRADE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_OtherBackground.B027_                          Ref 2000: G1088
+
+        And what is the highest grade of school your mother completed?
+
+        0 FOR NO FORMAL EDUCATION
+        1-11 GRADES
+        12 HIGH SCHOOL
+        13-15 SOME COLLEGE
+        16 COLLEGE GRAD
+        17 POST COLLEGE (17+ YEARS)
+        97 OTHER
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            330        0          17          8.85          4.15   17706
+         -----------------------------------------------------------------
+            2          97. OTHER
+          122          98. DK (Don't Know)
+            7          99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+         AND (piReIwR <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB028    R HISPANIC/LATINO
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_OtherBackground.B028_                          Ref 2000: G1089
+
+        Do you consider yourself Hispanic or Latino?
+        ..................................................................................
+           23           1. YES
+          210           5. NO
+                        8. DK (Don't Know)
+                        9. RF (Refused)
+        17934       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+         AND (piReIwR <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB028A   R HISPANIC/LATINO - COMBINED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_OtherBackground.B028_                          Ref 2000: G1089
+
+        Do you consider yourself Hispanic or Latino?
+
+         User Note: Data from previous wave has been combined with data from HB028 to
+        create this variable.
+        ..................................................................................
+         1464           1. YES
+        16679           5. NO
+                        8. DK (Don't Know)
+                        9. RF (Refused)
+           24       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+         AND (piReIwR <> REIWR)
+         AND (B028_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB029M1M TYPE HISPANIC - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_OTHERBACKGROUND.B029M                       Ref 2000: G1090M1M
+
+        Would you say you are Mexican American, Puerto Rican, Cuban American or
+        something else?
+
+        IWER: CHOOSE ALL THAT APPLY
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+            8           1. MEXICAN AMERICAN/CHICANO
+           15           7. OTHER (SPECIFY) masked version includes Puerto Rican, Cuban
+                           American
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+        18144       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+         AND (piReIwR <> REIWR)
+         AND (B028_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB029M2M TYPE HISPANIC - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_OTHERBACKGROUND.B029M                       Ref 2000: G1090M1M
+
+        Would you say you are Mexican American, Puerto Rican, Cuban American or
+        something else?
+
+        IWER: CHOOSE ALL THAT APPLY
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+                        1. MEXICAN AMERICAN/CHICANO
+                        7. OTHER (SPECIFY) masked version includes Puerto Rican, Cuban
+                           American
+                        8. DK (Don't Know)
+                        9. RF (Refused)
+        18167       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+         AND (piReIwR <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB031M   R RACE - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_OtherBackground.B031_                         Ref 2000: G1092M
+
+        Do you consider yourself primarily White or Caucasian, Black or African
+        American, American Indian, or Asian, or something else?
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+          183           1. WHITE/CAUCASIAN
+           28           2. BLACK/AFRICAN AMERICAN
+           21           7. OTHER (SPECIFY) Masked version includes American Indian,
+                           Alaskan Native, Asian, and Pacific Islander
+                        8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+        17934       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+         AND (piReIwR <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB031A   R RACE - MASKED COMBINED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_OtherBackground.B031_                         Ref 2000: G1092M
+
+        Do you consider yourself primarily White or Caucasian, Black or African
+        American, American Indian, or Asian, or something else?
+
+         User Note: Data from previous wave has been combined with data from HB031 to
+        create this variable.
+        ..................................................................................
+        14952           1. WHITE/CAUCASIAN
+         2502           2. BLACK/AFRICAN AMERICAN
+          684           7. OTHER (SPECIFY) Masked version includes American Indian,
+                           Alaskan Native, Asian, and Pacific Islander
+                        8. DK (Don't Know)
+                        9. RF (Refused)
+           29       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+         AND (piReIwR <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB033    NUMBER CHILDREN EVER
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_OtherBackground.B033_NumKids                   Ref 2000: G1093
+
+         I need to clarify some aspects of family history.)
+        How many children  have you fathered/have you given birth to)? Please don't
+        count miscarriages or still-births, or adopted or step-children for this
+        question.
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            231        0          14          2.70          2.05   17934
+         -----------------------------------------------------------------
+                       98. DK (Don't Know)
+            2          99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+         AND (piReIwR <> REIWR)
+         AND (B033_NumKids > 0)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB034    NUMBER LIVING CHILDREN
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_OtherBackground.B034_                          Ref 2000: G1094
+
+         Is that child alive today?
+
+        IWER: IF R RESPONDS YES TYPE 1 AND  PRESS [ENTER]. TYPE 0 IF R RESPONDS
+        NO/(How many of them are still living?)
+
+        NUMBER LIVING:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            199        0          13          2.96          1.70   17967
+         -----------------------------------------------------------------
+            1          98. DK (Don't Know)
+                       99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+         AND (piReIwR <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB035    R SERVED IN MILITARY
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_OtherBackground.B035_                          Ref 2000: G1095
+
+        Have you ever served in the active military of the United States?
+        ..................................................................................
+           49           1. YES
+          183           5. NO
+            1           8. DK (Don't Know)
+                        9. RF (Refused)
+        17934       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+         AND (piReIwR <> REIWR)
+         AND (B035_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB036    YEAR MILITARY BEGIN
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI Reference: BB_OtherBackground.B036_                          Ref 2000: G1096
+
+        During what years were you in active service?
+
+        FROM:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             43     1941        1991       1957.95         11.54   18118
+         -----------------------------------------------------------------
+            5        9998. DK (Don't Know)
+            1        9999. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+         AND (piReIwR <> REIWR)
+         AND (B035_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB037    YEAR MILITARY END
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI Reference: BB_OtherBackground.B037_                          Ref 2000: G1097
+
+        (During what years were you in active service?)
+
+        TO:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             43     1944        2001       1962.95         14.69   18118
+         -----------------------------------------------------------------
+            5        9998. DK (Don't Know)
+            1        9999. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((piReIwR = REIWR) AND (PWIWYEAR >= (piInitA114_PrevWaveYear - 2))))
+         AND (piReIwR <> REIWR)
+         AND (B035_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB038    MILITARY RELATED DISABILITY
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_OtherBackground.B038_                          Ref 2000: G1098
+
+        Do you have a disability connected with military service?
+        ..................................................................................
+            8           1. YES
+           39           5. NO
+                        8. DK (Don't Know)
+            2           9. RF (Refused)
+        18118       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piInNursingHome <> YES) OR (piA070_NHOwnRent = YES))
+         AND ((((piHHX033_HHMoved <> RDIDNTMOVE) OR (piA071_SameMainRes <> YES)) AND
+        (piReIwR = REIWR)) AND (piSCVXR1_R2 <> SECOND))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB039    YEAR MOVED TO MAIN RESIDENCE
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI Reference: BB_LivedArea.B039_YrMoveMainRes                   Ref 2000: G1104
+
+        In what year did you move to your current home in  ([CITY AND STATE OF MAIN
+        RESIDENCE])?
+
+        YEAR:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           2062     1915        2003       1997.52          9.36   16089
+         -----------------------------------------------------------------
+           15        9998. DK (Don't Know)
+            1        9999. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF ((piInNursingHome <> YES) OR (piA070_NHOwnRent = YES))
+         AND ((((piHHX033_HHMoved <> RDIDNTMOVE) OR (piA071_SameMainRes <> YES)) AND
+        (piReIwR = REIWR)) AND (piSCVXR1_R2 <> SECOND))
+         AND ((Today.YEAR - B039_YrMoveMainRes) <= 2)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB040    MONTH MOVED TO MAIN RESIDENCE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_LivedArea.B040_MoMoveMainRes                   Ref 2000: G1105
+
+        In what month was that?
+
+        MONTH:
+        ..................................................................................
+           72           1. JAN
+           91           2. FEB
+          101           3. MAR
+          128           4. APR
+          117           5. MAY
+          126           6. JUN
+          125           7. JUL
+          108           8. AUG
+          100           9. SEP
+          103          10. OCT
+          101          11. NOV
+           94          12. DEC
+           20          98. DK (Don't Know)
+                       99. RF (Refused)
+        16881       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piInNursingHome <> YES) OR (piA070_NHOwnRent = YES))
+         AND ((((piHHX033_HHMoved <> RDIDNTMOVE) OR (piA071_SameMainRes <> YES)) AND
+        (piReIwR = REIWR)) AND (piSCVXR1_R2 <> SECOND))
+         AND ((Today.YEAR - B039_YrMoveMainRes) <= 5)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB041M1  REASONS FOR MOVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_LIVEDAREA.B041M                              Ref 2000: G1109M1
+
+        What were your reasons for moving to (your current home in)  ([CITY AND STATE
+        OF MAIN RESIDENCE])?
+
+        IWER: CHOOSE UP TO TWO REASONS
+        ..................................................................................
+          291           1. NEAR OR WITH CHILDREN
+          128           2. NEAR OR WITH OTHER RELATIVES OR FRIENDS
+          180           3. HEALTH PROBLEMS OR SERVICES; for health reasons
+           65           4. CLIMATE OR WEATHER
+           22           5. LEISURE ACTIVITIES
+          192           6. SMALLER OR LESS EXPENSIVE HOME
+           91           7. LARGER HOME
+          179           8. WORK OR RETIREMENT RELATED; business opportunities
+          125           9. CHANGE IN MARITAL STATUS; spouse died; change in relationship
+                           status
+            1          10. Public transportation
+            5          11. Closer to work
+            4          12. Shopping or other consumption services
+           30          20. Old neighborhood/location bad; Run down area; crime; bad
+                           schools; earthquakes; or other undesirable characteristics
+           56          21. Dispossessed/Forced to move; e.g. old house sold by owner;
+                           property condemned; house/property not maintained; falling
+                           apart; conflict with landlord
+            9          22. Old home too expensive; e.g. Taxes too high; couldn't pay
+                           mortgage; rent increased; (Not to be confused  with code 06
+                           which refers to a smaller or less expensive home.)
+                       23. Lived in apartment/mobile home/condo before; Have now moved
+                           into a house
+           28          24. Not happy in last location-NFS
+           21          25. Sold old home; in order to sell home
+           17          26. Natural disaster (fire/flood/hurricane damage; etc.);
+           38          30. New neighborhood/location better; better area; nicer location;
+                           (These descriptive terms or similar only;) Can refer to
+                           qualities of the area such as friendly people or having good
+                           schools.
+            6          32. Cheaper area or NA what; Not house related or mentioned;
+           16          33. Moved to retirement housing or complex; (Must say something
+                           specifically about retirement or senior housing)
+           13          34. Moved into area where had lived previously; e.g. moved back to
+                           area where I grew up
+           35          40. New house/apartment has specific desirable features not size
+                           related;   e.g. All on one floor; lake access; view; old home
+                           has undesirable features
+           11          41. Simpler house to take care of; less upkeep; old home/property
+                           too much upkeep
+            4          42. Moved into previously owned property; Formerly R’s second or
+                           vacation home
+           30          43. Bought own/new home; had new one built; wanted a house-NFS
+           15          44. Wanted to own instead of rent
+            4          45. In temporary housing; a transition place, while home is built,
+                           fixed, or re-modeled
+           10          46. Moved into house where grew up; bought property that had been
+                           in family previously
+            4          47. Desperation; nowhere else to go
+           17          48. Financial reasons-NFS
+                       49. Family problems-NFS
+            4          50. Could not live by self; R did not want to live alone
+           15          51. Wanted to live by self; to live on own or by self
+            7          52. Negative change in economic status of R or spouse/partner
+                           (e.g. R or spouse/partner laid off or unemployed)
+            6          53. Positive change in economic status (e.g. received inheritance)
+            5          54. R or Spouse/partner changed job
+            4          55. R retired
+            3          56. Spouse retired
+            7          57. To care for relative/family member
+            7          58. To move in with or nearby non-family member; e.g. 'moved in
+                           with my girlfriend'
+           30          59. Personal reasons (NA nature); 'no reason'; 'just wanted to
+                           move'
+           11          60. To get away from family members; e.g. 'my husband is abusive'
+            7          61. To get away from non-family members
+            3          62. Moved out of assisted living/nursing home
+            9          97. OTHER
+            4          98. DK (Don't Know); NA (Not Ascertained)
+            7          99. RF (Refused)
+        16391       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piInNursingHome <> YES) OR (piA070_NHOwnRent = YES))
+         AND ((((piHHX033_HHMoved <> RDIDNTMOVE) OR (piA071_SameMainRes <> YES)) AND
+        (piReIwR = REIWR)) AND (piSCVXR1_R2 <> SECOND))
+         AND ((Today.YEAR - B039_YrMoveMainRes) <= 5)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB041M2  REASONS FOR MOVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_LIVEDAREA.B041M                              Ref 2000: G1109M1
+
+        What were your reasons for moving to (your current home in)  ([CITY AND STATE
+        OF MAIN RESIDENCE])?
+
+        IWER: CHOOSE UP TO TWO REASONS
+        ..................................................................................
+           36           1. NEAR OR WITH CHILDREN
+           41           2. NEAR OR WITH OTHER RELATIVES OR FRIENDS
+           53           3. HEALTH PROBLEMS OR SERVICES; for health reasons
+           19           4. CLIMATE OR WEATHER
+            5           5. LEISURE ACTIVITIES
+           37           6. SMALLER OR LESS EXPENSIVE HOME
+            9           7. LARGER HOME
+           30           8. WORK OR RETIREMENT RELATED; business opportunities
+           25           9. CHANGE IN MARITAL STATUS; spouse died; change in relationship
+                           status
+            1          10. Public transportation
+            7          11. Closer to work
+            6          12. Shopping or other consumption services
+            8          20. Old neighborhood/location bad; Run down area; crime; bad
+                           schools; earthquakes; or other undesirable characteristics
+            3          21. Dispossessed/Forced to move; e.g. old house sold by owner;
+                           property condemned; house/property not maintained; falling
+                           apart; conflict with landlord
+            8          22. Old home too expensive; e.g. Taxes too high; couldn't pay
+                           mortgage; rent increased; (Not to be confused  with code 06
+                           which refers to a smaller or less expensive home.)
+                       23. Lived in apartment/mobile home/condo before; Have now moved
+                           into a house
+            5          24. Not happy in last location-NFS
+            6          25. Sold old home; in order to sell home
+                       26. Natural disaster (fire/flood/hurricane damage; etc.);
+           29          30. New neighborhood/location better; better area; nicer location;
+                           (These descriptive terms or similar only;) Can refer to
+                           qualities of the area such as friendly people or having good
+                           schools.
+            7          32. Cheaper area or NA what; Not house related or mentioned;
+           10          33. Moved to retirement housing or complex; (Must say something
+                           specifically about retirement or senior housing)
+            6          34. Moved into area where had lived previously; e.g. moved back to
+                           area where I grew up
+           21          40. New house/apartment has specific desirable features not size
+                           related;   e.g. All on one floor; lake access; view; old home
+                           has undesirable features
+           15          41. Simpler house to take care of; less upkeep; old home/property
+                           too much upkeep
+            3          42. Moved into previously owned property; Formerly R’s second or
+                           vacation home
+           12          43. Bought own/new home; had new one built; wanted a house-NFS
+                       44. Wanted to own instead of rent
+            4          45. In temporary housing; a transition place, while home is built,
+                           fixed, or re-modeled
+            3          46. Moved into house where grew up; bought property that had been
+                           in family previously
+            1          47. Desperation; nowhere else to go
+            1          48. Financial reasons-NFS
+            2          49. Family problems-NFS
+            4          50. Could not live by self; R did not want to live alone
+            3          51. Wanted to live by self; to live on own or by self
+            5          52. Negative change in economic status of R or spouse/partner
+                           (e.g. R or spouse/partner laid off or unemployed)
+            1          53. Positive change in economic status (e.g. received inheritance)
+            2          54. R or Spouse/partner changed job
+                       55. R retired
+            2          56. Spouse retired
+            2          57. To care for relative/family member
+                       58. To move in with or nearby non-family member; e.g. 'moved in
+                           with my girlfriend'
+            2          59. Personal reasons (NA nature); 'no reason'; 'just wanted to
+                           move'
+            4          60. To get away from family members; e.g. 'my husband is abusive'
+            1          61. To get away from non-family members
+                       62. Moved out of assisted living/nursing home
+            5          97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+        17723       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piInNursingHome <> YES) OR (piA070_NHOwnRent = YES))
+         AND ((((piHHX033_HHMoved <> RDIDNTMOVE) OR (piA071_SameMainRes <> YES)) AND
+        (piReIwR = REIWR)) AND (piSCVXR1_R2 <> SECOND))
+         AND ((Today.YEAR - B039_YrMoveMainRes) <= 5)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB041M3  REASONS FOR MOVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_LIVEDAREA.B041M                              Ref 2000: G1109M1
+
+        What were your reasons for moving to (your current home in)  ([CITY AND STATE
+        OF MAIN RESIDENCE])?
+
+        IWER: CHOOSE UP TO TWO REASONS
+        ..................................................................................
+            3           1. NEAR OR WITH CHILDREN
+            3           2. NEAR OR WITH OTHER RELATIVES/FRIENDS
+            2           3. HEALTH PROBLEMS OR SERVICES; for health reasons
+                        4. CLIMATE OR WEATHER
+                        5. LEISURE ACTIVITIES
+                        6. SMALLER OR LESS EXPENSIVE HOME
+            1           7. LARGER HOME
+            2           8. WORK OR RETIREMENT RELATED; business opportunities
+                        9. CHANGE IN MARITAL STATUS; spouse died; change in relationship
+                           status
+                       10. Public transportation
+            1          11. Closer to work
+            2          12. Shopping or other consumption services
+                       20. Old neighborhood/location bad; Run down area; crime; bad
+                           schools; earthquakes; or other undesirable characteristics
+                       21. Dispossessed/Forced to move; e.g. old house sold by owner;
+                           property condemned; house/property not maintained; falling
+                           apart; conflict with landlord
+            1          22. Old home too expensive; e.g. Taxes too high; couldn't pay
+                           mortgage; rent increased; (Not to be confused  with code 06
+                           which refers to a smaller or less expensive home.)
+                       23. Lived in apartment/mobile home/condo before; Have now moved
+                           into a house
+                       24. Not happy in last location-NFS
+            1          25. Sold old home; in order to sell home
+            1          26. Natural disaster (fire/flood/hurricane damage; etc.);
+            3          30. New neighborhood/location better; better area; nicer location;
+                           (These descriptive terms or similar only;) Can refer to
+                           qualities of the area such as friendly people or having good
+                           schools.
+            2          32. Cheaper area or NA what; Not house related or mentioned;
+            1          33. Moved to retirement housing or complex; (Must say something
+                           specifically about retirement or senior housing)
+            3          34. Moved into area where had lived previously; e.g. moved back to
+                           area where I grew up
+            6          40. New house/apartment has specific desirable features not size
+                           related;   e.g. All on one floor; lake access; view; old home
+                           has undesirable features
+            1          41. Simpler house to take care of; less upkeep; old home/property
+                           too much upkeep
+            1          42. Moved into previously owned property; Formerly R’s second or
+                           vacation home
+            1          43. Bought own/new home; had new one built; wanted a house-NFS
+            2          44. Wanted to own instead of rent
+            2          45. In temporary housing; a transition place, while home is built,
+                           fixed, or re-modeled
+                       46. Moved into house where grew up; bought property that had been
+                           in family previously
+                       47. Desperation; nowhere else to go
+                       48. Financial reasons-NFS
+                       49. Family problems-NFS
+            1          50. Could not live by self; R did not want to live alone
+                       51. Wanted to live by self; to live on own or by self
+            1          52. Negative change in economic status of R or spouse/partner
+                           (e.g. R or spouse/partner laid off or unemployed)
+            1          53. Positive change in economic status (e.g. received inheritance)
+                       54. R or Spouse/partner changed job
+                       55. R retired
+                       56. Spouse retired
+            2          57. To care for relative/family member
+                       58. To move in with or nearby non-family member; e.g. 'moved in
+                           with my girlfriend'
+            2          59. Personal reasons (NA nature); 'no reason'; 'just wanted to
+                           move'
+                       60. To get away from family members; e.g. 'my husband is abusive'
+                       61. To get away from non-family members
+                       62. Moved out of assisted living/nursing home
+                       97. OTHER (SPECIFY)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+        18121       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piInNursingHome <> YES) OR (piA070_NHOwnRent = YES))
+         AND ((((piHHX033_HHMoved <> RDIDNTMOVE) OR (piA071_SameMainRes <> YES)) AND
+        (piReIwR = REIWR)) AND (piSCVXR1_R2 <> SECOND))
+         AND ((Today.YEAR - B039_YrMoveMainRes) <= 5)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB041M4  REASONS FOR MOVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_LIVEDAREA.B041M                              Ref 2000: G1109M1
+
+        What were your reasons for moving to (your current home in)  ([CITY AND STATE
+        OF MAIN RESIDENCE])?
+
+        IWER: CHOOSE UP TO TWO REASONS
+        ..................................................................................
+                        1. NEAR OR WITH CHILDREN
+                        2. NEAR OR WITH OTHER RELATIVES/FRIENDS
+                        3. HEALTH PROBLEMS OR SERVICES; for health reasons
+                        4. CLIMATE OR WEATHER
+            1           5. LEISURE ACTIVITIES
+                        6. SMALLER OR LESS EXPENSIVE HOME
+            1           7. LARGER HOME
+                        8. WORK OR RETIREMENT RELATED; business opportunities
+            1           9. CHANGE IN MARITAL STATUS; spouse died; change in relationship
+                           status
+                       10. Public transportation
+            1          11. Closer to work
+                       12. Shopping or other consumption services
+                       20. Old neighborhood/location bad; Run down area; crime; bad
+                           schools; earthquakes; or other undesirable characteristics
+                       21. Dispossessed/Forced to move; e.g. old house sold by owner;
+                           property condemned; house/property not maintained; falling
+                           apart; conflict with landlord
+                       22. Old home too expensive; e.g. Taxes too high; couldn't pay
+                           mortgage; rent increased; (Not to be confused  with code 06
+                           which refers to a smaller or less expensive home.)
+                       23. Lived in apartment/mobile home/condo before; Have now moved
+                           into a house
+                       24. Not happy in last location-NFS
+                       25. Sold old home; in order to sell home
+                       26. Natural disaster (fire/flood/hurricane damage; etc.);
+            1          30. New neighborhood/location better; better area; nicer location;
+                           (These descriptive terms or similar only;) Can refer to
+                           qualities of the area such as friendly people or having good
+                           schools.
+            1          32. Cheaper area or NA what; Not house related or mentioned;
+                       33. Moved to retirement housing or complex; (Must say something
+                           specifically about retirement or senior housing)
+                       34. Moved into area where had lived previously; e.g. moved back to
+                           area where I grew up
+                       40. New house/apartment has specific desirable features not size
+                           related;   e.g. All on one floor; lake access; view; old home
+                           has undesirable features
+            1          41. Simpler house to take care of; less upkeep; old home/property
+                           too much upkeep
+                       42. Moved into previously owned property; Formerly R’s second or
+                           vacation home
+                       43. Bought own/new home; had new one built; wanted a house-NFS
+                       44. Wanted to own instead of rent
+            1          45. In temporary housing; a transition place, while home is built,
+                           fixed, or re-modeled
+                       46. Moved into house where grew up; bought property that had been
+                           in family previously
+                       47. Desperation; nowhere else to go
+                       48. Financial reasons-NFS
+                       49. Family problems-NFS
+                       50. Could not live by self; R did not want to live alone
+            1          51. Wanted to live by self; to live on own or by self
+                       52. Negative change in economic status of R or spouse/partner
+                           (e.g. R or spouse/partner laid off or unemployed)
+                       53. Positive change in economic status (e.g. received inheritance)
+                       54. R or Spouse/partner changed job
+                       55. R retired
+                       56. Spouse retired
+                       57. To care for relative/family member
+                       58. To move in with or nearby non-family member; e.g. 'moved in
+                           with my girlfriend'
+                       59. Personal reasons (NA nature); 'no reason'; 'just wanted to
+                           move'
+                       60. To get away from family members; e.g. 'my husband is abusive'
+                       61. To get away from non-family members
+                       62. Moved out of assisted living/nursing home
+                       97. OTHER (SPECIFY)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+        18158       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piInNursingHome <> YES) OR (piA070_NHOwnRent = YES))
+         AND ((((piHHX033_HHMoved <> RDIDNTMOVE) OR (piA071_SameMainRes <> YES)) AND
+        (piReIwR = REIWR)) AND (piSCVXR1_R2 <> SECOND))
+         AND ((Today.YEAR - B039_YrMoveMainRes) <= 5)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB041M5  REASONS FOR MOVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_LIVEDAREA.B041M                              Ref 2000: G1109M1
+
+        What were your reasons for moving to (your current home in)  ([CITY AND STATE
+        OF MAIN RESIDENCE])?
+
+        IWER: CHOOSE UP TO TWO REASONS
+        ..................................................................................
+            1           1. NEAR OR WITH CHILDREN
+                        2. NEAR OR WITH OTHER RELATIVES/FRIENDS
+                        3. HEALTH PROBLEMS OR SERVICES; for health reasons
+                        4. CLIMATE OR WEATHER
+                        5. LEISURE ACTIVITIES
+                        6. SMALLER OR LESS EXPENSIVE HOME
+                        7. LARGER HOME
+                        8. WORK OR RETIREMENT RELATED; business opportunities
+                        9. CHANGE IN MARITAL STATUS; spouse died; change in relationship
+                           status
+                       10. Public transportation
+                       11. Closer to work
+                       12. Shopping or other consumption services
+                       20. Old neighborhood/location bad; Run down area; crime; bad
+                           schools; earthquakes; or other undesirable characteristics
+                       21. Dispossessed/Forced to move; e.g. old house sold by owner;
+                           property condemned; house/property not maintained; falling
+                           apart; conflict with landlord
+                       22. Old home too expensive; e.g. Taxes too high; couldn't pay
+                           mortgage; rent increased; (Not to be confused  with code 06
+                           which refers to a smaller or less expensive home.)
+                       23. Lived in apartment/mobile home/condo before; Have now moved
+                           into a house
+                       24. Not happy in last location-NFS
+            1          25. Sold old home; in order to sell home
+                       26. Natural disaster (fire/flood/hurricane damage; etc.);
+                       30. New neighborhood/location better; better area; nicer location;
+                           (These descriptive terms or similar only;) Can refer to
+                           qualities of the area such as friendly people or having good
+                           schools.
+                       32. Cheaper area or NA what; Not house related or mentioned;
+                       33. Moved to retirement housing or complex; (Must say something
+                           specifically about retirement or senior housing)
+                       34. Moved into area where had lived previously; e.g. moved back to
+                           area where I grew up
+                       40. New house/apartment has specific desirable features not size
+                           related;   e.g. All on one floor; lake access; view; old home
+                           has undesirable features
+                       41. Simpler house to take care of; less upkeep; old home/property
+                           too much upkeep
+                       42. Moved into previously owned property; Formerly R’s second or
+                           vacation home
+                       43. Bought own/new home; had new one built; wanted a house-NFS
+                       44. Wanted to own instead of rent
+                       45. In temporary housing; a transition place, while home is built,
+                           fixed, or re-modeled
+            1          46. Moved into house where grew up; bought property that had been
+                           in family previously
+                       47. Desperation; nowhere else to go
+                       48. Financial reasons-NFS
+                       49. Family problems-NFS
+                       50. Could not live by self; R did not want to live alone
+                       51. Wanted to live by self; to live on own or by self
+                       52. Negative change in economic status of R or spouse/partner
+                           (e.g. R or spouse/partner laid off or unemployed)
+                       53. Positive change in economic status (e.g. received inheritance)
+                       54. R or Spouse/partner changed job
+                       55. R retired
+                       56. Spouse retired
+                       57. To care for relative/family member
+                       58. To move in with or nearby non-family member; e.g. 'moved in
+                           with my girlfriend'
+                       59. Personal reasons (NA nature); 'no reason'; 'just wanted to
+                           move'
+                       60. To get away from family members; e.g. 'my husband is abusive'
+                       61. To get away from non-family members
+                       62. Moved out of assisted living/nursing home
+                       97. OTHER (SPECIFY)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+        18164       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piInNursingHome <> YES) OR (piA070_NHOwnRent = YES))
+         AND ((((piHHX033_HHMoved <> RDIDNTMOVE) OR (piA071_SameMainRes <> YES)) AND
+        (piReIwR = REIWR)) AND (piSCVXR1_R2 <> SECOND))
+         AND ((Today.YEAR - B039_YrMoveMainRes) <= 5)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB041M6  REASONS FOR MOVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_LIVEDAREA.B041M                              Ref 2000: G1109M1
+
+        What were your reasons for moving to (your current home in)  ([CITY AND STATE
+        OF MAIN RESIDENCE])?
+
+        IWER: CHOOSE UP TO TWO REASONS
+        ..................................................................................
+                        1. NEAR OR WITH CHILDREN
+                        2. NEAR OR WITH OTHER RELATIVES/FRIENDS
+                        3. HEALTH PROBLEMS OR SERVICES; for health reasons
+                        4. CLIMATE OR WEATHER
+                        5. LEISURE ACTIVITIES
+                        6. SMALLER OR LESS EXPENSIVE HOME
+                        7. LARGER HOME
+                        8. WORK OR RETIREMENT RELATED
+                        9. CHANGE IN MARITAL STATUS
+                       10. Public transportation
+                       11. Closer to work
+                       12. Shopping or other consumption services
+                       20. Old neighborhood/location bad; Run down area; crime; bad
+                           schools; earthquakes; or other undesirable characteristics
+                       21. Dispossessed/Forced to move; e.g. old house sold by owner;
+                           property condemned; house/property not maintained; falling
+                           apart; conflict with landlord
+                       22. Old home too expensive; e.g. Taxes too high; couldn't pay
+                           mortgage; rent increased; (Not to be confused  with code 06
+                           which refers to a smaller or less expensive home.)
+                       23. Lived in apartment/mobile home/condo before; Have now moved
+                           into a house
+                       24. Not happy in last location-NFS
+                       25. Sold old home; in order to sell home
+                       26. Natural disaster (fire/flood/hurricane damage; etc.);
+                       30. New neighborhood/location better; better area; nicer location;
+                           (These descriptive terms or similar only;) Can refer to
+                           qualities of the area such as friendly people or having good
+                           schools.
+                       32. Cheaper area or NA what; Not house related or mentioned;
+                       33. Moved to retirement housing or complex; (Must say something
+                           specifically about retirement or senior housing)
+                       34. Moved into area where had lived previously; e.g. moved back to
+                           area where I grew up
+                       40. New house/apartment has specific desirable features not size
+                           related;   e.g. All on one floor; lake access; view; old home
+                           has undesirable features
+                       41. Simpler house to take care of; less upkeep; old home/property
+                           too much upkeep
+                       42. Moved into previously owned property; Formerly R’s second or
+                           vacation home
+                       43. Bought own/new home; had new one built; wanted a house-NFS
+                       44. Wanted to own instead of rent
+                       45. In temporary housing; a transition place, while home is built,
+                           fixed, or re-modeled
+                       46. Moved into house where grew up; bought property that had been
+                           in family previously
+                       47. Desperation; nowhere else to go
+                       48. Financial reasons-NFS
+                       49. Family problems-NFS
+                       50. Could not live by self; R did not want to live alone
+                       51. Wanted to live by self; to live on own or by self
+                       52. Negative change in economic status of R or spouse/partner
+                           (e.g. R or spouse/partner laid off or unemployed)
+                       53. Positive change in economic status (e.g. received inheritance)
+                       54. R or Spouse/partner changed job
+                       55. R retired
+                       56. Spouse retired
+                       57. To care for relative/family member
+                       58. To move in with or nearby non-family member; e.g. 'moved in
+                           with my girlfriend'
+                       59. Personal reasons (NA nature); 'no reason'; 'just wanted to
+                           move'
+                       60. To get away from family members; e.g. 'my husband is abusive'
+                       61. To get away from non-family members
+                       62. Moved out of assisted living/nursing home
+                       97. OTHER (SPECIFY)
+                       98. DK (Don't Know)
+                       99. RF (Refused)
+        18167       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((piHHX033_HHMoved = MOVEDOUTAREA) OR (piReIwR <> REIWR)) AND
+        ((piInNursingHome <> YES) OR (piA070_NHOwnRent = YES)))
+         AND (piReIwR = REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB044    LIVE GEN AREA BEFORE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_LivedArea.B044_                                Ref 2000: G1117
+
+         Before you moved to [piFLWhichMainRes] in [YEAR MOVED TO MAIN
+        RESIDENCE]/Before you moved to [piFLWhichMainRes] [HOW LONG AT CURRENT ADDR]
+        years ago,/Before you moved to [piFLWhichMainRes])
+        had you ever lived there before?
+        ..................................................................................
+          429           1. YES
+         1338           5. NO
+            1           8. DK (Don't Know)
+                        9. RF (Refused)
+        16399       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((piHHX033_HHMoved = MOVEDOUTAREA) OR (piReIwR <> REIWR)) AND
+        ((piInNursingHome <> YES) OR (piA070_NHOwnRent = YES)))
+         AND ((piInNursingHome <> YES) OR (piA070_NHOwnRent = YES))
+         AND ((B044_ <> NO) AND NOT ((piSCVXR1_R2 = SECOND) AND (piInNursingHome =
+        YES)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB045    NUMBER YEARS LIVING IN AREA
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_LivedArea.B045_                                Ref 2000: G1118
+
+        Altogether, about how many years have you lived in or around  ([CITY AND STATE
+        OF MAIN RESIDENCE])?
+
+        96 ALWAYS LIVED AROUND HERE/THERE
+
+        NUMBER OF YEARS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            564        0          86         22.17         18.96   17525
+         -----------------------------------------------------------------
+           69          96. ALWAYS LIVED AROUND HERE/THERE
+            9          98. DK (Don't Know)
+                       99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (((piHHX033_HHMoved = MOVEDOUTAREA) OR (piReIwR <> REIWR)) AND
+        ((piInNursingHome <> YES) OR (piA070_NHOwnRent = YES)))
+         AND ((piInNursingHome <> YES) OR (piA070_NHOwnRent = YES))
+         AND ((B044_ <> NO) AND NOT ((piSCVXR1_R2 = SECOND) AND (piInNursingHome =
+        YES)))
+         AND (B045_ = EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB046    SINCE YEAR LIVING IN MAIN AREA
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI Reference: BB_LivedArea.B046_                                Ref 2000: G1119
+
+        (Altogether, about how many years have you lived in or around  ([CITY AND
+        STATE OF MAIN RESIDENCE])?
+
+        9996 ALWAYS LIVED AROUND HERE/THERE
+
+        SINCE YEAR:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             18     1932        2002       1984.61         23.73   18148
+         -----------------------------------------------------------------
+            1        9996. ALWAYS LIVED AROUND HERE/THERE
+                     9998. DK (Don't Know)
+                     9999. RF (Refused)
+
+==========================================================================================
+
+        Assign:
+         IF (piReIwR <> REIWR)
+         AND (B045_ <> 96)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB047M   ST/COUNTRY LIVED DURING SCHOOL - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_LivedArea.B047_                               Ref 2000: G1122M
+
+        In what state or country did you live most of the time you were  in grade
+        school/in high school/about age 10)?
+
+        STATE:
+        or COUNTRY:
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+           11           1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+           19           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+           23           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+           18           4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+           35           5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+            8           6. South Region: East South Central Division (KY, TN, AL, MS)
+           27           7. South Region: West South Central Division (AR, LA, OK, TX)
+            6           8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+           27           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+           18          11. Foreign Country: Not in a Census Division (includes U.S.
+                           territories)
+                       97. OTHER COUNTRY (SPECIFY)
+            1          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+        17974       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB049    LIVED RURAL AREA DURING SCHOOL
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_LivedArea.B049_                                Ref 2000: G1125
+
+        Were you living in a rural area most of the time when you were  in grade
+        school/in high school/about age 10)?
+        ..................................................................................
+          117           1. YES
+          112           5. NO
+            2           8. DK (Don't Know)
+                        9. RF (Refused)
+        17936       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB050    R RELIGIOUS PREFERENCE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_LivedArea.B050_                                Ref 2000: G1139
+
+        What is your religious preference: Is it Protestant, Catholic, Jewish, some
+        other religion, or do you have no preference?
+        ..................................................................................
+          140           1. PROTESTANT
+           51           2. CATHOLIC
+            5           3. JEWISH
+           27           4. NO PREFERENCE
+            4           7. OTHER (SPECIFY)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+            3           9. RF (Refused)
+        17936       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B050_ = PROTESTANT)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB052M   DENOMINATION - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_LivedArea.B052_                               Ref 2000: G1140M
+
+        What denomination is that?
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+           31           1. PROTESTANT: REFORMATION ERA (Congregational; Episcopalian,
+                           Anglican, Church of England; Evangelical and Reformed;
+                           Lutheran; Presbyterian; Reformed, Dutch Reformed or Christian
+                           Reformed; United Church of Christ)
+           68          11. PROTESTANT: PIETISTIC (African Methodist Episcopal; AME Zion;
+                           Baptist--NA type; Disciples of Christ; Methodist; United
+                           Brethren or Evangelical Brethren; Mennonite, Amish; Church of
+                           the Brethren; 'Christian'
+           23          21. PROTESTANT: FUNDAMENTALIST (Church of Christ; Church of God,
+                           'Holiness', Church of Living; God, Church of God in Prophecy;
+                           Church of God in Christ; Fundamentalist Baptist: include
+                           Primitive Baptist, Free Will Baptist, Missionary Baptist,
+                           Gospel Baptist; Nazarene or Free Methodist; Pentecostal or
+                           Assembly of God; Plymouth Brethren; Salvation Army;
+                           Sanctified; Seventh Day Adventist; Southern Baptist; United
+                           Missionary or Protestant Missionary; Christian and Missionary
+                           Alliance; Missouri Synod Lutheran; Other Fundamentalist;
+                           'Apostolic'--NFS; 'Charismatic' --NFS; Bible Church, Word of
+                           Faith, Foursquare
+            5          41. PROTESTANT: GENERAL (Protestant, no denomination given; Non-
+                           denominational Protestant church; Community church--no
+                           denominational basis; 'Born again Christian'--NFS;
+                           'Evangelical'--NFS; Other Protestant--not listed above;
+                           Berean,AZUA, United Church of Canada
+                       51. CATHOLIC; EASTERN ORTHODOX (ROMAN CATHOLIC; 'Catholic'--NFS;
+                           Greek Rite Catholic; Orthodox; Eastern Orthodox;
+                           Greek/Russian; Orthodox; other Orthodox
+            8          61. NON-TRADITIONAL CHRISTIAN (Christian Scientist; Jehovah's
+                           Witnesses Latter Day Saints, Mormons Quakers; Spiritualists;
+                           Unitarian or Universalist; Unity; Other non-traditional
+                           Christian
+                       71. JEWISH
+            2          81. NON-JUDEO-CHRISTIAN (Nation of Islam; Islam; Muslim; Moslem;
+                           Mohammedan; World Community of Islam in the West; Buddhist;
+                           Hindu; Bahai; Other non-Judeo-Christian religion)
+                       91. NO RELIGION; NONE; NO PREFERENCE; Atheist; agnostic; OTHER
+                           (include Mason, New Age, RC and Jewish, RC in summer/Lutheran
+                           in winter, Mile-High Church of Rel. Science, Science of Mind,
+                           Yeshuan)
+            1          98. DK (Don't Know)
+                       99. RF (Refused)
+        18029       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+HB053    IMPORTANCE OF RELIGION
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB.B053_                                          Ref 2000: G1142
+
+        How important would you say religion is in your life; is it very important,
+        somewhat important, or not too important?
+        ..................................................................................
+        12003           1. VERY IMPORTANT
+         4272           3. SOMEWHAT IMPORTANT
+         1863           5. NOT TOO IMPORTANT
+           25           8. DK (Don't Know)
+            4           9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB054    ENGLISH USUALLY SPOKEN IN HOME
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB.B054_                                          Ref 2000: G1145
+
+        Is English the language you usually speak at home?
+        ..................................................................................
+          212           1. YES
+           21           5. NO
+                        8. DK (Don't Know)
+                        9. RF (Refused)
+        17934       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR = REIWR)
+         AND (((piInTSameSpP_A <> YESANDSPPTRISLIVING) AND ((piA023_PWSpPAlive <> NO)
+        OR (piA026_Rmarried <> NO))) AND (piR1_R2 <> SECOND))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB055    NEW MARRIAGE SINCE PREVIOUS WAVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Marriage2.B055_                                Ref 2000: G1146
+
+        Sometimes marital situations are not entirely clear from what we've asked so
+        far. Please bear with me for a few more questions on this. Did you have a
+        marriage start after  (NEW MARRIAGE SINCE PREVIOUS WAVE),  ([See Blaise
+        Specifications for fill PWIWYEAR])?
+        ..................................................................................
+          136           1. YES
+         5772           5. NO
+                        8. DK (Don't Know)
+                        9. RF (Refused)
+        12259       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR = REIWR)
+         AND (((piInTSameSpP_A <> YESANDSPPTRISLIVING) AND ((piA023_PWSpPAlive <> NO)
+        OR (piA026_Rmarried <> NO))) AND (piR1_R2 <> SECOND))
+         AND (B055_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB056    BETWEEN WAVE MARRIAGE START-MONTH
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Marriage2.B056_                                Ref 2000: G1148
+
+        In what month and year were you married?
+
+        MONTH:
+        ..................................................................................
+            9           1. JAN
+           15           2. FEB
+            8           3. MAR
+           13           4. APR
+            8           5. MAY
+           19           6. JUN
+           10           7. JUL
+           14           8. AUG
+           10           9. SEP
+           12          10. OCT
+           10          11. NOV
+            7          12. DEC
+            1          98. DK (Don't Know)
+                       99. RF (Refused)
+        18031       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR = REIWR)
+         AND (((piInTSameSpP_A <> YESANDSPPTRISLIVING) AND ((piA023_PWSpPAlive <> NO)
+        OR (piA026_Rmarried <> NO))) AND (piR1_R2 <> SECOND))
+         AND (B055_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB057    BETWEEN WAVE MARRIAGE START-YEAR
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI Reference: BB_Marriage2.B057_                                Ref 2000: G1149
+
+        (In what month and year were you married?)
+
+        YEAR:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            135     1992        2002       2000.50          1.87   18031
+         -----------------------------------------------------------------
+            1        9998. DK (Don't Know)
+                     9999. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR = REIWR)
+         AND (((piInTSameSpP_A <> YESANDSPPTRISLIVING) AND ((piA023_PWSpPAlive <> NO)
+        OR (piA026_Rmarried <> NO))) AND (piR1_R2 <> SECOND))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB058    DIVORCE/WIDOW SINCE PREVIOUS WAVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Marriage2.B058_DivWidSincePW                   Ref 2000: G1153
+
+        Did you divorce or become widowed since  (DIVORCE/WIDOW SINCE PREVIOUS WAVE),
+        ([See Blaise Specifications for fill PWIWYEAR])?
+        ..................................................................................
+          138           1. YES, DIVORCED/ANNULLED
+          177           2. YES, WIDOWED
+         5591           5. NO
+            1           8. DK (Don't Know)
+            1           9. RF (Refused)
+        12259       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR = REIWR)
+         AND (((piInTSameSpP_A <> YESANDSPPTRISLIVING) AND ((piA023_PWSpPAlive <> NO)
+        OR (piA026_Rmarried <> NO))) AND (piR1_R2 <> SECOND))
+         AND ((B058_DivWidSincePW = YESDIVORCED_ANNULLED) OR (B058_DivWidSincePW =
+        YESWIDOWED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB059    BETWEEN WAVE DIVORCE/WIDOW-MONTH
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Marriage2.B059_                                Ref 2000: G1154
+
+        In what month and year did you   divorce/ become widowed?
+
+        MONTH:
+        ..................................................................................
+           28           1. JAN
+           22           2. FEB
+           25           3. MAR
+           21           4. APR
+           26           5. MAY
+           24           6. JUN
+           22           7. JUL
+           24           8. AUG
+           14           9. SEP
+           23          10. OCT
+           32          11. NOV
+           10          12. DEC
+           42          98. DK (Don't Know)
+            2          99. RF (Refused)
+        17852       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR = REIWR)
+         AND (((piInTSameSpP_A <> YESANDSPPTRISLIVING) AND ((piA023_PWSpPAlive <> NO)
+        OR (piA026_Rmarried <> NO))) AND (piR1_R2 <> SECOND))
+         AND ((B058_DivWidSincePW = YESDIVORCED_ANNULLED) OR (B058_DivWidSincePW =
+        YESWIDOWED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB060    BETWEEN WAVE DIVORCE/WIDOW-YEAR
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI Reference: BB_Marriage2.B060_                                Ref 2000: G1155
+
+        (In what month and year did you (divorce/ become widowed)?)
+
+        YEAR:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            272     1992        2002       1998.27          3.34   17852
+         -----------------------------------------------------------------
+           38        9998. DK (Don't Know)
+            5        9999. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (((piA034_RMarSep <> SEPARATED) AND (piRespondent1_Couplenss <> MARRIED))
+        AND (piRespondent1_Couplenss <> REMARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB061    MARITAL STATUS IF UNMARRIED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Marriage2.B061_AskMarStat                      Ref 2000: G1157
+
+        Just to clarify, are you currently separated, divorced, widowed, or have you
+        never been married?
+        ..................................................................................
+          208           3. SEPARATED
+         1752           4. DIVORCED
+         4145           5. WIDOWED
+          528           6. NEVER MARRIED
+           79           7. OTHER (SPECIFY)
+            1           8. DK (Don't Know)
+            7           9. RF (Refused)
+        11447       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+HMARITAL MARITAL STATUS
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        User Note: This variable was constructed using the following variables:
+        HX065_r, HB061, HA026, and HA035.
+        ..................................................................................
+        11415           1. Married
+          293           3. Separated
+         1752           4. Divorced
+         4145           5. Widowed
+          528           6. Never Married
+           25           7. Other (Specify)
+            1           8. DK (Don't Know)
+            7           9. RF (Refused)
+            1       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B061_AskMarStat <> NEVERMARRIED)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB065    NUMBER OF MARRIAGES
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Marriage2.B065_                                Ref 2000: G1159
+
+        Altogether, how many times have you been married  including your current
+        marriage)?
+        ..................................................................................
+           86           1. ONCE
+           87           2. TWICE
+           33           3. THREE TIMES
+           14           4. FOUR OR MORE
+            1           8. DK (Don't Know)
+            5           9. RF (Refused)
+        17941       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B061_AskMarStat <> NEVERMARRIED)
+         AND (M <= i)
+         AND ((piM < 4) OR (piA034_RMarSep = MARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB066_1  FIRST MARRIAGE YEAR BEGAN
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI Reference: BB_Marriage.B066_YrMarBegan                       Ref 2000: G1160
+
+        In what year did your (current/first/second/third) marriage begin?
+
+        YEAR:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            163     1919        2002       1962.31         12.41   17990
+         -----------------------------------------------------------------
+           13        9998. DK (Don't Know)
+            1        9999. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B061_AskMarStat <> NEVERMARRIED)
+         AND (M <= i)
+         AND ((piM < 4) OR (piA034_RMarSep = MARRIED))
+         AND (B066_YrMarBegan <> REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB067_1  FIRST MARRIAGE MONTH BEGAN
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Marriage.B067_MoMarBegan                       Ref 2000: G1161
+
+        In what month was that?
+
+        MONTH:
+        ..................................................................................
+            7           1. JAN
+           15           2. FEB
+           10           3. MAR
+            7           4. APR
+           10           5. MAY
+           20           6. JUN
+            8           7. JUL
+           12           8. AUG
+           11           9. SEP
+           11          10. OCT
+           18          11. NOV
+           10          12. DEC
+           36          98. DK (Don't Know)
+            1          99. RF (Refused)
+        17991       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B061_AskMarStat <> NEVERMARRIED)
+         AND (M <= i)
+         AND ((piM < 4) OR (piA034_RMarSep = MARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB068_1  FIRST MARRIAGE END DIVORCE/WIDOW
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Marriage.B068_HowMarEnd                        Ref 2000: G1162
+
+        Did that marriage end in divorce or were you widowed?
+        ..................................................................................
+          111           4. DIVORCED
+           61           5. WIDOWED
+            5           7. OTHER (SPECIFY)
+                        8. DK (Don't Know)
+                        9. RF (Refused)
+        17990       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B061_AskMarStat <> NEVERMARRIED)
+         AND (M <= i)
+         AND ((piM < 4) OR (piA034_RMarSep = MARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB070_1  FIRST MARRIAGE-YEARS MARRIAGE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Marriage.B070_NumYrsMar                        Ref 2000: G1163
+
+        About how many years did that marriage last?
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            165        1          60         21.27         15.91   17990
+         -----------------------------------------------------------------
+           12          98. DK (Don't Know)
+                       99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B061_AskMarStat <> NEVERMARRIED)
+         AND (M <= i)
+         AND ((piM < 4) OR (piA034_RMarSep = MARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB066_2  SECOND MARRIAGE YEAR BEGAN
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI Reference: BB_Marriage.B066_YrMarBegan                       Ref 2000: G1160
+
+        In what year did your (current/first/second/third) marriage begin?
+
+        YEAR:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             63     1949        2002       1979.29         11.91   18099
+         -----------------------------------------------------------------
+            4        9998. DK (Don't Know)
+            1        9999. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B061_AskMarStat <> NEVERMARRIED)
+         AND (M <= i)
+         AND ((piM < 4) OR (piA034_RMarSep = MARRIED))
+         AND (B066_YrMarBegan <> REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB067_2  SECOND MARRIAGE MONTH BEGAN
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Marriage.B067_MoMarBegan                       Ref 2000: G1161
+
+        In what month was that?
+
+        MONTH:
+        ..................................................................................
+            5           1. JAN
+            5           2. FEB
+            3           3. MAR
+            4           4. APR
+            3           5. MAY
+            8           6. JUN
+            4           7. JUL
+            5           8. AUG
+            2           9. SEP
+            6          10. OCT
+            3          11. NOV
+            5          12. DEC
+           14          98. DK (Don't Know)
+                       99. RF (Refused)
+        18100       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B061_AskMarStat <> NEVERMARRIED)
+         AND (M <= i)
+         AND ((piM < 4) OR (piA034_RMarSep = MARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB068_2  SECOND MARRIAGE END DIVORCE/WIDOW
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Marriage.B068_HowMarEnd                        Ref 2000: G1162
+
+        Did that marriage end in divorce or were you widowed?
+        ..................................................................................
+           41           4. DIVORCED
+           23           5. WIDOWED
+            4           7. OTHER (SPECIFY)
+                        8. DK (Don't Know)
+                        9. RF (Refused)
+        18099       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B061_AskMarStat <> NEVERMARRIED)
+         AND (M <= i)
+         AND ((piM < 4) OR (piA034_RMarSep = MARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB070_2  SECOND MARRIAGE-YEARS MARRIAGE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Marriage.B070_NumYrsMar                        Ref 2000: G1163
+
+        About how many years did that marriage last?
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             64        0          50         10.58          9.87   18099
+         -----------------------------------------------------------------
+            3          98. DK (Don't Know)
+            1          99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B061_AskMarStat <> NEVERMARRIED)
+         AND (M <= i)
+         AND ((piM < 4) OR (piA034_RMarSep = MARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB066_3  THIRD MARRIAGE YEAR BEGAN
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI Reference: BB_Marriage.B066_YrMarBegan                       Ref 2000: G1160
+
+        In what year did your (current/first/second/third) marriage begin?
+
+        YEAR:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             19     1968        2001       1989.05         10.05   18144
+         -----------------------------------------------------------------
+            4        9998. DK (Don't Know)
+                     9999. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B061_AskMarStat <> NEVERMARRIED)
+         AND (M <= i)
+         AND ((piM < 4) OR (piA034_RMarSep = MARRIED))
+         AND (B066_YrMarBegan <> REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB067_3  THIRD MARRIAGE MONTH BEGAN
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Marriage.B067_MoMarBegan                       Ref 2000: G1161
+
+        In what month was that?
+
+        MONTH:
+        ..................................................................................
+                        1. JAN
+            3           2. FEB
+                        3. MAR
+                        4. APR
+            1           5. MAY
+                        6. JUN
+            2           7. JUL
+            3           8. AUG
+            5           9. SEP
+                       10. OCT
+            1          11. NOV
+            1          12. DEC
+            7          98. DK (Don't Know)
+                       99. RF (Refused)
+        18144       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B061_AskMarStat <> NEVERMARRIED)
+         AND (M <= i)
+         AND ((piM < 4) OR (piA034_RMarSep = MARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB068_3  THIRD MARRIAGE END DIVORCE/WIDOW
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB_Marriage.B068_HowMarEnd                        Ref 2000: G1162
+
+        Did that marriage end in divorce or were you widowed?
+        ..................................................................................
+           17           4. DIVORCED
+            4           5. WIDOWED
+            2           7. OTHER (SPECIFY)
+                        8. DK (Don't Know)
+                        9. RF (Refused)
+        18144       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (piReIwR <> REIWR)
+         AND (B061_AskMarStat <> NEVERMARRIED)
+         AND (M <= i)
+         AND ((piM < 4) OR (piA034_RMarSep = MARRIED))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HB070_3  THIRD MARRIAGE-YEARS MARRIAGE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI Reference: BB_Marriage.B070_NumYrsMar                        Ref 2000: G1163
+
+        About how many years did that marriage last?
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             22        0          28          4.50          6.19   18144
+         -----------------------------------------------------------------
+            1          98. DK (Don't Know)
+                       99. RF (Refused)
+
+==========================================================================================
+
+HB076    ASSIST SECTION B-DEMOGRAPHICS
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI Reference: BB.B076_AssistB                                   Ref 2000: G1176
+
+        IWER: HOW OFTEN DID R RECEIVE ASSISTANCE WITH ANSWERS IN SECTION B -
+        DEMOGRAPHICS?
+        ..................................................................................
+        18007           1. NEVER
+          122           2. A FEW TIMES
+           27           3. MOST OR ALL OF THE TIME
+           11           4. THE SECTION WAS DONE BY A PROXY REPORTER
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+HVERSION 2002 DATA RELEASE VERSION
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+        18167           2. Second Data Release
+
+==========================================================================================
+
+HQNR     BLAISE IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 11  Decimals: 0
+
+        ..................................................................................
+        18167 00000300010-21347900020. Blaise Identification Number
+

@@ -1,0 +1,1462 @@
+==========================================================================================
+2000 HRS Exit (Final Release)
+ODBC Reference: [HRS2000x]
+Perl script: CodebkD9.pl v5.043 Tue Mar  1  9:48:45 2005
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Surveycraft metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION B: Health Status (Respondent)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFIER
+          Section: B            Level: Respondent         CAI Reference: Q9001
+          Type: Character       Width: 6                  Decimals: 0
+          ................................................................................
+           1348       010003-213471. Household ID
+
+==========================================================================================
+
+PN        PERSON NUMBER
+          Section: B            Level: Respondent         CAI Reference: Q9002
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+            929       010. Person Number
+             12       011. Person Number
+            320       020. Person Number
+              2       021. Person Number
+             36       030. Person Number
+              1       031. Person Number
+             47       040. Person Number
+              1       041. Person Number
+
+==========================================================================================
+
+RSUBHH    2000 SUB-HOUSEHOLD IDENTIFIER
+          Section: B            Level: Respondent         CAI Reference: Q9004
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+           1296         3. 1st deceased respondent from a household
+             52         4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+FSUBHH    1998 SUB-HOUSEHOLD IDENTIFIER
+          Section: B            Level: Respondent         CAI Reference: Q9003
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+           1306         0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+             14         1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+             13         2. Split household - other half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+             15         3. 1st deceased respondent from a household
+                        5. Split household - one half of couple from SUBHH 1 or 2
+                        6. Split household - one half of couple from SUBHH 1 or 2
+                        7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+RPN_SP    2000 SPOUSE/PARTNER PERSON NUMBER
+          Section: B            Level: Respondent         CAI Reference: Q9005
+          Type: Character       Width: 3                  Decimals: 0
+
+          User Note:  There are 42 R's with a valid RPN_SP who are not coupled in the
+          2000 Exit.  Two reasons explain this occurrence: both members of a
+          previously intact household are part of the 2000 Exit, or there was a
+          legitimate split between the exit interview and their last core interview.
+          We have included them in the data to allow linkage back to the spouse's
+          interview.
+          ................................................................................
+            276       010. Spouse Person Number
+             14       011. Spouse Person Number
+            292       020. Spouse Person Number
+              4       021. Spouse Person Number
+             25       030. Spouse Person Number
+             34       040. Spouse Person Number
+            703     Blank. No Spouse at Death
+
+==========================================================================================
+
+RQNR      SURVEYCRAFT CASE NUMBER
+          Section: B            Level: Respondent         CAI Reference: Q9006
+          Type: Numeric         Width: 5                  Decimals: 0
+          ................................................................................
+            999         80001-80999. AHEAD/CODA Surveycraft Case Number
+            349         90001-90349. HRS/WAR BABY Surveycraft Case Number
+
+==========================================================================================
+
+R1166     B0.HEALTH INTRO
+          Section: B            Level: Respondent         CAI Reference: Q1166
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B0.
+                  We want to be sure we understand any health problems that may
+                  have preceded
+                  [Q754-CS22Y31.R FIRST NAME]'s
+          IF Q530 IS (2) AND Q532 IS (1-3)
+                  death, even though (his/her) death was unexpected.
+          ELSE
+                  death.
+          END
+
+                  The questions we will be asking are about
+                  [Q754-CS22Y31.R FIRST NAME]'s
+          IF Q753 IS (1) AND Q218 IS (NE0) AND Q219 IS (NE0)
+                  health since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219.] .
+          ELSE
+                  health during the last two years.
+          END
+          ................................................................................
+           1348     Blank. No Data Collected
+
+==========================================================================================
+
+R1174     B5.CANCER
+          Section: B            Level: Respondent         CAI Reference: Q1174
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5.
+          IF Q753 IS (1)
+                  PREVIOUS WAVE:
+                  [Q232-PR232.PREV WAVE CANCER]
+          END
+          IF Q753 IS (NE1)
+                  Had a doctor ever told (him/her) that (he/she) had cancer or a
+                  malignant tumor, excluding minor skin cancers?
+          ELSE Q232 IS (1)
+                  Our records from (his/her) last interview in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR]
+                  show that (he/she) had cancer.
+
+                  IWER:  PRESS 1 THEN PRESS ENTER UNLESS R VOLUNTARILY
+                         DISPUTES PREVIOUS WAVE RECORD.
+
+                  IWER: IF R DISPUTES REPORT FROM PREVIOUS WAVE, PROBE AS
+                        NECESSARY TO DETERMINE WHETHER R WAS SINCE
+                        TOLD BY A DOCTOR THAT HE/SHE HAD THE CONDITION.
+
+                        DESCRIBE THE SITUATION IN THE OPEN FIELD
+          ELSE
+                  Since we last talked to (him/her), (that is since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ,)
+                  had a doctor told (him/her) that (he/she) had cancer or a
+                  malignant tumor, excluding minor skin cancer?
+          END
+          ................................................................................
+            453         1. YES
+                        3. DISPUTES PREVIOUS WAVE RECORD, BUT DID HAVE CONDITION
+             13         4. DISPUTES PREVIOUS WAVE RECORD, DID NOT HAVE CONDITION
+            875         5. NO
+              7         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1175     B5a. DOCTOR PAST CANCER
+          Section: B            Level: Respondent         CAI Reference: Q1175
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5a.
+          IF Q218 IS (NE0) AND Q219 IS (NE0)
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] , had (he/she) seen a doctor about
+          (his/her) cancer?
+          ELSE
+                  In the last two years before (his/her) death, had
+                  (he/she) seen a doctor about (his/her) cancer?
+          END
+          ................................................................................
+            228         1. YES
+             63         5. NO
+              5         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1052     Blank. INAP (Inapplicable): [Q1174:B5] IS (NE 1 AND NE 3); [Q1174:B5]
+                           IS (1) AND [Q232:PR232] IS (NE 1) AND [Q753:CS22Y30] IS (1)
+
+==========================================================================================
+
+R1176     B5b. PAST CANCER TREATED
+          Section: B            Level: Respondent         CAI Reference: Q1176
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5b.
+                  We want to know about any cancer treatment that may have
+                  taken place during the past two years.
+
+          IF Q753 IS (1)
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] , had (he/she) received any treatment
+          for cancer?
+          ELSE
+                  In the two years preceding (his/her) death, had (he/she)
+                  received any treatment for cancer?
+          END
+          ................................................................................
+            251         1. YES
+            194         5. NO
+              9         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            894     Blank. INAP (Inapplicable): [Q1174:B5] IS (NE 1 AND NE 3)
+
+==========================================================================================
+
+R1177M1   B5c. CANCER TREATMENT-1
+          Section: B            Level: Respondent         CAI Reference: Q1177
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5c.
+          IF Q753 IS (NE1)
+                  During the last two years, what
+          ELSE Q232 IS (1)
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] , what
+          ELSE
+                  What
+          END
+                  sort of treatments had (he/she) received for cancer?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+            134         1. CHEMOTHERAPY OR MEDICATION
+             41         2. SURGERY OR BIOPSY
+             50         3. RADIATION/ X-RAY
+             15         4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+              4         5. NONE
+              4         7. OTHER, SPECIFY
+              3         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1097     Blank. INAP (Inapplicable): [Q1174:B5] IS (NE 1 AND NE 3);
+                           [Q1175:B5a] IS (A AND NE 1) AND [Q1176:B5b] IS (5 OR DK OR RF)
+                           AND [Q232:PR232] IS (1); [Q1176:B5b] IS (A AND NE 1) AND
+                           [Q232:PR232] IS (1); [Q1176:B5b] IS (A AND NE 1) AND
+                           [Q232:PR232] IS (NE 1)
+
+==========================================================================================
+
+R1177M2   B5c. CANCER TREATMENT-2
+          Section: B            Level: Respondent         CAI Reference: Q1177
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5c.
+          IF Q753 IS (NE1)
+                  During the last two years, what
+          ELSE Q232 IS (1)
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] , what
+          ELSE
+                  What
+          END
+                  sort of treatments had (he/she) received for cancer?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+             20         1. CHEMOTHERAPY OR MEDICATION
+             25         2. SURGERY OR BIOPSY
+             59         3. RADIATION/ X-RAY
+             36         4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+              1         7. OTHER, SPECIFY
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1207     Blank. INAP (Inapplicable): [Q1174:B5] IS (NE 1 AND NE 3);
+                           [Q1175:B5a] IS (A AND NE 1) AND [Q1176:B5b] IS (5 OR DK OR RF)
+                           AND [Q232:PR232] IS (1); [Q1176:B5b] IS (A AND NE 1) AND
+                           [Q232:PR232] IS (1); [Q1176:B5b] IS (A AND NE 1) AND
+                           [Q232:PR232] IS (NE 1)
+
+==========================================================================================
+
+R1177M3   B5c. CANCER TREATMENT-3
+          Section: B            Level: Respondent         CAI Reference: Q1177
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5c.
+          IF Q753 IS (NE1)
+                  During the last two years, what
+          ELSE Q232 IS (1)
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] , what
+          ELSE
+                  What
+          END
+                  sort of treatments had (he/she) received for cancer?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+              5         1. CHEMOTHERAPY OR MEDICATION
+             12         2. SURGERY OR BIOPSY
+             17         3. RADIATION/ X-RAY
+             33         4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+              4         7. OTHER, SPECIFY
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1276     Blank. INAP (Inapplicable): [Q1174:B5] IS (NE 1 AND NE 3);
+                           [Q1175:B5a] IS (A AND NE 1) AND [Q1176:B5b] IS (5 OR DK OR RF)
+                           AND [Q232:PR232] IS (1); [Q1176:B5b] IS (A AND NE 1) AND
+                           [Q232:PR232] IS (1); [Q1176:B5b] IS (A AND NE 1) AND
+                           [Q232:PR232] IS (NE 1)
+
+==========================================================================================
+
+R1177M4   B5c. CANCER TREATMENT-4
+          Section: B            Level: Respondent         CAI Reference: Q1177
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5c.
+          IF Q753 IS (NE1)
+                  During the last two years, what
+          ELSE Q232 IS (1)
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] , what
+          ELSE
+                  What
+          END
+                  sort of treatments had (he/she) received for cancer?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+              1         1. CHEMOTHERAPY OR MEDICATION
+              4         2. SURGERY OR BIOPSY
+                        3. RADIATION/ X-RAY
+             18         4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+                        7. OTHER, SPECIFY
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1325     Blank. INAP (Inapplicable): [Q1174:B5] IS (NE 1 AND NE 3);
+                           [Q1175:B5a] IS (A AND NE 1) AND [Q1176:B5b] IS (5 OR DK OR RF)
+                           AND [Q232:PR232] IS (1); [Q1176:B5b] IS (A AND NE 1) AND
+                           [Q232:PR232] IS (1); [Q1176:B5b] IS (A AND NE 1) AND
+                           [Q232:PR232] IS (NE 1)
+
+==========================================================================================
+
+R1177M5   B5c. CANCER TREATMENT-5
+          Section: B            Level: Respondent         CAI Reference: Q1177
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5c.
+          IF Q753 IS (NE1)
+                  During the last two years, what
+          ELSE Q232 IS (1)
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] , what
+          ELSE
+                  What
+          END
+                  sort of treatments had (he/she) received for cancer?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                        1. CHEMOTHERAPY OR MEDICATION
+                        2. SURGERY OR BIOPSY
+              1         3. RADIATION/ X-RAY
+                        4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+              1         7. OTHER, SPECIFY
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1346     Blank. INAP (Inapplicable): [Q1174:B5] IS (NE 1 AND NE 3);
+                           [Q1175:B5a] IS (A AND NE 1) AND [Q1176:B5b] IS (5 OR DK OR RF)
+                           AND [Q232:PR232] IS (1); [Q1176:B5b] IS (A AND NE 1) AND
+                           [Q232:PR232] IS (1); [Q1176:B5b] IS (A AND NE 1) AND
+                           [Q232:PR232] IS (NE 1)
+
+==========================================================================================
+
+R1177M6   B5c. CANCER TREATMENT-6
+          Section: B            Level: Respondent         CAI Reference: Q1177
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5c.
+          IF Q753 IS (NE1)
+                  During the last two years, what
+          ELSE Q232 IS (1)
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] , what
+          ELSE
+                  What
+          END
+                  sort of treatments had (he/she) received for cancer?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                        1. CHEMOTHERAPY OR MEDICATION
+                        2. SURGERY OR BIOPSY
+                        3. RADIATION/ X-RAY
+                        4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+                        7. OTHER, SPECIFY
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1348     Blank. INAP (Inapplicable): [Q1174:B5] IS (NE 1 AND NE 3);
+                           [Q1175:B5a] IS (A AND NE 1) AND [Q1176:B5b] IS (5 OR DK OR RF)
+                           AND [Q232:PR232] IS (1); [Q1176:B5b] IS (A AND NE 1) AND
+                           [Q232:PR232] IS (1); [Q1176:B5b] IS (A AND NE 1) AND
+                           [Q232:PR232] IS (NE 1)
+
+==========================================================================================
+
+R1186     B5j.YEAR RECENT CANCER
+          Section: B            Level: Respondent         CAI Reference: Q1186
+          Type: Numeric         Width: 4                  Decimals: 0
+
+          B5j.
+                  In what year was (his/her) (most recent) cancer diagnosed?
+
+                  YEAR:
+          ................................................................................
+            356           1900-2001. Actual Value
+             29                9998. DK (Don't Know); NA (Not Ascertained)
+              2                9999. RF (Refused)
+            961               Blank. INAP (Inapplicable): [Q1174:B5] IS (NE 1 AND NE 3);
+                                     [Q1175:B5a] IS (A AND NE 1) AND [Q1176:B5b] IS (5
+                                     OR DK OR RF) AND [Q232:PR232] IS (1)
+
+==========================================================================================
+
+R1187     B5k.MONTH RECENT CANCER
+          Section: B            Level: Respondent         CAI Reference: Q1187
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          B5k.
+                  In what month was that?
+
+                  MONTH:
+          ................................................................................
+             31         1. JAN
+             20         2. FEB
+             14         3. MAR
+             19         4. APR
+              9         5. MAY
+             23         6. JUN
+             14         7. JUL
+             14         8. AUG
+             16         9. SEP
+             18        10. OCT
+             11        11. NOV
+             12        12. DEC
+             23        98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1124     Blank. INAP (Inapplicable): [Q1174:B5] IS (NE 1 AND NE 3);
+                           [Q1175:B5a] IS (A AND NE 1) AND [Q1176:B5b] IS (5 OR DK OR RF)
+                           AND [Q232:PR232] IS (1); [Q1186:B5j] IS (DK OR RF OR LT 1998)
+
+==========================================================================================
+
+R1191     B6. LUNG
+          Section: B            Level: Respondent         CAI Reference: Q1191
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B6.
+          IF Q753 IS (1)
+                  PREVIOUS WAVE:
+                  [Q233-PR233.PREV WAVE LUNG]
+          END
+          IF Q753 IS (NE1)
+                  Had a doctor ever told (him/her) that (he/she) had chronic lung
+                  disease such as chronic bronchitis or emphysema?
+
+                  DO NOT INCLUDE ASTHMA
+          ELSE Q233 IS (1)
+                  Our records from (his/her) interview in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR]  show that
+                  (he/she) had a chronic lung disease, such as chronic
+                  bronchitis or emphysema.
+
+                  IWER:  PRESS 1 THEN PRESS ENTER UNLESS R VOLUNTARILY
+                         DISPUTES PREVIOUS WAVE RECORD.
+
+                  IWER: IF R DISPUTES REPORT FROM PREVIOUS WAVE, PROBE AS
+                        NECESSARY TO DETERMINE WHETHER R WAS SINCE
+                        TOLD BY A DOCTOR THAT HE/SHE HAD THE CONDITION.
+                        DESCRIBE THE SITUATION IN THE OPEN FIELD.
+          ELSE
+                  Since we last talked with (him/her), (that is since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ,)
+                  had a doctor told (him/her) that (he/she) had chronic lung disease,
+                  such as chronic bronchitis or emphysema?
+
+                  DO NOT INCLUDE ASTHMA
+          END
+          ................................................................................
+            299         1. YES
+              1         3. DISPUTES PREVIOUS WAVE RECORD, BUT DID HAVE CONDITION
+             17         4. DISPUTES PREVIOUS WAVE RECORD, DID NOT HAVE CONDITION
+           1021         5. NO
+             10         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1197     B6c. LUNG OXYGEN
+          Section: B            Level: Respondent         CAI Reference: Q1197
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B6c.
+                   Was (he/she) receiving oxygen for (his/her) lung condition?
+          ................................................................................
+            173         1. YES
+            126         5. NO
+              2         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1047     Blank. INAP (Inapplicable): [Q1191:B6] IS (NE 1 AND NE 3)
+
+==========================================================================================
+
+R1201     B7. HEART CONDITION
+          Section: B            Level: Respondent         CAI Reference: Q1201
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B7.
+          IF Q753 IS (1)
+                  PREVIOUS WAVE:
+                  [Q234-PR234.PREV WAVE HEART]
+          END
+          IF Q753 IS (NE1)
+                  Did a doctor ever tell (him/her) that (he/she) had a heart attack,
+                  coronary heart disease, angina, congestive heart
+                  failure, or other heart problems?
+          ELSE Q234 IS (1)
+                  Our records (from (his/her) interview in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] )
+                  show that (he/she) had a heart problem.
+
+                  IWER:  PRESS 1 THEN PRESS ENTER UNLESS R VOLUNTARILY
+                         DISPUTES PREVIOUS WAVE RECORD.
+
+                  IWER: IF R DISPUTES REPORT FROM PREVIOUS WAVE, PROBE AS
+                        NECESSARY TO DETERMINE WHETHER R WAS SINCE
+                        TOLD BY A DOCTOR THAT HE/SHE HAD THE CONDITION.
+
+                        DESCRIBE THE SITUATION IN THE OPEN FIELD
+          ELSE
+                  (Since (his/her) interview in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR]  did a doctor tell (him/her)
+                  that (he/she) had) A heart attack, (had) coronary heart disease,
+                  angina, congestive heart failure, or other heart problems?
+          END
+          ................................................................................
+            697         1. YES
+              1         3. DISPUTES PREVIOUS WAVE RECORD, BUT DID HAVE CONDITION
+             17         4. DISPUTES PREVIOUS WAVE RECORD, DID NOT HAVE CONDITION
+            627         5. NO
+              6         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1202     B7a. HEART MEDICATION
+          Section: B            Level: Respondent         CAI Reference: Q1202
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B7a.
+                  Was (he/she) taking or carrying medication for (his/her)
+                  heart problem?
+          ................................................................................
+            425         1. YES
+             81         5. NO
+              9         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            833     Blank. INAP (Inapplicable): [Q1201:B7] IS (NE 1 AND NE 3);
+                           [Q234:PR234] IS (NE 1) AND [Q753:CS22Y30] IS (1)
+
+==========================================================================================
+
+R1203     B7b. HEART SEEN DR
+          Section: B            Level: Respondent         CAI Reference: Q1203
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B7b.
+          IF Q753 IS (1)
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ,
+          ELSE
+                  In the last two years,
+          END
+                  had (he/she) seen a doctor for (his/her) heart problem?
+          ................................................................................
+            417         1. YES
+             83         5. NO
+             15         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            833     Blank. INAP (Inapplicable): [Q1201:B7] IS (NE 1 AND NE 3);
+                           [Q234:PR234] IS (NE 1) AND [Q753:CS22Y30] IS (1)
+
+==========================================================================================
+
+R1207     B7d. HEART ATTACK
+          Section: B            Level: Respondent         CAI Reference: Q1207
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B7d.
+          IF Q753 IS (1)
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ,
+          ELSE
+                  In the past two years,
+          END
+                  did (he/she) have a heart attack or myocardial infarction?
+          ................................................................................
+            186         1. YES
+            453         5. NO
+             15         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            694     Blank. INAP (Inapplicable): [Q1201:B7] IS (NE 1 AND NE 3);
+                           [Q1202:B7a] IS (5) AND [Q1203:B7b] IS (5)
+
+==========================================================================================
+
+R1211     B7g.YEAR RECENT HEART ATTACK
+          Section: B            Level: Respondent         CAI Reference: Q1211
+          Type: Numeric         Width: 4                  Decimals: 0
+
+          B7g.
+                  In what year was (his/her) (most recent) heart attack?
+
+                  YEAR:
+          ................................................................................
+            178           1900-2001. Actual Value
+              8                9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+           1162               Blank. INAP (Inapplicable): [Q1201:B7] IS (NE 1 AND NE 3);
+                                     [Q1202:B7a] IS (5) AND [Q1203:B7b] IS (5);
+                                     [Q1207:B7d] IS (NE 1)
+
+==========================================================================================
+
+R1212     B7h.MONTH RECENT HEART ATTACK
+          Section: B            Level: Respondent         CAI Reference: Q1212
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          B7h.
+                  In what month was that?
+
+                  MONTH:
+          ................................................................................
+             19         1. JAN
+             14         2. FEB
+             15         3. MAR
+             12         4. APR
+             13         5. MAY
+             13         6. JUN
+              6         7. JUL
+             10         8. AUG
+             19         9. SEP
+             13        10. OCT
+             13        11. NOV
+             13        12. DEC
+              6        98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1182     Blank. INAP (Inapplicable): [Q1201:B7] IS (NE 1 AND NE 3);
+                           [Q1202:B7a] IS (5) AND [Q1203:B7b] IS (5); [Q1207:B7d] IS (NE
+                           1); [Q1211:B7g] IS (DK OR RF OR LT 1998)
+
+==========================================================================================
+
+R1216     B7kb. CONGESTIVE HEART
+          Section: B            Level: Respondent         CAI Reference: Q1216
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B7kb.
+          IF Q753 IS (1)
+                  Since we last talked to (him/her), (that is, since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ,)
+                  had a doctor told (him/her) that (he/she) had congestive
+                  heart failure?
+          ELSE
+                  In the last two years had a doctor told (him/her) that
+                  (he/she) had congestive heart failure?
+          END
+          ................................................................................
+            261         1. YES
+            365         5. NO
+             28         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            694     Blank. INAP (Inapplicable): [Q1201:B7] IS (NE 1 AND NE 3);
+                           [Q1202:B7a] IS (5) AND [Q1203:B7b] IS (5)
+
+==========================================================================================
+
+R1219     B7p.HEART TREATMENT
+          Section: B            Level: Respondent         CAI Reference: Q1219
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B7p.
+          IF Q753 IS (1)
+                   Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ,
+          ELSE
+                   In the past two years,
+          END
+                  did (he/she) have a special test or treatment
+                  of (his/her) heart where tubes were inserted into
+                  (his/her) veins or arteries (cardiac catheterization,
+                  coronary angiogram or angioplasty)?
+          ................................................................................
+            120         1. YES
+            515         5. NO
+             19         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            694     Blank. INAP (Inapplicable): [Q1201:B7] IS (NE 1 AND NE 3);
+                           [Q1202:B7a] IS (5) AND [Q1203:B7b] IS (5)
+
+==========================================================================================
+
+R1220     B7q. HEART SURGERY
+          Section: B            Level: Respondent         CAI Reference: Q1220
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B7q.
+          IF Q753 IS (1)
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ,
+          ELSE
+                  In the past two years,
+          END
+                  did (he/she) have surgery on (his/her) heart?
+          ................................................................................
+             53         1. YES
+            598         5. NO
+              3         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            694     Blank. INAP (Inapplicable): [Q1201:B7] IS (NE 1 AND NE 3);
+                           [Q1202:B7a] IS (5) AND [Q1203:B7b] IS (5)
+
+==========================================================================================
+
+R1221     B9. STROKE
+          Section: B            Level: Respondent         CAI Reference: Q1221
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B9.
+          IF Q753 IS (1)
+                  PREVIOUS WAVE:
+                  [Q235-PR235.PREV WAVE STROKE]
+          END
+          IF Q753 IS (NE1)
+                  Had a doctor ever told (him/her) that (he/she) had a stroke?
+          ELSE Q235 IS (1)
+                  Our records (from (his/her) last interview in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ) show
+                  that (he/she) had a stroke.
+
+                  IWER:  PRESS 1 THEN PRESS ENTER UNLESS R VOLUNTARILY
+                         DISPUTES PREVIOUS WAVE RECORD.
+
+                  IWER: IF R DISPUTES REPORT FROM PREVIOUS WAVE, PROBE AS
+                        NECESSARY TO DETERMINE WHETHER R WAS SINCE
+                        TOLD BY A DOCTOR THAT HE/SHE HAD THE CONDITION.
+                        DESCRIBE THE SITUATION IN THE OPEN FIELD.
+          ELSE
+                  (Since (his/her) interview in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] , had a doctor told
+                  (him/her) that (he/she) had) A stroke?
+          END
+          ................................................................................
+            335         1. YES
+             41         2. [VOL] POSSIBLE STROKE OR TIA (TRANSIENT ISCHEMIC ATTACK)
+              1         3. DISPUTES PREVIOUS WAVE RECORD, BUT DID HAVE CONDITION
+              8         4. DISPUTES PREVIOUS WAVE RECORD, DID NOT HAVE CONDITION
+            956         5. NO
+              7         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1223     B9j. ANOTHER STROKE-2YR
+          Section: B            Level: Respondent         CAI Reference: Q1223
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B9j.
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ,
+                  did a doctor tell (him/her) that (he/she) had another stroke?
+          ................................................................................
+             83         1. YES
+            147         5. NO
+              6         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1112     Blank. INAP (Inapplicable): [Q1221:B9] IS (4 OR 5 OR DK OR RF);
+                           [Q235:PR235] IS (NE 1) OR [Q1221:B9] IS (3)
+
+==========================================================================================
+
+R1224     B9m.DATE RECENT STROKE
+          Section: B            Level: Respondent         CAI Reference: Q1224
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          B9m.
+                  In what month and year was (his/her) (most recent) stroke?
+
+                  MONTH:
+                  YEAR:
+          ................................................................................
+             31         1. JAN
+             18         2. FEB
+              7         3. MAR
+             12         4. APR
+             16         5. MAY
+             16         6. JUN
+             10         7. JUL
+              9         8. AUG
+             10         9. SEP
+             17        10. OCT
+             15        11. NOV
+             11        12. DEC
+             22        98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1154     Blank. INAP (Inapplicable): [Q1221:B9] IS (4 OR 5 OR DK OR RF);
+                           [Q1223:B9j] IS (5 OR DK OR RF) OR [Q1221:B9] IS (2)
+
+==========================================================================================
+
+R1225     B9n.YEAR RECENT STROKE
+          Section: B            Level: Respondent         CAI Reference: Q1225
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+            171           1900-2001. Actual Value
+             23                9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+           1154               Blank. INAP (Inapplicable): [Q1221:B9] IS (4 OR 5 OR DK OR
+                                     RF); [Q1223:B9j] IS (5 OR DK OR RF) OR [Q1221:B9]
+                                     IS (2)
+
+==========================================================================================
+
+R1230     B12. FALL
+          Section: B            Level: Respondent         CAI Reference: Q1230
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B12.
+                  Had (he/she) fallen down
+          IF Q753 IS (1)
+                  since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ?
+          ELSE
+                  in the last two years?
+
+          END
+          ................................................................................
+            495         1. YES
+            650         5. NO
+             13         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            190     Blank. INAP (Inapplicable): [Q1086:A21Y1] IS (LT 65)
+
+==========================================================================================
+
+R1231     B12a.TIMES FALL
+          Section: B            Level: Respondent         CAI Reference: Q1231
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          B12a.
+                  How many times had (he/she) fallen
+          IF Q753 IS (1)
+                  since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ?
+          ELSE
+                  in the last two years?
+          END
+
+                  # TIMES:
+          ................................................................................
+            440                0-20. Actual Value
+             55                  98. DK (Don't Know); NA (Not Ascertained)
+                                 99. RF (Refused)
+            853               Blank. INAP (Inapplicable): [Q1086:A21Y1] IS (LT 65);
+                                     [Q1230:B12] IS (NE 1)
+
+==========================================================================================
+
+R1236     B12b. INJURE
+          Section: B            Level: Respondent         CAI Reference: Q1236
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B12b.
+          IF Q1231 IS (1)
+                  In that fall, did (he/she) injure (him/her)self seriously enough
+          ELSE
+                  In any of those falls, did (he/she) injure (him/her)self seriously
+          enough
+          END
+                  to need medical treatment?
+          ................................................................................
+            238         1. YES
+            256         5. NO
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            853     Blank. INAP (Inapplicable): [Q1086:A21Y1] IS (LT 65); [Q1230:B12] IS
+                           (NE 1)
+
+==========================================================================================
+
+R1239     B13. BROKEN HIP
+          Section: B            Level: Respondent         CAI Reference: Q1239
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B13.
+          IF Q753 IS (NE1)
+                  Did (he/she) ever fracture (his/her) hip?
+          ELSE
+                  PREVIOUS WAVE:
+                  [Q239-PR239.PREV WAVE BROKEN HIP]
+
+                  Did (he/she) fracture (his/her) hip since we talked (in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] )?
+          END
+          ................................................................................
+             74         1. YES
+           1078         5. NO
+              6         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            190     Blank. INAP (Inapplicable): [Q1086:A21Y1] IS (LT 65)
+
+==========================================================================================
+
+R1240     B14X. MEMORY-RELATED DISEASE
+          Section: B            Level: Respondent         CAI Reference: Q1240
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B14X.
+          IF Q753 IS (1) AND Q218 IS (NE0) AND Q219 IS (NE0)
+                  (Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ,)
+          END
+                  Did a doctor ever say that (he/she) had a
+                  memory-related disease?
+          ................................................................................
+            230         1. YES
+            920         5. NO
+              8         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            190     Blank. INAP (Inapplicable): [Q1086:A21Y1] IS (LT 65)
+
+==========================================================================================
+
+R1241     B15X. AUTOPSY
+          Section: B            Level: Respondent         CAI Reference: Q1241
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B15X.
+                  After (he/she) died, was an autopsy performed?
+          ................................................................................
+             75         1. YES
+           1057         5. NO
+             26         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            190     Blank. INAP (Inapplicable): [Q1086:A21Y1] IS (LT 65)
+
+==========================================================================================
+
+R1246     B18. PAIN
+          Section: B            Level: Respondent         CAI Reference: Q1246
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B18.
+                  Was (he/she) often troubled with pain?
+
+                  IWER: WE WANT A GENERAL IDEA OF R'S PAIN LEVEL DURING THE
+                        LAST YEAR OR SO OF LIFE.
+          ................................................................................
+            718         1. YES
+            610         5. NO
+             20         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1248     B18b. DEGREE PAIN MOST
+          Section: B            Level: Respondent         CAI Reference: Q1248
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B18b.
+                  How bad was the pain most of the time: mild, moderate
+                  or severe?
+          ................................................................................
+             90         1. MILD
+            301         2. MODERATE
+            309         3. SEVERE
+             18         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            630     Blank. INAP (Inapplicable): [Q1246:B18] IS (NE 1)
+
+==========================================================================================
+
+R1250     B19. OTHER HEALTH
+          Section: B            Level: Respondent         CAI Reference: Q1250
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B19.
+                  Did (he/she) have any (other) major illnesses
+          IF Q480 IS (1) AND {When Q19 IS (Q474), Q26 IS (1)}
+                  since the time of our interview in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ?
+          ELSE Q480 IS (2) AND {When Q72 IS (Q474), Q79 IS (1)}
+                  since the time of our interview in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ?
+          ELSE Q480 IS (1) AND {When Q19 IS (Q474), Q26 IS (NE1)}
+                  in the two years preceding (.../...) death?
+          ELSE Q480 IS (2) AND {When Q72 IS (Q474), Q79 IS (NE1)}
+                  in the two years preceding (.../...) death?
+          END
+          ................................................................................
+            331         1. YES
+           1006         5. NO
+             11         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1251M1M  B19a.OTHER HEALTH-SPECIFY- 1- MASKED
+          Section: B            Level: Respondent         CAI Reference: Q1251
+          Type: Numeric         Width: 3                  Decimals: 0
+
+          B19a.
+                  What illness was that?
+
+          User note:  Code categories have been collapsed to protect respondent
+          confidentiality. Values 181, 182, and 183 were recoded to 189; Values 194,
+          and 195 were recoded to 196.
+          ................................................................................
+             11             101-103. Cancers and tumors; skin conditions
+             35             111-119. Musculoskeletal system and connective tissue
+             41             121-129. Heart, circulatory and blood conditions
+             38             131-139. Allergies; hayfever; sinusitis; tonsillitis
+             68             141-149. Endocrine, metabolic and nutritional conditions
+             52             151-159. Digestive system (stomach, liver, gallbladder,
+                                     kidney, bladder)
+             33             161-169. Neurological and sensory conditions
+              4             171-179. Reproductive system and prostate conditions
+             10             181-189. Emotional and psychological conditions
+             33             191-196. Miscellaneous
+              2             595-597. Other symptoms
+                                990. No text displayed
+              2                 996. None
+                                997. Other health condition
+              2                 998. DK (Don't Know); NA (Not Ascertained)
+                                999. RF (Refused)
+           1017               Blank. INAP (Inapplicable): [Q1250:B19] IS (NE 1)
+
+==========================================================================================
+
+R1251M2M  B19a.OTHER HEALTH-SPECIFY- 2- MASKED
+          Section: B            Level: Respondent         CAI Reference: Q1251
+          Type: Numeric         Width: 3                  Decimals: 0
+
+          B19a.
+                  What illness was that?
+
+          User note:  Code categories have been collapsed to protect respondent
+          confidentiality. Values 181, 182, and 183 were recoded to 189; Values 194,
+          and 195 were recoded to 196.
+          ................................................................................
+              5             101-103. Cancers and tumors; skin conditions
+             12             111-119. Musculoskeletal system and connective tissue
+             21             121-129. Heart, circulatory and blood conditions
+              6             131-139. Allergies; hayfever; sinusitis; tonsillitis
+             12             141-149. Endocrine, metabolic and nutritional conditions
+             13             151-159. Digestive system (stomach, liver, gallbladder,
+                                     kidney, bladder)
+             19             161-169. Neurological and sensory conditions
+                            171-179. Reproductive system and prostate conditions
+              2             181-189. Emotional and psychological conditions
+             13             191-196. Miscellaneous
+              1             595-597. Other symptoms
+                                990. No text displayed
+                                996. None
+              1                 997. Other health condition
+                                998. DK (Don't Know); NA (Not Ascertained)
+                                999. RF (Refused)
+           1243               Blank. INAP (Inapplicable): [Q1250:B19] IS (NE 1)
+
+==========================================================================================
+
+R1251M3M  B19a.OTHER HEALTH-SPECIFY- 3- MASKED
+          Section: B            Level: Respondent         CAI Reference: Q1251
+          Type: Numeric         Width: 3                  Decimals: 0
+
+          B19a.
+                  What illness was that?
+
+          User note:  Code categories have been collapsed to protect respondent
+          confidentiality. Values 181, 182, and 183 were recoded to 189; Values 194,
+          and 195 were recoded to 196.
+          ................................................................................
+                            101-103. Cancers and tumors; skin conditions
+                            111-119. Musculoskeletal system and connective tissue
+                            121-129. Heart, circulatory and blood conditions
+                            131-139. Allergies; hayfever; sinusitis; tonsillitis
+                            141-149. Endocrine, metabolic and nutritional conditions
+                            151-159. Digestive system (stomach, liver, gallbladder,
+                                     kidney, bladder)
+                            161-169. Neurological and sensory conditions
+                            171-179. Reproductive system and prostate conditions
+                            181-189. Emotional and psychological conditions
+                            191-196. Miscellaneous
+                            595-597. Other symptoms
+                                990. No text displayed
+                                996. None
+                                997. Other health condition
+                                998. DK (Don't Know); NA (Not Ascertained)
+                                999. RF (Refused)
+           1348               Blank. INAP (Inapplicable): [Q1250:B19] IS (NE 1)
+
+==========================================================================================
+
+R1258     B20. EVER SMOKE
+          Section: B            Level: Respondent         CAI Reference: Q1258
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B20.
+                  Did (he/she) ever smoke cigarettes in the last two years
+                  of (his/her) life?
+
+                  DEFINITION: DO NOT INCLUDE PIPES OR CIGARS.
+          ................................................................................
+            250         1. YES
+           1097         5. NO
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1260     B20a. # CIG-PACKS
+          Section: B            Level: Respondent         CAI Reference: Q1260
+          Type: Numeric         Width: 3                  Decimals: 0
+
+          B20a.
+                  About how many cigarettes or packs did (he/she) usually smoke
+                  in a day?
+
+                  PROBE A RANGE
+
+                  CIGARETTES/DAY:
+                  PACKS/DAY:
+          ................................................................................
+            108               0-100. Actual Value
+             19                 998. DK (Don't Know); NA (Not Ascertained)
+                                999. RF (Refused)
+           1221               Blank. INAP (Inapplicable): [Q1258:B20] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+R1261     B20b. PACKS
+          Section: B            Level: Respondent         CAI Reference: Q1261
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            129                 1-5. Actual Value
+                                  8. DK (Don't Know); NA (Not Ascertained)
+                                  9. RF (Refused)
+           1219               Blank. INAP (Inapplicable): [Q1258:B20] IS (5 OR DK OR
+                                     RF); [Q1260:B20a] IS (1-100 OR DK OR RF)
+
+==========================================================================================
+
+R1264     B21.ALCOHOL
+          Section: B            Level: Respondent         CAI Reference: Q1264
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B21.
+          IF Q753 IS (1) AND Q218 IS (GT0) AND Q219 IS (GT0)
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR]
+          ELSE
+                  In the two years before (he/she) died
+          END
+                  did (he/she) ever drink any alcoholic beverages such as beer,
+                  wine, or liquor?
+          ................................................................................
+            349         1. YES
+             13         3. [VOL] NEVER HAVE USED ALCOHOL
+            979         5. NO
+              7         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1274     B22. WEIGHT CURRENT WAVE
+          Section: B            Level: Respondent         CAI Reference: Q1274
+          Type: Numeric         Width: 3                  Decimals: 0
+
+          B22.
+                  About how much did (he/she) weigh at the time
+                  of (his/her) death?
+
+                  POUNDS:
+          ................................................................................
+           1261              50-400. Actual Value
+             87                 998. DK (Don't Know); NA (Not Ascertained)
+                                999. RF (Refused)
+                              Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1275     B22a. CHANGE WEIGHT
+          Section: B            Level: Respondent         CAI Reference: Q1275
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B22a.
+                  Did
+                  [Q754-CS22Y31.R FIRST NAME]  gain or lose ten or more pounds in the
+          last 2 years of (his/her) life?
+          ................................................................................
+             89         1. YES, GAINED
+            838         2. YES, LOST
+             50         3. YES, GAINED AND LOST
+            348         5. NO
+             23         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1285     B23ax.DIF BREATHING
+          Section: B            Level: Respondent         CAI Reference: Q1285
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B23ax.
+                  Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had the following
+                  problems:
+
+                  Difficulty breathing?
+          ................................................................................
+            640         1. YES
+             29         3. [VOL] ON RESPIRATOR
+            668         5. NO
+             11         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1286     B23bx.NO APPETITE
+          Section: B            Level: Respondent         CAI Reference: Q1286
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B23bx.
+                  (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Very little appetite or desire for food?
+          ................................................................................
+            803         1. YES
+             34         3. [VOL] IV FLUIDS OR FEEDING TUBE
+            500         5. NO
+             11         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1287     B23cx.FREQ VOMITING
+          Section: B            Level: Respondent         CAI Reference: Q1287
+          Type: Numeric         Width: 1                  Decimals: 0
+
+                  (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                   Frequent vomiting?
+          ................................................................................
+            160         1. YES
+           1177         5. NO
+             10         8. DK (Don't Know); NA (Not Ascertained)
+              1         9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1288     B23dx.CONTROL ARM/LEG
+          Section: B            Level: Respondent         CAI Reference: Q1288
+          Type: Numeric         Width: 1                  Decimals: 0
+
+                (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                 Difficulty controlling (his/her) arms and legs?
+          ................................................................................
+            423         1. YES
+            917         5. NO
+              8         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1289     B23ex.DEPRESSION
+          Section: B            Level: Respondent         CAI Reference: Q1289
+          Type: Numeric         Width: 1                  Decimals: 0
+
+                (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Depression?
+          ................................................................................
+            586         1. YES
+            730         5. NO
+             31         8. DK (Don't Know); NA (Not Ascertained)
+              1         9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1290     B23fx.CONFUSION
+          Section: B            Level: Respondent         CAI Reference: Q1290
+          Type: Numeric         Width: 1                  Decimals: 0
+
+                (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Periodic confusion?
+          ................................................................................
+            563         1. YES
+            776         5. NO
+              9         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1291     B23m.SEVERE FATIGUE
+          Section: B            Level: Respondent         CAI Reference: Q1291
+          Type: Numeric         Width: 1                  Decimals: 0
+
+                (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                 Severe fatigue or exhaustion?
+          ................................................................................
+            780         1. YES
+            550         5. NO
+             18         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1292     B23hx.DIF TO AWAKE
+          Section: B            Level: Respondent         CAI Reference: Q1292
+          Type: Numeric         Width: 1                  Decimals: 0
+
+                (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Difficulty being aroused or wakened, or loss of
+                  consciousness?
+          ................................................................................
+            210         1. YES
+           1123         5. NO
+             15         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1293     B23n.PERSISTENT COUGH
+          Section: B            Level: Respondent         CAI Reference: Q1293
+          Type: Numeric         Width: 1                  Decimals: 0
+
+                (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                 Persistent wheezing, cough or bringing up phlegm?
+          ................................................................................
+            420         1. YES
+            920         5. NO
+              8         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1294     B23kx.UNCONTROLLED TEMPER
+          Section: B            Level: Respondent         CAI Reference: Q1294
+          Type: Numeric         Width: 1                  Decimals: 0
+
+                (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Uncontrolled oubursts of temper?
+          ................................................................................
+            210         1. YES
+           1132         5. NO
+              6         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1295     B23mx.LOSS OF CONTROL
+          Section: B            Level: Respondent         CAI Reference: Q1295
+          Type: Numeric         Width: 1                  Decimals: 0
+
+                (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Loss of control of bowel or bladder?
+          ................................................................................
+            545         1. YES
+            794         5. NO
+              9         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+RVERSION  2000 EXIT FINAL RELEASE VERSION NUMBER
+          Section: B            Level: Respondent         CAI Reference: Q9007
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+           1348         1. First Data Release
+

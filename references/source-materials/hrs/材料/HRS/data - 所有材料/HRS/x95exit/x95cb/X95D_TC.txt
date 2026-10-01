@@ -1,0 +1,259 @@
+==========================================================================================
+1995 AHEAD Exit (Final Release)
+ODBC Reference: [a1995x]
+Perl script: CodebkD9.pl v5.04 Thu Jun 26 15:26:32 2003
+
+Note to Users: The program that generated this codebook is under development. 
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION D: FAMILY STRUCTURE (ToChild)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFIER
+          Section: D            Level: ToChild            CAI Reference: Q9001
+          Type: Character       Width: 6                  Decimals: 0
+          ................................................................................
+            113       200000-209999. HOUSEHOLD IDENTIFICATION NUMBER
+
+==========================================================================================
+
+PN        RESPONDENT PERSON NUMBER
+          Section: D            Level: ToChild            CAI Reference: Q9002
+          Type: Character       Width: 3                  Decimals: 0
+
+          User Note: The range 010-040 is reserved for respondent person numbers.
+          Respondent person numbers ending in zero are generally original sample
+          members, while respondent person numbers ending in one are generally new
+          spouses added after the original sample.
+          ................................................................................
+            100       010. RESPONDENT PERSON NUMBER
+             13       020. RESPONDENT PERSON NUMBER
+
+==========================================================================================
+
+NPN_SP    SPOUSE / PARTNER  PERSON NUMBER
+          Section: D            Level: ToChild            CAI Reference: Q9005
+          Type: Character       Width: 3                  Decimals: 0
+
+          User Note: New Spouses of deceased respondents are not considered
+          respondents, thus are not assigned a person number.
+          ................................................................................
+             11       010. Person Number
+              2       011. Person Number
+              3       020. Person Number
+             97     Blank. No Spouse
+
+==========================================================================================
+
+NSUBHH    1995 SUB-HOUSEHOLD IDENTIFIER
+          Section: D            Level: ToChild            CAI Reference: Q9003
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+            111         3. Deceased respondent household
+              2         4. 2ND Deceased respondent household
+
+==========================================================================================
+
+BSUBHH    1993 SUB-HOUSEHOLD IDENTIFIER
+          Section: D            Level: ToChild            CAI Reference: Q9004
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+            113         0. Original Sample Household - No Split From Divorce or
+                           Separation of Spouses or Partners
+
+==========================================================================================
+
+NTYPTRAN  1995x TYPE OF TRANSFER
+          Section: D            Level: ToChild            CAI Reference: Q9010
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             77         1. Transfer to Child
+             36         2. Transfer to Grandchild
+
+==========================================================================================
+
+N1474     COUNTER CHILD LOOP
+          Section: D            Level: ToChild            CAI Reference: Q1474
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          User Note: To uniqely identify each transfer, sort by HHID, NSUBHH,
+          NTYPTRAN, N1474, and N1475. To merge with the other children files use HHID
+          NSUBHH and N1475.
+          ................................................................................
+            105         1. First Mentioned
+              7         2. Second Mentioned
+              1         3. Third Mentioned
+                    Blank. INAP
+
+==========================================================================================
+
+N1475     D52.TRANSFER TO CHILDREN $ WHICH-1
+          Section: D            Level: ToChild            CAI Reference: Q1475
+          Type: Character       Width: 3                  Decimals: 0
+
+          D52.
+          IF Q1474 IS (1)
+                  To which child did (he/she) give the largest amount?
+          ELSE
+                  To which child did (he/she) give the next largest amount?
+          END
+          ................................................................................
+              5       037. DECEASED CHILD
+             19       038. ALL CHILDREN
+             86   041-995. Other Person Number
+              2       998. DK
+              1       999. RF
+                    Blank. INAP(inapplicable): [Q203:WHICH HH] IS (2); [Q262:SP ALIVE] IS
+                           (1); [Q1455:D45] IS (0) AND [Q513:CS # CHILDREN|512U(1-20)=]
+                           IS (0); [Q513:CS # CHILDREN|512U(1-20)=] IS (0); [Q1471:D50]
+                           IS (5 OR DK OR RF); [Q1486:D54] IS (5 OR DK OR RF) OR
+                           [Q1475:D52] IS (11); [Q513:CS # CHILDREN|512U(1-20)=] IS (0);
+                           [Q203:WHICH HH] IS (2) Or Partial Interview
+
+==========================================================================================
+
+N1479     D53.TRANSFER TO CHILD $ AMOUNT
+          Section: D            Level: ToChild            CAI Reference: Q1479
+          Type: Numeric         Width: 6                  Decimals: 0
+
+          D53.
+          IF Q1475 IS (10) OR Q1476 IS (10)
+                  About how much did that amount to for (his/her/their) deceased child
+          ELSE Q1475 IS (NE11) AND Q203 IS (1)
+                  About how much did that amount to for
+                  [Q7-PR-Q7.HH1 FIRST NAME]
+          ELSE Q1476 IS (NE11) AND Q203 IS (2)
+                  About how much did that amount to for
+                  [Q48-PR-Q48.HH2 FIRST NAME]
+          ELSE
+                  About how much did that amount to for each child
+          END
+                  (or family) (since last interview month/year/in the last two years)?
+
+                  DO NOT PROBE DK/RF
+
+                  AMOUNT:
+          ................................................................................
+             78            0-999996. Actual Value
+             27              999998. DK
+              8              999999. RF
+                              Blank. INAP(inapplicable): [Q203:WHICH HH] IS (2);
+                                     [Q262:SP ALIVE] IS (1); [Q1455:D45] IS (0) AND
+                                     [Q513:CS # CHILDREN|512U(1-20)=] IS (0); [Q513:CS #
+                                     CHILDREN|512U(1-20)=] IS (0); [Q1471:D50] IS (5 OR
+                                     DK OR RF); [Q1486:D54] IS (5 OR DK OR RF) OR
+                                     [Q1475:D52] IS (11); [Q513:CS # CHILDREN|512U(1-
+                                     20)=] IS (0) Or Partial Interview
+
+==========================================================================================
+
+N1480     D53a.DK D13-1
+          Section: D            Level: ToChild            CAI Reference: Q1480
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D53a.
+                  Was it more than $5,000?
+          ................................................................................
+              6         1. YES
+             20         5. NO
+              4         8. DK
+              5         9. RF
+             78     Blank. INAP(inapplicable): [Q203:WHICH HH] IS (2); [Q262:SP ALIVE] IS
+                           (1); [Q1455:D45] IS (0) AND [Q513:CS # CHILDREN|512U(1-20)=]
+                           IS (0); [Q513:CS # CHILDREN|512U(1-20)=] IS (0); [Q1471:D50]
+                           IS (5 OR DK OR RF); [Q1486:D54] IS (5 OR DK OR RF) OR
+                           [Q1475:D52] IS (11) ; [Q513:CS # CHILDREN|512U(1-20)=] IS (0);
+                           [Q1479:D53] IS (NE DK AND NE RF) Or Partial Interview
+
+==========================================================================================
+
+N1481     D53b.DK D13-2
+          Section: D            Level: ToChild            CAI Reference: Q1481
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D53b.
+                  Was it more than $20,000?
+          ................................................................................
+                        1. YES
+              6         5. NO
+                        8. DK
+                        9. RF
+            107     Blank. INAP(inapplicable): [Q203:WHICH HH] IS (2); [Q262:SP ALIVE] IS
+                           (1); [Q1455:D45] IS (0) AND [Q513:CS # CHILDREN|512U(1-20)=]
+                           IS (0); [Q513:CS # CHILDREN|512U(1-20)=] IS (0); [Q1471:D50]
+                           IS (5 OR DK OR RF); [Q1486:D54] IS (5 OR DK OR RF) OR
+                           [Q1475:D52] IS (11); [Q513:CS # CHILDREN|512U(1-20)=] IS (0);
+                           [Q1479:D53] IS (NE DK AND NE RF); [Q1480:D53a] IS (5);
+                           [Q1480:D53a] IS (DK OR RF) Or Partial Interview
+
+==========================================================================================
+
+N1483     D53c.DK D13-3
+          Section: D            Level: ToChild            CAI Reference: Q1483
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D53c.
+                  Was it more than $500?
+          ................................................................................
+             17         1. YES
+              3         5. NO
+                        8. DK
+                        9. RF
+             93     Blank. INAP(inapplicable): [Q203:WHICH HH] IS (2); [Q262:SP ALIVE] IS
+                           (1); [Q1455:D45] IS (0) AND [Q513:CS # CHILDREN|512U(1-20)=]
+                           IS (0); [Q513:CS # CHILDREN|512U(1-20)=] IS (0); [Q1471:D50]
+                           IS (5 OR DK OR RF); [Q1486:D54] IS (5 OR DK OR RF) OR
+                           [Q1475:D52] IS (11) ; [Q513:CS # CHILDREN|512U(1-20)=] IS (0);
+                           [Q1479:D53] IS (NE DK AND NE RF); [Q1480:D53a] IS (DK OR RF);
+                           [Q1480:D53a] IS (1) Or Partial Interview
+
+==========================================================================================
+
+N1486     D54.NEXT CHILD TRANSFER TO
+          Section: D            Level: ToChild            CAI Reference: Q1486
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D54.
+                  Had (he/she) (or your husband/or your wife/or your partner/.../or
+          your late husband/or your late wife/or your late partner) given financial
+          help or
+                  gifts totaling $100 or more to any other
+                  child (since last interview month/year/in the last two years)?
+          ................................................................................
+              8         1. YES
+             81         5. NO
+              3         8. DK
+              1         9. RF
+             20     Blank. INAP(inapplicable): [Q203:WHICH HH] IS (2); [Q262:SP ALIVE] IS
+                           (1); [Q1455:D45] IS (0) AND [Q513:CS # CHILDREN|512U(1-20)=]
+                           IS (0); [Q513:CS # CHILDREN|512U(1-20)=] IS (0); [Q1471:D50]
+                           IS (5 OR DK OR RF); [Q1486:D54] IS (5 OR DK OR RF) OR
+                           [Q1475:D52] IS (11); [Q513:CS # CHILDREN|512U(1-20)=] IS
+                           (0);[Q1479:D53] IS (L100 AND G0 AND NDK AND NRF)=] IS (GT 0);
+                           [Q1475:D52] IS (11) Or Partial Interview
+
+==========================================================================================
+
+NQNR      SURVEYCRAFT CASE NUMBER
+          Section: D            Level: ToChild            CAI Reference: Q9008
+          Type: Numeric         Width: 4                  Decimals: 0
+
+          User Note:  NQNR is not an analysis variable.  It is intended for internal
+          use by the HRS staff.  The range is not continuous.
+          ................................................................................
+            113           5057-7800. SURVEYCRAFT CASE NUMBER
+
+==========================================================================================
+
+NVERSION  1995 EXIT RELEASE VERSION NUMBER
+          Section: D            Level: ToChild            CAI Reference: Q9012
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            113         2. Release 2 - June 2003
+

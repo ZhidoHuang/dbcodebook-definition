@@ -1,0 +1,2964 @@
+==========================================================================================
+2002 HRS Exit (Final Release)
+ODBC Reference: [HRS2002x]
+Perl script: CodebkD11.pl v6.132 Mon Dec 11 11:20:50 2006
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION G: Functional Limitations and Helpers (Respondent)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFICATION NUMBER
+          Section: G      Level: Respondent  Type: Character   Width: 6    Decimals: 0
+
+        ..................................................................................
+         1501           000002-213399. Household Identifier
+
+==========================================================================================
+
+PN        RESPONDENT PERSON IDENTIFICATION NUMBER
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+
+        ..................................................................................
+         1047         010. Person Identifier
+           14         011. Person Identifier
+          341         020. Person Identifier
+            2         021. Person Identifier
+           50         030. Person Identifier
+           47         040. Person Identifier
+
+==========================================================================================
+
+SSUBHH    2002 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+          Section: G      Level: Respondent  Type: Character   Width: 1    Decimals: 0
+
+        ..................................................................................
+         1429           3. 1st deceased respondent from a household
+           72           4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+GSUBHH    2000 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+          Section: G      Level: Respondent  Type: Character   Width: 1    Decimals: 0
+
+        ..................................................................................
+         1450           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+           16           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           15           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           17           3. 1st deceased respondent from a household
+            1           4. 2nd deceased respondent from a household
+            2           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+SPN_SP    2002 SPOUSE PERSON IDENTIFICATION NUMBER
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+
+        ..................................................................................
+          254         010. Person Identifier
+           27         011. Person Identifier
+            1         012. Person Identifier
+          312         020. Person Identifier
+            2         021. Person Identifier
+           22         030. Person Identifier
+            2         031. Person Identifier
+           38         040. Person Identifier
+            1         041. Person Identifier
+            2         810. Person Identifier
+            1         811. Person Identifier
+          839       Blank. R not coupled
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]); NOT
+        ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG129     NUMBER DAYS IN BED
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_ADL.G129TDaysInBed_A
+
+        We need to understand difficulties people may have with various activities
+        because of a health or physical problem.
+
+        About how many days did (she/he) stay in bed more than half the day because of
+        illness or injury during the last three months before (her/his) death?
+
+        INTERVIEWER:USE ZERO FOR NONE
+
+        USE 93 FOR EVERY DAY
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           1055          0         90         17.36         24.80       2
+         -----------------------------------------------------------------
+          374          93. EVERY DAY
+           67          98. DK (Don't Know); NA (Not Ascertained)
+            3          99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; G014_DiffDress
+        <> NO;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG015     HELP W/DRESS
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G015_HelpDress
+
+        The next questions are about help [RESPONDENT FIRST NAME] received with
+        various activities.
+
+        (Please tell me if (she/he) had received any help with these because of a
+        physical, mental, emotional or memory problem.
+
+        We want to know about the help that (she/he) received during the last three
+        months of (her/his) life.)
+
+        Because of a health or memory problem did anyone help (her/him) with dressing,
+        including putting on shoes and socks in the last three months of (her/his)
+        life?
+
+        User Note: If in the three months prior to death, R stayed in bed more than 85
+        days (SG129) the Proxy reporter skips past the ADLs and goes to the last IADL
+        (SG061: IADL MANAGING MONEY HELP)
+        ..................................................................................
+          491           1. YES
+          553           5. NO
+            8           6. COULDN'T DO
+            8           7. DIDN'T DO
+            7           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+          433       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; ((G015_HelpDress
+        <> NO) AND G015_HelpDress <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG130     HELP DRESSING- MONTHS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_ADL.G130_
+
+        How long had (she/he) needed help with dressing?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        MONTHS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            407          0         90          5.30          9.53    1080
+         -----------------------------------------------------------------
+           14          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; ((G015_HelpDress
+        <> NO) AND G015_HelpDress <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); G130_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG131     HELP DRESSING- YEARS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_ADL.G131_
+
+        How long had (she/he) needed help with dressing?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+
+        YEARS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+             78          1         28          2.73          3.27    1423
+         -----------------------------------------------------------------
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; ((G015_HelpDress
+        <> NO) AND G015_HelpDress <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); G130_ = EMPTY; G131_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG132     HELP DRESSING- SINCE AGE
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G132_
+
+        How long had (she/he) needed help with dressing?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+
+        SINCE AGE:
+        ..................................................................................
+            1           2. Actual Value
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1500       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; ((G015_HelpDress
+        <> NO) AND G015_HelpDress <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); G130_ = EMPTY; G131_ = EMPTY; G132_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG133     HELP DRESSING- SINCE YEAR
+          Section: G      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BG_ADL.G133_
+
+        How long had (she/he) needed help with dressing?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE YEAR:
+        ..................................................................................
+            7               1996-2000. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1494                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G016_DiffWalk <> NO;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG020     ADL WALK HELP
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G020_HelpWalk
+
+        Because of a health or memory problem did anyone help (her/him) get across a
+        room (in the last three months of (her/his) life)?
+        ..................................................................................
+          360           1. YES
+          659           5. NO
+           35           6. COULDN'T DO
+           12           7. DIDN'T DO
+            1           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+          433       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G016_DiffWalk <> NO; ((G020_HelpWalk <> NO)
+        AND G020_HelpWalk <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG134     HELP WALKING- MONTHS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_ADL.G134_
+
+        How long had (she/he) needed help with walking?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        MONTHS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            328          0         90          4.84         10.71    1156
+         -----------------------------------------------------------------
+           17          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G016_DiffWalk <> NO; ((G020_HelpWalk <> NO)
+        AND G020_HelpWalk <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); G134_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG135     HELP WALKING- YEARS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_ADL.G135_
+
+        How long had (she/he) needed help with walking?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+
+        YEARS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+             50          1          6          2.40          1.32    1450
+         -----------------------------------------------------------------
+                       98. DK (Don't Know); NA (Not Ascertained)
+            1          99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G016_DiffWalk <> NO; ((G020_HelpWalk <> NO)
+        AND G020_HelpWalk <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); G134_ = EMPTY; G135_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG136     HELP WALKING- SINCE AGE
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G136_
+
+        How long had (she/he) needed help with walking?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE AGE:
+        ..................................................................................
+            1           5. Actual Value
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1500       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G016_DiffWalk <> NO; ((G020_HelpWalk <> NO)
+        AND G020_HelpWalk <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); G134_ = EMPTY; G135_ = EMPTY; G136_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG137     HELP WALKING- SINCE YEAR
+          Section: G      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BG_ADL.G137_
+
+        How long had (she/he) needed help with walking?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE YEAR:
+        ..................................................................................
+           10               1991-2001. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1491                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G021_DiffBathe <> NO;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG022     ADL BATHE HELP
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G022_HelpBathe
+
+        (Because of a health or memory problem) Did anyone help (her/him) with bathing
+        or showering (in the last three months of (her/his) life)?
+        ..................................................................................
+          567           1. YES
+          490           5. NO
+            5           6. COULDN'T DO
+            3           7. DIDN'T DO
+            2           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+          433       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G021_DiffBathe <> NO; ((G022_HelpBathe <> NO)
+        AND G022_HelpBathe <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG138     HELP BATHING- MONTHS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_ADL.G138_
+
+        How long had (she/he) needed help with bathing or showering?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        MONTHS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            447          0         90          5.67         10.47    1034
+         -----------------------------------------------------------------
+           20          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G021_DiffBathe <> NO; ((G022_HelpBathe <> NO)
+        AND G022_HelpBathe <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); G138_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG139     HELP BATHING- YEARS
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G139_
+
+        How long had (she/he) needed help with bathing or showering?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+
+        YEARS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+             94          1          7          2.39          1.42    1405
+         -----------------------------------------------------------------
+            2           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G021_DiffBathe <> NO; ((G022_HelpBathe <> NO)
+        AND G022_HelpBathe <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); G138_ = EMPTY; G139_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG140     HELP BATHING- SINCE AGE
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G140_
+
+        How long had (she/he) needed help with bathing or showering?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE AGE:
+        ..................................................................................
+            1           2. Actual Value
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1500       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G021_DiffBathe <> NO; ((G022_HelpBathe <> NO)
+        AND G022_HelpBathe <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); G138_ = EMPTY; G139_ = EMPTY; G140_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG141     HELP BATHING- SINCE YEAR
+          Section: G      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BG_ADL.G141_
+
+        How long had (she/he) needed help with bathing or showering?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE YEAR:
+        ..................................................................................
+           11               1993-2001. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1490                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G023_DiffEat <> NO;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG024     ADL EAT HELP
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G024_HelpEat
+
+        (Because of a health or memory problem) Did anyone help (her/him) with eating,
+        such as cutting up (her/his) food (in the last three months of (her/his)
+        life)?
+        ..................................................................................
+          302           1. YES
+          737           5. NO
+           18           6. COULDN'T DO
+            8           7. DIDN'T DO
+            2           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+          433       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G023_DiffEat <> NO; ((G024_HelpEat <> NO) AND
+        G024_HelpEat <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG142     HELP EATING- MONTHS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_ADL.G142_
+
+         How long had (she/he) needed help with eating?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        MONTHS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            274          0         90          4.81         10.87    1219
+         -----------------------------------------------------------------
+            8          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G023_DiffEat <> NO; ((G024_HelpEat <> NO) AND
+        G024_HelpEat <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN)); G142_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG143     HELP EATING- YEARS
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G143_
+
+        How long had (she/he) needed help with eating?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        YEARS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+             40          1          5          2.52          1.40    1461
+         -----------------------------------------------------------------
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G023_DiffEat <> NO; ((G024_HelpEat <> NO) AND
+        G024_HelpEat <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN)); G142_ = EMPTY; G143_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG144     HELP EATING- SINCE AGE
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G144_
+
+        How long had (she/he) needed help with eating?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE AGE:
+        ..................................................................................
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1501       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G023_DiffEat <> NO; ((G024_HelpEat <> NO) AND
+        G024_HelpEat <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN)); G142_ = EMPTY; G143_ = EMPTY; G144_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG170     HELP EATING- SINCE YEAR
+          Section: G      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BG_ADL.G170_
+
+        How long had (she/he) needed help with eating?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE YEAR:
+        ..................................................................................
+            6               1993-1999. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1495                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G025_DiffBed <> NO;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG029     ADL BED HELP
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G029_HelpBed
+
+        (Because of a health or memory problem) Did anyone help (her/him) with getting
+        in or out of bed in the last three months of (her/his) life?
+        ..................................................................................
+          417           1. YES
+          626           5. NO
+            9           6. COULDN'T DO
+           10           7. DIDN'T DO
+            4           8. DK (Don't Know); NA (Not Ascertained)
+            2           9. RF (Refused)
+          433       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G025_DiffBed <> NO; ((G029_HelpBed <> NO) AND
+        G029_HelpBed <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG145     HELP IN/OUT BED- MONTHS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_ADL.G145_
+
+        How long had (she/he) needed help getting in or out of bed?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        MONTHS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            367          1         20          3.04          3.25    1118
+         -----------------------------------------------------------------
+           16          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G025_DiffBed <> NO; ((G029_HelpBed <> NO) AND
+        G029_HelpBed <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN)); G145_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG146     HELP IN/OUT BED- YEARS
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G146_
+
+        How long had (she/he) needed help getting in or out of bed?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        YEARS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+             43          1          5          2.26          1.22    1458
+         -----------------------------------------------------------------
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G025_DiffBed <> NO; ((G029_HelpBed <> NO) AND
+        G029_HelpBed <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN)); G145_ = EMPTY; G146_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG147     HELP IN/OUT BED- SINCE AGE
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G147_
+
+        How long had (she/he) needed help getting in or out of bed?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE AGE:
+        ..................................................................................
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1501       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G025_DiffBed <> NO; ((G029_HelpBed <> NO) AND
+        G029_HelpBed <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN)); G145_ = EMPTY; G146_ = EMPTY; G147_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG148     HELP IN/OUT BED- SINCE YEAR
+          Section: G      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BG_ADL.G148_
+
+        How long had (she/he) needed help getting in or out of bed?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE YEAR :
+        ..................................................................................
+           10               1992-2002. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1491                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G030_DiffToilet <> NO;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG031     ADL TOILET HELP
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G031_HelpToilet
+
+        (Because of a health or memory problem) Did anyone help (her/him) with using
+        the toilet, including getting up and down in the last three months of
+        (her/his) life?
+        ..................................................................................
+          380           1. YES
+          651           5. NO
+           12           6. COULDN'T DO
+           16           7. DIDN'T DO
+            7           8. DK (Don't Know); NA (Not Ascertained)
+            2           9. RF (Refused)
+          433       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G030_DiffToilet <> NO; ((G031_HelpToilet <>
+        NO) AND G031_HelpToilet <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG149     HELP USING TOILET- MONTHS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_ADL.G149_
+
+        How long had (she/he) needed help with using the toilet?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        MONTHS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            343          1         60          3.32          4.99    1147
+         -----------------------------------------------------------------
+           11          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G030_DiffToilet <> NO; ((G031_HelpToilet <>
+        NO) AND G031_HelpToilet <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); G149_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG150     HELP USING TOILET- YEARS
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G150_
+
+        How long had (she/he) needed help with using the toilet?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        YEARS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+             43          1          5          2.49          1.22    1457
+         -----------------------------------------------------------------
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G030_DiffToilet <> NO; ((G031_HelpToilet <>
+        NO) AND G031_HelpToilet <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); G149_ = EMPTY; G150_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG151     HELP USING TOILET- SINCE AGE
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_ADL.G151_
+
+        How long had (she/he) needed help with using the toilet?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE AGE:
+        ..................................................................................
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1501       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G129TDaysInBed_A < 86) OR G129TDaysInBed_A = EMPTY; (G013TNagiCkpt_A
+        <> 1) OR (G014_DiffDress <> NO); G030_DiffToilet <> NO; ((G031_HelpToilet <>
+        NO) AND G031_HelpToilet <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); G149_ = EMPTY; G150_ = EMPTY; G151_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG152     HELP USING TOILET- SINCE YEAR
+          Section: G      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BG_ADL.G152_
+
+        How long had (she/he) needed help with using the toilet?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE YEAR:
+        ..................................................................................
+           10               1993-2002. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1491                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85); AskHelp[I - 1].G035_ADLHlprOth = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG032_1   WHO HELPS MOST- ADL- 1
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G032_ADLHlpr
+
+        IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH
+        (G129>85):
+
+        When [RESPONDENT FIRST NAME] was (mostly) bedridden, who helped (him/her) with
+        doing things like bathing and dressing in the last three months of (his/her)
+        life?
+
+        OTHERWISE:
+        Who most often helped (him/her) with (getting across a room/dressing
+        /bathing/eating/getting (in/out of) bed/using the toilet) in the last
+        three months of (his/her) life?
+        ..................................................................................
+          296                 010-082. Person Number
+                              083-095. New Helper (First time mentioned will be coded
+                                       097)
+          363                     096. Employee of Institution
+          205                     097. Helper Not on List
+          228                 101-990. Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+          409                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85); AskHelp[I - 1].G035_ADLHlprOth = YES;
+        puG032_ADLHlprTemp <> EMPTY; G032_ADLHlpr <> 97;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG033_1   ADL HELPER RELATIONSHIP TO R- 1
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G033_ADLHlprRel
+
+        What is that person's relationship to (her/him) (, or are they an employee of
+        the place (she/he) lived)?
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+          261           2. SPOUSE/PARTNER
+           47           3. SON
+            1           4. STEPSON OR SON OF PARTNER
+            2           5. SPOUSE/PARTNER OF DAUGHTER
+          171           6. DAUGHTER
+            3           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+           10           8. SPOUSE/PARTNER OF SON
+            5           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+            1          12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+                       15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+            3          17. SISTER
+            1          18. SISTER-IN-LAW OR SISTER OF SP/P
+           39          19. OTHER RELATIVE
+           72          20. OTHER INDIVIDUAL
+          104          21. ORGANIZATION
+          363          22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+            1          27. EX-SPOUSE/PARTNER
+            4          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+            2          31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+          411       Blank. INAP (Inapplicable) or Missing
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG032_2   WHO HELPS- ADL- 2
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G032_ADLHlpr
+
+        IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH
+        (G129>85):
+
+        When [RESPONDENT FIRST NAME] was (mostly) bedridden, who helped (him/her) with
+        doing things like bathing and dressing in the last three months of (his/her)
+        life?
+
+        OTHERWISE:
+        Who most often helped (him/her) with (getting across a room/dressing
+        /bathing/eating/getting (in/out of) bed/using the toilet) in the last
+        three months of (his/her) life?
+        ..................................................................................
+           59                 010-082. Person Number
+                              083-095. New Helper (First time mentioned will be coded
+                                       097)
+           30                     096. Employee of Institution
+          164                     097. Helper Not on List
+          256                 101-990. Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+          992                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85); puG032_ADLHlprTemp <> EMPTY; NOT
+        (G032_ADLHlpr <> 97); G032_ADLHlpr = 97; G033_ADLHlprRel = SPOUSEPARTNER;
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85); puG032_ADLHlprTemp <> EMPTY; NOT
+        (G032_ADLHlpr <> 97); G032_ADLHlpr = 97;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG033_2   ADL HELPER RELATIONSHIP TO R- 2
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G033_ADLHlprRel
+
+        What is that person's relationship to (her/him) (, or are they an employee of
+        the place (she/he) lived)?
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+           40           2. SPOUSE/PARTNER
+           76           3. SON
+            3           4. STEPSON OR SON OF PARTNER
+           10           5. SPOUSE/PARTNER OF DAUGHTER
+          139           6. DAUGHTER
+            3           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+           21           8. SPOUSE/PARTNER OF SON
+           25           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+                       12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+                       15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+            4          17. SISTER
+                       18. SISTER-IN-LAW OR SISTER OF SP/P
+           31          19. OTHER RELATIVE
+           45          20. OTHER INDIVIDUAL
+           76          21. ORGANIZATION
+           30          22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+            5          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+            1          30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+          992       Blank. INAP (Inapplicable) or Missing
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG032_3   WHO HELPS- ADL- 3
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G032_ADLHlpr
+
+        IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH
+        (G129>85):
+
+        When [RESPONDENT FIRST NAME] was (mostly) bedridden, who helped (him/her) with
+        doing things like bathing and dressing in the last three months of (his/her)
+        life?
+
+        OTHERWISE:
+        Who most often helped (him/her) with (getting across a room/dressing
+        /bathing/eating/getting (in/out of) bed/using the toilet) in the last
+        three months of (his/her) life?
+        ..................................................................................
+            4                 010-082. Person Number
+                              083-095. New Helper (First time mentioned will be coded
+                                       097)
+            7                     096. Employee of Institution
+           82                     097. Helper Not on List
+          128                 101-990. Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1280                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85); AskHelp[I - 1].G035_ADLHlprOth = YES;
+        puG032_ADLHlprTemp <> EMPTY; G032_ADLHlpr <> 97;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG033_3   ADL HELPER RELATIONSHIP TO R- 3
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G033_ADLHlprRel
+
+        What is that person's relationship to (her/him) (, or are they an employee of
+        the place (she/he) lived)?
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+            2           2. SPOUSE/PARTNER
+           30           3. SON
+            1           4. STEPSON OR SON OF PARTNER
+           11           5. SPOUSE/PARTNER OF DAUGHTER
+           63           6. DAUGHTER
+            2           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+           18           8. SPOUSE/PARTNER OF SON
+           17           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+                       12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+                       15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+                       17. SISTER
+                       18. SISTER-IN-LAW OR SISTER OF SP/P
+           24          19. OTHER RELATIVE
+           20          20. OTHER INDIVIDUAL
+           21          21. ORGANIZATION
+            7          22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+            3          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+         1282       Blank. INAP (Inapplicable) or Missing
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85); AskHelp[I - 1].G035_ADLHlprOth = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG032_4   WHO HELPS- ADL- 4
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G032_ADLHlpr
+
+        IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH
+        (G129>85):
+
+        When [RESPONDENT FIRST NAME] was (mostly) bedridden, who helped (him/her) with
+        doing things like bathing and dressing in the last three months of (his/her)
+        life?
+
+        OTHERWISE:
+        Who most often helped (him/her) with (getting across a room/dressing
+        /bathing/eating/getting (in/out of) bed/using the toilet) in the last
+        three months of (his/her) life?
+        ..................................................................................
+            3                 010-082. Person Number
+                              083-095. New Helper (First time mentioned will be coded
+                                       097)
+                                  096. Employee of Institution
+           30                     097. Helper Not on List
+           59                 101-990. Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1409                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85); puG032_ADLHlprTemp <> EMPTY; G032_ADLHlpr <>
+        97;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG033_4   ADL HELPER RELATIONSHIP TO R- 4
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G033_ADLHlprRel
+
+        What is that person's relationship to (her/him) (, or are they an employee of
+        the place (she/he) lived)?
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+                        2. SPOUSE/PARTNER
+           16           3. SON
+                        4. STEPSON OR SON OF PARTNER
+            7           5. SPOUSE/PARTNER OF DAUGHTER
+           24           6. DAUGHTER
+            1           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+            8           8. SPOUSE/PARTNER OF SON
+            8           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+                       12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+                       15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+            2          17. SISTER
+                       18. SISTER-IN-LAW OR SISTER OF SP/P
+           10          19. OTHER RELATIVE
+            6          20. OTHER INDIVIDUAL
+            9          21. ORGANIZATION
+                       22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+            1          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+         1409       Blank. INAP (Inapplicable) or Missing
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG032_5   WHO HELPS- ADL- 5
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G032_ADLHlpr
+
+        IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH
+        (G129>85):
+
+        When [RESPONDENT FIRST NAME] was (mostly) bedridden, who helped (him/her) with
+        doing things like bathing and dressing in the last three months of (his/her)
+        life?
+
+        OTHERWISE:
+        Who most often helped (him/her) with (getting across a room/dressing
+        /bathing/eating/getting (in/out of) bed/using the toilet) in the last
+        three months of (his/her) life?
+        ..................................................................................
+            1                 010-082. Person Number
+                              083-095. New Helper (First time mentioned will be coded
+                                       097)
+            1                     096. Employee of Institution
+           17                     097. Helper Not on List
+           22                 101-990. Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1460                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85); AskHelp[I - 1].G035_ADLHlprOth = YES;
+        puG032_ADLHlprTemp <> EMPTY; G032_ADLHlpr <> 97;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG033_5   ADL HELPER RELATIONSHIP TO R- 5
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G033_ADLHlprRel
+
+        What is that person's relationship to (her/him) (, or are they an employee of
+        the place (she/he) lived)?
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+                        2. SPOUSE/PARTNER
+            5           3. SON
+                        4. STEPSON OR SON OF PARTNER
+            3           5. SPOUSE/PARTNER OF DAUGHTER
+            8           6. DAUGHTER
+                        7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+            3           8. SPOUSE/PARTNER OF SON
+            6           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+                       12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+            1          15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+            1          17. SISTER
+                       18. SISTER-IN-LAW OR SISTER OF SP/P
+            4          19. OTHER RELATIVE
+            7          20. OTHER INDIVIDUAL
+            2          21. ORGANIZATION
+            1          22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+                       28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+         1460       Blank. INAP (Inapplicable) or Missing
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG032_6   WHO HELPS- ADL- 6
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G032_ADLHlpr
+
+        IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH
+        (G129>85):
+
+        When [RESPONDENT FIRST NAME] was (mostly) bedridden, who helped (him/her) with
+        doing things like bathing and dressing in the last three months of (his/her)
+        life?
+
+        OTHERWISE:
+        Who most often helped (him/her) with (getting across a room/dressing
+        /bathing/eating/getting (in/out of) bed/using the toilet) in the last
+        three months of (his/her) life?
+        ..................................................................................
+                              010-082. Person Number
+                              083-095. New Helper (First time mentioned will be coded
+                                       097)
+            1                     096. Employee of Institution
+            8                     097. Helper Not on List
+           10                 101-990. Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1482                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85); AskHelp[I - 1].G035_ADLHlprOth = YES;
+        puG032_ADLHlprTemp <> EMPTY; G032_ADLHlpr <> 97;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG033_6   ADL HELPER RELATIONSHIP TO R- 6
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G033_ADLHlprRel
+
+        What is that person's relationship to (her/him) (, or are they an employee of
+        the place (she/he) lived)?
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+                        2. SPOUSE/PARTNER
+            4           3. SON
+                        4. STEPSON OR SON OF PARTNER
+            3           5. SPOUSE/PARTNER OF DAUGHTER
+            1           6. DAUGHTER
+                        7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+            1           8. SPOUSE/PARTNER OF SON
+            3           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+                       12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+                       15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+                       17. SISTER
+                       18. SISTER-IN-LAW OR SISTER OF SP/P
+            1          19. OTHER RELATIVE
+            3          20. OTHER INDIVIDUAL
+            2          21. ORGANIZATION
+            1          22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+                       28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+         1482       Blank. INAP (Inapplicable) or Missing
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG032_7   WHO HELPS- ADL- 7
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G032_ADLHlpr
+
+        IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH
+        (G129>85):
+
+        When [RESPONDENT FIRST NAME] was (mostly) bedridden, who helped (him/her) with
+        doing things like bathing and dressing in the last three months of (his/her)
+        life?
+
+        OTHERWISE:
+        Who most often helped (him/her) with (getting across a room/dressing
+        /bathing/eating/getting (in/out of) bed/using the toilet) in the last
+        three months of (his/her) life?
+        ..................................................................................
+                              010-082. Person Number
+                              083-095. New Helper (First time mentioned will be coded
+                                       097)
+                                  096. Employee of Institution
+            4                     097. Helper Not on List
+            5                 101-990. Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1492                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G013TNagiCkpt_A > 0) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN)); (G013TNagiCkpt_A <> 1) OR (G014_DiffDress <> NO);
+        ((((((G015_HelpDress IN [YES, CANTDO, DONTDO]) OR (G020_HelpWalk IN [YES,
+        CANTDO, DONTDO])) OR (G022_HelpBathe IN [YES, CANTDO, DONTDO])) OR
+        (G024_HelpEat IN [YES, CANTDO, DONTDO])) OR (G029_HelpBed IN [YES, CANTDO,
+        DONTDO])) OR (G031_HelpToilet IN [YES, CANTDO, DONTDO])) OR
+        (SecG.ADL.G129TDaysInBed_A > 85); puG032_ADLHlprTemp <> EMPTY; G032_ADLHlpr <>
+        97;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG033_7   ADL HELPER RELATIONSHIP TO R- 7
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_AskHelpADL.G033_ADLHlprRel
+
+        What is that person's relationship to (her/him) (, or are they an employee of
+        the place (she/he) lived)?
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+                        2. SPOUSE/PARTNER
+            3           3. SON
+                        4. STEPSON OR SON OF PARTNER
+                        5. SPOUSE/PARTNER OF DAUGHTER
+                        6. DAUGHTER
+                        7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+            1           8. SPOUSE/PARTNER OF SON
+                        9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+                       12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+            1          15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+                       17. SISTER
+                       18. SISTER-IN-LAW OR SISTER OF SP/P
+                       19. OTHER RELATIVE
+            2          20. OTHER INDIVIDUAL
+            2          21. ORGANIZATION
+                       22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+                       28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+         1492       Blank. INAP (Inapplicable) or Missing
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((G041_DiffMeals <> NO) AND (G042_ProbMeals <> NO)) AND
+        (piSecARelationsA028_RInNHome <> YES);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG043     IADL MEAL PREPARATION HELP
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_IADL.G043_HelpMeals
+
+        (Because of a health or memory problem,)
+        Did anyone help (her/him) prepare hot meals in the last three months of
+        (her/his) life?
+        ..................................................................................
+          411           1. YES
+          375           5. NO
+           53           6. COULDN'T DO
+          144           7. DIDN'T DO
+            5           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+          512       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((G043_HelpMeals <> NO) AND G043_HelpMeals <> NONRESPONSE) AND ((ACTIVELANGUAGE
+        = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (G043_HelpMeals = CANTDO) OR
+        (G043_HelpMeals = DONTDO);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG171     HELP HOT MEALS- MEM PROB
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_IADL.G171_
+
+        Was that because of a health or memory problem?
+        ..................................................................................
+           94           1. YES
+          103           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1304       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((G043_HelpMeals <> NO) AND G043_HelpMeals <> NONRESPONSE) AND ((ACTIVELANGUAGE
+        = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); ((G043_HelpMeals = YES) OR (G171_ =
+        YES)) OR G171_ = NONRESPONSE;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG153     HELP HOT MEALS- MONTHS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_IADL.G153_
+
+        How long had (she/he) needed help with preparing hot meals?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        MONTHS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            379          0         90          5.45          8.89    1111
+         -----------------------------------------------------------------
+            9          98. DK (Don't Know); NA (Not Ascertained)
+            2          99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((G043_HelpMeals <> NO) AND G043_HelpMeals <> NONRESPONSE) AND ((ACTIVELANGUAGE
+        = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); ((G043_HelpMeals = YES) OR (G171_ =
+        YES)) OR G171_ = NONRESPONSE; G153_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG154     HELP HOT MEALS- YEARS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_IADL.G154_
+
+        How long had (she/he) needed help with preparing hot meals?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        YEARS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            101          1         44          3.78          5.39    1399
+         -----------------------------------------------------------------
+            1          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((G043_HelpMeals <> NO) AND G043_HelpMeals <> NONRESPONSE) AND ((ACTIVELANGUAGE
+        = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); ((G043_HelpMeals = YES) OR (G171_ =
+        YES)) OR G171_ = NONRESPONSE; G153_ = EMPTY; G154_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG155     HELP HOT MEALS- SINCE AGE
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_IADL.G155_
+
+        How long had (she/he) needed help with preparing hot meals?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE AGE:
+        ..................................................................................
+            2                   12-70. Actual Value
+                                   98. DK (Don't Know); NA (Not Ascertained)
+                                   99. RF (Refused)
+         1499                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((G043_HelpMeals <> NO) AND G043_HelpMeals <> NONRESPONSE) AND ((ACTIVELANGUAGE
+        = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); ((G043_HelpMeals = YES) OR (G171_ =
+        YES)) OR G171_ = NONRESPONSE; G153_ = EMPTY; G154_ = EMPTY; G155_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG156     HELP HOT MEALS- SINCE YEAR
+          Section: G      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BG_IADL.G156_
+
+        How long had (she/he) needed help with preparing hot meals?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE YEAR  :
+        ..................................................................................
+           11               1978-2002. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1490                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((G044_DiffShop <> NO) AND (G045_ <> NO)) AND (piSecARelationsA028_RInNHome <>
+        YES);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG046     IADL GROC SHOP HELP
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_IADL.G046_HelpShop
+
+        (Because of a health or memory problem,)
+        Did anyone help (her/him) shop for groceries in the last three months of
+        (her/his) life?
+        ..................................................................................
+          388           1. YES
+          355           5. NO
+           62           6. COULDN'T DO
+          181           7. DIDN'T DO
+            2           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+          512       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((G044_DiffShop <> NO) AND (G045_ <> NO)) AND (piSecARelationsA028_RInNHome <>
+        YES); ((G046_HelpShop <> NO) AND G046_HelpShop <> NONRESPONSE) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (G046_HelpShop =
+        CANTDO) OR (G046_HelpShop = DONTDO);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG173     GROCERY SHOPPING- MEM PROB
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_IADL.G173_
+
+        Was that because of a health or memory problem?
+        ..................................................................................
+          143           1. YES
+          100           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1258       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((G044_DiffShop <> NO) AND (G045_ <> NO)) AND (piSecARelationsA028_RInNHome <>
+        YES); ((G046_HelpShop <> NO) AND G046_HelpShop <> NONRESPONSE) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); ((G046_HelpShop =
+        YES) OR (G173_ = YES)) OR G173_ = NONRESPONSE;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG157     HELP GROC SHOPPING- MONTHS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_IADL.G157_
+
+        How long had (she/he) needed help with shopping for groceries?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        MONTHS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            390          1         90          6.28         10.15    1098
+         -----------------------------------------------------------------
+           13          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((G044_DiffShop <> NO) AND (G045_ <> NO)) AND (piSecARelationsA028_RInNHome <>
+        YES); ((G046_HelpShop <> NO) AND G046_HelpShop <> NONRESPONSE) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); ((G046_HelpShop =
+        YES) OR (G173_ = YES)) OR G173_ = NONRESPONSE; G157_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG158     HELP GROC SHOPPING- YEARS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_IADL.G158_
+
+        How long had (she/he) needed help with shopping for groceries?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        YEARS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            113          1         20          3.50          3.23    1387
+         -----------------------------------------------------------------
+                       98. DK (Don't Know); NA (Not Ascertained)
+            1          99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((G044_DiffShop <> NO) AND (G045_ <> NO)) AND (piSecARelationsA028_RInNHome <>
+        YES); ((G046_HelpShop <> NO) AND G046_HelpShop <> NONRESPONSE) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); ((G046_HelpShop =
+        YES) OR (G173_ = YES)) OR G173_ = NONRESPONSE; G157_ = EMPTY; G158_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG159     HELP GROC SHOPPING- SINCE AGE
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_IADL.G159_
+
+        How long had (she/he) needed help with shopping for groceries?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE AGE:
+        ..................................................................................
+            2                   21-70. Actual Value
+                                   98. DK (Don't Know); NA (Not Ascertained)
+                                   99. RF (Refused)
+         1499                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((G044_DiffShop <> NO) AND (G045_ <> NO)) AND (piSecARelationsA028_RInNHome <>
+        YES); ((G046_HelpShop <> NO) AND G046_HelpShop <> NONRESPONSE) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); ((G046_HelpShop =
+        YES) OR (G173_ = YES)) OR G173_ = NONRESPONSE; G157_ = EMPTY; G158_ = EMPTY;
+        G159_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG160     HELP GROC SHOPPING- SINCE YEAR
+          Section: G      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BG_IADL.G160_
+
+        How long had (she/he) needed help with shopping for groceries?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE YEAR:
+        ..................................................................................
+           12               1977-2002. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1489                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G047_DiffPhone <> NO) AND (G048_ProbPhone <> NO);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG049     IADL MAKING PHONE CALLS HELP
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_IADL.G049_HelpPhone
+
+        (Because of a health or memory problem,)
+        Did anyone help (her/him) make phone calls in the last three months of
+        (her/his) life?
+        ..................................................................................
+          304           1. YES
+          896           5. NO
+          103           6. COULDN'T DO
+          191           7. DIDN'T DO
+            4           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            3       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G047_DiffPhone <> NO) AND (G048_ProbPhone <> NO); ((G049_HelpPhone <> NO) AND
+        G049_HelpPhone <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); (G049_HelpPhone = CANTDO) OR (G049_HelpPhone =
+        DONTDO);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG161     HELP W/ PHONE CALLS- MEM PROB
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_IADL.G161_
+
+        Was that because of a health or memory problem?
+        ..................................................................................
+          235           1. YES
+           59           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1207       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G047_DiffPhone <> NO) AND (G048_ProbPhone <> NO); ((G049_HelpPhone <> NO) AND
+        G049_HelpPhone <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); ((G049_HelpPhone = YES) OR (G161_ = YES)) OR G161_
+        = NONRESPONSE;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG162     HELP PHONE CALLS- MONTHS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_IADL.G162_
+
+        How long had (she/he) needed help making telephone calls?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        MONTHS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            384          0         90          6.28         11.91    1087
+         -----------------------------------------------------------------
+           30          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G047_DiffPhone <> NO) AND (G048_ProbPhone <> NO); ((G049_HelpPhone <> NO) AND
+        G049_HelpPhone <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); ((G049_HelpPhone = YES) OR (G161_ = YES)) OR G161_
+        = NONRESPONSE; G162_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG163     HELP PHONE CALLS- YEARS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_IADL.G163_
+
+        How long had (she/he) needed help making telephone calls?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        YEARS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            111          1         92          4.99         10.99    1388
+         -----------------------------------------------------------------
+            2          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G047_DiffPhone <> NO) AND (G048_ProbPhone <> NO); ((G049_HelpPhone <> NO) AND
+        G049_HelpPhone <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); ((G049_HelpPhone = YES) OR (G161_ = YES)) OR G161_
+        = NONRESPONSE; G162_ = EMPTY; G163_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG164     HELP PHONE CALLS- SINCE AGE
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_IADL.G164_
+
+        How long had (she/he) needed help making telephone calls?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE AGE:
+        ..................................................................................
+            2                   84-92. Actual Value
+                                   98. DK (Don't Know); NA (Not Ascertained)
+                                   99. RF (Refused)
+         1499                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G047_DiffPhone <> NO) AND (G048_ProbPhone <> NO); ((G049_HelpPhone <> NO) AND
+        G049_HelpPhone <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); ((G049_HelpPhone = YES) OR (G161_ = YES)) OR G161_
+        = NONRESPONSE; G162_ = EMPTY; G163_ = EMPTY; G164_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG165     HELP PHONE CALLS- SINCE YEAR
+          Section: G      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BG_IADL.G165_
+
+        How long had (she/he) needed help making telephone calls?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE YEAR:
+        ..................................................................................
+           10               1993-2002. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1491                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G051_DiffMeds2 <> NO) AND (G050_DiffMeds <> NO)) AND (G052_ProbMeds <> NO))
+        AND (piSecARelationsA028_RInNHome <> YES);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG053     IADL TAKING MEDICATIONS HELP
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_IADL.G053_HelpMeds
+
+        (Because of a health or memory problem,)
+        Did anyone help (her/him) with taking medication in the last three months of
+        (her/his) life?
+        ..................................................................................
+          470           1. YES
+          492           5. NO
+           10           6. COULDN'T DO
+           13           7. DIDN'T DO
+            4           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          512       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G051_DiffMeds2 <> NO) AND (G050_DiffMeds <> NO)) AND (G052_ProbMeds <> NO))
+        AND (piSecARelationsA028_RInNHome <> YES); ((G053_HelpMeds <> NO) AND
+        G053_HelpMeds <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN)); (G053_HelpMeds = CANTDO) OR (G053_HelpMeds = DONTDO);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG174     HELP W/ MEDICATION- MEM PROB
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_IADL.G174_ProbMeds
+
+        Was that because of a health or memory problem?
+        ..................................................................................
+           11           1. YES
+           12           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1478       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G051_DiffMeds2 <> NO) AND (G050_DiffMeds <> NO)) AND (G052_ProbMeds <> NO))
+        AND (piSecARelationsA028_RInNHome <> YES); ((G053_HelpMeds <> NO) AND
+        G053_HelpMeds <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN)); ((G053_HelpMeds = YES) OR (G174_ProbMeds = YES)) OR G174_ProbMeds =
+        NONRESPONSE;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG166     HELP W/ MEDICATION- MONTHS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_IADL.G166_
+
+        How long had (she/he) needed help taking medications?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        MONTHS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            365          1         20          4.30          4.22    1122
+         -----------------------------------------------------------------
+           13          98. DK (Don't Know); NA (Not Ascertained)
+            1          99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G051_DiffMeds2 <> NO) AND (G050_DiffMeds <> NO)) AND (G052_ProbMeds <> NO))
+        AND (piSecARelationsA028_RInNHome <> YES); ((G053_HelpMeds <> NO) AND
+        G053_HelpMeds <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN)); ((G053_HelpMeds = YES) OR (G174_ProbMeds = YES)) OR G174_ProbMeds =
+        NONRESPONSE; G166_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG167     HELP W/ MEDICATION- YEARS
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_IADL.G167_
+
+        How long had (she/he) needed help taking medications?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        YEARS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+             93          1         20          2.76          2.85    1408
+         -----------------------------------------------------------------
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G051_DiffMeds2 <> NO) AND (G050_DiffMeds <> NO)) AND (G052_ProbMeds <> NO))
+        AND (piSecARelationsA028_RInNHome <> YES); ((G053_HelpMeds <> NO) AND
+        G053_HelpMeds <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN)); ((G053_HelpMeds = YES) OR (G174_ProbMeds = YES)) OR G174_ProbMeds =
+        NONRESPONSE; G166_ = EMPTY; G167_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG168     HELP W/ MEDICATION- SINCE AGE
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_IADL.G168_
+
+        How long had (she/he) needed help taking medications?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE AGE:
+        ..................................................................................
+            2                   70-85. Actual Value
+                                   98. DK (Don't Know); NA (Not Ascertained)
+                                   99. RF (Refused)
+         1499                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G051_DiffMeds2 <> NO) AND (G050_DiffMeds <> NO)) AND (G052_ProbMeds <> NO))
+        AND (piSecARelationsA028_RInNHome <> YES); ((G053_HelpMeds <> NO) AND
+        G053_HelpMeds <> NONRESPONSE) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN)); ((G053_HelpMeds = YES) OR (G174_ProbMeds = YES)) OR G174_ProbMeds =
+        NONRESPONSE; G166_ = EMPTY; G167_ = EMPTY; G168_ = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG169     HELP W/ MEDICATION- SINCE YEAR
+          Section: G      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BG_IADL.G169_
+
+        How long had (she/he) needed help taking medications?
+
+        INTERVIEWER: RECORD MONTHS OR YEARS, OR SINCE AGE, OR
+        SINCE YEAR
+
+        SINCE YEAR :
+        ..................................................................................
+            7               1982-2000. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1494                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop IN [YES, CANTDO,
+        DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR (G053_HelpMeds IN
+        [YES, CANTDO, DONTDO]);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG054_1   IADLS- WHO HELPS MOST-1
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_AskHelpIADL.G054_IADLHlpr
+
+        Who most often helped [him/her] (prepare meals,/shop for groceries,/make
+        telephone calls,/take medications)?
+
+        Who else helped [him/her]?
+        ..................................................................................
+          376                 010-082. Person Number
+          120                 083-095. New Helper (First time mentioned will be coded
+                                       097)
+          136                     096. Employee of Institution
+           52                     097. Helper Not on List
+          317                 101-990. Person Number
+           10                     998. DK (Don't Know); NA (Not Ascertained)
+            5                     999. RF (Refused)
+          485                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop IN [YES, CANTDO,
+        DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR (G053_HelpMeds IN
+        [YES, CANTDO, DONTDO]); AskHelpIADL[i - 1].G057_IADLHlprOth = YES;
+        puG054_IADLHlprTemp <> EMPTY; NOT ((G054_IADLHlpr <> 97) AND
+        puG054_IADLHlprTemp <> NONRESPONSE); G054_IADLHlpr = 97; G055_IADLHlprRel =
+        SPOUSEPARTNER; ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND
+        (RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <>
+        SECREPEATPOST); NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST,
+        SECREPEATPOST]); (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop
+        IN [YES, CANTDO, DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR
+        (G053_HelpMeds IN [YES, CANTDO, DONTDO]); AskHelpIADL[i - 1].G057_IADLHlprOth =
+        YES; puG054_IADLHlprTemp <> EMPTY; NOT ((G054_IADLHlpr <> 97) AND
+        puG054_IADLHlprTemp <> NONRESPONSE); G054_IADLHlpr = 97;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG055_1   IADL HELPER RELATIONSHIP TO R- 1
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_AskHelpIADL.G055_IADLHlprRel
+
+        What was that person's relationship to (her/him) (, or are they an employee of
+        the place (she/he)lives?/?)
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+          332           2. SPOUSE/PARTNER
+           62           3. SON
+            3           4. STEPSON OR SON OF PARTNER
+            1           5. SPOUSE/PARTNER OF DAUGHTER
+          229           6. DAUGHTER
+            5           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+           20           8. SPOUSE/PARTNER OF SON
+            8           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+            1          12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+                       15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+            5          17. SISTER
+            1          18. SISTER-IN-LAW OR SISTER OF SP/P
+           45          19. OTHER RELATIVE
+           70          20. OTHER INDIVIDUAL
+           66          21. ORGANIZATION
+          136          22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+            2          27. EX-SPOUSE/PARTNER
+            2          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+            2          31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+          511       Blank. INAP (Inapplicable) or Missing
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop IN [YES, CANTDO,
+        DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR (G053_HelpMeds IN
+        [YES, CANTDO, DONTDO]); AskHelpIADL[i - 1].G057_IADLHlprOth = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG054_2   IADLS- WHO HELPS- 2
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_AskHelpIADL.G054_IADLHlpr
+
+        Who most often helped [him/her] (prepare meals,/shop for groceries,/make
+        telephone calls,/take medications)?
+
+        Who else helped [him/her]?
+        ..................................................................................
+           34                 010-082. Person Number
+           62                 083-095. New Helper (First time mentioned will be coded
+                                       097)
+            5                     096. Employee of Institution
+           42                     097. Helper Not on List
+          153                 101-990. Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1205                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop IN [YES, CANTDO,
+        DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR (G053_HelpMeds IN
+        [YES, CANTDO, DONTDO]); AskHelpIADL[i - 1].G057_IADLHlprOth = YES;
+        puG054_IADLHlprTemp <> EMPTY; NOT ((G054_IADLHlpr <> 97) AND
+        puG054_IADLHlprTemp <> NONRESPONSE); G054_IADLHlpr = 97; G055_IADLHlprRel =
+        SPOUSEPARTNER; ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND
+        (RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <>
+        SECREPEATPOST); NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST,
+        SECREPEATPOST]); (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop
+        IN [YES, CANTDO, DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR
+        (G053_HelpMeds IN [YES, CANTDO, DONTDO]); AskHelpIADL[i - 1].G057_IADLHlprOth =
+        YES; puG054_IADLHlprTemp <> EMPTY; NOT ((G054_IADLHlpr <> 97) AND
+        puG054_IADLHlprTemp <> NONRESPONSE); G054_IADLHlpr = 97;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG055_2   IADL HELPER RELATIONSHIP TO R- 2
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_AskHelpIADL.G055_IADLHlprRel
+
+        What was that person's relationship to (her/him) (, or are they an employee of
+        the place (she/he)lives?/?)
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+           23           2. SPOUSE/PARTNER
+           43           3. SON
+                        4. STEPSON OR SON OF PARTNER
+            8           5. SPOUSE/PARTNER OF DAUGHTER
+           78           6. DAUGHTER
+            4           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+           21           8. SPOUSE/PARTNER OF SON
+           13           9. GRANDCHILD
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+            1          12. MOTHER
+            1          13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+                       15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+                       17. SISTER
+                       18. SISTER-IN-LAW OR SISTER OF SP/P
+           32          19. OTHER RELATIVE
+           32          20. OTHER INDIVIDUAL
+           31          21. ORGANIZATION
+            5          22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+            3          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+         1206       Blank. INAP (Inapplicable) or Missing
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop IN [YES, CANTDO,
+        DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR (G053_HelpMeds IN
+        [YES, CANTDO, DONTDO]);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG054_3   IADLS- WHO HELPS- 3
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_AskHelpIADL.G054_IADLHlpr
+
+        Who most often helped [him/her] (prepare meals,/shop for groceries,/make
+        telephone calls,/take medications)?
+
+        Who else helped [him/her]?
+        ..................................................................................
+            1                 010-082. Person Number
+           22                 083-095. New Helper (First time mentioned will be coded
+                                       097)
+            1                     096. Employee of Institution
+           16                     097. Helper Not on List
+           53                 101-990. Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1408                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop IN [YES, CANTDO,
+        DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR (G053_HelpMeds IN
+        [YES, CANTDO, DONTDO]); puG054_IADLHlprTemp <> EMPTY; (G054_IADLHlpr <> 97) AND
+        puG054_IADLHlprTemp <> NONRESPONSE;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG055_3   IADL HELPER RELATIONSHIP TO R- 3
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_AskHelpIADL.G055_IADLHlprRel
+
+        What was that person's relationship to (her/him) (, or are they an employee of
+        the place (she/he)lives?/?)
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+            1           2. SPOUSE/PARTNER
+           11           3. SON
+            2           4. STEPSON OR SON OF PARTNER
+            1           5. SPOUSE/PARTNER OF DAUGHTER
+           26           6. DAUGHTER
+            1           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+           10           8. SPOUSE/PARTNER OF SON
+           11           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+                       12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+                       15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+                       17. SISTER
+                       18. SISTER-IN-LAW OR SISTER OF SP/P
+            8          19. OTHER RELATIVE
+           11          20. OTHER INDIVIDUAL
+            7          21. ORGANIZATION
+            1          22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+            3          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+         1408       Blank. INAP (Inapplicable) or Missing
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop IN [YES, CANTDO,
+        DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR (G053_HelpMeds IN
+        [YES, CANTDO, DONTDO]); AskHelpIADL[i - 1].G057_IADLHlprOth = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG054_4   IADLS- WHO HELPS- 4
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_AskHelpIADL.G054_IADLHlpr
+
+        Who most often helped [him/her] (prepare meals,/shop for groceries,/make
+        telephone calls,/take medications)?
+
+        Who else helped [him/her]?
+        ..................................................................................
+            2                 010-082. Person Number
+           11                 083-095. New Helper (First time mentioned will be coded
+                                       097)
+                                  096. Employee of Institution
+            4                     097. Helper Not on List
+           17                 101-990. Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1467                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop IN [YES, CANTDO,
+        DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR (G053_HelpMeds IN
+        [YES, CANTDO, DONTDO]); AskHelpIADL[i - 1].G057_IADLHlprOth = YES;
+        puG054_IADLHlprTemp <> EMPTY; NOT ((G054_IADLHlpr <> 97) AND
+        puG054_IADLHlprTemp <> NONRESPONSE); G054_IADLHlpr = 97; G055_IADLHlprRel =
+        SPOUSEPARTNER; ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND
+        (RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <>
+        SECREPEATPOST); NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST,
+        SECREPEATPOST]); (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop
+        IN [YES, CANTDO, DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR
+        (G053_HelpMeds IN [YES, CANTDO, DONTDO]); AskHelpIADL[i - 1].G057_IADLHlprOth =
+        YES; puG054_IADLHlprTemp <> EMPTY; NOT ((G054_IADLHlpr <> 97) AND
+        puG054_IADLHlprTemp <> NONRESPONSE); G054_IADLHlpr = 97;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG055_4   IADL HELPER RELATIONSHIP TO R- 4
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_AskHelpIADL.G055_IADLHlprRel
+
+        What was that person's relationship to (her/him) (, or are they an employee of
+        the place (she/he)lives?/?)
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+                        2. SPOUSE/PARTNER
+            8           3. SON
+                        4. STEPSON OR SON OF PARTNER
+            2           5. SPOUSE/PARTNER OF DAUGHTER
+            5           6. DAUGHTER
+            1           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+            1           8. SPOUSE/PARTNER OF SON
+            3           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+                       12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+                       15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+            1          17. SISTER
+                       18. SISTER-IN-LAW OR SISTER OF SP/P
+            5          19. OTHER RELATIVE
+            5          20. OTHER INDIVIDUAL
+            2          21. ORGANIZATION
+                       22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+            1          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+         1467       Blank. INAP (Inapplicable) or Missing
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop IN [YES, CANTDO,
+        DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR (G053_HelpMeds IN
+        [YES, CANTDO, DONTDO]); AskHelpIADL[i - 1].G057_IADLHlprOth = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG054_5   IADLS- WHO HELPS- 5
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_AskHelpIADL.G054_IADLHlpr
+
+        Who most often helped [him/her] (prepare meals,/shop for groceries,/make
+        telephone calls,/take medications)?
+
+        Who else helped [him/her]?
+        ..................................................................................
+            1                 010-082. Person Number
+            5                 083-095. New Helper (First time mentioned will be coded
+                                       097)
+                                  096. Employee of Institution
+            3                     097. Helper Not on List
+            9                 101-990. Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1483                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop IN [YES, CANTDO,
+        DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR (G053_HelpMeds IN
+        [YES, CANTDO, DONTDO]); AskHelpIADL[i - 1].G057_IADLHlprOth = YES;
+        puG054_IADLHlprTemp <> EMPTY; (G054_IADLHlpr <> 97) AND puG054_IADLHlprTemp <>
+        NONRESPONSE;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG055_5   IADL HELPER RELATIONSHIP TO R- 5
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_AskHelpIADL.G055_IADLHlprRel
+
+        What was that person's relationship to (her/him) (, or are they an employee of
+        the place (she/he)lives?/?)
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+                        2. SPOUSE/PARTNER
+            3           3. SON
+                        4. STEPSON OR SON OF PARTNER
+                        5. SPOUSE/PARTNER OF DAUGHTER
+            3           6. DAUGHTER
+                        7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+            2           8. SPOUSE/PARTNER OF SON
+            1           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+                       12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+                       15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+            1          17. SISTER
+                       18. SISTER-IN-LAW OR SISTER OF SP/P
+            2          19. OTHER RELATIVE
+            4          20. OTHER INDIVIDUAL
+            1          21. ORGANIZATION
+                       22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+            1          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+         1483       Blank. INAP (Inapplicable) or Missing
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop IN [YES, CANTDO,
+        DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR (G053_HelpMeds IN
+        [YES, CANTDO, DONTDO]); AskHelpIADL[i - 1].G057_IADLHlprOth = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG054_6   IADLS- WHO HELPS- 6
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_AskHelpIADL.G054_IADLHlpr
+
+        Who most often helped [him/her] (prepare meals,/shop for groceries,/make
+        telephone calls,/take medications)?
+
+        Who else helped [him/her]?
+        ..................................................................................
+                              010-082. Person Number
+            2                 083-095. New Helper (First time mentioned will be coded
+                                       097)
+                                  096. Employee of Institution
+            1                     097. Helper Not on List
+            5                 101-990. Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1493                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop IN [YES, CANTDO,
+        DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR (G053_HelpMeds IN
+        [YES, CANTDO, DONTDO]); puG054_IADLHlprTemp <> EMPTY; (G054_IADLHlpr <> 97) AND
+        puG054_IADLHlprTemp <> NONRESPONSE;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG055_6   IADL HELPER RELATIONSHIP TO R- 6
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_AskHelpIADL.G055_IADLHlprRel
+
+        What was that person's relationship to (her/him) (, or are they an employee of
+        the place (she/he)lives?/?)
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+                        2. SPOUSE/PARTNER
+            2           3. SON
+                        4. STEPSON OR SON OF PARTNER
+            1           5. SPOUSE/PARTNER OF DAUGHTER
+            1           6. DAUGHTER
+                        7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+            1           8. SPOUSE/PARTNER OF SON
+                        9. GRANDCHILD
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+                       12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+                       15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+                       17. SISTER
+                       18. SISTER-IN-LAW OR SISTER OF SP/P
+                       19. OTHER RELATIVE
+            2          20. OTHER INDIVIDUAL
+            1          21. ORGANIZATION
+                       22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+                       28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+         1493       Blank. INAP (Inapplicable) or Missing
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((((((G059_DiffMoney = YES) OR (G059_DiffMoney = DONTKNOW)) OR (G059_DiffMoney
+        = REFUSAL)) OR (G060_ProbMoney = YES)) OR (G060_ProbMoney = DONTKNOW)) OR
+        (G060_ProbMoney = REFUSAL)) OR ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG061     IADL MANAGING MONEY HELP
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_IADL.G061_HelpMoney
+
+        Because of a health or memory problem,
+        Did anyone help (her/him) manage (her/his) money -- such as paying (her/his)
+        bills and keeping track of expenses in the last three months of (her/his)
+        life?
+        ..................................................................................
+          810           1. YES
+          521           5. NO
+           44           6. COULDN'T DO
+          117           7. DIDN'T DO
+            7           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            2       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN); (G059_DiffMoney =
+        CANTDO) OR (G059_DiffMoney = DONTDO);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG060     HELP MANAGING MONEY- MEM PROB
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_IADL.G060_ProbMoney
+
+        Was that because of a health or memory problem?
+        ..................................................................................
+           95           1. YES
+           66           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1340       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G059_DiffMoney <> NO) AND (G059_DiffMoney <> EMPTY OR ((ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN))); (((G061_HelpMoney = YES) OR
+        (G061_HelpMoney = CANTDO)) OR (G061_HelpMoney = DONTDO)) AND (G060_ProbMoney <>
+        NO);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG062_1   WHO HELPS MANAGE MONEY-1
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_MoneyLoop.G062_MnyHlpr
+
+        IF THIS IS THE FIRST TIME THROUGH THE FINANCIAL HELPER LOOP:
+        Who most often helped [him/her] manage [his/her] money in the last three
+        months of [his/her] life?
+
+        IF THIS IS THE SECOND TIME THROUGH THE FINANCIAL HELPER LOOP:
+        Who was that?
+        ..................................................................................
+          307                 010-082. Person Number
+           42                 083-095. New Helper (First time mentioned will be coded
+                                       097)
+           24                     096. Employee of Institution
+           82                     097. Helper Not on List
+          433                 101-990. Person Number
+            3                     998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+          610                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G059_DiffMoney <> NO) AND (G059_DiffMoney <> EMPTY OR ((ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN))); (((G061_HelpMoney = YES) OR
+        (G061_HelpMoney = CANTDO)) OR (G061_HelpMoney = DONTDO)) AND (G060_ProbMoney <>
+        NO);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG063_1   MONEY HELPER RELATIONSHIP TO R- 1
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_MoneyLoop.G062_MnyHlpr
+
+        (What was that person's relationship to [her/him] or are they an employee of
+        the place (she/he)lived?/What was that person's relationship to [her/him]?)
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+          261           2. SPOUSE/PARTNER
+          150           3. SON
+            2           4. STEPSON OR SON OF PARTNER
+            7           5. SPOUSE/PARTNER OF DAUGHTER
+          270           6. DAUGHTER
+            3           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+           16           8. SPOUSE/PARTNER OF SON
+           21           9. GRANDCHILD
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+            1          12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+            1          15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+            5          17. SISTER
+            1          18. SISTER-IN-LAW OR SISTER OF SP/P
+           79          19. OTHER RELATIVE
+           38          20. OTHER INDIVIDUAL
+            7          21. ORGANIZATION
+           24          22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+            2          27. EX-SPOUSE/PARTNER
+            8          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+            1          30. FORMER STEP-CHILD
+            2          31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+          602       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G059_DiffMoney <> NO) AND (G059_DiffMoney <> EMPTY OR ((ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN))); (((G061_HelpMoney = YES) OR
+        (G061_HelpMoney = CANTDO)) OR (G061_HelpMoney = DONTDO)) AND (G060_ProbMoney <>
+        NO); MoneyLoop[1].G065_MnyHlprOth = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG062_2   WHO HELPS MANAGE MONEY-2
+          Section: G      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_MoneyLoop.G062_MnyHlpr
+
+        IF THIS IS THE FIRST TIME THROUGH THE FINANCIAL HELPER LOOP:
+        Who most often helped [him/her] manage [his/her] money in the last three
+        months of [his/her] life?
+
+        IF THIS IS THE SECOND TIME THROUGH THE FINANCIAL HELPER LOOP:
+        Who was that?
+        ..................................................................................
+           13                 010-082. Person Number
+           10                 083-095. New Helper (First time mentioned will be coded
+                                       097)
+            1                     096. Employee of Institution
+           18                     097. Helper Not on List
+           73                 101-990. Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1386                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (G059_DiffMoney <> NO) AND (G059_DiffMoney <> EMPTY OR ((ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN))); (((G061_HelpMoney = YES) OR
+        (G061_HelpMoney = CANTDO)) OR (G061_HelpMoney = DONTDO)) AND (G060_ProbMoney <>
+        NO); MoneyLoop[1].G065_MnyHlprOth = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG063_2   MONEY HELPER RELATIONSHIP TO R- 2
+          Section: G      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_MoneyLoop.G062_MnyHlpr
+
+        (What was that person's relationship to [her/him] or are they an employee of
+        the place (she/he)lived?/What was that person's relationship to [her/him]?)
+
+        INTERVIEWER: DON'T USE DK OR RF
+        ..................................................................................
+            5           2. SPOUSE/PARTNER
+           23           3. SON
+                        4. STEPSON OR SON OF PARTNER
+            4           5. SPOUSE/PARTNER OF DAUGHTER
+           43           6. DAUGHTER
+            1           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+            8           8. SPOUSE/PARTNER OF SON
+            3           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+                       12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+                       15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+                       17. SISTER
+                       18. SISTER-IN-LAW OR SISTER OF SP/P
+           13          19. OTHER RELATIVE
+           10          20. OTHER INDIVIDUAL
+            3          21. ORGANIZATION
+            1          22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+            2          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+                       90. UNKNOWN CHILD
+         1385       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG103     ANYONE MONITOR OR SUPERVISE R
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_EXSUPERVISE.G103AHelpSupervise
+
+        Because of a health or memory problem,) in the last three months of
+        [RESPONDENT FIRST NAME]'s life did anyone help by supervising she/he to ensure
+        safety, provide reassurance, or to make sure that nothing went wrong?
+        ..................................................................................
+          913           1. YES
+          576           5. NO
+            9           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+            2       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SVDATE    2002 DATA MODEL VERSION
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+
+
+        User Note:  This variable identifies which data model was used to interview
+        the proxy respondent.  Please reference the data description for a summary of
+        changes in each data model.
+        ..................................................................................
+          608           1. Version 1
+          337           2. Version 2
+          449           3. Version 3
+          107           4. Version 4
+
+==========================================================================================
+
+SVERSION  2002 EXIT FINAL RELEASE VERSION NUMBER
+          Section: G      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+
+        ..................................................................................
+         1501           1. HRS 2002 Exit Final Release #1
+
+==========================================================================================
+
+SQNR      BLAISE IDENTIFICATION NUMBER
+          Section: G      Level: Respondent  Type: Character   Width: 11   Decimals: 0
+
+        ..................................................................................
+         1501 00000200010-21339900010. Blaise Identifier
+

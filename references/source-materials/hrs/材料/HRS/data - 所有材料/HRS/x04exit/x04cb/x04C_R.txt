@@ -1,0 +1,1737 @@
+==========================================================================================
+2004 HRS Exit (Final Release)
+ODBC Reference: [HRS2004x]
+Perl script: CodebkD11.pl v6.161 Tue Feb  6 13:58:16 2007
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION C: Physical Health (Respondent)
+
+==========================================================================================
+
+HHID       HOUSEHOLD IDENTIFICATION NUMBER
+         Section: C     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+        ..................................................................................
+         1227           010240-213434. Household Identifier
+
+==========================================================================================
+
+PN         RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: C     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+          861         010. Person Identifier
+           19         011. Person Identifier
+          274         020. Person Identifier
+           39         030. Person Identifier
+            1         031. Person Identifier
+           33         040. Person Identifier
+
+==========================================================================================
+
+TSUBHH     2004 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: C     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+         1176           3. 1st deceased respondent from a household
+           51           4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+HSUBHH     2002 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: C     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+         1180           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+           21           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           21           2. Split household - other half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+            4           3. 1st deceased respondent from a household
+                        5. Split household - one half of couple from SUBHH 1 or 2
+                        6. Split household - one half of couple from SUBHH 1 or 2
+            1           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+TPN_SP     2004 SPOUSE PERSON IDENTIFICATION NUMBER
+         Section: C     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+          184         010. Person Identifier
+           16         011. Person Identifier
+          233         020. Person Identifier
+            5         021. Person Identifier
+           21         030. Person Identifier
+            2         031. Person Identifier
+           22         040. Person Identifier
+            3         041. Person Identifier
+            1         811. New Spouse of Non-Original Respondent
+          740       Blank. R not coupled
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC018      CANCER OF ANY KIND EXCLUDING SKIN
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Cancer.C018_
+
+        ([We want to be sure we understand any health problems that may have preceded
+        R’s FIRST NAME’s death, even though [his/her] death was unexpected.]/[We want
+        to be sure we understand any health problems that may have preceded R’s FIRST
+        NAME’s death.])
+
+        The questions we will be asking are about R’s FIRST NAME’s health [since R's
+        LAST IW MONTH, YEAR/during the last two years].
+
+        Our records (from  R’s FIRST NAME’s  last interview in R's LAST IW MONTH,
+        YEAR)  show that [he/she] had cancer.
+
+        (Since we last talked to [him/her] (in  R's LAST IW MONTH, YEAR),)  had a
+        doctor told  R’s FIRST NAME  that [he/she] had cancer or a malignant tumor,
+        excluding minor skin cancer?
+
+        DEF: (Medical doctors include specialists such as Dermatologists,
+        Psychiatrists, Ophthalmologists, Osteopaths, Cardiologists, as well as family
+        doctors, internists and physicians' assistants. Do not include Chiropractors,
+        Dentists, or Nurses/Nurse Practitioners.)
+
+        [IWER: PRESS 1 THEN PRESS [ENTER] UNLESS R VOLUNTARILY DISPUTES PREVIOUS WAVE
+        RECORD]
+
+        [IWER: IF REPORTER DISPUTES REPORT FROM PREVIOUS WAVE, PROBE AS NECESSARY TO
+        DETERMINE WHETHER  R’s FIRST NAME  WAS SINCE TOLD BY A DOCTOR THAT HE/SHE HAD
+        THE CONDITION. IF YOU WISH, YOU MAY DESCRIBE THE SITUATION IN AN F2 COMMENT.]
+        ..................................................................................
+          443           1. YES
+            1           3. DISPUTES PREVIOUS WAVE RECORD, BUT DID HAVE CONDITION
+            9           4. DISPUTES PREVIOUS WAVE RECORD, DID NOT HAVE CONDITION
+          767           5. NO
+            7           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C018_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND ((((piRVarsZ076_ReIwR_V <> REIWR) OR (piC185_DifferentReporter = YES)) OR
+        (piRVarsZ103_Cancer_V = YES)) OR (C018_ <> YES))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC019      R SEEN DOC CONCERNING CANCER
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Cancer.C019_
+
+        [Since R's LAST IW MONTH, YEAR/In the last two years before [his/her] death],
+        had [he/she] seen a doctor about [his/her] cancer?
+
+        DEF: (Medical doctors include specialists such as Dermatologists,
+        Psychiatrists, Ophthalmologists, Osteopaths, Cardiologists, as well as family
+        doctors, internists and physicians' assistants. Do not include Chiropractors,
+        Dentists, or Nurses/Nurse Practitioners.)
+        ..................................................................................
+          211           1. YES
+           73           5. NO
+            2           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          941       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C018_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND (NOT ((((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)) AND
+        (piRVarsZ076_ReIwR_V = REIWR)) AND (Init.E005_AltWaveFlag <> SKIPQUESTIONS)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC020      PAST CANCER TREATED
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Cancer.C020_
+
+        We want to know about any cancer treatment that may have taken place during
+        the last two years.
+
+        [Since  R's LAST IW MONTH, YEAR/In the last two years before [his/her] death],
+        had [he/she] received any treatment for cancer?
+        ..................................................................................
+          225           1. YES
+          215           5. NO
+            4           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          783       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C018_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND ((C232YC021BP <> 1) OR (C231YC020BP_TOC023BP = 1))
+         AND (NOT (C232YC021BP IN [2, 3]) AND (C231YC020BP_TOC023BP <> 1))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC021M1    CANCER TREATMENT-TYPE- 1
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Cancer.C021M[1]
+
+        IF R REPORTED IN LAST IW THAT HAD CANCER (Z103=1):
+
+        [Since [PREV WAVE IW MONTH], [PREV WAVE IW YEAR]/Since [PREV WAVE IW
+        YEAR,](what/What) sort of treatments had (she/he) received for cancer?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+
+        [IWER: CHOOSE ALL THAT APPLY]
+        ..................................................................................
+          129           1. CHEMOTHERAPY OR MEDICATION
+           28           2. SURGERY OR BIOPSY
+           32           3. RADIATION/ X-RAY
+           23           4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+            4           5. NONE
+            8           7. OTHER (SPECIFY)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1002       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C018_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND ((C232YC021BP <> 1) OR (C231YC020BP_TOC023BP = 1))
+         AND (NOT (C232YC021BP IN [2, 3]) AND (C231YC020BP_TOC023BP <> 1))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC021M2    CANCER TREATMENT-TYPE- 2
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Cancer.C021M[2]
+
+        IF R REPORTED IN LAST IW THAT HAD CANCER (Z103=1):
+
+        [Since [PREV WAVE IW MONTH], [PREV WAVE IW YEAR]/Since [PREV WAVE IW
+        YEAR,](what/What) sort of treatments had (she/he) received for cancer?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+
+        [IWER: CHOOSE ALL THAT APPLY]
+        ..................................................................................
+           11           1. CHEMOTHERAPY OR MEDICATION
+           30           2. SURGERY OR BIOPSY
+           37           3. RADIATION/ X-RAY
+           27           4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+            1           7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1121       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C018_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND ((C232YC021BP <> 1) OR (C231YC020BP_TOC023BP = 1))
+         AND (NOT (C232YC021BP IN [2, 3]) AND (C231YC020BP_TOC023BP <> 1))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC021M3    CANCER TREATMENT-TYPE- 3
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Cancer.C021M[3]
+
+        IF R REPORTED IN LAST IW THAT HAD CANCER (Z103=1):
+
+        [Since [PREV WAVE IW MONTH], [PREV WAVE IW YEAR]/Since [PREV WAVE IW
+        YEAR,](what/What) sort of treatments had (she/he) received for cancer?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+
+        [IWER: CHOOSE ALL THAT APPLY]
+        ..................................................................................
+                        1. CHEMOTHERAPY OR MEDICATION
+            5           2. SURGERY OR BIOPSY
+           16           3. RADIATION/ X-RAY
+           24           4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1182       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C018_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND ((C232YC021BP <> 1) OR (C231YC020BP_TOC023BP = 1))
+         AND (NOT (C232YC021BP IN [2, 3]) AND (C231YC020BP_TOC023BP <> 1))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC021M4    CANCER TREATMENT-TYPE- 4
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Cancer.C021M[4]
+
+        IF R REPORTED IN LAST IW THAT HAD CANCER (Z103=1):
+
+        [Since [PREV WAVE IW MONTH], [PREV WAVE IW YEAR]/Since [PREV WAVE IW
+        YEAR,](what/What) sort of treatments had (she/he) received for cancer?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+
+        [IWER: CHOOSE ALL THAT APPLY]
+        ..................................................................................
+                        1. CHEMOTHERAPY OR MEDICATION
+                        2. SURGERY OR BIOPSY
+                        3. RADIATION/ X-RAY
+           15           4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+                        7. OTHER (SPECIFY)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1211       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C018_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND ((C232YC021BP <> 1) OR (C231YC020BP_TOC023BP = 1))
+         AND (NOT (C232YC021BP IN [2, 3]) AND (C231YC020BP_TOC023BP <> 1))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC021M5    CANCER TREATMENT-TYPE- 5
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Cancer.C021M[5]
+
+        IF R REPORTED IN LAST IW THAT HAD CANCER (Z103=1):
+
+        [Since [PREV WAVE IW MONTH], [PREV WAVE IW YEAR]/Since [PREV WAVE IW
+        YEAR,](what/What) sort of treatments had (she/he) received for cancer?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+
+        [IWER: CHOOSE ALL THAT APPLY]
+        ..................................................................................
+                        1. CHEMOTHERAPY OR MEDICATION
+                        2. SURGERY OR BIOPSY
+                        3. RADIATION/ X-RAY
+                        4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+            1           7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1226       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C018_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND ((C232YC021BP <> 1) OR (C231YC020BP_TOC023BP = 1))
+         AND (NOT (C232YC021BP IN [2, 3]) AND (C231YC020BP_TOC023BP <> 1))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC021M6    CANCER TREATMENT-TYPE- 6
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Cancer.C021M[6]
+
+        IF R REPORTED IN LAST IW THAT HAD CANCER (Z103=1):
+
+        [Since [PREV WAVE IW MONTH], [PREV WAVE IW YEAR]/Since [PREV WAVE IW
+        YEAR,](what/What) sort of treatments had (she/he) received for cancer?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+
+        [IWER: CHOOSE ALL THAT APPLY]
+        ..................................................................................
+                        1. CHEMOTHERAPY OR MEDICATION
+                        2. SURGERY OR BIOPSY
+                        3. RADIATION/ X-RAY
+                        4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+                        7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C018_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND ((C232YC021BP <> 1) OR (C231YC020BP_TOC023BP = 1))
+         AND (C024_ <> NO)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC028      YEAR RECENT CANCER
+         Section: C     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecC.Cancer.C028_
+
+        In what year was [her/his] (most recent) cancer diagnosed?
+        YEAR:
+        ..................................................................................
+          348               1976-2004. Actual Value
+           26                    9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+          853                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C018_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND ((C232YC021BP <> 1) OR (C231YC020BP_TOC023BP = 1))
+         AND (C024_ <> NO)
+         AND ((C028_ >= Init.A062T2YrsAgo_A) AND C028_ <> NONRESPONSE)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC029      MONTH RECENT CANCER
+         Section: C     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecC.Cancer.C029_MonLastCancer
+
+        In what month was that?
+        MONTH:
+        ..................................................................................
+           25           1. JAN
+           21           2. FEB
+           21           3. MAR
+           11           4. APR
+           16           5. MAY
+           15           6. JUN
+           13           7. JUL
+           17           8. AUG
+           19           9. SEP
+           15          10. OCT
+           11          11. NOV
+            7          12. DEC
+           12          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1024       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C018_ IN [YES, DISPUTPWRECORDHASCONDITION]
+          OR C018_ IN [YES, DISPUTPWRECORDHASCONDITION]
+          OR C018_ IN [YES, DISPUTPWRECORDHASCONDITION]
+          OR C018_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND (((C019_ <> YES) AND (C020_ <> YES)) AND (piRVarsZ103_Cancer_V = YES)
+          OR NOT (((C019_ <> YES) AND (C020_ <> YES)) AND (piRVarsZ103_Cancer_V = YES))
+          OR NOT (((C019_ <> YES) AND (C020_ <> YES)) AND (piRVarsZ103_Cancer_V = YES))
+          OR NOT (((C019_ <> YES) AND (C020_ <> YES)) AND (piRVarsZ103_Cancer_V =
+        YES)))
+         AND (((C020_ = NO) OR C020_ = NONRESPONSE) AND (piRVarsZ103_Cancer_V = YES)
+          OR NOT (((C020_ = NO) OR C020_ = NONRESPONSE) AND (piRVarsZ103_Cancer_V =
+        YES))
+          OR NOT (((C020_ = NO) OR C020_ = NONRESPONSE) AND (piRVarsZ103_Cancer_V =
+        YES)))
+         AND (((C020_ = NO) OR C020_ = NONRESPONSE) AND (piRVarsZ103_Cancer_V <> YES)
+          OR NOT (((C020_ = NO) OR C020_ = NONRESPONSE) AND (piRVarsZ103_Cancer_V <>
+        YES)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC232      BRANCHPOINT FOR C232Y
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Cancer.C232YC021BP
+        ..................................................................................
+          225           0. ALL OTHERS
+           70           1. R DID NOT REPORT SEEING DR. FOR CANCER AND DID NOT REPORT
+                           HAVING CANCER TREATMENT IN THE LAST TWO YEARS, AND REPORTED
+                           CANCER LAST IVW
+           83           2. R  DID NOT REPORT HAVING CANCER TREATMENT IN THE LAST TWO
+                           YEARS AND REPORTED CANCER LAST IVW
+           67           3. R  DID NOT REPORT HAVING CANCER TREATMENT IN THE LAST TWO
+                           YEARS AND DID NOT REPORT CANCER LAST IVW
+          782       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC030      LUNG DISEASE
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Bronchitis.C030_
+
+        PREVIOUS WAVE: (Yes/No/Unknown)
+
+        Had a doctor ever told [RESPONDENT FIRST NAME] that (she/he) had chronic lung
+        disease such as chronic bronchitis or emphysema?
+
+        INTERVIEWER: DO NOT INCLUDE ASTHMA
+
+        Our records (from (her/his) interview (in [PREV WAVE IW MONTH], [PREV WAVE
+        IWYEAR]/in [PREV WAVE IW YEAR]/...)) show that [RESPONDENT FIRST NAME] had
+        achronic lung disease, such as chronic bronchitis or emphysema.
+
+        INTERVIEWER: PRESS 1 THEN PRESS [ENTER] UNLESS R VOLUNTARILY DISPUTES PREVIOUS
+        WAVE RECORD/
+
+        (Since we last talked with (her/him) (in [PREV WAVE IW MONTH], [PREV WAVE IW
+        YEAR])/(in [PREV WAVE IW YEAR])/...]), had a doctor told [RESPONDENT FIRST
+        NAME] that (she/he) had chronic lung disease, such as chronic bronchitis or
+        emphysema?
+
+        INTERVIEWER: DO NOT INCLUDE ASTHMA
+
+        INTERVIEWER: IF REPORTER DISPUTES REPORT FROM PREVIOUS WAVE, PROBE AS
+        NECESSARY TO DETERMINE WHETHER  [RESPONDENT FIRST NAME] WAS SINCE TOLD BY A
+        DOCTOR THAT HE/SHE HAS THE CONDITION. DESCRIBE THE SITUATION IN THE OPEN FIELD
+
+        DEF: (Medical doctors include specialists such as Dermatologists,
+        Psychiatrists, Ophthalmologists, Osteopaths, Cardiologists, as well as family
+        doctors, internists and physicians' assistants. Do not include Chiropractors,
+        Dentists, or Nurses/Nurse Practitioners.)
+        ..................................................................................
+          295           1. YES
+                        3. DISPUTES PREVIOUS WAVE RECORD, BUT NOW HAS CONDITION
+           19           4. DISPUTES PREVIOUS WAVE RECORD, DOES NOT HAVE CONDITION
+          902           5. NO
+           11           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C030_ IN [YES, DISPUTPWRECORDHASCONDITION])
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC033      LUNG OXYGEN
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Bronchitis.C033_
+
+        Was [she/he] receiving oxygen for [her/his] lung condition?
+        ..................................................................................
+          178           1. YES
+          117           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          932       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC036      HEART CONDITION
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Heartattack.C036_
+
+        PREVIOUS WAVE: (Yes/No/Unknown)
+
+        (Did a doctor ever tell [RESPONDENT FIRST NAME] that (she/he) had a heart
+        attack, coronary heart disease, angina, congestive heart failure, or other
+        heart problems?/Our records (from (her/his) interview([in [PREV WAVE IW
+        MONTH], [PREV WAVE IW YEAR]/in [PREV WAVE IW YEAR]/. . . )) show that (she/he)
+        had a heart problem.
+
+        INTERVIEWER: PRESS 1 THEN PRESS [ENTER] UNLESS R VOLUNTARILY DISPUTES PREVIOUS
+        WAVE RECORD/
+
+        (Since (her/his) interview in ((in [PREV WAVE IW MONTH], [PREV WAVE IW
+        YEAR])/(in [PREV WAVE IW YEAR])/. . .] did a doctor tell [RESPONDENT FIRST
+        NAME] that (she/he) had) a heart attack, (had) coronary heart disease, angina,
+        congestive heart failure, or other heart problems?)
+
+        (IF REPORTER DISPUTES REPORT FROM PREVIOUS WAVE, PROBE AS NECESSARY TO
+        DETERMINE WHETHER  [RESPONDENT FIRST NAME] WAS SINCE TOLD BY A DOCTOR THAT
+        HE/SHE HAD THE CONDITION. DESCRIBE THE SITUATION IN THE OPEN FIELD)
+
+        DEFINITION: (Medical doctors include specialists such as, Dermatologists,
+        Psychiatrists, Ophthalmologists, as well as general practitioners, and
+        Osteopaths. Do not include Chiropractors, Dentists, or Nurses/Nurse
+        Practitioners.)
+        ..................................................................................
+          686           1. YES
+            3           3. DISPUTES PREVIOUS WAVE RECORD, BUT NOW HAS CONDITION
+           18           4. DISPUTPWRECNOTHAVECOND
+          510           5. NO
+           10           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C036_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND (((piRVarsZ105_Heart_V = YES) OR (piRVarsZ076_ReIwR_V <> REIWR)) OR
+        (piC185_DifferentReporter = YES))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC037      HEART MEDICATION
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Heartattack.C037_HeartMeds
+
+        Was [she/he] taking or carrying medication for [her/his] heart problem?
+        ..................................................................................
+          460           1. YES
+           80           5. NO
+           17           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          670       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C036_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND (((piRVarsZ105_Heart_V = YES) OR (piRVarsZ076_ReIwR_V <> REIWR)) OR
+        (piC185_DifferentReporter = YES))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC038      HAS R SEEN HEART DOCTOR
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Heartattack.C038_
+
+        ([ Since [PREV WAVE IW MONTH], [PREV WAVE IW YEAR]/Since [PREV WAVE IW
+        YEAR]/In the last two years before (her/his) death], /In the last two years
+        before (her/his) death) had (she/he) seen a doctor for (her/his) heart
+        problem?
+
+        DEFINITION: (Medical doctors include specialists such as, Dermatologists,
+        Psychiatrists, Ophthalmologists, as well as general practitioners, and
+        Osteopaths. Do not include Chiropractors, Dentists, or Nurses/Nurse
+        Practitioners.)
+        ..................................................................................
+          478           1. YES
+           70           5. NO
+            9           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          670       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C036_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND (((C037_HeartMeds <> NO) OR (C038_ <> NO)) OR ((piRVarsZ105_Heart_V <>
+        YES) AND (piRVarsZ076_ReIwR_V = REIWR)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC040      HEART ATTACK
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Heartattack.C040_HeartAttack
+
+        ([ Since [PREV WAVE IW MONTH], [PREV WAVE IW YEAR]/In the last two years
+        before (her/his) death) did (she/he) have a heart attack or myocardial
+        infarction?
+        ..................................................................................
+          175           1. YES
+          464           5. NO
+           12           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          576       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C036_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND (((C037_HeartMeds <> NO) OR (C038_ <> NO)) OR ((piRVarsZ105_Heart_V <>
+        YES) AND (piRVarsZ076_ReIwR_V = REIWR)))
+         AND (C040_HeartAttack = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC043      YR RECENT HEART ATTACK
+         Section: C     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecC.Heartattack.C043_
+
+        In what year was [her/his] (most recent) heart attack?
+        YEAR:
+        ..................................................................................
+          169               1985-2004. Actual Value
+            6                    9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1052                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C036_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND (((C037_HeartMeds <> NO) OR (C038_ <> NO)) OR ((piRVarsZ105_Heart_V <>
+        YES) AND (piRVarsZ076_ReIwR_V = REIWR)))
+         AND (C040_HeartAttack = YES)
+         AND (C043_ >= Init.A062T2YrsAgo_A)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC044      MO RECENT HEART ATTACK
+         Section: C     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecC.Heartattack.C044_
+
+        In what month was that?
+        MONTH:
+        ..................................................................................
+           16           1. JAN
+           16           2. FEB
+           11           3. MAR
+            9           4. APR
+           11           5. MAY
+           18           6. JUN
+           17           7. JUL
+           13           8. AUG
+            9           9. SEP
+            7          10. OCT
+            9          11. NOV
+           12          12. DEC
+           12          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1067       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C036_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND (((C037_HeartMeds <> NO) OR (C038_ <> NO)) OR ((piRVarsZ105_Heart_V <>
+        YES) AND (piRVarsZ076_ReIwR_V = REIWR)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC048      CONGESTIVE HEART FAILURE
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Heartattack.C048_
+
+        ((Since we last talked to (her/his), (that is, [ since [PREV WAVE IW MONTH],
+        [PREV WAVE IW YEAR]/since [PREV WAVE IW YEAR]/in the last two years before
+        (her/his) death]) had a doctor told [her/him] that (she/he) has congestive
+        heart failure?/In the last two years before (her/his) death had a doctor told
+        [her/him] that (she/he) had congestive heart failure?)
+
+         DEFINITION: (Medical doctors include specialists such as, Dermatologists,
+        Psychiatrists, Ophthalmologists, as well as general practitioners, and
+        Osteopaths. Do not include Chiropractors, Dentists, or Nurses/Nurse
+        Practitioners.)
+        ..................................................................................
+          288           1. YES
+          336           5. NO
+           27           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          576       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C036_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND (((C037_HeartMeds <> NO) OR (C038_ <> NO)) OR ((piRVarsZ105_Heart_V <>
+        YES) AND (piRVarsZ076_ReIwR_V = REIWR)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC051      HEART TREATMENT
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Heartattack.C051_
+
+        ([ Since [PREV WAVE IW MONTH], [PREV WAVE IW YEAR]/In the last two years
+        before (her/his) death], did (she/he) have a special test or treatment of
+        (her/his) heart where tubes were inserted into (her/his) veins or arteries
+        (cardiac catheterization, coronary angiogram or angioplasty)?
+        ..................................................................................
+          135           1. YES
+          493           5. NO
+           23           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          576       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C036_ IN [YES, DISPUTPWRECORDHASCONDITION])
+         AND (((C037_HeartMeds <> NO) OR (C038_ <> NO)) OR ((piRVarsZ105_Heart_V <>
+        YES) AND (piRVarsZ076_ReIwR_V = REIWR)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC052      HEART SURGERY
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Heartattack.C052_
+
+        ([ Since [PREV WAVE IW MONTH], [PREV WAVE IW YEAR],/In the last two years
+        before (her/his) death) did (she/he) have surgery on (her/his) heart?
+        ..................................................................................
+           56           1. YES
+          593           5. NO
+            2           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          576       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC053      STROKE
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Stroke.C053_Stroke
+
+        PREVIOUS WAVE: (Yes/No/Unknown)
+
+        (Had a doctor ever told [RESPONDENT FIRST NAME] that (she/he) had a
+        stroke?/Our records (from (her/his) last interview (in [PREV WAVE IW MONTH],
+        [PREV WAVE IW YEAR]/in [PREV WAVE IW YEAR]/. . .)) show that (she/he) had a
+        stroke.
+
+        INTERVIEWER: PRESS 1 THEN PRESS [ENTER] UNLESS R VOLUNTARILY DISPUTES PREVIOUS
+        WAVE RECORD
+
+        (Since (her/his) interview ((in [PREV WAVE IW MONTH], [PREV WAVE IW YEAR])/(in
+        [PREV WAVE IW YEAR])/. . .), had a doctor told [RESPONDENT FIRST NAME] that
+        (she/he) had) A stroke?)
+
+        IF REPORTER DISPUTES REPORT FROM PREVIOUS WAVE, PROBE AS NECESSARY TO
+        DETERMINE WHETHER  [RESPONDENT FIRST NAME] WAS SINCE BEEN TOLD BY A DOCTOR
+        THAT HE/SHE HAD THE CONDITION. DESCRIBE THE SITUATION IN THE OPEN FIELD)
+
+        DEFINITION: (Medical doctors include specialists such as, Dermatologists,
+        Psychiatrists, Ophthalmologists, as well as general practitioners, and
+        Osteopaths. Do not include Chiropractors, Dentists, or Nurses/Nurse
+        Practitioners.)
+        ..................................................................................
+          326           1. YES
+           28           2. [VOL] POSSIBLE STROKE OR TIA (TRANSIENT ISCHEMIC ATTACK)
+            1           3. DISPUTES PREVIOUS WAVE RECORD, BUT NOW HAS CONDITION
+            3           4. DISPUTES PREVIOUS WAVE RECORD, DOES NOT HAVE CONDITION
+          860           5. NO
+            9           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C053_Stroke IN [YES, VolPossStrokeOrTIA, DISPUTPWRECORDHASCONDITION])
+         AND (((C054_ <> NO) OR (C055_ <> NO)) OR (piRVarsZ106_Stroke_V <> YES))
+         AND ((piRVarsZ106_Stroke_V = YES) AND (C053_Stroke <>
+        DISPUTPWRECORDHASCONDITION))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC062      ANOTHER STROKE SINCE PREVIOUS WAVE
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Stroke.C062_OthStroke2yr
+
+        Since ([PREV WAVE IW MONTH], [PREV WAVE IW YEAR]/[PREV WAVE IW YEAR]), [PREV
+        WAVE FIRST R IW YEAR], did a doctor tell[her/him] that[she/he] had another
+        stroke?
+
+        DEF: (Medical doctors include specialists such as Dermatologists,
+        Psychiatrists, Ophthalmologists, Osteopaths, Cardiologists, as well as family
+        doctors, internists and physicians' assistants. Do not include Chiropractors,
+        Dentists, or Nurses/Nurse Practitioners.)
+        ..................................................................................
+           69           1. YES
+          152           5. NO
+            7           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          999       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C053_Stroke IN [YES, VolPossStrokeOrTIA, DISPUTPWRECORDHASCONDITION])
+         AND (((C054_ <> NO) OR (C055_ <> NO)) OR (piRVarsZ106_Stroke_V <> YES))
+         AND ((((C062_OthStroke2yr = YES) OR (piRVarsZ106_Stroke_V <> YES)) OR
+        (C053_Stroke = DISPUTPWRECORDHASCONDITION)) AND (C053_Stroke <>
+        VolPossStrokeOrTIA))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC064      MOST RECENT STROKE-YEAR
+         Section: C     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecC.Stroke.C064_
+
+        In what year was [her/his] (most recent) stroke?
+        YEAR:
+        ..................................................................................
+          163               1994-2004. Actual Value
+            9                    9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1055                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C053_Stroke IN [YES, VolPossStrokeOrTIA, DISPUTPWRECORDHASCONDITION])
+         AND (((C054_ <> NO) OR (C055_ <> NO)) OR (piRVarsZ106_Stroke_V <> YES))
+         AND ((((C062_OthStroke2yr = YES) OR (piRVarsZ106_Stroke_V <> YES)) OR
+        (C053_Stroke = DISPUTPWRECORDHASCONDITION)) AND (C053_Stroke <>
+        VolPossStrokeOrTIA))
+         AND (C064_ >= Init.A062T2YrsAgo_A)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC063      MOST RECENT STROKE-MONTH
+         Section: C     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecC.Stroke.C063_
+
+        In what month was that?
+        MONTH:
+        ..................................................................................
+           12           1. JAN
+            9           2. FEB
+           14           3. MAR
+           13           4. APR
+           16           5. MAY
+            9           6. JUN
+            9           7. JUL
+            7           8. AUG
+            9           9. SEP
+            8          10. OCT
+           15          11. NOV
+           14          12. DEC
+           17          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1075       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC193      R HAVE MEMORY PROBLEMS
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Psychiatric.C193_HaveMemProbs
+
+        Did [FIRST NAME OF INDIVIDUAL] have memory problems as of one month before
+        [she/he] died?
+        ..................................................................................
+          561           1. YES
+          647           5. NO
+           19           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+         AND (C193_HaveMemProbs = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC194      MEMORY PROB ONSET- AGE
+         Section: C     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         CAI: SecC.Psychiatric.C194_MemOnsetAge
+
+        How old was [FIRST NAME OF INDIVIDUAL] when memory problems became apparent?
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            534        1         110         78.44         11.60     666
+         -----------------------------------------------------------------
+           27         998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+         AND (C193_HaveMemProbs = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC195      MEMORY PROB ONSET- SUDDEN/SLOW
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Psychiatric.C195_MemOnset
+
+        Did the memory problems begin suddenly or slowly?
+        ..................................................................................
+          116           1. SUDDENLY
+          442           2. SLOWLY
+            3           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          666       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+         AND (C193_HaveMemProbs = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC196      MEMORY PROB GET WORSE
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Psychiatric.C196_MemGetWorse
+
+        Did the memory problems get worse over time?
+        ..................................................................................
+          475           1. YES
+           84           5. NO
+            2           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          666       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piRVarsZ117_MemryDisease_V <> YES)) OR (piC185_DifferentReporter = YES))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC069      MEMORY RELATED DISEASE
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Psychiatric.C069_
+
+        ((Since [(in [PREV WAVE IW MONTH], [PREV WAVE IW YEAR])/(in [PREV WAVE IW
+        YEAR])/']),)  Did a doctor ever say that[she/he] had a memory-related disease?
+
+        DEF: (Medical doctors include specialists such as Dermatologists,
+        Psychiatrists, Ophthalmologists, Osteopaths, Cardiologists, as well as family
+        doctors, internists and physicians' assistants. Do not include Chiropractors,
+        Dentists, or Nurses/Nurse Practitioners.)
+        ..................................................................................
+          206           1. YES
+         1006           5. NO
+           15           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piRVarsZ117_MemryDisease_V <> YES)) OR (piC185_DifferentReporter = YES))
+         AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN))
+         AND (C069_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC209M1M   DIAGNOSIS OF MEMORY PROBLEM-MASKED-1
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Psychiatric.C209_MemProbDiagnosis
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+          109           1. Alzheimer’s
+           77           2. Dementia
+            8           3. Effects of Stroke/Circulation Problems
+            9           7. Other (Including Parkinson's and brain cancer)
+            3           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1021       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+TC209M2M   DIAGNOSIS OF MEMORY PROBLEM-MASKED-2
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+            6           1. Alzheimer’s
+            3           2. Dementia
+                        3. Effects of Stroke/Circulation Problems
+            5           7. Other (Including Parkinson's and brain cancer)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1213       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piRVarsZ117_MemryDisease_V <> YES)) OR (piC185_DifferentReporter = YES))
+         AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN))
+         AND (C069_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC210      MEDICATION- MEMORY PROBLEMS
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Psychiatric.C210_MedsforMemProb
+
+        Was[she/he] taking any medication prescribed by a doctor to help with[her/his]
+        memory problems?
+        ..................................................................................
+          100           1. YES
+           96           5. NO
+           10           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1021       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piRVarsZ117_MemryDisease_V <> YES)) OR (piC185_DifferentReporter = YES))
+         AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC197      AUTOPSY PERFORMED
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Psychiatric.C197_Autopsy
+
+        After [she/he] died, was an autopsy performed?
+        ..................................................................................
+           94           1. YES
+         1099           5. NO
+           34           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piSecAContinuInterviewA019_RAge >= 65)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC079      FALLEN IN PAST TWO YEARS
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Rheumatism.C079_
+
+        Had (she/he) fallen down ([ since [PREV WAVE IW MONTH], [PREV WAVE IW
+        YEAR]/since [PREV WAVE IW YEAR]/in the last two years before (her/his)
+        death]/in the last two years)?
+        ..................................................................................
+          572           1. YES
+          562           5. NO
+           19           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           74       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piSecAContinuInterviewA019_RAge >= 65)
+         AND (C079_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC080      NUMBER TIMES FALLEN
+         Section: C     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecC.Rheumatism.C080_
+
+        How many times had (she/he) fallen ([ since [PREV WAVE IW MONTH], [PREV WAVE
+        IW YEAR]/since [PREV WAVE IW YEAR]/in the last two years before (her/his)
+        death]/in the last two years)?
+
+        # TIMES:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            527        1          30          2.97          3.32     655
+         -----------------------------------------------------------------
+           45          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piSecAContinuInterviewA019_RAge >= 65)
+         AND (C079_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC081      INJURY DUE TO FALL
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Rheumatism.C081_
+
+        (In that fall/In any of those falls, did (she/he) injure [herself/himself]
+        seriously enough to need medical treatment?
+        ..................................................................................
+          262           1. YES
+          307           5. NO
+            3           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          655       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (piSecAContinuInterviewA019_RAge >= 65)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC082      BROKEN HIP
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Rheumatism.C082_
+
+        IF THIS IS A NEW INTERVIEW R or IF {R IS ALIVE AND THIS IS A DIFFERENT
+        REPORTER FROM LAST IW} (piC185_DifferentReporter=1):
+         Did [he/she] ever fracture [his/her] hip?
+
+        IF REINTERVIEW R:
+        PREVIOUS WAVE (Z110): [Yes/No/Unknown]
+
+        NOTE: SCREEN DISPLAYS WHETHER OR NOT R REPORTED THIS CONDITION IN R's LAST IW.
+        Did [he/she] fracture [his/her] hip (since  R's LAST IW MONTH, YEAR)?
+        ..................................................................................
+           71           1. YES
+         1076           5. NO
+            6           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           74       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC104      TROUBLED WITH PAIN
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Pain.C104_
+
+        Was [she/he] often troubled with pain?
+        INTERVIEWER: WE WANT A GENERAL IDEA OF R'S PAIN LEVEL DURING THE LAST YEAR OR
+        SO OF LIFE.
+        ..................................................................................
+          677           1. YES
+          530           5. NO
+           20           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (C104_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC105      DEGREE PAIN MOST OF TIME
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Pain.C105_
+
+        How bad was the pain most of the time: mild, moderate or severe?
+        ..................................................................................
+           84           1. MILD
+          293           2. MODERATE
+          281           3. SEVERE
+           19           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          550       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piRVarsZ076_ReIwR_V <> REIWR)) OR (Init.E005_AltWaveFlag = SKIPQUESTIONS))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC107      OTHER MEDICAL CONDITIONS
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Disease.C107_
+
+        Did [she/he] have any (other) major illnesses[since the time of our interview
+        in  R’S LAST IW MONTH, YEAR/in the two years preceding [his/her] death]?
+        ..................................................................................
+          323           1. YES
+          897           5. NO
+            7           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piRVarsZ076_ReIwR_V <> REIWR)) OR (Init.E005_AltWaveFlag = SKIPQUESTIONS))
+         AND (C107_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC108M1M   OTHER MEDICAL CONDITIONS-SP-MASKED-1
+         Section: C     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         CAI: SecC.Disease.C108S
+
+        User note:  Code categories have been collapsed to protect respondent
+        confidentiality. Values 181, 182, and 183 were recoded to 189; Values 194, and
+        195 were recoded to 196.
+        ..................................................................................
+           14                 101-103. Cancers and tumors; skin conditions
+           35                 111-119. Musculoskeletal system and connective tissue
+           42                 121-129. Heart, circulatory and blood conditions
+           45                 131-139. Allergies; hayfever; sinusitis; tonsillitis
+           79                 141-149. Endocrine, metabolic and nutritional conditions
+           58                 151-159. Digestive system (stomach, liver, gallbladder,
+                                       kidney, bladder)
+           24                 161-169. Neurological and sensory conditions
+            2                 171-179. Reproductive system and prostate conditions
+            4                 181-189. Emotional and psychological conditions
+           10                 191-196. Miscellaneous
+            2                 595-597. Other symptoms
+                                  990. No text displayed
+                                  996. None
+            3                     997. Other health condition
+            4                     998. DK (Don’t Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+          905                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+TC108M2M   OTHER MEDICAL CONDITIONS-SP-MASKED-2
+         Section: C     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+
+
+        User note:  Code categories have been collapsed to protect respondent
+        confidentiality. Values 181, 182, and 183 were recoded to 189; Values 194, and
+        195 were recoded to 196.
+        ..................................................................................
+            4                 101-103. Cancers and tumors; skin conditions
+           18                 111-119. Musculoskeletal system and connective tissue
+           24                 121-129. Heart, circulatory and blood conditions
+           13                 131-139. Allergies; hayfever; sinusitis; tonsillitis
+           12                 141-149. Endocrine, metabolic and nutritional conditions
+           15                 151-159. Digestive system (stomach, liver, gallbladder,
+                                       kidney, bladder)
+            8                 161-169. Neurological and sensory conditions
+            1                 171-179. Reproductive system and prostate conditions
+            2                 181-189. Emotional and psychological conditions
+            4                 191-196. Miscellaneous
+            1                 595-597. Other symptoms
+                                  990. No text displayed
+                                  996. None
+            2                     997. Other health condition
+                                  998. DK (Don’t Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1123                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (piRVarsZ205_EverSmoked_V = YES))
+         AND (((C116_ = YES) OR (piRVarsZ076_ReIwR_V = REIWR)) OR ((ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC117      SMOKED CIGARETTES
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Smoking.C117_
+
+        Did[she/he] ever smoke cigarettes in the last two years of[her/his] life?
+        DEF: (Do not include pipes or cigars.)
+        ..................................................................................
+          173           1. YES
+          559           5. NO
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          494       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (piRVarsZ205_EverSmoked_V = YES))
+         AND (((C116_ = YES) OR (piRVarsZ076_ReIwR_V = REIWR)) OR ((ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN)))
+         AND ((((piRVarsZ076_ReIwR_V <> REIWR) AND (ACTIVELANGUAGE <> EXTENG)) AND
+        (ACTIVELANGUAGE <> EXTSPN)) OR ((C117_ <> NO) AND C117_ <> NONRESPONSE))
+         AND (C117_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC118      NUM CIGARETTES SMOKED PER DAY
+         Section: C     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecC.Smoking.C118_
+
+        About how many cigarettes or packs did [she/he] usually smoke in a day?
+        INTERVIEWER: PROBE A RANGE. THERE ARE 20 CIGARETTES IN A PACK.
+        INTERVIEWER: THIS QUESTION REFERS TO CIGARETTE SMOKING ONLY. IF R SMOKES
+        CIGARS OR PIPES, ENTER THE TYPE AND AMOUNT SMOKED IN AN F2 COMMENT.
+        CIGARETTES PER DAY:
+         OR
+        PACKS PER DAY:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            105        0          60         13.77         14.26    1106
+         -----------------------------------------------------------------
+           16          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (piRVarsZ205_EverSmoked_V = YES))
+         AND (((C116_ = YES) OR (piRVarsZ076_ReIwR_V = REIWR)) OR ((ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN)))
+         AND ((((piRVarsZ076_ReIwR_V <> REIWR) AND (ACTIVELANGUAGE <> EXTENG)) AND
+        (ACTIVELANGUAGE <> EXTSPN)) OR ((C117_ <> NO) AND C117_ <> NONRESPONSE))
+         AND (C117_ = YES)
+         AND (C118_ = EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC119      NUM PACKS SMOKED PER DAY
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Smoking.C119_
+
+        (About how many cigarettes or packs did [she/he] usually smoke in a day?)
+        INTERVIEWER: PROBE A RANGE. THERE ARE 20 CIGARETTES IN A PACK.
+        INTERVIEWER: THIS QUESTION REFERS TO CIGARETTE SMOKING ONLY. IF R SMOKES
+        CIGARS OR PIPES, ENTER THE TYPE AND AMOUNT SMOKED IN AN F2 COMMENT.
+        CIGARETTES PER DAY:
+         OR
+        PACKS PER DAY:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             52        1           3          1.40          0.57    1175
+         -----------------------------------------------------------------
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC128      EVER DRINK ALCOHOL
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Drinking.C128_
+
+         In the last two years before [her/his] death, did [she/he] ever drink any
+        alcoholic beverages such as beer, wine, or liquor?
+        ..................................................................................
+          313           1. YES
+           12           3. [VOL] NEVER HAVE USED ALCOHOL
+          897           5. NO
+            4           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC139      WEIGHT IN POUNDS
+         Section: C     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         CAI: SecC.Weigh.C139_
+
+        About how much did [she/he] weigh at the time of [her/his] death?
+        POUNDS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           1139       55         360        146.38         43.24       0
+         -----------------------------------------------------------------
+           87         998. DK (Don't Know); NA (Not Ascertained)
+            1         999. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND (((piRVarsZ076_ReIwR_V <> REIWR) OR (ACTIVELANGUAGE = EXTENG)) OR
+        (ACTIVELANGUAGE = EXTSPN))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC140      WEIGHT GAIN/LOSS 10 LBS. SINCE PREV WAVE
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.Weigh.C140_
+
+        Did [FIRST NAME OF INDIVIDUAL] gain or lose ten or more pounds in the last 2
+        years of[her/his] life?
+        ..................................................................................
+          107           1. YES, GAINED
+          772           2. YES, LOST
+           48           3. YES, GAINED AND LOST
+          283           5. NO
+           17           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (Init.E005_AltWaveFlag = ASKQUESTIONS))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC198      DIFFICULTY BREATHING
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.PersistentProblems.C198_DiffBreathe
+
+        Was there a period of at least one month during the last year of [her/his]
+        life when [she/he] had the following problems: Difficulty breathing?
+        ..................................................................................
+          608           1. YES
+           28           3. [VOL] ON RESPIRATOR
+          580           5. NO
+           11           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (Init.E005_AltWaveFlag = ASKQUESTIONS))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC199      VERY LITTLE APPETITE
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.PersistentProblems.C199_NoAppetite
+
+        (Was there a period of at least one month during the last year of [her/his]
+        life when [she/he] had) Very little appetite or desire for food?
+        ..................................................................................
+          734           1. YES
+           36           3. [VOL] IV FLUIDS OR FEEDING TUBE
+          442           5. NO
+           15           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (Init.E005_AltWaveFlag = ASKQUESTIONS))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC200      FREQUENT VOMITING
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.PersistentProblems.C200_FreqVomit
+
+        (Was there a period of at least one month during the last year of [her/his]
+        life when [she/he] had) Frequent vomiting?
+        ..................................................................................
+          130           1. YES
+         1072           5. NO
+           25           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (Init.E005_AltWaveFlag = ASKQUESTIONS))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC201      DIFFICULTY CONTROLLING ARMS/LEGS
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.PersistentProblems.C201_DiffCtrlArmLet
+
+        (Was there a period of at least one month during the last year of [her/his]
+        life when [she/he] had) Difficulty controlling [her/his] arms and legs?
+        ..................................................................................
+          406           1. YES
+          810           5. NO
+           11           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (Init.E005_AltWaveFlag = ASKQUESTIONS))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC202      DEPRESSION
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.PersistentProblems.C202_Depression
+
+        (Was there a period of at least one month during the last year of [her/his]
+        life when [she/he] had) Depression?
+        ..................................................................................
+          599           1. YES
+          586           5. NO
+           42           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (Init.E005_AltWaveFlag = ASKQUESTIONS))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC203      PERIODIC CONFUSION
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.PersistentProblems.C203_Confusion
+
+        (Was there a period of at least one month during the last year of [her/his]
+        life when [she/he] had) Periodic confusion?
+        ..................................................................................
+          559           1. YES
+          655           5. NO
+           13           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (Init.E005_AltWaveFlag = ASKQUESTIONS))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC204      SEVERE FATIGUE
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.PersistentProblems.C204_SeverFatigue
+
+        (Was there a period of at least one month during the last year of [her/his]
+        life when [she/he] had) Severe fatigue or exhaustion?
+        ..................................................................................
+          730           1. YES
+          463           5. NO
+           34           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (Init.E005_AltWaveFlag = ASKQUESTIONS))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC205      DIFFICULTY AWAKENING
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.PersistentProblems.C205_DiffAwaken
+
+        (Was there a period of at least one month during the last year of [her/his]
+        life when [she/he] had) Difficulty being aroused or wakened, or loss of
+        consciousness?
+        ..................................................................................
+          226           1. YES
+          980           5. NO
+           21           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (Init.E005_AltWaveFlag = ASKQUESTIONS))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC206      PERSISTENT COUGH
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.PersistentProblems.C206_Cough
+
+        (Was there a period of at least one month during the last year of[her/his]
+        life when[she/he] had) Persistent wheezing, cough or bringing up phlegm?
+        ..................................................................................
+          402           1. YES
+          809           5. NO
+           16           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (Init.E005_AltWaveFlag = ASKQUESTIONS))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC207      UNCONTROLLED TEMPER
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.PersistentProblems.C207_Temper
+
+        (Was there a period of at least one month during the last year of [her/his]
+        life when [she/he] had) Uncontrolled outbursts of temper?
+        ..................................................................................
+          199           1. YES
+         1017           5. NO
+           10           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRVarsZ076_ReIwR_V <> REIWR) OR (Init.E005_AltWaveFlag = ASKQUESTIONS))
+         AND (NOT ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TC208      INCONTINENCE
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecC.PersistentProblems.C208_Incontinent
+
+        (Was there a period of at least one month during the last year of [her/his]
+        life when [she/he] had) Loss of control of bowel or bladder?
+        ..................................................................................
+          576           1. YES
+          615           5. NO
+           36           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+TVDATE     2004 DATA MODEL VERSION
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        User Note:  This variable identifies which data model was used to interview
+        the household.  Please reference the data description for a summary of changes
+        in each data model.
+        ..................................................................................
+           14           1. Version 1
+           79           2. Version 2
+          153           3. Version 3
+          150           4. Version 4
+           92           5. Version 5
+          200           6. Version 6
+          515           7. Version 7
+           24           8. Version 8
+
+==========================================================================================
+
+TVERSION   2004 EXIT FINAL RELEASE VERSION NUMBER
+         Section: C     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+         1227           1. HRS 2004 Exit Final Release #1
+

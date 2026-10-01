@@ -1,0 +1,2312 @@
+==========================================================================================
+
+HRS 2022 Early Exit
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section J: EMPLOYMENT  (Respondent)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: J     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+          1201           010063-920360.  Household Identification Number
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: J     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           696         010.  Person Identifier
+            33         011.  Person Identifier
+             3         012.  Person Identifier
+           369         020.  Person Identifier
+            14         021.  Person Identifier
+             2         022.  Person Identifier
+             1         023.  Person Identifier
+            37         030.  Person Identifier
+             2         031.  Person Identifier
+            40         040.  Person Identifier
+             3         041.  Person Identifier
+             1         042.  Person Identifier
+
+
+==========================================================================================
+
+RSUBHH                        2020 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: J     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+          1072           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+            47           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            46           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            25           3.  1st deceased respondent from a household
+                         4.  2nd deceased respondent from a household
+             2           5.  Split household - one half of couple from SUBHH 1 or 2
+             1           6.  Split household - one half of couple from SUBHH 1 or 2
+             8           7.  Reunited household - respondents from split household
+                             reunite
+
+
+==========================================================================================
+
+XSSUBHH                       2022 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: J     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+          1147           3.  1st deceased respondent from a household
+            54           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+XSPN_SP                       2022 SPOUSE/PARTNER PERSON NUMBER
+         Section: J     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           176         010.  Person Identifier
+            34         011.  Person Identifier
+             2         012.  Person Identifier
+           169         020.  Person Identifier
+             5         021.  Person Identifier
+             2         022.  Person Identifier
+             1         023.  Person Identifier
+            20         030.  Person Identifier
+             3         031.  Person Identifier
+            38         040.  Person Identifier
+             1         041.  Person Identifier
+             1         042.  Person Identifier
+           749       Blank.  R not coupled
+
+
+==========================================================================================
+
+XSJ677                        BRANCHPOINT FOR J677Y
+         Section: J     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecJ.WORKSTATUS.J677YJ023BP
+
+         *
+
+         .................................................................................
+            32           0.  ALL OTHERS
+          1089           1.  NOT WORKING LAST WAVE
+            80           2.  NOT SELF EMPLOYED LAST WAVE
+
+
+==========================================================================================
+
+         IF SecJ.WORKSTATUS.J677YJ023BP = ALL OTHERS 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ023                        STOPPED WORKING FOR SLF - MONTH
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf
+
+         Now I have some questions about [First Name]'s employment before [he/she]
+         (died/passed away). According to our records, in [Prev Wave IW Month], [Prev
+         Wave IW Year] [he/she] was self-employed.
+         
+         In what month and year did [he/she] stop working for [himself/herself]?
+                 
+         INSTR: Month entered must be between [Prev Wave IW Month], [Prev Wave IW Year]
+         and [Date of Death Month], [Date of Death Year]
+                 
+         Month:
+         
+         Year:
+
+         .................................................................................
+             2           1.  JAN
+             1           2.  FEB
+             1           3.  MAR
+             1           4.  APR
+             1           5.  MAY
+             2           6.  JUN
+             1           7.  JUL
+                         8.  AUG
+             3           9.  SEP
+             1          10.  OCT
+             2          11.  NOV
+             4          12.  DEC
+             9          96.  WORKED THERE UNTIL DEATH
+             1          97.  WAS NOT SELF-EMPLOYED AT PREVIOUS INTERVIEW
+             3          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1169       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf = STILLWORKING 
+         OR SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf = 
+         DENYSLF_EMPATPW THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J024_YrStopWrkSelf := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf 
+         IF NOT(J023_MoStopWrkSelf = STILLWORKING OR J023_MoStopWrkSelf = 
+         DENYSLF_EMPATPW) THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ024                        STOPPED WORKING FOR SLF - YEAR
+         Section: J     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J024_YrStopWrkSelf
+
+         Now I have some questions about [First Name]'s employment before [he/she] died.
+         According to our records, in [Prev Wave IW Month], [Prev Wave IW Year] [he/she]
+         was self-employed.
+         
+         In what month and year did [he/she] stop working for [himself/herself]?
+         
+         INSTR: Month entered must be between [Prev Wave IW Month], [Prev Wave IW Year]
+         and [Date of Death Month], [Date of Death Year]
+         
+         Month: [STOPPED WORKING FOR SLF-MO]
+         
+         Year:
+
+         .................................................................................
+            20               2001-2022.  Actual Value
+             2                    9998.  DK (Don't Know); NA (Not Ascertained)
+            10                    9999.  RF (Refused)
+          1169                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF SecJ.WORKSTATUS.J677YJ023BP = ALL OTHERS AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf = DENYSLF_EMPATPW 
+         THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J678YJ023TOW158_2BP := '1' 
+         IF SecJ.WORKSTATUS.J677YJ023BP = ALL OTHERS AND 
+         NOT(SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J023_MoStopWrkSelf = 
+         DENYSLF_EMPATPW) THEN 
+           ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J678YJ023TOW158_2BP := '0' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ678                        BRANCHPOINT FOR J678Y
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J678YJ023TOW158_2BP
+
+         *
+
+         .................................................................................
+            31           0.  ALL OTHERS
+             1           1.  R DENIES WORKING FOR SELF
+          1169       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF SecJ.WORKSTATUS.J677YJ023BP = ALLOTHERS AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J678YJ023TOW158_2BP = ALLOTHERS AND 
+         NOT(J023_MoStopWrkSelf = 97) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ031                        PAID REGULAR SALARY
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_
+
+         Was [he/she] paid a regular salary or wages?
+
+         .................................................................................
+            10           1.  YES
+            18           5.  NO
+             3           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1170       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ032                        AMOUNT OF SALARY
+         Section: J     Level: Respondent      Type: Numeric    Width: 7   Decimals: 2
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J032_
+
+         How much was [he/she] paid before taxes and other deductions?
+         
+         INSTR: Do not probe DK/RF
+         
+         INSTR: If amount per hour, enter both dollars and cents, otherwise enter '0'
+         cents.
+         
+         Amount:
+         
+         Per:
+
+         .................................................................................
+             3                700-5000.  Actual Value
+             7                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+          1191                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> DontKnow AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> Refusal AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> NO THEN 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J032_ = Response AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J032_ <> 0 AND ActiveMode = 
+         'IWERADMIN' OR ActiveMode = 'SELFADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ036                        AMOUNT OF SALARY PER
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J036_
+
+         How much was [he/she] paid before taxes and other deductions?
+         
+         INSTR: PROBE if necessary: Was that per hour, week, month, or year?
+         
+         Amount: [AMOUNT OF SALARY]
+         
+         Per:
+
+         .................................................................................
+                         1.  HOUR
+             1           2.  WEEK
+             1           3.  EVERY TWO WEEKS/BI-WEEKLY
+             1           4.  MONTH
+                         5.  TWICE A MONTH
+                         6.  YEAR
+                         7.  OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1198       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> DontKnow AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> Refusal AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> NO THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J032_ = Response THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := Empty 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := 625  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(625 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := 1500  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := 3000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := 6500  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(6500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := 625  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(625 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := 1500  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := 3000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := 6500  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_ := PlusInt(6500 + '1') 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ033                        AMOUNT OF SALARY - MIN
+         Section: J     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J033_
+
+         (Thinking about how much [he/she] was paid before taxes and other deductions):
+         
+         Did it amount to a total of less than $____ per month, more than $____ per
+         month, or what?
+         
+         PROCEDURES: 2Up1Down, 1Up2Down
+         BREAKPOINTS: $625, $1,500, $3,000, $6,500
+         RANDOM ENTRY POINTS: $1,500, $3,000
+         ENTRY POINT ASSIGNMENT: 1 OR {NOT 1} AT X510
+
+         .................................................................................
+             1           0.  Value of Breakpoint
+             1         626.  Value of Breakpoint
+             1        1500.  Value of Breakpoint
+             2        3000.  Value of Breakpoint
+             1        6500.  Value of Breakpoint
+             1        6501.  Value of Breakpoint
+          1194       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> DontKnow AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> Refusal AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> NO THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J032_ = Response THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := Empty 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(625 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := 625  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := 1500  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := 3000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(6500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := 6500  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(625 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := 625  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := 1500  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := 3000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MinusInt(6500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := 6500  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_ := MISSING_FIELD_NAME 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ034                        AMOUNT OF SALARY - MAX
+         Section: J     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J034_
+
+         *
+
+         .................................................................................
+             1        1499.  Value of Breakpoint
+             1        1500.  Value of Breakpoint
+             2        3000.  Value of Breakpoint
+             1        6500.  Value of Breakpoint
+             2    99999996.  Greater than Maximum Breakpoint
+          1194       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> DontKnow AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> Refusal AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ <> NO THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J032_ = Response THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := Empty 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down0.E2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.A2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down0.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_ := '0' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ035                        AMOUNT OF SALARY - RESULT
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J035_
+
+         *
+
+         .................................................................................
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1200       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ038                        RECEIVE ANY PROFITS
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J038_
+
+         Did [he/she] receive some or all of the net earnings or profits?
+         
+         DEF: By "Net earnings or profits" we mean total business incomes less total
+         business expenses.
+
+         .................................................................................
+            20           1.  YES
+             6           5.  NO
+             5           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1170       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+         IF (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J038_ = NO OR 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J038_ = [DontKnow, Refusal]) AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ = YES THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073 := '1' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+         IF NOT((J038_ = NO OR J038_ = [DontKnow, Refusal]) AND J031_ = YES) THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073 := '0' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ681                        BRANCHPOINT FOR J681Y
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073
+
+         *
+
+         .................................................................................
+            28           0.  ALL OTHERS
+             3           1.  R DID NOT RECIEVE NET EARNINGS OR PROFITS (J038=5,8,9) AND R
+                             WAS PAID REGULAR SALARY OR WAGE (J031=1)
+          1170       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF NOT (SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ = YES AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J038_ <> YES) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ039                        AMOUNT OF NET PROFITS/EARNINGS
+         Section: J     Level: Respondent      Type: Numeric    Width: 8   Decimals: 2
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J039_
+
+         [What did [he/she] earn the last year [he/she] worked?/(In addition to [his/her]
+         regular salary,) How much did [he/she] receive from net earnings or profits?
+         
+         INSTR: If Proxy has trouble giving dollar figure, ask: What did [he/she] earn
+         the last year [he/she] worked?]
+         
+         DEF: By "Net earnings or profits" we mean total business incomes less total
+         business expenses.
+         
+         INSTR: Do not probe DK/RF
+         
+         INSTR: If amount per hour, enter both dollars and cents
+         
+         Amount:
+         
+         Per:
+
+         .................................................................................
+             8               400-30000.  Actual Value
+            20                   99998.  DK (Don't Know); NA (Not Ascertained)
+                                 99999.  RF (Refused)
+          1173                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073 <> 1 THEN 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J039_ = Response AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J039_ <> 0 AND ActiveMode = 
+         'IWERADMIN' OR ActiveMode = 'SELFADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ043                        AMOUNT OF NET PROFITS/EARNINGS PER
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J043_
+
+         [What did [he/she] earn the last year [he/she] worked?/(In addition to [his/her]
+         regular salary,) How much did [he/she] receive from net earnings or profits?
+         
+         INSTR: If Proxy has trouble giving dollar figure, ask: What did [he/she] earn
+         the last year [he/she] worked?]
+         
+         DEF: By "Net earnings or profits" we mean total business incomes less total
+         business expenses.
+         
+         INSTR: Do not probe DK/RF
+         
+         INSTR: If amount per hour, enter both dollars and cents
+         
+         Amount: [AMOUNT OF NET PROFITS/EARNINGS]
+         
+         Per:
+
+         .................................................................................
+                         1.  HOUR
+                         2.  WEEK
+             1           3.  EVERY TWO WEEKS/BI-WEEKLY
+             2           4.  MONTH
+                         5.  TWICE A MONTH
+             4           6.  YEAR
+             1           7.  OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1193       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073 <> 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J039_ = Response THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := Empty 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := 3300  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(3300 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := 10000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(10000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := 30000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(10000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(10000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(10000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(30000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := 75000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(30000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(30000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(30000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(75000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := 3300  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(3300 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := 10000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(10000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := 30000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(30000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := 75000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(30000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(30000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(30000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_ := PlusInt(75000 + '1') 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ040                        AMOUNT OF NET PROFITS/EARNINGS - MIN
+         Section: J     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J040_
+
+         (Thinking about what [she/he] earned the last year [she/he] worked):
+         
+         Did it amount to a total of less than $____ per year, more than $____ per year,
+         or what?
+         
+         PROCEDURES: 2Up1Down, 1Up2Down
+         BREAKPOINTS: $3,300, $10,000, $30,000, $75,000
+         RANDOM ENTRY POINTS: $10,000, $30,000
+         ENTRY POINT ASSIGNMENT: 1 OR {NOT 1} AT X501
+         ORDER OF ENTRY POINT ASSIGNMENTS AND PROCEDURES CORRESPOND
+
+         .................................................................................
+            10           0.  Value of Breakpoint
+             1        3300.  Value of Breakpoint
+             1        3301.  Value of Breakpoint
+             5       10001.  Value of Breakpoint
+             2       30001.  Value of Breakpoint
+             1       75001.  Value of Breakpoint
+          1181       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073 <> 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J039_ = Response THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := Empty 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(3300 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := 3300  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(10000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(10000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(10000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(10000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := 10000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(30000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := 30000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(75000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := 75000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(3300 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := 3300  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(10000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(10000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(10000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(10000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := 10000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(30000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(30000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(30000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(30000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := 30000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MinusInt(75000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := 75000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_ := MISSING_FIELD_NAME 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ041                        AMOUNT OF NET PROFITS/EARNINGS - MAX
+         Section: J     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J041_
+
+         *
+
+         .................................................................................
+             3        3299.  Value of Breakpoint
+             1        3300.  Value of Breakpoint
+             1        9999.  Value of Breakpoint
+             6       29999.  Value of Breakpoint
+             2       74999.  Value of Breakpoint
+             7    99999996.  Greater than Maximum Breakpoint
+          1181       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073 <> 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J039_ = Response THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := Empty 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_2Up1Down1.E2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.A2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.UNFM_1Up2Down1.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_ := '0' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ042                        AMOUNT OF NET PROFITS/EARNINGS - RESULT
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J042_
+
+         *
+
+         .................................................................................
+             7          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1194       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073 <> 1 THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J682YJ045BP_TOJ073 := '1' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J031_ 
+         IF NOT(J681YJ038TOJ073 <> 1) THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J682YJ045BP_TOJ073 := '0' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ682                        BRANCHPOINT FOR J682Y
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J682YJ045BP_TOJ073
+
+         *
+
+         .................................................................................
+             3           0.  ALL OTHERS
+            28           1.  J681 NOT EQUAL 1
+          1170       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF SecJ.WORKSTATUS.J677YJ023BP = 2 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ063                        STOP/RETIRE WORK PREV WAVE EMPLOYER - MONTH
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J063_MoStopWrkPrevEmp
+
+         Now I have some questions about [First Name]'s employment before [he/she] died.
+                          
+         IF R'S LAST IW EMPLOYER IS KNOWN:
+         According to our records, [he/she] was working for [Prev Wave Employer Name] in
+         [Prev Wave IW Month] [Prev Wave IW Year]. In what month and year did [he/she]
+         stop working for there, or was [he/she] still working there when [he/she]
+         (died/passed away)?
+                 
+         OTHERWISE:
+         According to our records, [he/she] was working for someone else when we last
+         talked to [him/her] in [Prev Wave IW Month] [Prev Wave Iw Yr]. In what month and
+         year did [he/she] stop working for that employer?
+                 
+         INSTR: Month entered must be between [[Prev Wave IW Month] [Prev Wave IW
+         Year]/[Prev Wave IW Year]] and [R's Death Month], [R's Death Year].
+         
+         INSTR: Options other than month and year can be found at the bottom of the
+         'month' list.
+                         
+         Month:
+                         
+         Year:
+
+         .................................................................................
+             2           1.  JAN
+             1           2.  FEB
+             3           3.  MAR
+             2           4.  APR
+             3           5.  MAY
+             6           6.  JUN
+             2           7.  JUL
+             4           8.  AUG
+             2           9.  SEP
+             3          10.  OCT
+             7          11.  NOV
+             2          12.  DEC
+            23          96.  WORKED THERE UNTIL DEATH
+             9          97.  DENY WORKING FOR SOMEONE ELSE, OR FOR NAMED EMPLOYER, AT
+                             LAST INTERVIEW
+            10          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1122       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J063_MoStopWrkPrevEmp 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J063_MoStopWrkPrevEmp = 
+         DENYWORKELSEORFORNAME THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J687YJ063TOW158_2BP := '1' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J063_MoStopWrkPrevEmp 
+         IF NOT(J063_MoStopWrkPrevEmp = DENYWORKELSEORFORNAME) THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J687YJ063TOW158_2BP := '0' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ687                        BRANCHPOINT FOR J687Y
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J687YJ063TOW158_2BP
+
+         *
+
+         .................................................................................
+            71           0.  ALL OTHERS
+             9           1.  (DENIES R WORKED FOR SELF OR PREV WAVE EMPLOYER) OR WAS
+                             STILL WORKING FOR SELF AS EITHER MAIN OR 2ND JOB
+          1121       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J063_MoStopWrkPrevEmp 
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J687YJ063TOW158_2BP <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J063_MoStopWrkPrevEmp <> STILLWORKING 
+         THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ064                        STOP/RETIRE WORK PREV WAVE EMPLOYER - YEAR
+         Section: J     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J064_YrStopWrkPrevEmp
+
+         Now I have some questions about [First Name]'s employment before [he/she] died.
+                          
+         IF R'S LAST IW EMPLOYER IS KNOWN:
+         According to our records, [he/she] was working for [Prev Wave Employer Name] in
+         [Prev Wave IW Month] [Prev Wave IW Year]. In what month and year did [he/she]
+         stop working for there, or was [he/she] still working there when [he/she]
+         (died/passed away)?
+                 
+         OTHERWISE:
+         According to our records, [he/she] was working for someone else when we last
+         talked to [him/her] in [Prev Wave IW Month] [Prev Wave Iw Yr]. In what month and
+         year did [he/she] stop working for that employer?
+                 
+         INSTR: Month entered must be between [[Prev Wave IW Month] [Prev Wave IW
+         Year]/[Prev Wave IW Year]] and [R's Death Month], [R's Death Year].
+         
+         INSTR: Options other than month and year can be found at the bottom of the
+         'month' list.
+                         
+         Month:
+                         
+         Year:
+
+         .................................................................................
+            39               2015-2022.  Actual Value
+             8                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+          1154                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XSJ067                        AMOUNT EARNING WHEN LEFT
+         Section: J     Level: Respondent      Type: Numeric    Width: 9   Decimals: 2
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J067_
+
+         What was [he/she] earning, before deductions, [when [he/she] left that
+         employer/at the time of [his/her] death]?
+         
+         INSTR: IF AMOUNT PER HOUR, ENTER BOTH DOLLARS AND CENTS, OTHERWISE ENTER '0'
+         CENTS
+         
+         INSTR: DO NOT PROBE DK/RF
+                 
+         Amount:
+                 
+         Per:
+
+         .................................................................................
+            27                0-120000.  Actual Value
+            44                  999998.  DK (Don't Know); NA (Not Ascertained)
+                                999999.  RF (Refused)
+          1130                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J067_ = Response AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J067_ <> 0 AND ActiveMode = 
+         'IWERADMIN' OR ActiveMode = 'SELFADMIN' THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ071                        AMOUNT EARNING WHEN LEFT - PER
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J071_
+
+         What was [he/she] earning, before deductions, [when [he/she] left that
+         employer/at the time of [his/her] death]?
+         
+         INSTR: IF AMOUNT PER HOUR, ENTER BOTH DOLLARS AND CENTS, OTHERWISE ENTER '0'
+         CENTS
+         
+         INSTR: DO NOT PROBE DK/RF
+         
+         Amount: [AMOUNT EARNING WHEN LEFT]
+         
+         Per:
+
+         .................................................................................
+             8           1.  HOUR
+                         2.  WEEK
+             2           3.  EVERY TWO WEEKS/BI-WEEKLY
+             6           4.  MONTH
+                         5.  TWICE A MONTH
+            10           6.  YEAR
+                         7.  OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1175       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF SecJ.WORKSTATUS.J677YJ023BP <> SKIP1 AND SecJ.WORKSTATUS.J677YJ023BP <> 
+         SKIP6 THEN 
+         IF NOT(piJ023BP = SKIP8) THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J678YJ023TOW158_2BP <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J679YJ028TOW158_2BP <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J680YJ031BP_TOW158_2BP <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073 <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J682YJ045BP_TOJ073 <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J683YJ045TOW158_2BP <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J684YJ058BP_TOJ167BP < 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J686YJ063BP <> 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J687YJ063TOW158_2BP <> 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J067_ = Response THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := Empty 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := 200  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(200 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := 800  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(800 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := 1500  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(800 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(800 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(800 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := 3000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := 200  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(200 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := 800  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(800 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := 1500  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := 3000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_ := PlusInt(3000 + '1') 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ068                        AMOUNT EARNING WHEN LEFT - MIN
+         Section: J     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J068_
+
+         (Thinking about what [she/he] was earning at that time, before deductions):
+         
+         Did it amount to a total of less than $____ per month, more than $____ per
+         month, or what?
+         
+         PROCEDURES: 2Up1Down, 1Up2Down
+         BREAKPOINTS: $200, $800, $1,500, $3,000
+         RANDOM ENTRY POINTS: $800, $1,500
+         ENTRY POINT ASSIGNMENT: 1 OR {NOT 1} AT X502
+
+         .................................................................................
+            16           0.  Value of Breakpoint
+             3         800.  Value of Breakpoint
+             7         801.  Value of Breakpoint
+             5        1500.  Value of Breakpoint
+             5        1501.  Value of Breakpoint
+             3        3000.  Value of Breakpoint
+             5        3001.  Value of Breakpoint
+          1157       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF SecJ.WORKSTATUS.J677YJ023BP <> SKIP1 AND SecJ.WORKSTATUS.J677YJ023BP <> 
+         SKIP6 THEN 
+         IF NOT(piJ023BP = SKIP8) THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J678YJ023TOW158_2BP <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J679YJ028TOW158_2BP <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J680YJ031BP_TOW158_2BP <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073 <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J682YJ045BP_TOJ073 <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J683YJ045TOW158_2BP <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J684YJ058BP_TOJ167BP < 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J686YJ063BP <> 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J687YJ063TOW158_2BP <> 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J067_ = Response THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := Empty 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(200 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := 200  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(800 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(800 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(800 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(800 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := 800  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := 1500  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := 3000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(200 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := 200  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(800 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(800 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(800 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(800 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := 800  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(1500 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := 1500  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = LESS THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MinusInt(3000 + '1') 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = ABOUT THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := 3000  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME  
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = MORE THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_ := MISSING_FIELD_NAME 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ069                        AMOUNT EARNING WHEN LEFT - MAX
+         Section: J     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J069_
+
+         *
+
+         .................................................................................
+             3         800.  Value of Breakpoint
+             8        1499.  Value of Breakpoint
+             5        1500.  Value of Breakpoint
+             2        2999.  Value of Breakpoint
+             3        3000.  Value of Breakpoint
+            23    99999996.  Greater than Maximum Breakpoint
+          1157       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF SecJ.WORKSTATUS.J677YJ023BP <> SKIP1 AND SecJ.WORKSTATUS.J677YJ023BP <> 
+         SKIP6 THEN 
+         IF NOT(piJ023BP = SKIP8) THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J678YJ023TOW158_2BP <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J679YJ028TOW158_2BP <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J680YJ031BP_TOW158_2BP <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J681YJ038TOJ073 <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWSELFNOWELSE.J682YJ045BP_TOJ073 <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J683YJ045TOW158_2BP <> 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J684YJ058BP_TOJ167BP < 1 AND 
+         SecJ.PREVIOUSJOBANDPENSION.PWELSENOWELSE.J686YJ063BP <> 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J687YJ063TOW158_2BP <> 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J067_ = Response THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := Empty 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 
+         IF E2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_2Up1Down0.E2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 
+         IF A2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.A2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 
+         IF B2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.B2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 
+         IF C2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.C2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := '0' 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = DontKnow THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := DontKnow 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = Refusal THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := Refusal 
+         {PREVIOUS ASK} SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 
+         IF D2.IsVisited = 1 THEN 
+         IF SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.UNFM_1Up2Down0.D2 = Empty AND 
+         ActiveMode = 'SELFADMIN' THEN 
+         ASSIGN: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_ := '0' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XSJ070                        AMOUNT EARNING WHEN LEFT - RESULT
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J070_
+
+         *
+
+         .................................................................................
+            18          98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+          1182       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XSJ688                        BRANCHPOINT FOR J688Y
+         Section: J     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecJ.PREVIOUSJOBANDPENSION.PWELSENOWSELF.J688YJ073BP_TOJ080
+
+         *
+
+         .................................................................................
+                         0.  ALL OTHERS
+            71           1.  SAME JOB TITLE AS PREVIOUS WAVE
+          1130       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XSVDATE                       2022 DATA MODEL VERSION
+         Section: J     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         User Note:  This variable identifies which data model was used to interview the
+         household.  Please reference the data description for a summary of changes in
+         each data model.
+
+         .................................................................................
+            78           1.  Version 1
+            94           2.  Version 2
+            65           3.  Version 3
+            32           4.  Version 4
+           162           5.  Version 5
+           770           6.  Version 6
+
+
+==========================================================================================
+
+XSVERSION                     2022 DATA RELEASE VERSION
+         Section: J     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+          1201           1.  HRS 2022 Exit Early Release - January 2025
+
+
+==========================================================================================

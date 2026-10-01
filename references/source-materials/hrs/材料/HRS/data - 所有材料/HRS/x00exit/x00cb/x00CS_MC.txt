@@ -1,0 +1,206 @@
+==========================================================================================
+2000 HRS Exit (Final Release)
+ODBC Reference: [HRS2000x]
+Perl script: CodebkD9.pl v5.043 Tue Mar  1  9:50:26 2005
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Surveycraft metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION CS: Cover Screen (HHMemberChild)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFIER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9001
+          Type: Character       Width: 6                  Decimals: 0
+          ................................................................................
+            280       010468-213355. Household ID
+
+==========================================================================================
+
+RSUBHH    2000 SUB-HOUSEHOLD IDENTIFIER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9004
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+            266         3. 1st deceased respondent from a household
+             14         4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+OPN       OTHER PERSON NUMBER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9008
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+            280             041-995. Other Person Number
+
+==========================================================================================
+
+FSUBHH    1998 SUB-HOUSEHOLD IDENTIFIER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9003
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+            275         0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+                        1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+              2         2. Split household - other half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+              3         3. 1st deceased respondent from a household
+                        5. Split household - one half of couple from SUBHH 1 or 2
+                        6. Split household - one half of couple from SUBHH 1 or 2
+                        7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+RQNR      SURVEYCRAFT CASE NUMBER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9006
+          Type: Numeric         Width: 5                  Decimals: 0
+          ................................................................................
+            192         80005-80999. AHEAD/CODA Surveycraft Case Number
+             88         90001-90342. HRS/WAR BABY Surveycraft Case Number
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R867 when [Q480:CS0Y7] IS (1) AND {When Q5 is (1) AND [Q7:PR7] IS
+             (5)}
+          *  Jump from R867 when [Q480:CS0Y7] IS (2) AND {When Q60 is (4) AND
+             [Q148:PR148] IS (NE 4)}
+          *  Jump from R867 when [Q480:CS0Y7] IS (2) AND {When Q58 is (1) AND [Q60:PR60]
+             IS (5)}
+          *  Jump from R867 when [Q480:CS0Y7] IS (1) AND {When Q7 is (4) AND [Q148:PR148]
+             IS (NE 4)}
+          *  Jump from R867 when [Q480:CS0Y7] IS (2) AND {When Q58 is (0 OR 5) AND
+             [Q60:PR60] IS (1) AND [Q148:PR148] IS (NE 1)}
+          *  Jump from R867 when [Q480:CS0Y7] IS (1) AND {When Q5 is (0 OR 5) AND
+             [Q7:PR7] IS (2) AND [Q148:PR148] IS (NE 2)}
+          *  Jump from R867 when [Q480:CS0Y7] IS (2) AND {When Q58 is (0 OR 5) AND
+             [Q60:PR60] IS (2) AND [Q148:PR148] IS (NE 2)}
+          *  Jump from R867 when [Q480:CS0Y7] IS (1) AND {When Q5 is (1) AND [Q7:PR7] IS
+             (5) AND [Q148:PR148] IS (NE 5)}
+          *  Jump from R867 when [Q480:CS0Y7] IS (1) AND {When Q5 is (0 OR 5) AND
+             [Q7:PR7] IS (3) AND [Q148:PR148] IS (NE 3)}
+          *  Jump from R867 when [Q480:CS0Y7] IS (2) AND {When Q58 is (1) AND [Q60:PR60]
+             IS (5) AND [Q148:PR148] IS (NE 5)}
+          *  Jump from R867 when [Q480:CS0Y7] IS (1) AND {When Q7 is (2) AND [Q148:PR148]
+             IS (NE 2)}
+          *  Jump from R867 when [Q480:CS0Y7] IS (2) AND {When Q60 is (2) AND
+             [Q148:PR148] IS (NE 2)}
+          *  Jump from R867 when [Q480:CS0Y7] IS (1) AND {When Q5 is (0 OR 5) AND
+             [Q7:PR7] IS (1) AND [Q148:PR148] IS (NE 1)}
+          *  Jump from R867 when [Q480:CS0Y7] IS (2) AND {When Q58 is (0 OR 5) AND
+             [Q60:PR60] IS (3) AND [Q148:PR148] IS (NE 3)}
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R868      CS48S.INDEX KID LOOP
+          Section: CS           Level: HHMemberChild      CAI Reference: Q868
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+            280             041-995. Other Person Number
+                              Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1);
+                                     [Q867:CS47Y2] IS (NE 1); [Q506:CS0Y20] IS (2)
+
+==========================================================================================
+
+R869      CS48.GRID MONTH
+          Section: CS           Level: HHMemberChild      CAI Reference: Q869
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS48.
+                  In what month and year did
+          IF Q480 IS (1)
+          IF {When Q4 IS (Q868), Q7 IS (4)}
+
+                  [Q8-PR8.HH1 FIRST NAME]  die?
+          ELSE {When Q4 IS (Q868), Q5 IS (0 OR 5) AND Q7 IS (1 OR 2 OR 3)}
+                  (he/she) and
+                  [Q8-PR8.HH1 FIRST NAME]  start living in the same
+                  (house or apartment/house/apartment)?
+          ELSE {When Q4 IS (Q868), Q5 IS (1) AND Q7 IS (5)}
+                  (he/she) and
+                  [Q8-PR8.HH1 FIRST NAME]  stop living together?
+          ELSE
+
+                  [Q8-PR8.HH1 FIRST NAME]  stop living in (his/her) home?
+          END
+
+          ELSE
+          IF {When Q57 IS (Q868), Q60 IS (4)}
+
+                  [Q61-PR61.HH2 MEM FIRST NAME]  die?
+          ELSE {When Q57 IS (Q868), Q58 IS (0 OR 5) AND Q60 IS (1 OR 2 OR 3)}
+                  (he/she) and
+                  [Q61-PR61.HH2 MEM FIRST NAME]  start living in the same
+                  (house or apartment/house/apartment)?
+
+          ELSE {When Q57 IS (Q868), Q58 IS (1) AND Q60 IS (5)}
+                  (he/she) and
+                  [Q61-PR61.HH2 MEM FIRST NAME]  stop living together?
+          ELSE
+
+                  [Q61-PR61.HH2 MEM FIRST NAME]  stop living in (his/her) home?
+          END
+
+          END
+
+                  MONTH:
+                  YEAR:
+          ................................................................................
+             39         1. JAN
+             16         2. FEB
+             18         3. MAR
+             29         4. APR
+             17         5. MAY
+             25         6. JUN
+             22         7. JUL
+             16         8. AUG
+             14         9. SEP
+             21        10. OCT
+              9        11. NOV
+             25        12. DEC
+             29        98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+                    Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1); [Q867:CS47Y2] IS
+                           (NE 1); [Q506:CS0Y20] IS (2)
+
+==========================================================================================
+
+R870      CS48a.GRID YEAR
+          Section: CS           Level: HHMemberChild      CAI Reference: Q870
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+            266           1955-2001. Actual Value
+             14                9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+                              Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1);
+                                     [Q867:CS47Y2] IS (NE 1); [Q506:CS0Y20] IS (2)
+
+==========================================================================================
+
+R871      CS48bx.TEMP/PERM MOVE
+          Section: CS           Level: HHMemberChild      CAI Reference: Q871
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS48bx.
+                  Was the move intended to be temporary or was it thought
+                  of as permanent?
+          ................................................................................
+             64         1. TEMPORARY
+            157         2. PERMANENT
+             12         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+             47     Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1); [Q867:CS47Y2] IS
+                           (NE 1); [Q506:CS0Y20] IS (2)
+
+==========================================================================================
+
+RVERSION  2000 EXIT FINAL RELEASE VERSION NUMBER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9007
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            280         1. First Data Release
+

@@ -1,0 +1,361 @@
+==========================================================================================
+
+HRS 2010 Post Exit (Final Release)
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquest@isr.umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section A: COVERSCREEN  (Respondent)
+
+==========================================================================================
+
+HHID           HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+           134           015140-501713.  Household Identifier
+
+
+==========================================================================================
+
+PN             RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+            87         010.  Person Identifier
+            43         020.  Person Identifier
+             1         021.  Person Identifier
+             1         030.  Person Identifier
+             2         040.  Person Identifier
+
+
+==========================================================================================
+
+WPSUBHH        2010 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           128           3.  1st deceased respondent from a household
+             6           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+LSUBHH         2008 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           128           3.  1st deceased respondent from a household
+             6           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+WPPN_SP        2010 SPOUSE PERSON IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+             1         010.  Person Identifier
+            47         011.  Person Identifier
+             2         012.  Person Identifier
+             1         020.  Person Identifier
+            28         021.  Person Identifier
+             1         041.  Person Identifier
+             1         821.  New Spouse of Non-Original Respondent
+            53       Blank.  No Spouse
+
+
+==========================================================================================
+
+WPEXITIW       YEAR OF EXIT INTERVIEW
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+
+         .................................................................................
+            13        2006.  Year of Exit Interview
+           121        2008.  Year of Exit Interview
+
+
+==========================================================================================
+
+         ASSIGN: IF (Init.A120_UPDATER > 0) OR Init.A503_REFRESH <> EMPTY THEN 
+         A500_CurDate := SYSDATE 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WPA500         DATE OF INTERVIEW - MONTH
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: Init.A500_CurDate
+
+         *
+
+         .................................................................................
+             3           1.  JAN
+             9           2.  FEB
+            10           3.  MAR
+            46           4.  APR
+                         5.  MAY
+                         6.  JUN
+             9           7.  JUL
+             3           8.  AUG
+            11           9.  SEP
+            18          10.  OCT
+            14          11.  NOV
+            11          12.  DEC
+
+
+==========================================================================================
+
+         ASSIGN: IF (Init.A120_UPDATER > 0) OR Init.A503_REFRESH <> EMPTY THEN 
+         A501_CurDateYear := A500_CurDate.YEAR 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WPA501         DATE OF INTERVIEW - YEAR
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: Init.A501_CurDateYear
+
+         *
+
+         .................................................................................
+           134               2010-2011.  Actual Year
+
+
+==========================================================================================
+
+         IF puSectionTracker* = EMPTY OR (puSectionTracker* = Start) THEN 
+
+         IF (Preload_HH.X024_ReIwHH_V = YES) OR ((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (StartInterview.SecA.StartInterview.A007TRAlive_A = YES)) THEN 
+
+         IF (Preload_HH.X024_ReIwHH_V = YES) OR ((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (StartInterview.SecA.StartInterview.A007TRAlive_A = YES)) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WPA165         INTRO CONFIDENTIALITY 1
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.ContinuInterview.A165_A013_
+
+         (As you may know, [R's FIRST NAME] was a part of the Health and Retirement
+         Study, an important study about issues of aging.) About two years ago, after 
+         [R's FIRST NAME]  died, we spoke with [you/NAME OF EXIT INTERVIEW PROXY] about
+         [R's FIRST NAME]'s death and the health conditions surrounding [his/her] death.
+         At that time, final settlement of the estate had not taken place, and we would
+         like to ask a few questions now about the final estate settlement.
+         
+         This interview is completely voluntary. If we should come to any question that
+         you don't want to answer, just let me know and I will go on to the next
+         question. The answers you give will be kept confidential.
+         
+         We are required to report to State officials credible evidence of serious harm
+         or abuse to any person, but we will not ask you any questions about such topics.
+         
+         Press 1 to continue
+
+         .................................................................................
+           134           1.  CONTINUE
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.ContinuInterview.A165_A013_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WPA013         INTRO CONFIDENTIALITY 2
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.ContinuInterview.A013_Continue
+
+         A Department of Health and Human Services Certificate of Confidentiality covers
+         this research in order to help ensure [R FIRST NAME]'s privacy. This certificate
+         can help protect the investigators from being forced to release any research
+         information that identifies [him/her].
+         
+         This interview may be recorded so that my supervisor can evaluate my
+         performance.
+         
+         Press 1 or 5 as appropriate to confirm that you have read the above statement to
+         the respondent
+
+         .................................................................................
+           100           1.  CONTINUE
+            34           5.  CONTINUE WITHOUT RECORDING
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.StartInterview.A155_SelfPrxy 
+
+         IF SecA.StartInterview.A009_SelfPrxy* <> SLF THEN 
+
+         IF (Preload_RVARS.Z095_SelfPrxyIw_V <> SLF) AND (Preload_RVARS.Z076_ReIwR_V = 
+         REIWR) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WPA010         CURRENT WAVE PROXY - SAME AS LAST WAVE
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.StartInterview.A010_CurrWavePrxy
+
+         [IWER: THE NAME OR RELATIONSHIP OF THE PROXY AT THE PREVIOUS INTERVIEW IS NOT
+         RECORDED. UNLESS YOU LEARN FROM THE CURRENT WAVE PROXY THAT S/HE ALSO DID THE
+         PREVIOUS INTERVIEW, ENTER CODE 3 BELOW./PREVIOUS WAVE PROXY WAS [PREV WAVE PROXY
+         NAME][PW PROXY RELATIONSHIP]]
+         
+         IWER: IS CURRENT WAVE PROXY THE SAME PERSON OR SOMEONE ELSE?
+
+         .................................................................................
+           117           1.  SAME PERSON AS IN PRIOR-WAVE
+            15           2.  DIFFERENT/NEW PERSON
+             2           3.  NOT KNOWN
+
+
+==========================================================================================
+
+         ASSIGN: IF puSectionTracker = EMPTY OR (puSectionTracker = Start) THEN 
+         IF (Preload_HH.X024_ReIwHH_V = YES) OR ((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (SecA.StartInterview.A007TRAlive_A = YES)) THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> PXYSPISREPORTER THEN 
+         IF (piPreload_RVarsZ096_PrxyRTR_V = EMPTY OR (piPreload_RVarsZ096_PrxyRTR_V = 
+         UNKNOWN)) OR (SecA.StartInterview.A010_CurrWavePrxy <> SAMEPERSONASINPRIORWAVE) 
+         THEN 
+         A103_PrxyRTR.ASK 
+         ELSE 
+         IF piPreload_RVarsZ096_PrxyRTR_V <> EMPTY AND 
+         (SecA.StartInterview.A010_CurrWavePrxy = SAMEPERSONASINPRIORWAVE) THEN 
+         A103_PrxyRTR := piPreload_RVarsZ096_PrxyRTR_V.ORD 
+         ELSE 
+         IF SecA.StartInterview.A009_SelfPrxy = PXYSPISREPORTER THEN 
+         A103_PrxyRTR := SPOUSEPARTNER 
+         IF SecA.StartInterview.A009_SelfPrxy <> PXYSPISREPORTER THEN 
+         IF (piPreload_RVarsZ096_PrxyRTR_V = EMPTY OR (piPreload_RVarsZ096_PrxyRTR_V = 
+         UNKNOWN)) OR (SecA.StartInterview.A010_CurrWavePrxy <> SAMEPERSONASINPRIORWAVE) 
+         THEN 
+         A103_PrxyRTR.ASK 
+         ELSE 
+         IF piPreload_RVarsZ096_PrxyRTR_V <> EMPTY AND 
+         (SecA.StartInterview.A010_CurrWavePrxy = SAMEPERSONASINPRIORWAVE) THEN 
+         A103_PrxyRTR := piPreload_RVarsZ096_PrxyRTR_V.ORD 
+         ELSE 
+         IF SecA.StartInterview.A009_SelfPrxy = PXYSPISREPORTER THEN 
+         A103_PrxyRTR := SPOUSEPARTNER 
+         ELSE 
+         IF SecA.StartInterview.A009_SelfPrxy <> PXYSPISREPORTER THEN 
+         IF (piPreload_RVarsZ096_PrxyRTR_V = EMPTY OR (piPreload_RVarsZ096_PrxyRTR_V = 
+         UNKNOWN)) OR (SecA.StartInterview.A010_CurrWavePrxy <> SAMEPERSONASINPRIORWAVE) 
+         THEN 
+         A103_PrxyRTR.ASK 
+         ELSE 
+         IF piPreload_RVarsZ096_PrxyRTR_V <> EMPTY AND 
+         (SecA.StartInterview.A010_CurrWavePrxy = SAMEPERSONASINPRIORWAVE) THEN 
+         A103_PrxyRTR := piPreload_RVarsZ096_PrxyRTR_V.ORD 
+         ELSE 
+         IF SecA.StartInterview.A009_SelfPrxy = PXYSPISREPORTER THEN 
+         A103_PrxyRTR := SPOUSEPARTNER 
+         IF SecA.StartInterview.A009_SelfPrxy <> PXYSPISREPORTER THEN 
+         IF (piPreload_RVarsZ096_PrxyRTR_V = EMPTY OR (piPreload_RVarsZ096_PrxyRTR_V = 
+         UNKNOWN)) OR (SecA.StartInterview.A010_CurrWavePrxy <> SAMEPERSONASINPRIORWAVE) 
+         THEN 
+         A103_PrxyRTR.ASK 
+         ELSE 
+         IF piPreload_RVarsZ096_PrxyRTR_V <> EMPTY AND 
+         (SecA.StartInterview.A010_CurrWavePrxy = SAMEPERSONASINPRIORWAVE) THEN 
+         A103_PrxyRTR := piPreload_RVarsZ096_PrxyRTR_V.ORD 
+         ELSE 
+         IF SecA.StartInterview.A009_SelfPrxy = PXYSPISREPORTER THEN 
+         A103_PrxyRTR := SPOUSEPARTNER 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WPA103         PROXY RELATIONSHIP TO R
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.StartInterview.A103_PrxyRTR
+
+         IWER: DESIGNATE THE PROXY REPORTER'S RELATIONSHIP TO [FIRST NAME]
+
+         .................................................................................
+            20           2.  SPOUSE/PARTNER
+            34           3.  SON
+             1           4.  STEPSON OR SON OF PARTNER
+                         5.  SPOUSE/PARTNER OF DAUGHTER
+            51           6.  DAUGHTER
+                         7.  STEPDAUGHTER OR DAUGHTER OF PARTNER
+             1           8.  SPOUSE/PARTNER OF SON
+             3           9.  GRANDCHILD OF R OR SP/P
+             2          15.  BROTHER
+             4          17.  SISTER
+            14          19.  OTHER RELATIVE
+             4          20.  OTHER INDIVIDUAL
+                        23.  PAID HELPER
+                        24.  PROFESSIONAL
+                        33.  SP/P OF GRANDCHILD
+                        98.  DK (Don't Know)
+                        99.  RF (Refused)
+                     Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+WPA152         INTRO TO POST EXIT
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.StartInterview.A152_IntroPostExit
+
+         (As you may know, [R's First Name] was a part of the Health and Retirement
+         Study, an important study about issues of aging.) In [Last Interview Month],
+         [Last Interview Year], after [he/she] died, we spoke with you about [his/her]
+         death and the health conditions surrounding [his/her] death. At that time, final
+         settlement of the estate had not taken place, and we would like to ask a few
+         questions now about the final estate settlement.
+
+         .................................................................................
+           134       Blank.  Continue - No Data Collected
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.StartInterview.A155_SelfPrxy 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WPA012         SELECT LANGUAGE
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.StartInterview.A012_LangSwitch
+
+         Select English or Spanish
+
+         .................................................................................
+           134           1.  ENGLISH
+                         2.  SPANISH
+
+
+==========================================================================================
+
+WPVDATE        2010 DATA MODEL VERSION
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+             8           1.  Version 1
+            46           2.  Version 2
+                         3.  Version 3
+                         4.  Version 4
+                         5.  Version 5
+            11           6.  Version 6
+                         7.  Version 7
+            69           8.  Version 8
+
+
+==========================================================================================
+
+WPVERSN        2010 POST-EXIT RELEASE VERSION NUMBER
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+           134           1.  HRS 2010 Post-Exit Version 1
+
+
+==========================================================================================

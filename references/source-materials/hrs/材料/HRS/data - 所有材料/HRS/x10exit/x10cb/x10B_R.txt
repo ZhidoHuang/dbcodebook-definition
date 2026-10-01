@@ -1,0 +1,1039 @@
+==========================================================================================
+
+HRS 2010 Final Exit Release
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquest@isr.umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section B: DEMOGRAPHICS  (Respondent)
+
+==========================================================================================
+
+HHID                HOUSEHOLD IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+          1446           010210-502753.  Household Identification Number
+
+
+==========================================================================================
+
+PN                  RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           880         010.  Person Identifier
+            31         011.  Person Identifier
+             2         012.  Person Identifier
+           410         020.  Person Identifier
+             7         021.  Person Identifier
+            60         030.  Person Identifier
+             3         031.  Person Identifier
+            48         040.  Person Identifier
+             5         041.  Person Identifier
+
+
+==========================================================================================
+
+WSUBHH              2010 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+          1392           3.  1st deceased respondent from a household
+            54           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+LSUBHH              2008 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+          1376           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+            29           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            27           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+             4           3.  1st deceased respondent from a household
+             5           5.  Split household - one half of couple from SUBHH 1 or 2
+             1           6.  Split household - one half of couple from SUBHH 1 or 2
+             4           7.  Reunited household - respondents from split household
+                             reunite
+
+
+==========================================================================================
+
+WPN_SP              2010 SPOUSE/PARTNER PERSON NUMBER
+         Section: B     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           211         010.  Person Identifier
+            32         011.  Person Identifier
+             4         012.  Person Identifier
+           256         020.  Person Identifier
+            15         021.  Person Identifier
+             1         022.  Person Identifier
+            31         030.  Person Identifier
+            40         040.  Person Identifier
+             2         041.  Person Identifier
+             2         811.  New Spouse of Non-Original Respondent
+             1         812.  New Spouse of Non-Original Respondent
+           851       Blank.  R not coupled
+
+
+==========================================================================================
+
+WB084               IW MODE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.B084_IwMode
+
+         ENTER current mode of interview:
+
+         .................................................................................
+          1153           1.  TELEPHONE
+           293           2.  FACE-TO-FACE
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.B084_IwMode 
+
+         IF RVARS.Z076_ReIwR_V* <> REIWR THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB001               INTRO-DEMOGRAPHICS
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.B001_
+
+         Now I have some questions about [R's FIRST NAME]'s background.
+
+         .................................................................................
+          1446           1.  CONTINUE
+                     Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         IF (RVARS.RVARS.Z076_ReIwR_V* = REIWR) AND ((RVARS.RVARS.Z230_USBORN <> YES) 
+         AND (RVARS.RVARS.Z093_IwYr_V* < 2006)) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB085               US CITIZENSHIP
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: REIwRCitizenship.B085_
+
+         Was [R's FIRST NAME] a citizen of the United States?
+
+         .................................................................................
+             9           1.  YES
+             4           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1433       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} REIwRCitizenship.B085_ 
+
+         IF REIwRCitizenship.B085_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB086               BORN US CITIZEN
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: REIwRCitizenship.B086_
+
+         Was [she/he] born a citizen of the United States?
+         
+         Definition: U.S. born citizens include people born abroad of an American parent
+         or parents, and those born in U.S. territories and possessions, including Puerto
+         Rico, Guam, the U.S. Virgin Islands, or Northern Marianas.
+
+         .................................................................................
+                         1.  YES
+             9           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1437       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} REIwRCitizenship.B086_ 
+
+         IF REIwRCitizenship.B086_ <> YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB087               YEAR BECAME US CITIZEN
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: REIwRCitizenship.B087_
+
+         In what year did [he/she] become a United States citizen?
+
+         .................................................................................
+             7               1955-1998.  Actual Value
+             2                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+          1437                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.B084_IwMode 
+
+         IF (RVARS.Z076_ReIwR_V* <> REIWR) OR (RVARS.Z093_IwYr_V* < 2006) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB088               MOTHER WORK DURING CHILDHOOD
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.OtherBackground.B088_
+
+         What portion of the time did [R's FIRST NAME]'s mother work outside the home
+         when [R's FIRST NAME] was growing up: all of the time, some of the time, or not
+         at all?
+
+         .................................................................................
+             7           1.  ALL OF THE TIME
+            13           3.  SOME OF THE TIME
+            34           5.  NOT AT ALL
+             1           7.  NEVER LIVED WITH MOTHER/MOTHER WAS NOT ALIVE (VOL)
+            19           8.  DK (Don't Know); NA (Not Ascertained)
+             2           9.  RF (Refused)
+          1370       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.OtherBackground.B088_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB028               R HISPANIC/LATINO
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.OtherBackground.B028_
+
+         Did [R's FIRST NAME] consider [herself/himself] Hispanic or Latino?
+
+         .................................................................................
+            10           1.  YES
+            63           5.  NO
+             2           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+          1370       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.OtherBackground.B028_ 
+
+         IF SecB.OtherBackground.B028_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB029M1M            TYPE HISPANIC - 1-MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.OtherBackground.B029M[1]
+
+         Would [she/he] have said [she/he] was Mexican American, Puerto Rican, Cuban
+         American or something else?
+         
+         CHOOSE all that apply
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+             5           1.  MEXICAN AMERICAN/CHICANO
+             5           7.  OTHER (SPECIFY) masked version includes Puerto Rican, Cuban
+                             American
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1436       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.OtherBackground.B028_ 
+
+         IF SecB.OtherBackground.B028_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB029M2M            TYPE HISPANIC - 2-MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.OtherBackground.B029M[2]
+
+         Would [she/he] have said [she/he] was Mexican American, Puerto Rican, Cuban
+         American or something else?
+         
+         CHOOSE all that apply
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+                         1.  MEXICAN AMERICAN/CHICANO
+                         7.  OTHER (SPECIFY) masked version includes Puerto Rican, Cuban
+                             American
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1446       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.OtherBackground.B028_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB089M1M            R RACE -1- MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecB.OtherBackground.B089M[1]
+
+         What race did [FIRST NAME] consider [yourself] to be: White, Black or African
+         American, American Indian, Alaska Native, Asian, Native Hawaiian, Pacific
+         Islander, or something else?
+         
+         RECORD all mentions
+         
+         PROBE before accepting refusal
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+            43           1.  WHITE/CAUCASIAN
+            22           2.  BLACK/AFRICAN AMERICAN
+            10          97.  OTHER (SPECIFY) Masked version includes American Indian,
+                             Alaskan Native, Asian, Native Hawaiian, and Pacific Islander
+                        98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+          1370       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.OtherBackground.B028_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB089M2M            R RACE -2- MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecB.OtherBackground.B089M[2]
+
+         What race did [FIRST NAME] consider [yourself] to be: White, Black or African
+         American, American Indian, Alaska Native, Asian, Native Hawaiian, Pacific
+         Islander, or something else?
+         
+         RECORD all mentions
+         
+         PROBE before accepting refusal
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+                         1.  WHITE/CAUCASIAN
+                         2.  BLACK/AFRICAN AMERICAN
+                        97.  OTHER (SPECIFY) Masked version includes American Indian,
+                             Alaskan Native, Asian, Native Hawaiian, and Pacific Islander
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1446       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.OtherBackground.B089M 
+
+         IF (((((((((((((((((((((((((((SecB.OtherBackground.B089Temp1* <> EMPTY AND 
+         SecB.OtherBackground.B089Temp2* <> EMPTY) OR (SecB.OtherBackground.B089Temp1* 
+         <> EMPTY AND SecB.OtherBackground.B089Temp3* <> EMPTY)) OR 
+         (SecB.OtherBackground.B089Temp1* <> EMPTY AND SecB.OtherBackground.B089Temp4* 
+         <> EMPTY)) OR (SecB.OtherBackground.B089Temp1* <> EMPTY AND 
+         SecB.OtherBackground.B089Temp5* <> EMPTY)) OR (SecB.OtherBackground.B089Temp1* 
+         <> EMPTY AND SecB.OtherBackground.B089Temp6* <> EMPTY)) OR 
+         (SecB.OtherBackground.B089Temp1* <> EMPTY AND SecB.OtherBackground.B089Temp7* 
+         <> EMPTY)) OR (SecB.OtherBackground.B089Temp1* <> EMPTY AND 
+         SecB.OtherBackground.B089Temp8* <> EMPTY)) OR (SecB.OtherBackground.B089Temp2* 
+         <> EMPTY AND SecB.OtherBackground.B089Temp3* <> EMPTY)) OR 
+         (SecB.OtherBackground.B089Temp2* <> EMPTY AND SecB.OtherBackground.B089Temp4* 
+         <> EMPTY)) OR (SecB.OtherBackground.B089Temp2* <> EMPTY AND 
+         SecB.OtherBackground.B089Temp5* <> EMPTY)) OR (SecB.OtherBackground.B089Temp2* 
+         <> EMPTY AND SecB.OtherBackground.B089Temp6* <> EMPTY)) OR 
+         (SecB.OtherBackground.B089Temp2* <> EMPTY AND SecB.OtherBackground.B089Temp7* 
+         <> EMPTY)) OR (SecB.OtherBackground.B089Temp2* <> EMPTY AND 
+         SecB.OtherBackground.B089Temp8* <> EMPTY)) OR (SecB.OtherBackground.B089Temp3* 
+         <> EMPTY AND SecB.OtherBackground.B089Temp4* <> EMPTY)) OR 
+         (SecB.OtherBackground.B089Temp3* <> EMPTY AND SecB.OtherBackground.B089Temp5* 
+         <> EMPTY)) OR (SecB.OtherBackground.B089Temp3* <> EMPTY AND 
+         SecB.OtherBackground.B089Temp6* <> EMPTY)) OR (SecB.OtherBackground.B089Temp3* 
+         <> EMPTY AND SecB.OtherBackground.B089Temp7* <> EMPTY)) OR 
+         (SecB.OtherBackground.B089Temp3* <> EMPTY AND SecB.OtherBackground.B089Temp8* 
+         <> EMPTY)) OR (SecB.OtherBackground.B089Temp4* <> EMPTY AND 
+         SecB.OtherBackground.B089Temp5* <> EMPTY)) OR (SecB.OtherBackground.B089Temp4* 
+         <> EMPTY AND SecB.OtherBackground.B089Temp6* <> EMPTY)) OR 
+         (SecB.OtherBackground.B089Temp4* <> EMPTY AND SecB.OtherBackground.B089Temp7* 
+         <> EMPTY)) OR (SecB.OtherBackground.B089Temp4* <> EMPTY AND 
+         SecB.OtherBackground.B089Temp8* <> EMPTY)) OR (SecB.OtherBackground.B089Temp5* 
+         <> EMPTY AND SecB.OtherBackground.B089Temp6* <> EMPTY)) OR 
+         (SecB.OtherBackground.B089Temp5* <> EMPTY AND SecB.OtherBackground.B089Temp7* 
+         <> EMPTY)) OR (SecB.OtherBackground.B089Temp5* <> EMPTY AND 
+         SecB.OtherBackground.B089Temp8* <> EMPTY)) OR (SecB.OtherBackground.B089Temp6* 
+         <> EMPTY AND SecB.OtherBackground.B089Temp7* <> EMPTY)) OR 
+         (SecB.OtherBackground.B089Temp6* <> EMPTY AND SecB.OtherBackground.B089Temp8* 
+         <> EMPTY)) OR (SecB.OtherBackground.B089Temp7* <> EMPTY AND 
+         SecB.OtherBackground.B089Temp8* <> EMPTY) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB091M              R RACE - PRIMARY- MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecB.OtherBackground.B091_
+
+         Did [he/she] consider [herself/himself] primarily [White/ Black/African
+         American/or Black/African American/American Indian/or American Indian/Alaska
+         Native/or Alaska Native/Asian/or Asian/Native Hawaiian/or Native Hawaiian/
+         Pacific Islander/or Pacific Islander/[R RACE - OTHER SPECIFY]/or [R RACE - OTHER
+         SPECIFY]/?]
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+                         1.  [WHITE/CAUCASIAN]       
+                         2.  [BLACK/AFRICAN-AMERICAN]
+                        97.  OTHER (SPECIFY) Masked version includes American Indian,
+                             Alaskan Native, Asian, Native Hawaiian, and Pacific Islander
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1446       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.B084_IwMode 
+
+         IF (SecA.Relations.A028_RInNHome* <> YES) OR 
+         (SecA.HousingLocation.NursingHome.A070_NHOwnRent = YES) THEN 
+
+         IF (((RVARS.Z076_ReIwR_V* = REIWR) AND ((HH.X033_HHMoved* <> RDIDNTMOVE) OR 
+         (SecA.HousingLocation.A071_SameMainRes* <> YES))) AND (SCV.XR1_R2 <> SECOND)) 
+         OR (RVARS.Z076_ReIwR_V* <> REIWR) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB039               YEAR MOVED TO MAIN RESIDENCE
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecB.LivedArea.B039_YrMoveMainRes
+
+         In what year did [she/he] move to [her/his] home in [MAIN RES ADDRESS CITY],
+         [MAIN RES ADDRESS STATE]?
+         
+         Year:
+
+         .................................................................................
+           125               1948-2010.  Actual Value
+            16                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+          1305                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.LivedArea.B039_YrMoveMainRes 
+
+         IF SecB.LivedArea.B039_YrMoveMainRes >= (SecB.LivedArea.Today*.YEAR - 2) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB040               MONTH MOVED TO MAIN RESIDENCE
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecB.LivedArea.B040_MoMoveMainRes
+
+         In what month was that?
+         
+         Month:
+
+         .................................................................................
+             8           1.  JAN
+             5           2.  FEB
+             4           3.  MAR
+             6           4.  APR
+             2           5.  MAY
+             5           6.  JUN
+             5           7.  JUL
+             2           8.  AUG
+             3           9.  SEP
+             7          10.  OCT
+             5          11.  NOV
+             5          12.  DEC
+             5          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1384       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.LivedArea.B039_YrMoveMainRes 
+
+         IF RVARS.Z076_ReIwR_V* = REIWR THEN 
+
+         IF HH.X033_HHMoved* = MOVEDOUTAREA THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB044               LIVE GEN AREA BEFORE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.LivedArea.B044_
+
+         IF KNOW YEAR R MOVED TO CURRENT RESIDENCE (A25/B039):
+         Before [he/she] moved to MAIN RESIDENCE [CITY/CITY & STATE] in YEAR (A25/B039)
+         did [he/she] ever live there before?
+         
+         IF KNOW HOW MANY YEARS R LIVED AT CURRENT RESIDENCE (CS33A/A078):
+         Before [he/she] moved to MAIN RESIDENCE [CITY/CITY & STATE] YEARS AT CURRENT
+         RESIDENCE (CS33A/A078) years ago, had [he/she] ever lived there before?
+         
+         OTHERWISE:
+         Before [he/she] moved to MAIN RESIDENCE [CITY/CITY & STATE] had [he/she]
+         ever lived there before?
+
+         .................................................................................
+            21           1.  YES
+            54           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          1371       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.B084_IwMode 
+
+         IF (((SecB.LivedArea.B044_ = YES) OR (SecB.LivedArea.B044_ = DONTKNOW)) OR 
+         (SecB.LivedArea.B044_ = REFUSAL)) OR (((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (SecA.HousingLocation.A078_YrsCurRes* <> 95)) AND ((SCV.XR1_R2 <> SECOND) AND 
+         (SecA.Relations.A028_RInNHome* <> YES))) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB045               NUMBER YEARS LIVING IN AREA
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecB.LivedArea.B045_
+
+         Altogether, about how many years did [he/she] live in or around [[MAIN RES
+         ADDRESS CITY],[MAIN RES ADDRESS STATE]?
+         
+         96 Always lived around here/there
+         
+         Number of years:
+          or
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             12        2          80         40.92         29.61    1429
+         -----------------------------------------------------------------
+             4          96.  ALWAYS LIVED AROUND HERE/THERE
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.LivedArea.B045_ 
+
+         IF SecB.LivedArea.B045_ = EMPTY OR SecB.LivedArea.B045_ = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB046               SINCE YEAR LIVING IN MAIN AREA
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecB.LivedArea.B046_
+
+         (Altogether, about how many years did [he/she] lived in or around [MAIN RES
+         ADDRESS CITY],[MAIN RES ADDRESS STATE]?)
+         
+         9996 Always lived around here/there
+         
+         Number of years:
+          or
+         Since year:
+
+         .................................................................................
+             5               1955-1994.  Actual Value
+                                  9996.  ALWAYS LIVED AROUND HERE/THERE
+                                  9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+          1441                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         Assign: IF ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V 
+         <> FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST) THEN 
+         IF puSectionTracker = B THEN 
+         IF (B IN puTEST) OR (ALL IN puTEST) THEN 
+         IF (piRVarsZ076_ReIwR_V <> REIWR) AND (piSecAHousingLocationA078_YrsCurRes <> 
+         95) THEN 
+         IF (SecB.LivedArea.B045_ <> 96) AND (SecB.LivedArea.B046_ <> 9996) THEN 
+         IF SecB.LivedArea.StateList.StateCodeNum = DONTKNOW THEN 
+         B047_ :=  DONTKNOW 
+         ELSE 
+         IF SecB.LivedArea.StateList.StateCodeNum = REFUSAL THEN 
+         B047_ :=  REFUSAL 
+         ELSE 
+         IF SecB.LivedArea.StateList.StateCodeNum <> EMPTY THEN 
+         B047_ := StateList.StateCodeNum 
+         B047_.SHOW 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB047M              ST/COUNTRY LIVED DURING SCHOOL - MASKED
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecB.LivedArea.B047_
+
+         In what state or country did [he/she] live most of the time [he/she] was [in
+         grade school/in high school/about age 10]?
+         
+         State:
+         
+         or
+         
+         Country (specify):
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+                         1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+                         2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+             1           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+             1           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+                         5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+                         6.  South Region: East South Central Division (KY, TN, AL, MS)
+             1           7.  South Region: West South Central Division (AR, LA, OK, TX)
+                         8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+                         9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+                        10.  U.S., NA state
+                        11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+                        96.  Same State (see questionnaire)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1443       Blank.  No Data From Prior Wave Interview/New Respondent in 2008
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.B084_IwMode 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB082               ATTEND RELIGIOUS SERV- FREQ
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.B082_OftReligServices
+
+         About how often did [he/she] attend religious services during the last year
+         [he/she] was alive?
+         
+         PROBE if necessary: (Would you say more than once a week, once a week, two or
+         three times a month, one or more times a year, or not at all?)
+
+         .................................................................................
+           117           1.  MORE THAN ONCE A WEEK
+           289           2.  ONCE A WEEK
+           161           3.  TWO OR THREE TIMES A MONTH
+           225           4.  ONE OR MORE TIMES A YEAR
+           623           5.  NOT AT ALL
+            29           8.  DK (Don't Know); NA (Not Ascertained)
+             2           9.  RF (Refused)
+                     Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.B082_OftReligServices 
+
+         IF SecB.B082_OftReligServices <> NOTATALL THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB093               FRIENDS IN CONGREGATION
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.B093_
+
+         Did [R's FIRST NAME] have any good friends who were members of the place where
+         [he/she] attended religious services?
+
+         .................................................................................
+           549           1.  YES
+           228           5.  NO
+             8           7.  NO REGULAR PLACE OF WORSHIP (VOL)
+            37           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+           623       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.B093_ 
+
+         IF SecB.B093_ <> NOPLACEOFWORSHIP THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB094               RELATIVES IN CONGREGATION
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.B094_
+
+         [Other than you/[her/his] [you/husband/wife/partner] [and your children,]
+         did/Other than you/[her/his] [you/husband/wife/partner] [and your/child,]
+         did/Other than you/[her/his] [you/husband/wife/partner,][did/Other than]
+         [her/his] children, did/Other than][her/his] [child, did/Did] [FIRST NAME] have
+         any relatives who were members of the place where [she/he] attended religious
+         services?
+
+         .................................................................................
+           221           1.  YES
+           579           5.  NO
+             2           7.  NO REGULAR PLACE OF WORSHIP (VOL)
+            12           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+           631       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         Assign: IF ((piRespondents1X066ACouplenss_V <> MARRIED) AND 
+         (piRespondents1X066ACouplenss_V <> REMARRIED)) AND 
+         ((piRespondents1X065ACouplenss = MARRIED) OR (piRespondents1X065ACouplenss = 
+         REMARRIED)) THEN 
+         B055_ := YES 
+         ELSE 
+         B055_.ASK 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB055               NEW MARRIAGE SINCE PREVIOUS WAVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.Marriage2.B055_
+
+         Sometimes marital situations are not entirely clear from what we've asked so
+         far.
+         
+         Please bear with me for a few more questions on this.
+         
+         Was [he/she] married at any time since [PREV WAVE FIRST R IW MONTH], [PREV WAVE
+         FIRST R IW YEAR]/[Prev Wave Iw Yr]?
+
+         .................................................................................
+            20           1.  YES
+           838           5.  NO
+             2           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           586       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.B082_OftReligServices 
+
+         IF (RVARS.Z076_ReIwR_V* = REIWR) AND (SCV.XR1_R2 <> SECOND) THEN 
+
+         IF (SecA.Relations.A020TSameSpP_A* <> YESANDSPPTRISLIVING) AND 
+         (((SecA.Relations.A023_PWSpPAlive* <> NO) OR 
+         (SecA.Relations.A202_CoupledatDeath <> YES)) OR (SecA.Relations.A026_Rmarried* 
+         <> NO)) THEN 
+
+         IF SecB.Marriage2.B055_* = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB056               BETWEEN WAVE MARRIAGE START-MONTH
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecB.Marriage2.B056_
+
+         [You told me earlier that you were married since [[PREV WAVE FIRST R IW MONTH],
+         [PREV WAVE FIRST R IW YEAR]/[Prev Wave Iw Yr]]./]
+         
+         In what month and year was [she/he] married?
+         
+         Month:
+         
+         Year:
+
+         .................................................................................
+             1           1.  JAN
+             1           2.  FEB
+                         3.  MAR
+                         4.  APR
+             1           5.  MAY
+             2           6.  JUN
+             1           7.  JUL
+             3           8.  AUG
+             2           9.  SEP
+                        10.  OCT
+                        11.  NOV
+             2          12.  DEC
+             6          98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+          1426       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.Marriage2.B056_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB057               BETWEEN WAVE MARRIAGE START-YEAR
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecB.Marriage2.B057_
+
+         (In what month and year was [she/he] married?)
+         
+         Month: [BETWEEN WAVE MARRIAGE START-MONTH]
+         
+         Year:
+
+         .................................................................................
+             8               1992-2006.  Actual Value
+            11                    9998.  DK (Don't Know); NA (Not Ascertained)
+             1                    9999.  RF (Refused)
+          1426                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.B082_OftReligServices 
+
+         IF (RVARS.Z076_ReIwR_V* = REIWR) AND (SCV.XR1_R2 <> SECOND) THEN 
+
+         IF (SecA.Relations.A020TSameSpP_A* <> YESANDSPPTRISLIVING) AND 
+         (((SecA.Relations.A023_PWSpPAlive* <> NO) OR 
+         (SecA.Relations.A202_CoupledatDeath <> YES)) OR (SecA.Relations.A026_Rmarried* 
+         <> NO)) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB058               DIVORCE/WIDOW SINCE PREVIOUS WAVE
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.Marriage2.B058_DivWidSincePW
+
+         Did [he/she] divorce or become widowed since [PREV WAVE FIRST R IW MONTH], [PREV
+         WAVE FIRST R IW YEAR]/[Prev Wave Iw Yr]?
+
+         .................................................................................
+             9           1.  YES, DIVORCED/ANNULLED
+            48           2.  YES, WIDOWED
+           799           5.  NO
+             4           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           586       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.Marriage2.B058_DivWidSincePW 
+
+         IF (SecB.Marriage2.B058_DivWidSincePW = YESDIVORCED_ANNULLED) OR 
+         (SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB059               BETWEEN WAVE DIVORCE/WIDOW-MONTH
+         Section: B     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecB.Marriage2.B059_
+
+         In what month and year did [he/she] [divorce/become widowed]?
+         
+         Month:
+         
+         Year:
+
+         .................................................................................
+             2           1.  JAN
+             6           2.  FEB
+             4           3.  MAR
+             4           4.  APR
+             7           5.  MAY
+             2           6.  JUN
+             2           7.  JUL
+             4           8.  AUG
+             7           9.  SEP
+             3          10.  OCT
+             3          11.  NOV
+             4          12.  DEC
+             9          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1389       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.Marriage2.B059_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB060               BETWEEN WAVE DIVORCE/WIDOW-YEAR
+         Section: B     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecB.Marriage2.B060_
+
+         (In what month and year did [he/she] [divorce/become widowed]?)
+         
+         Month: [BETWEEN WAVE DIVORCE/WIDOW-MONTH]
+         
+         Year:
+
+         .................................................................................
+            55               1992-2010.  Actual Value
+             2                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+          1389                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecB.B082_OftReligServices 
+
+         IF ((Respondents[iDM].X065ACouplenss <> MARRIED) AND 
+         (Respondents[iDM].X065ACouplenss <> REMARRIED)) AND 
+         (SecA.Relations.A034_RMarSep <> SEPARATED) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB061               MARITAL STATUS IF UNMARRIED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.Marriage2.B061_AskMarStat
+
+         Just to clarify, at the time of [her/his] death was [she/he] separated,
+         divorced, widowed, or had [she/he] never been married?
+         
+         If R reports being partnered, read: For this question, we are interested in
+         knowing [her/his] legal marital status. Would you say [she/he] was married,
+         separated, divorced, widowed, or never married?
+
+         .................................................................................
+             6           1.  MARRIED (VOL)
+                         2.  ANULLED (VOL)
+            12           3.  SEPARATED
+           130           4.  DIVORCED
+           670           5.  WIDOWED
+            50           6.  NEVER MARRIED
+             6           7.  OTHER (SPECIFY)
+             4           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+           567       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         Assign: IF ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V 
+         <> FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST) THEN 
+         IF puSectionTracker = B THEN 
+         IF (B IN puTEST) OR (ALL IN puTEST) THEN 
+         B063_MarStatAssign.KEEP 
+         IF SecB.Marriage2.B061_AskMarStat <> EMPTY AND SecB.Marriage2.B061_AskMarStat 
+         <> NONRESPONSE THEN 
+         B063_MarStatAssign := SecB.Marriage2.B061_AskMarStat 
+         ELSE 
+         IF piRespondents1X065ACouplenss = MARRIED THEN 
+         B063_MarStatAssign := MARRIED 
+         ELSE 
+         IF piSecARelationsA034_RMarSep = SEPARATED THEN 
+         B063_MarStatAssign := SEPARATED 
+         ELSE 
+         IF SecB.Marriage2.B058_DivWidSincePW = YESDIVORCED_ANNULLED THEN 
+         B063_MarStatAssign := DIVORCED 
+         ELSE 
+         IF (SecB.Marriage2.B058_DivWidSincePW = YESWIDOWED) OR 
+         ((piSecARelationsA202_CoupledatDeath = YES) AND (piSecARelationsA026_Rmarried 
+         <> YES)) THEN 
+         B063_MarStatAssign := WIDOWED 
+         ELSE 
+         IF ((piSecAStartInterviewA007TRAlive_A = NO) AND 
+         (piSecARelationsA023_PWSpPAlive = NO)) AND (piSecARelationsA026_Rmarried <> 
+         YES) THEN 
+         B063_MarStatAssign := WIDOWED 
+         ELSE 
+         IF SecB.Marriage2.B061_AskMarStat = NONRESPONSE THEN 
+         B063_MarStatAssign := SecB.Marriage2.B061_AskMarStat 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WB063               MARITAL STATUS ASSIGNED
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecB.B063_MarStatAssign
+
+         *
+
+         User Note: WB063 is assigned using values from the following variables:  WX065,
+         WA007, WA023, WA026, WA034, WB058, and WB061.
+
+         .................................................................................
+           569           1.  MARRIED (VOL)
+                         2.  ANULLED (VOL)
+            16           3.  SEPARATED
+           130           4.  DIVORCED
+           670           5.  WIDOWED
+            50           6.  NEVER MARRIED
+             6           7.  OTHER (SPECIFY)
+             4           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+                     Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+WVDATE              2010 DATA MODEL VERSION
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         User Note:  This variable identifies which data model was used to interview the
+         household.  Please reference the data description for a summary of changes in
+         each data model.
+
+         .................................................................................
+             8           1.  Version 1
+            74           2.  Version 2
+            12           3.  Version 3
+            20           4.  Version 4
+            37           5.  Version 5
+            60           6.  Version 6
+          1161           7.  Version 7
+            74           8.  Version 8
+
+
+==========================================================================================
+
+WVERSION            2010 DATA RELEASE VERSION
+         Section: B     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+          1446           2.  HRS 2010 Exit Final Release
+
+
+==========================================================================================

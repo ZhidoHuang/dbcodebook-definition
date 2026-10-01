@@ -1,0 +1,1281 @@
+==========================================================================================
+2004 HRS Core (Final Release)
+ODBC Reference: [HRS2004]
+Perl script: CodebkD11.pl v6.16 Wed Oct  4 14:40:46 2006
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION A: Coverscreen (Household)
+
+==========================================================================================
+
+HHID     HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Household       Type: Character  Width: 6   Decimals: 0
+
+        ..................................................................................
+        13645           000003-502761. Household Identification Number
+
+==========================================================================================
+
+JSUBHH   2004 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Household       Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+        12856           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+          419           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+          301           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           30           5. Split household - one half of couple from SUBHH 1 or 2
+            2           6. Split household - one half of couple from SUBHH 1 or 2
+           37           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+HSUBHH   2002 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Household       Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+        10763           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+          376           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+          269           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           15           5. Split household - one half of couple from SUBHH 1 or 2
+            1           6. Split household - one half of couple from SUBHH 1 or 2
+           27           7. Reunited household - respondents from split household reunite
+         2194       Blank. NEW COHORT HH
+
+==========================================================================================
+
+JPN_CS   PERSON NUMBER OF COVER SCREEN RESPONDENT
+         Section: A     Level: Household       Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+         8502         010. Person Identifier
+          209         011. Person Identifier
+            7         012. Person Identifier
+         3719         020. Person Identifier
+           39         021. Person Identifier
+            2         022. Person Identifier
+          498         030. Person Identifier
+           16         031. Person Identifier
+                      032. Person Identifier
+          632         040. Person Identifier
+           18         041. Person Identifier
+            1         042. Person Identifier
+            2       Blank. No Coverscreen Respondent
+
+==========================================================================================
+
+JPN_FAM  2004 FAMILY RESP PERSON NUMBER
+         Section: A     Level: Household       Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+         7898         010. Person Identifier
+          121         011. Person Identifier
+            6         012. Person Identifier
+         4128         020. Person Identifier
+           23         021. Person Identifier
+            1         022. Person Identifier
+          467         030. Person Identifier
+            9         031. Person Identifier
+                      032. Person Identifier
+          844         040. Person Identifier
+           16         041. Person Identifier
+            1         042. Person Identifier
+          131       Blank. No Family Respondent
+
+==========================================================================================
+
+JPN_FIN  2004 FINANCIAL RESP PERSON NUMBER
+         Section: A     Level: Household       Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+         9674         010. Person Identifier
+          115         011. Person Identifier
+            6         012. Person Identifier
+         2688         020. Person Identifier
+           25         021. Person Identifier
+            1         022. Person Identifier
+          752         030. Person Identifier
+            9         031. Person Identifier
+                      032. Person Identifier
+          301         040. Person Identifier
+           13         041. Person Identifier
+            1         042. Person Identifier
+           60       Blank. No Financial Respondent
+
+==========================================================================================
+
+JPN_NCS  2004 NON-COVERSCREEN RESP PERSON NUMBER
+         Section: A     Level: Household       Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+         2615         010. Person Identifier
+          238         011. Person Identifier
+           10         012. Person Identifier
+            1         013. Person Identifier
+         2679         020. Person Identifier
+           70         021. Person Identifier
+            3         022. Person Identifier
+          295         030. Person Identifier
+           21         031. Person Identifier
+            3         032. Person Identifier
+          513         040. Person Identifier
+           30         041. Person Identifier
+            1         042. Person Identifier
+         7166       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+JPN_NFAM 2004 NON-FAMILY RESP PERSON NUMBER
+         Section: A     Level: Household       Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+         3221         010. Person Identifier
+          330         011. Person Identifier
+           11         012. Person Identifier
+            1         013. Person Identifier
+         2270         020. Person Identifier
+           86         021. Person Identifier
+            4         022. Person Identifier
+          326         030. Person Identifier
+           28         031. Person Identifier
+            3         032. Person Identifier
+          301         040. Person Identifier
+           33         041. Person Identifier
+            1         042. Person Identifier
+         7030       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+JPN_NFIN 2004 NON-FINANCIAL RESP PERSON NUMBER
+         Section: A     Level: Household       Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+         1445         010. Person Identifier
+          336         011. Person Identifier
+           11         012. Person Identifier
+            1         013. Person Identifier
+         3710         020. Person Identifier
+           84         021. Person Identifier
+            4         022. Person Identifier
+           41         030. Person Identifier
+           28         031. Person Identifier
+            3         032. Person Identifier
+          844         040. Person Identifier
+           36         041. Person Identifier
+            1         042. Person Identifier
+         7101       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (NOT (A047_ = EMPTY AND ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <>
+        YES) AND (StartInterview.A007TRAlive_A = YES)))))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA020    1ST R SAME SP/P
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.Relations.A020TSameSpP_A
+         2000 Link: G543  2002 Link: HA020
+
+        ( (We need to update our records. They show that [Respondent 1 Name]\First we
+        need to update our records. As of [[piBasicFill[18]]], they show that
+        [Respondent 1 Name]\We need to be sure our records are accurate.  They show
+        that [Respondent 1 Name])  ( was married.\ was living with a partner as if
+        married.)
+        Is  (Respondent's SPP First Name) still your  (husband\wife\partner)?)
+        INTERVIEWER: ONCE YOU ANSWER THIS QUESTION YOU CANNOT BACK UP AND CHANGE THE
+        ANSWER FOR THIS QUESTION
+        ..................................................................................
+         6663           1. YES, AND SP/PARTNER IS LIVING
+           34           3. THAT PARTNER IS NOW R'S SPOUSE
+            9           4. THAT SPOUSE IS NOW R'S PARTNER
+          585           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         6354       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (A047_ = EMPTY AND ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES)
+        AND (StartInterview.A007TRAlive_A = YES))))
+         AND (ptSCVXR1_R2 <> SECOND)
+         AND (((piBA_HHX024_ReIwHH_V = YES) AND ((BA_Respondents[1].X066ACouplenss_V =
+        MARRIED) OR (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL))) OR
+        (((HH.X024_ReIwHH_V <> YES) AND (Respondents[1].X065ACouplenss = MARRIED)) OR
+        (Respondents[1].X065ACouplenss = PARTNERED_VOL)))
+         AND (A020TSameSpP_A = THATSPISNOWRSPTR)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA022    VERIFY PREV WAVE SP IS NOW PARTNER
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.Relations.A022_
+         2000 Link: G544  2002 Link: HA022
+
+        INTERVIEWER CONFIRMATION
+        INTERVIEWER: DO YOU REALLY MEAN THAT R AND SPOUSE ARE NO LONGER MARRIED BUT
+        THEY STILL LIVE TOGETHER AS PARTNERS?
+        ENTER 1 TO CONFIRM CODE AS ENTERED
+        ..................................................................................
+            8           1. ACCEPT CODE AS ENTERED
+            1           5. CODE NOT CORRECT - RETURN TO CORRECT
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+        13636       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((A020TSameSpP_A IN [YESANDSPPTRISLIVING, THATPTRISNOWRSSP,
+        THATSPISNOWRSPTR]) OR (piStartInterviewA009_SelfPrxy = PXYSPISREPORTER)))
+         AND (A020TSameSpP_A <> EMPTY AND ((piBA_HHX024_ReIwHH_V = YES) OR
+        (((piBA_HHX024_ReIwHH_V <> YES) AND A163_NewCohortNotEligable = EMPTY) AND
+        (A185_NC_ChangeSPP = YES))))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA023    PREVIOUS WAVE SP/P ALIVE
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.Relations.A023_PWSpPAlive
+         2000 Link: G545  2002 Link: HA023
+
+        (Is  (Respondent's SPP First Name) still alive?)
+
+        User Note: If R answers 'YES' at JA020, 'YES' is automatically assigned at
+        JA023
+        ..................................................................................
+          119           1. YES
+         6706           3. Yes - assigned from JA020
+          466           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         6354       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (A047_ = EMPTY AND ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES)
+        AND (StartInterview.A007TRAlive_A = YES))))
+         AND (ptSCVXR1_R2 <> SECOND)
+         AND (((piBA_HHX024_ReIwHH_V = YES) AND ((BA_Respondents[1].X066ACouplenss_V =
+        MARRIED) OR (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL))) OR
+        (((HH.X024_ReIwHH_V <> YES) AND (Respondents[1].X065ACouplenss = MARRIED)) OR
+        (Respondents[1].X065ACouplenss = PARTNERED_VOL)))
+         AND ((A020TSameSpP_A = NO) AND ((piBA_HHX024_ReIwHH_V = YES) OR
+        ((piBA_HHX024_ReIwHH_V <> YES) AND (A185_NC_ChangeSPP = YES))))
+         AND (piBA_HHX024_ReIwHH_V = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA024    MO COUPLE STOP LIVING TOGETHER/DIE
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecA.Relations.A024_MoStopCoHabit
+         2000 Link: G546  2002 Link: HA024
+
+        In what month and year did  ( you and [Respondent 2 Name] stop living
+        together? \ [Respondent 2 Name] die?)
+        MONTH:
+        YEAR:
+        ..................................................................................
+           52           1. JAN
+           46           2. FEB
+           58           3. MAR
+           51           4. APR
+           50           5. MAY
+           46           6. JUN
+           45           7. JUL
+           41           8. AUG
+           41           9. SEP
+           45          10. OCT
+           52          11. NOV
+           46          12. DEC
+           10          98. DK (Don't Know); NA (Not Ascertained)
+            1          99. RF (Refused)
+        13061       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (A047_ = EMPTY AND ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES)
+        AND (StartInterview.A007TRAlive_A = YES))))
+         AND (ptSCVXR1_R2 <> SECOND)
+         AND (((piBA_HHX024_ReIwHH_V = YES) AND ((BA_Respondents[1].X066ACouplenss_V =
+        MARRIED) OR (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL))) OR
+        (((HH.X024_ReIwHH_V <> YES) AND (Respondents[1].X065ACouplenss = MARRIED)) OR
+        (Respondents[1].X065ACouplenss = PARTNERED_VOL)))
+         AND ((A020TSameSpP_A = NO) AND ((piBA_HHX024_ReIwHH_V = YES) OR
+        ((piBA_HHX024_ReIwHH_V <> YES) AND (A185_NC_ChangeSPP = YES))))
+         AND (piBA_HHX024_ReIwHH_V = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA025    YEAR COUPLE STOPPED LIVE TOGETHER/DIE
+         Section: A     Level: Household       Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecA.Relations.A025_YrStopCoHabit
+         2000 Link: G547  2002 Link: HA025
+
+        (In what month and year did  ( you and [Respondent 2 Name] stop living
+        together? \ [Respondent 2 Name] die?))
+        MONTH:  (MO R AND SP/P STOP LIVING IN SAME HH)
+        YEAR:
+        ..................................................................................
+          577               1984-2004. Actual Value
+            6                    9998. DK (Don't Know); NA (Not Ascertained)
+            1                    9999. RF (Refused)
+        13061                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (ptSCVXR1_R2 <> SECOND)
+         AND (A026_Rmarried <> EMPTY OR (((((piBA_HHX024_ReIwHH_V <> YES) AND
+        (BA_Respondents[1].X065ACouplenss = OTHER)) AND A034_RMarSep = EMPTY) AND
+        A163_NewCohortNotEligable = EMPTY) OR ((piBA_HHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = OTHER) OR ((A020TSameSpP_A = NO) AND
+        (A185_NC_ChangeSPP <> NO))))))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA026    R MARRIED
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.Relations.A026_Rmarried
+         2000 Link: G548  2002 Link: HA026
+
+         (First we need to update our records. They show that you \First we need to
+        update our records. As of [Previous Wave Interview Month], [PREV WAVE FIRST R
+        IW YEAR] they show that you)
+         ( were not married or living with a partner.  Are you now married?\(We need
+        to be sure our records are accurate.  Are you now married?)\Are you married to
+        someone else?\Are you married?)
+        ..................................................................................
+          204           1. YES
+         6734           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         6707       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (ptSCVXR1_R2 <> SECOND)
+         AND (A026_Rmarried <> EMPTY OR (((((piBA_HHX024_ReIwHH_V <> YES) AND
+        (BA_Respondents[1].X065ACouplenss = OTHER)) AND A034_RMarSep = EMPTY) AND
+        A163_NewCohortNotEligable = EMPTY) OR ((piBA_HHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = OTHER) OR ((A020TSameSpP_A = NO) AND
+        (A185_NC_ChangeSPP <> NO))))))
+         AND (A026_Rmarried <> YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA027    LIVING W/P
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.Relations.A027_Rpartnerd
+         2000 Link: G549  2002 Link: HA027
+
+        Are you living with (a/another) partner as if married?
+        ..................................................................................
+           81           1. YES
+         6653           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         6911       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((ptSCVXR1_R2 <> SECOND) AND A029_NewCohortInelig = EMPTY)
+         AND (((((piBA_HHX024_ReIwHH_V <> YES) AND ((A026_Rmarried = YES) OR
+        (A027_Rpartnerd = YES))) AND (A186_NC_ChangeSPP <> NO)) OR (A020TSameSpP_A IN
+        [YESANDSPPTRISLIVING, THATPTRISNOWRSSP, THATSPISNOWRSPTR])) OR ((A026_Rmarried
+        = YES) AND (A186_NC_ChangeSPP <> NO)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA030    COUPLE LIVE TOGETHER
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.Relations.A030_LivTogethr
+         2000 Link: G562  2002 Link: HA030
+
+        INTERVIEWER: ASK IF NECESSARY:  (Are you and your[FLA030_LivTogethr] [
+        you\husband\wife\partner]) living  (in the same (nursing home/health care
+        facility)?\together?)
+        THIS QUESTION IS TO TELL WHETHER R'S SPOUSE/PARTNER IS ALSO LIVING IN THE
+        DWELLING OR FACILITY WHERE R LIVES  ([See Blaise Specifications for IwerInstr
+        assignment])
+        ..................................................................................
+         6669           1. YES
+          230           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         6746       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (A047_ = EMPTY AND ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES)
+        AND (StartInterview.A007TRAlive_A = YES))))
+         AND ((ptSCVXR1_R2 <> SECOND) AND A029_NewCohortInelig = EMPTY)
+         AND (A030_LivTogethr = NO)
+         AND (piBA_HHX024_ReIwHH_V = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA031    MO R AND SP/P STOP LIVING IN SAME HH
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecA.Relations.A031_MoStopLivTogthr
+         2000 Link: G563  2002 Link: HA031
+
+        In what month and year did you stop living together?
+        MONTH:
+        YEAR:
+        ..................................................................................
+           13           1. JAN
+            6           2. FEB
+           10           3. MAR
+           17           4. APR
+           13           5. MAY
+            7           6. JUN
+            5           7. JUL
+            3           8. AUG
+           17           9. SEP
+           15          10. OCT
+            8          11. NOV
+           14          12. DEC
+           26          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+        13491       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (A047_ = EMPTY AND ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES)
+        AND (StartInterview.A007TRAlive_A = YES))))
+         AND ((ptSCVXR1_R2 <> SECOND) AND A029_NewCohortInelig = EMPTY)
+         AND (A030_LivTogethr = NO)
+         AND (piBA_HHX024_ReIwHH_V = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA032    YR R AND SP/P STOP LIVING IN SAME HH
+         Section: A     Level: Household       Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecA.Relations.A032_YrStopLivTogthr
+         2000 Link: G564  2002 Link: HA032
+
+        (In what month and year did you stop living together?)
+        MONTH:  (MO COUPLE STOP LIVING TOGETHER/DIE)
+        YEAR:
+        ..................................................................................
+          147               1952-2004. Actual Value
+            7                    9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+        13491                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (A047_ = EMPTY AND ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES)
+        AND (StartInterview.A007TRAlive_A = YES))))
+         AND ((ptSCVXR1_R2 <> SECOND) AND A029_NewCohortInelig = EMPTY)
+         AND (A030_LivTogethr = NO)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA033    SP/P IN NURSHOME
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.Relations.A033_SpInNHome
+         2000 Link: G565  2002 Link: HA033
+
+        Is your  ((new))  (husband\wife\partner) living in a nursing home or other
+        health care facility?
+        DEF: (A nursing home provides all of the following services for its residents:
+        dispensing of medication, 24-hour nursing assistance and supervision, personal
+        assistance, and room & meals.)
+        ..................................................................................
+           52           1. YES
+          178           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+        13415       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (A047_ = EMPTY AND ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES)
+        AND (StartInterview.A007TRAlive_A = YES))))
+         AND ((ptSCVXR1_R2 <> SECOND) AND A029_NewCohortInelig = EMPTY)
+         AND (A030_LivTogethr = NO)
+         AND ((((((piBA_HHX024_ReIwHH_V = YES) AND (BA_Respondents[1].X066ACouplenss_V
+        = MARRIED)) OR ((piBA_HHX024_ReIwHH_V <> YES) AND
+        (BA_Respondents[1].X065ACouplenss = MARRIED))) AND (A020TSameSpP_A =
+        YESANDSPPTRISLIVING)) OR (A020TSameSpP_A = THATPTRISNOWRSSP)) OR (A026_Rmarried
+        = YES))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA034    MARRIED OR SEPARATED
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.Relations.A034_RMarSep
+         2000 Link: G569  2002 Link: HA034
+
+        Would you say you are married, or are you separated?
+        ..................................................................................
+          104           1. MARRIED
+          120           2. SEPARATED
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+        13420       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (A047_ = EMPTY AND ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES)
+        AND (StartInterview.A007TRAlive_A = YES))))
+         AND ((ptSCVXR1_R2 <> SECOND) AND A029_NewCohortInelig = EMPTY)
+         AND (A030_LivTogethr = NO)
+         AND ((((((piBA_HHX024_ReIwHH_V = YES) AND (BA_Respondents[1].X066ACouplenss_V
+        = MARRIED)) OR ((piBA_HHX024_ReIwHH_V <> YES) AND
+        (BA_Respondents[1].X065ACouplenss = MARRIED))) AND (A020TSameSpP_A =
+        YESANDSPPTRISLIVING)) OR (A020TSameSpP_A = THATPTRISNOWRSSP)) OR (A026_Rmarried
+        = YES))
+         AND (A034_RMarSep = SEPARATED)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA035    SEPARATED/PARTNERED
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.Relations.A035_SepWPartnr
+         2000 Link: G570  2002 Link: HA035
+
+        Are you living with a partner as if married?
+        ..................................................................................
+                        1. YES
+          120           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+        13525       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (A047_ = EMPTY AND ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES)
+        AND (StartInterview.A007TRAlive_A = YES))))
+         AND (ptSCVXR1_R2 <> SECOND)
+         AND (((piBA_HHX024_ReIwHH_V = YES) AND (((A026_Rmarried = YES) AND
+        (A030_LivTogethr = YES)) OR (A027_Rpartnerd = YES))) OR ((piBA_HHX024_ReIwHH_V
+        <> YES) AND ((A038TCouplenss_A = REPARTNERED_VOL) OR (A038TCouplenss_A =
+        PARTNERED_VOL))))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA036    MO STARTED LIVING WITH NEW SP/P
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecA.Relations.A036_
+         2000 Link: G567  2002 Link: HA036
+
+        In what month and year did you  (you and your)  (new)  (husband\wife\partner)
+        start living together?
+        MONTH:
+        YEAR:
+        ..................................................................................
+           27           1. JAN
+           30           2. FEB
+           23           3. MAR
+           15           4. APR
+           27           5. MAY
+           21           6. JUN
+           27           7. JUL
+           21           8. AUG
+           26           9. SEP
+           23          10. OCT
+           23          11. NOV
+           23          12. DEC
+           12          98. DK (Don't Know); NA (Not Ascertained)
+            3          99. RF (Refused)
+        13344       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (A047_ = EMPTY AND ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES)
+        AND (StartInterview.A007TRAlive_A = YES))))
+         AND (ptSCVXR1_R2 <> SECOND)
+         AND (((piBA_HHX024_ReIwHH_V = YES) AND (((A026_Rmarried = YES) AND
+        (A030_LivTogethr = YES)) OR (A027_Rpartnerd = YES))) OR ((piBA_HHX024_ReIwHH_V
+        <> YES) AND ((A038TCouplenss_A = REPARTNERED_VOL) OR (A038TCouplenss_A =
+        PARTNERED_VOL))))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA037    YEAR STARTED LIVING WITH NEW SP/P
+         Section: A     Level: Household       Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecA.Relations.A037_AYrStartCouple
+         2000 Link: G568  2002 Link: HA037
+
+        (In what month and year did you and your  (new)  (husband\wife\partner) start
+        living together?)
+        MONTH:  (MO STARTED LIVING WITH NEW SP/P)
+        YEAR:
+        ..................................................................................
+          298               1942-2004. Actual Value
+                                 9998. DK (Don't Know); NA (Not Ascertained)
+            3                    9999. RF (Refused)
+        13344                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (NOT (A047_ = EMPTY AND ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <>
+        YES) AND (StartInterview.A007TRAlive_A = YES)))))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA045    R HAS NEW SPOUSE OR PARTNER
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.Relations.A045_NewSpP
+         2000 Link: G605  2002 Link: HA045
+        ..................................................................................
+          254           1. YES
+        13389           5. NO
+            2       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (NOT (A047_ = EMPTY AND ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <>
+        YES) AND (StartInterview.A007TRAlive_A = YES)))))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA044    SP/P CURRENT AGE CALCULATION
+         Section: A     Level: Household       Type: Numeric    Width: 3   Decimals: 0
+         CAI: SecA.Relations.A044TSpAge_A
+         2000 Link: G1102  2002 Link: HA044
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           6870       26         104         64.19         10.81    6775
+         -----------------------------------------------------------------
+
+==========================================================================================
+
+        Ask:
+         IF (((HH.X024_ReIwHH_V <> YES) AND (BA_Respondents[1].X065ACouplenss <>
+        OTHER)) AND (SCV.XR1_R2 <> SECOND))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA050    NEW COHORT-CHOOSE FIN R
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.Financial.A050_NwCohortFinR
+
+        I would like to interview both you  (and your)  (husband\wife\partner) I will
+        be asking some questions about family assets, debts and retirement planning.
+        Which of you is the most knowledgeable about this, you or your
+        (husband\wife\partner)?
+        ..................................................................................
+         1607           1. RESPONDENT
+          406           2. SPOUSE/PARTNER
+            4           3. DK/REF: RESPONDENT IS MALE
+            9           4. DK/REF: SPOUSE/PARTNER IS MALE
+                        5. DK/REF: SAME SEX COUPLE, RESPONDENT
+          125           6. RESPONDENT BOTH FINANCIAL AND FAMILY
+            3           7. RESPONDENT NOT FINANCIAL OR FAMILY
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+        11490       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (A053_ = YESCHANGEASSIGNMENTS)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA055    FAM/FIN THIS WAVE
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.Financial.A055TRFinFam2_A
+         2000 Link: G711  2002 Link: HA055
+
+
+        CHANGE  (Respondents First Name) TO:
+        ..................................................................................
+         2017           1. FINANCIAL R
+         1914           2. FAMILY R
+         9040           3. FINANCIAL & FAMILY R
+          674           4. NON-FINANCIAL & NON-FAMILY R
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (NOT ((piBA_HHX024_ReIwHH_V <> YES) AND (ptSCVXR1_R2 <> SECOND)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA056    SP/P FAMILY/FINANCIAL TYPE - CHANGED
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.Financial.A056TSpFinFam2_A
+        ..................................................................................
+         1914           1. FINANCIAL R
+         2017           2. FAMILY R
+          674           3. FINANCIAL & FAMILY R
+         2265           4. NON-FINANCIAL & NON-FAMILY R
+         6775       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((((((HH.X024_ReIwHH_V <> YES) AND
+        (StartInterview.A007TRAlive_A = YES)) AND Relations.A029_NewCohortInelig =
+        EMPTY) AND Relations.A163_NewCohortNotEligable = EMPTY) AND
+        ContinuInterview.A158_NewCohortNotEligableR = EMPTY) AND
+        ((ContinuInterview.A176_CohortType = 2004) OR (Relations.A177_CohortType =
+        2004))))
+         AND (piRelations_A28_RInHome = YES)
+         AND (piCheck = 1)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA070    NH: STILL OWN/RENT HOME
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.HousingLocation.NursingHome.A070_NHOwnRent
+         2000 Link: G794  2002 Link: HA070
+
+         (Do you [FLoryourHWP]\Do you) still own or rent a residence outside the
+        facility where you are living?
+        ..................................................................................
+           99           1. YES
+          344           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+        13201       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)))
+         AND (HH.X024_ReIwHH_V = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA071    SAME RESID AS PREV WAVE #1
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.HousingLocation.A071_SameMainRes
+         2000 Link: G796  2002 Link: HA071
+
+        Next are some questions about changes in your housing location. Our records
+        show that (in  (in last interview month/last interview year/two years ago),
+        (your residence\one of your residences) was in  (MAIN RES ADDRESS CITY) ,
+        (MAIN RES STATE)  (Do you still have the same (house or
+        apartment/house/apartment)\Are you still living, all year or part of the year,
+        in that same residence) in  (MAIN RES ADDRESS CITY) ?
+        ..................................................................................
+         9547           1. YES
+         1599           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         2499       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)))
+         AND (HH.X024_ReIwHH_V = YES)
+         AND (A071_SameMainRes <> YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA072    SAME CITY/ST RESID # 1
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.HousingLocation.A072_SameAreaMain
+         2000 Link: G797  2002 Link: HA072
+
+         (Is your residence still\Do you still live, all year or part of the year in a
+        residence,) in or around  (MAIN RES ADDRESS CITY) ,  (MAIN RES STATE)?
+        ..................................................................................
+          581           1. YES
+         1014           5. NO
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+        12049       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((((((HH.X024_ReIwHH_V <> YES) AND
+        (StartInterview.A007TRAlive_A = YES)) AND Relations.A029_NewCohortInelig =
+        EMPTY) AND Relations.A163_NewCohortNotEligable = EMPTY) AND
+        ContinuInterview.A158_NewCohortNotEligableR = EMPTY) AND
+        ((ContinuInterview.A176_CohortType = 2004) OR (Relations.A177_CohortType =
+        2004))))
+         AND ((piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)))
+         AND (HH.X024_ReIwHH_V = YES)
+         AND (piBA_HHX028_Has2ndRes_V = HASOTHRES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA073    SAME RESID AS PREV WAVE #2
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.HousingLocation.A073_Same2ndRes
+         2000 Link: G800  2002 Link: HA073
+
+        Our records also show that (in last interview month/last interview year/two
+        years ago), you had another residence, one in  (Secondary Residence City),
+        (Secondary Residence State).  (Do you still have the same (house or
+        apartment/house/apartment)\Are you still living, all year or part of the year,
+        in that same residence) in (Secondary Residence City),  (Secondary Residence
+        State) ?
+        ..................................................................................
+          477           1. YES
+          512           5. NO
+            3           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+        12652       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((((((HH.X024_ReIwHH_V <> YES) AND
+        (StartInterview.A007TRAlive_A = YES)) AND Relations.A029_NewCohortInelig =
+        EMPTY) AND Relations.A163_NewCohortNotEligable = EMPTY) AND
+        ContinuInterview.A158_NewCohortNotEligableR = EMPTY) AND
+        ((ContinuInterview.A176_CohortType = 2004) OR (Relations.A177_CohortType =
+        2004))))
+         AND ((piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)))
+         AND (HH.X024_ReIwHH_V = YES)
+         AND (piBA_HHX028_Has2ndRes_V = HASOTHRES)
+         AND (A073_Same2ndRes <> YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA074    SAME CITY/ST RESID #2
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.HousingLocation.A074_SameArea2nd
+         2000 Link: G801  2002 Link: HA074
+
+         (Do you still have a home\Do you still live, all year or part of the year) in
+        or around  (Secondary Residence City),  (Secondary Residence State) ?
+        ..................................................................................
+          103           1. YES
+          411           5. NO
+            2           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+        13129       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((((((HH.X024_ReIwHH_V <> YES) AND
+        (StartInterview.A007TRAlive_A = YES)) AND Relations.A029_NewCohortInelig =
+        EMPTY) AND Relations.A163_NewCohortNotEligable = EMPTY) AND
+        ContinuInterview.A158_NewCohortNotEligableR = EMPTY) AND
+        ((ContinuInterview.A176_CohortType = 2004) OR (Relations.A177_CohortType =
+        2004))))
+         AND ((piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)))
+         AND (((((A071_SameMainRes <> YES) AND (A072_SameAreaMain <> YES)) AND
+        (A073_Same2ndRes <> YES)) AND (A074_SameArea2nd <> YES)) OR (HH.X024_ReIwHH_V
+        <> YES))
+         AND (A169_A076TCurResST_A.puState = 98
+          OR NOT (A169_A076TCurResST_A.puState = 98))
+         AND (A169_A076TCurResST_A.puState = 99
+          OR NOT (A169_A076TCurResST_A.puState = 99))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA076M   CURRENT RESIDENCE STATE - MASKED
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecA.HousingLocation.A076TCurResST_A
+         2000 Link: G805M  2002 Link: HA076M
+
+        INTERVIEWER: ASK IF NECESSARY: (In what city and state is your residence
+        currently located?)
+
+        CITY:  (Current Residence City)
+
+        STATE:
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+          141           1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+          317           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+          504           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+          217           4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+          559           5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+          285           6. South Region: East South Central Division (KY, TN, AL, MS)
+          312           7. South Region: West South Central Division (AR, LA, OK, TX)
+          238           8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+          458           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+           18          11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+           10          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (refused)
+        10586       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((((((HH.X024_ReIwHH_V <> YES) AND
+        (StartInterview.A007TRAlive_A = YES)) AND Relations.A029_NewCohortInelig =
+        EMPTY) AND Relations.A163_NewCohortNotEligable = EMPTY) AND
+        ContinuInterview.A158_NewCohortNotEligableR = EMPTY) AND
+        ((ContinuInterview.A176_CohortType = 2004) OR (Relations.A177_CohortType =
+        2004))))
+         AND ((piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)))
+         AND (((((A071_SameMainRes <> YES) AND (A072_SameAreaMain <> YES)) AND
+        (A073_Same2ndRes <> YES)) AND (A074_SameArea2nd <> YES)) OR (HH.X024_ReIwHH_V
+        <> YES))
+         AND (HH.X024_ReIwHH_V <> YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA078    NEW COHORT- YEARS IN CURRENT CITY/STATE
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecA.HousingLocation.A078_YrsCurRes
+
+        How many years have you lived around  (Current Residence City), ( (CURRENT
+        RESIDENCE STATE)/ (CURRENT RESIDENCE STATE - SPECIFY))?
+        INTERVIEWER: IF LESS THAN ONE YEAR, USE 1. ENTER 95 IF ''ALL MY LIFE''
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           1889        1          56         22.01         15.76   11492
+         -----------------------------------------------------------------
+          264          95. ALL MY LIFE
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((((((HH.X024_ReIwHH_V <> YES) AND
+        (StartInterview.A007TRAlive_A = YES)) AND Relations.A029_NewCohortInelig =
+        EMPTY) AND Relations.A163_NewCohortNotEligable = EMPTY) AND
+        ContinuInterview.A158_NewCohortNotEligableR = EMPTY) AND
+        ((ContinuInterview.A176_CohortType = 2004) OR (Relations.A177_CohortType =
+        2004))))
+         AND ((piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)))
+         AND (((piBA_HHX028_Has2ndRes_V <> HASOTHRES) OR (A072_SameAreaMain = NO)) OR
+        (A074_SameArea2nd = NO))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA079    OTHER HOMES/APTS
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.HousingLocation.A079_
+         2000 Link: G808  2002 Link: HA079
+
+        Do you  (or your [husband\wife\partner]) have any other house or apartment
+        where you live for 2 or more months of the year?
+        INTERVIEWER: IF R REPORTS MORE THAN ONE ADDITIONAL RESIDENCE, ASK ABOUT THE
+        ONE THEY USE MOST
+        ..................................................................................
+          292           1. YES
+        12520           5. NO
+            2           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          831       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((((((HH.X024_ReIwHH_V <> YES) AND
+        (StartInterview.A007TRAlive_A = YES)) AND Relations.A029_NewCohortInelig =
+        EMPTY) AND Relations.A163_NewCohortNotEligable = EMPTY) AND
+        ContinuInterview.A158_NewCohortNotEligableR = EMPTY) AND
+        ((ContinuInterview.A176_CohortType = 2004) OR (Relations.A177_CohortType =
+        2004))))
+         AND ((piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)))
+         AND (((piBA_HHX028_Has2ndRes_V <> HASOTHRES) OR (A072_SameAreaMain = NO)) OR
+        (A074_SameArea2nd = NO))
+         AND (A079_ = YES)
+         AND (A170_A081TOthResST_A.puState = 98
+          OR NOT (A170_A081TOthResST_A.puState = 98))
+         AND (A170_A081TOthResST_A.puState = 99
+          OR NOT (A170_A081TOthResST_A.puState = 99))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA081M   OTHER RESIDENCE STATE - MASKED
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecA.HousingLocation.A081TOthResST_A
+         2000 Link: G812M  2002 Link: HA081M
+
+        (In what city and state is your other residence located?)
+
+        CITY:  (Other Residence City)
+
+        STATE:
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+           17           1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+           29           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+           29           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+           13           4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+           83           5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+           12           6. South Region: East South Central Division (KY, TN, AL, MS)
+           25           7. South Region: West South Central Division (AR, LA, OK, TX)
+           35           8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+           25           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+           22          11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+            2          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (refused)
+        13353       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((((((HH.X024_ReIwHH_V <> YES) AND
+        (StartInterview.A007TRAlive_A = YES)) AND Relations.A029_NewCohortInelig =
+        EMPTY) AND Relations.A163_NewCohortNotEligable = EMPTY) AND
+        ContinuInterview.A158_NewCohortNotEligableR = EMPTY) AND
+        ((ContinuInterview.A176_CohortType = 2004) OR (Relations.A177_CohortType =
+        2004))))
+         AND ((piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)))
+         AND (((piBA_HHX028_Has2ndRes_V <> HASOTHRES) OR (A072_SameAreaMain = NO)) OR
+        (A074_SameArea2nd = NO))
+         AND (A079_ = YES)
+         AND ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA083    NEW COHORT - YEARS AT SECOND CITY/STATE
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecA.HousingLocation.A083_
+
+        How many years have you lived in or around  (Other Residence City) ( (OTHER
+        RESIDENCE STATE)/ (OTHER RESIDENCE STATE - SPECIFY))?
+        INTERVIEWER: IF LESS THAN ONE YEAR, USE 1. ENTER 95 IF ''ALL MY LIFE''
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            267        0          67         12.28         15.22   13353
+         -----------------------------------------------------------------
+           22          95. ALL MY LIFE
+            3          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF(Refused)
+
+==========================================================================================
+
+        Assign:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((((((HH.X024_ReIwHH_V <> YES) AND
+        (StartInterview.A007TRAlive_A = YES)) AND Relations.A029_NewCohortInelig =
+        EMPTY) AND Relations.A163_NewCohortNotEligable = EMPTY) AND
+        ContinuInterview.A158_NewCohortNotEligableR = EMPTY) AND
+        ((ContinuInterview.A176_CohortType = 2004) OR (Relations.A177_CohortType =
+        2004))))
+         AND ((((A071_SameMainRes = YES) OR (A072_SameAreaMain = YES)) AND
+        ((A073_Same2ndRes = YES) OR (A074_SameArea2nd = YES))) OR (A079_ = YES)
+          OR NOT ((((A071_SameMainRes = YES) OR (A072_SameAreaMain = YES)) AND
+        ((A073_Same2ndRes = YES) OR (A074_SameArea2nd = YES))) OR (A079_ = YES)))
+         AND (piSCVXR1_R2 = FIRST)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA084    ASSIGN 1 OR 2 RESIDENCES
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.HousingLocation.A084_NumRes
+         2000 Link: G815  2002 Link: HA084
+        ..................................................................................
+        12870           1. ONE RESIDENCE
+          773           2. TWO RESIDENCE
+            2       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((((((HH.X024_ReIwHH_V <> YES) AND
+        (StartInterview.A007TRAlive_A = YES)) AND Relations.A029_NewCohortInelig =
+        EMPTY) AND Relations.A163_NewCohortNotEligable = EMPTY) AND
+        ContinuInterview.A158_NewCohortNotEligableR = EMPTY) AND
+        ((ContinuInterview.A176_CohortType = 2004) OR (Relations.A177_CohortType =
+        2004))))
+         AND ((piSCVXR1_R2 = FIRST) AND (A084_NumRes = TWORES))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA085    MAIN RESIDENCE
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecA.HousingLocation.A085_WhichMainRes
+         2000 Link: G818  2002 Link: HA085
+
+        Which is your main residence,
+        your home in  (Main Residence City, Main Residence State) ?
+        or the one in  (Secondary Residence City, Secondary Residence State])?
+        DEF: (Main residence, one where R spent the most time (MTY).)
+        ..................................................................................
+          588           1. HOME IN LAST IW 1ST RESIDENCE CITY (HX025)
+           80           2. HOME IN NEW CURRENT RESIDENCE CITY, STATE (CS33/A075)
+           54           3. HOME IN LAST IW 2ND RESIDENCE CITY (HX030)
+           45           4. HOME IN NEW OTHER RESIDENCE CITY, STATE (CS35/A080)
+            3           8. DK (Don't Know); NA (Not Ascertained)
+            3           9. RF (Refused)
+        12872       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (((Children[iN1].X056AresStat IN [RESIDENT, AWAY_INST, AWAY_OTHER]) AND
+        Children[iN1].X054APNdx <> EMPTY) AND ((Children[iN1].X074AChanged <> DELETED)
+        AND (Children[iN1].X074AChanged <> DUPED))
+          OR ((HHMembers[iN2].X056AresStat IN [RESIDENT, AWAY_INST, AWAY_OTHER]) AND
+        HHMembers[iN2].X054APNdx <> EMPTY) AND ((HHMembers[iN2].X074AChanged <>
+        DELETED) AND (HHMembers[iN2].X074AChanged <> DUPED))
+          OR ((Parents[iN4].X056AresStat IN [RESIDENT, AWAY_INST, AWAY_OTHER]) AND
+        Parents[iN4].X054APNdx <> EMPTY) AND ((Parents[iN4].X074AChanged <> DELETED)
+        AND (Parents[iN4].X074AChanged <> DUPED))
+          OR ((Siblings[iN3].X056AresStat IN [RESIDENT, AWAY_INST, AWAY_OTHER]) AND
+        Siblings[iN3].X054APNdx <> EMPTY) AND ((Siblings[iN3].X074AChanged <> DELETED)
+        AND (Siblings[iN3].X074AChanged <> DUPED)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA098    COUNT OF HHM
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: Init.A098_NumHHM
+         2000 Link: G884  2002 Link: HA098
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+          13645        0          14          0.61          1.13       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+
+        Assign:
+         IF (((Children[iN5].X061ARelateR IN [SON, STEPSON, DAUGHTER, STEPDAUGHTER])
+        AND Children[iN5].X054APNdx <> EMPTY) AND ((Children[iN5].X074AChanged <>
+        DELETED) AND (Children[iN5].X074AChanged <> DUPED)))
+         AND (Children[iN5].X056AresStat IN [RESIDENT, AWAY_INST, AWAY_OTHER])
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA099    NUMBER OF RESIDENT CHILDREN
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+         CAI: Init.A099_NumResKid
+         2000 Link: G886  2002 Link: HA099
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+          13645        0           8          0.35          0.71       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+
+        Assign:
+         IF (((Children[iN5].X061ARelateR IN [SON, STEPSON, DAUGHTER, STEPDAUGHTER])
+        AND Children[iN5].X054APNdx <> EMPTY) AND ((Children[iN5].X074AChanged <>
+        DELETED) AND (Children[iN5].X074AChanged <> DUPED)))
+         AND (NOT (Children[iN5].X056AresStat IN [RESIDENT, AWAY_INST, AWAY_OTHER]))
+         AND (Children[iN5].X056AresStat IN [NONRESIDENT])
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA100    COUNT OF NONRESIDENT KIDS
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: Init.A100_NumNRKids
+         2000 Link: G888  2002 Link: HA100
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+          13645        0          19          2.70          2.15       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+
+        Assign:
+         IF (((Children[iN5].X061ARelateR IN [SON, STEPSON, DAUGHTER, STEPDAUGHTER])
+        AND Children[iN5].X054APNdx <> EMPTY) AND ((Children[iN5].X074AChanged <>
+        DELETED) AND (Children[iN5].X074AChanged <> DUPED)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA101    COUNT OF KIDS - NOT THEIR SPOUSES
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: Init.A101_TotalKids
+         2000 Link: G893  2002 Link: HA101
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+          13645        0          20          3.14          2.22       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+
+        Assign:
+         IF (Parents[iN10].X054APNdx <> EMPTY)
+         AND (Parents[iN10].X057AResStat_V <> Parents[iN10].X056AresStat AND
+        Parents[iN10].X054APNdx <> EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA102    COUNT OF MOVE IN/OUT
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: Init.A102_CntMoveInOut
+         2000 Link: G900  2002 Link: HA102
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+          13645        0          38          1.62          2.87       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+
+        Assign:
+         IF ((A120_UPDATER > 0) OR A503_REFRESH <> EMPTY)
+         AND ((((((Children[iN6].X061ARelateR IN [SON, STEPSON, DAUGHTER,
+        STEPDAUGHTER]) AND (Children[iN6].X074AChanged <> DELETED)) AND
+        (Children[iN6].X074AChanged <> DUPED)) AND (Children[iN6].X056AresStat <>
+        DIED)) AND (Children[iN6].X056AresStat <> HAVENOCONTACT)) AND
+        Children[iN6].X054APNdx <> EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA106    COUNT OF CONTACT KIDS
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: Init.A106_NumContactKids
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+          12407        1          20          3.36          2.03    1238
+         -----------------------------------------------------------------
+
+==========================================================================================
+
+        Assign:
+         IF ((((Children[iN12].X061ARelateR IN [SON, STEPSON, DAUGHTER, STEPDAUGHTER,
+        SPPOFDAUGHTER, SPPOFSON]) AND (Children[iN12].X074AChanged <> DELETED)) AND
+        (Children[iN12].X074AChanged <> DUPED)) AND Children[iN12].X054APNdx <> EMPTY
+          OR (((HHMembers[iN13].X061ARelateR IN [GRCHILD, GRCHILD_IN_LAW]) AND
+        (HHMembers[iN13].X074AChanged <> DELETED)) AND (HHMembers[iN13].X074AChanged <>
+        DUPED)) AND HHMembers[iN13].X054APNdx <> EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA113    COUNT OF CHILD CHILDLAW AND GRANDCHILD
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: Init.A113_Child_ChildIL_Grand
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+          13645        0          36          5.22          3.86       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+
+        Assign:
+         IF (iN15 <= 10)
+         AND (HHMembers[iN15].X054APNdx <> EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JA117    COUNT OF HOUSEHOLD MEMBERS
+         Section: A     Level: Household       Type: Numeric    Width: 2   Decimals: 0
+         CAI: Init.A117_TotalHHMembers
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+          13645        0          10          0.26          0.80       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+
+JVDATE   2004 DATA MODEL VERSION
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+
+
+        User Note:  This variable identifies which data model was used to interview
+        the household.  Please reference the data description for a summary of changes
+        in each data model.
+        ..................................................................................
+           22           1. Version 1
+          600           2. Version 2
+          970           3. Version 3
+         1731           4. Version 4
+         2055           5. Version 5
+         1114           6. Version 6
+         2203           7. Version 7
+         4701           8. Version 8
+          247           9. Version 9
+            2       Blank. No Coverscreen Respondent
+
+==========================================================================================
+
+JVERSION 2004 DATA RELEASE VERSION
+         Section: A     Level: Household       Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+        13645           1. First Final Release
+

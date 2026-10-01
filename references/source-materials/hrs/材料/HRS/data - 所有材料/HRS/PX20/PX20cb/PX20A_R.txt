@@ -1,0 +1,271 @@
+==========================================================================================
+
+HRS 2020 Final Post Exit
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section A: COVERSCREEN  (Respondent)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+           116           014307-911339.  Household Identification Number
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+            64         010.  Person Identifier
+             2         011.  Person Identifier
+            37         020.  Person Identifier
+             5         030.  Person Identifier
+             8         040.  Person Identifier
+
+
+==========================================================================================
+
+XPRSUBHH                      2020 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           112           3.  1st deceased respondent from a household
+             4           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+QSUBHH                        2018 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           112           3.  1st deceased respondent from a household
+             4           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+XPRPN_SP                      2020 SPOUSE/PARTNER PERSON NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+            12         010.  Person Identifier
+             2         011.  Person Identifier
+            13         020.  Person Identifier
+             2         030.  Person Identifier
+             1         031.  Person Identifier
+             2         040.  Person Identifier
+            84       Blank.  R Not Coupled
+
+
+==========================================================================================
+
+XPREXITIW                     YEAR OF EXIT INTERVIEW
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+
+         .................................................................................
+             2        2012.  Year of Exit Interview
+             7        2014.  Year of Exit Interview
+            21        2016.  Year of Exit Interview
+            86        2018.  Year of Exit Interview
+
+
+==========================================================================================
+
+         ASSIGN: Init.A500_CurDate := SysDate 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPRA500                       DATE OF INTERVIEW - MONTH
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: Init.A500_CurDate
+
+         *
+
+         .................................................................................
+             2           1.  JAN
+             2           2.  FEB
+            21           3.  MAR
+            30           4.  APR
+            23           5.  MAY
+             7           6.  JUN
+             8           7.  JUL
+             3           8.  AUG
+             5           9.  SEP
+             5          10.  OCT
+             7          11.  NOV
+             3          12.  DEC
+
+
+==========================================================================================
+
+         ASSIGN: Init.A501_CurDateYear := Year(Init.A500_CurDate ) 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPRA501                       DATE OF INTERVIEW - YEAR
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: Init.A501_CurDateYear
+
+         *
+
+         .................................................................................
+           116               2020-2021.  Actual Year
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES THEN 
+
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+
+         IF ActiveMode = 'IWERADMIN' THEN 
+
+         IF Preload_RVARS.Z095_SelfPrxyIw_V <> SLF AND Preload_RVARS.Z076_ReIwR_V = 
+         REIWR THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPRA010                       CURRENT WAVE PROXY - SAME AS LAST WAVE
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.StartInterview.A010_CurrWavePrxy
+
+         INSTR:  Previous wave proxy was [Prev Wave Proxy Name] ([Previous Wave Proxy
+         Relationship])
+         
+         INSTR: The name or relationship of the proxy at the previous interview is not
+         recorded. Unless you learn from the current wave proxy that s/he also did the
+         previous interview, enter code 3 below./  Previous wave proxy was [Prev Wave
+         Proxy Name][Prev Wave Proxy Relationship]
+                 
+         INSTR:  Is current wave proxy the same person or someone else?
+
+         .................................................................................
+           100           1.  SAME PERSON AS IN PRIOR WAVE
+            15           2.  DIFFERENT/NEW PERSON
+             1           3.  NOT KNOWN
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+         IF ActiveMode = 'IWERADMIN' THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> PXYSPISREPORTER THEN 
+         IF Preload_RVARS.Z096_PrxyRTR_V = Empty OR Preload_RVARS.Z096_PrxyRTR_V = 
+         UNKNOWN OR SecA.StartInterview.A010_CurrWavePrxy <> SAMEPERSONASINPRIORWAVE 
+         THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+         IF ActiveMode = 'IWERADMIN' THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> PXYSPISREPORTER THEN 
+         IF Preload_RVARS.Z096_PrxyRTR_V <> Empty AND 
+         SecA.StartInterview.A010_CurrWavePrxy = SAMEPERSONASINPRIORWAVE THEN 
+         ASSIGN: SecA.StartInterview.A103_PrxyRTR := 
+         OrdEnum(Preload_RVARS.Z096_PrxyRTR_V ) 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+         IF ActiveMode = 'IWERADMIN' THEN 
+         IF SecA.StartInterview.A009_SelfPrxy = PXYSPISREPORTER THEN 
+         ASSIGN: SecA.StartInterview.A103_PrxyRTR := 'SPOUSEPARTNER' 
+         ASSIGN: SecA.StartInterview.A103_PrxyRTR := 
+         OrdEnum(Preload_RVARS.Z096_PrxyRTR_V ) 
+         ASSIGN: SecA.StartInterview.A103_PrxyRTR := 'SPOUSEPARTNER' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPRA103                       PROXY RELATIONSHIP TO R
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.StartInterview.A103_PrxyRTR
+
+         INSTR: Designate the Proxy Reporter's Relationship to [R's First Name]
+
+         .................................................................................
+            22           2.  SPOUSE OR PARTNER
+            28           3.  SON
+             1           4.  STEPSON OR SON OF PARTNER
+                         5.  SPOUSE OR PARTNER OF DAUGHTER
+            48           6.  DAUGHTER
+             2           7.  STEPDAUGHTER OR DAUGHTER OF PARTNER
+             2           8.  SPOUSE OR PARTNER OF SON
+             4           9.  GRANDCHILD OF R OR SPOUSE OR PARTNER
+             1          15.  BROTHER
+             1          17.  SISTER
+             5          19.  OTHER RELATIVE
+             2          20.  OTHER INDIVIDUAL
+                        23.  PAID HELPER
+                        24.  PROFESSIONAL
+                        33.  SPOUSE OR PARTNER OF GRANDCHILD
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+                     Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES THEN 
+         IF ActiveMode = 'IWERADMIN' THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES THEN 
+         IF NOT(ActiveMode = 'IWERADMIN') THEN 
+         ASSIGN: SecA.StartInterview.A012_LangSwitch := 'ENGLISH' 
+         ASSIGN: SecA.StartInterview.A012_LangSwitch := 'ENGLISH' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPRA012                       SELECT LANGUAGE
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.StartInterview.A012_LangSwitch
+
+         INSTR:  Select English or Spanish
+
+         .................................................................................
+           114           1.  ENGLISH
+             2           2.  SPANISH
+
+
+==========================================================================================
+
+XPRVDATE                      2020 DATA MODEL VERSION
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+         .................................................................................
+            17           1.  Version 1
+                         2.  Version 2
+            11           3.  Version 3
+            19           4.  Version 4
+            14           5.  Version 5
+            10           6.  Version 6
+            13           7.  Version 7
+             3           8.  Version 8
+             4           9.  Version 9
+             5          10.  Version 10
+             6          11.  Version 11
+             8          12.  Version 12
+             6          13.  Version 13
+
+
+==========================================================================================
+
+XPRVERSN                      2020 POST-EXIT RELEASE VERSION NUMBER
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+           116           1.  HRS 2020 Post-Exit Final Release
+
+
+==========================================================================================

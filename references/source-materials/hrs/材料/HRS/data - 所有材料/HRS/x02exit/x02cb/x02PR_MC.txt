@@ -1,0 +1,450 @@
+==========================================================================================
+2002 HRS Exit (Final Release)
+ODBC Reference: [HRS2002x]
+Perl script: CodebkD11.pl v6.132 Mon Dec 11 11:20:16 2006
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION PR: Preload (HHMemberChild)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFICATION NUMBER
+          Section: PR     Level: HHMemberCh  Type: Character   Width: 6    Decimals: 0
+
+        ..................................................................................
+         8292           000002-213399. Household Identifier
+
+==========================================================================================
+
+SSUBHH    2002 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+          Section: PR     Level: HHMemberCh  Type: Character   Width: 1    Decimals: 0
+
+        ..................................................................................
+         7884           3. 1st deceased respondent from a household
+          408           4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+OPN       OTHER PERSON IDENTIFIER
+          Section: PR     Level: HHMemberCh  Type: Character   Width: 3    Decimals: 0
+
+        ..................................................................................
+         8292                 010-990. Other Person Identifier
+
+==========================================================================================
+
+GSUBHH    2000 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+          Section: PR     Level: HHMemberCh  Type: Character   Width: 1    Decimals: 0
+
+        ..................................................................................
+         7982           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+          110           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           92           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           93           3. 1st deceased respondent from a household
+            6           4. 2nd deceased respondent from a household
+            9           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); ptSCVXR1_R2 <> SECOND; (piHHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = MARRIED) OR
+        (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL)); A020TSameSpP_A = NO;
+        BA_Respondents[3].X054APNdx = EMPTY AND (A025_YrStopCoHabit = RESPONSE);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX054_MC  FAMILY MEMBER INDEX
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_People.X054APNdx
+        ..................................................................................
+         8292                    1-34. Household Member/Child Index Number
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        (((BA_Respondents[1].X066ACouplenss_V = MARRIED) AND (A020TSameSpP_A =
+        YESANDSPPTRISLIVING)) OR (A020TSameSpP_A = THATPTRISNOWRSSP)) OR (A026_Rmarried
+        = YES); A034_RMarSep = SEPARATED; BA_Respondents[3].X054APNdx = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX056_MC  RESIDENCY STATUS - HHM/KID-UPDATED
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_People.X056AresStat
+        ..................................................................................
+          692           1. RESIDENT
+            5           2. AWAY/INST: THE PERSON IS TEMPORARILY AWAY (IN SCHOOL, JAIL,
+                           REHAB, ETC.) AND DOES NOT HAVE ANY OTHER PERMANENT ADDRESS
+            1           3. AWAY/OTHER: THE PERSON IS TEMPORARILY AWAY (FOR ANOTHER
+                           REASON, SUCH AS TRAVELLING) AND DOES NOT HAVE ANY OTHER
+                           PERMANENT ADDRESS
+          185           4. DIED
+         6902           5. NONRESIDENT
+          101           6. HAVE NO CONTACT
+           17           7. PERSON DOES NOT BELONG IN THIS GRID
+          389       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        (((BA_Respondents[1].X066ACouplenss_V = MARRIED) AND (A020TSameSpP_A =
+        YESANDSPPTRISLIVING)) OR (A020TSameSpP_A = THATPTRISNOWRSSP)) OR (A026_Rmarried
+        = YES); A034_RMarSep = SEPARATED; BA_Respondents[3].X054APNdx = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SZ057_MC  PREV WAVE RESIDENCY STATUS - HHM/KID
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_People.X057AResStat_V
+        ..................................................................................
+          726           1. RESIDENT
+            2           2. AWAY/INST: THE PERSON IS TEMPORARILY AWAY (IN SCHOOL, JAIL,
+                           REHAB, ETC.) AND DOES NOT HAVE ANY OTHER PERMANENT ADDRESS
+            1           3. AWAY/OTHER: THE PERSON IS TEMPORARILY AWAY (FOR ANOTHER
+                           REASON, SUCH AS TRAVELLING) AND DOES NOT HAVE ANY OTHER
+                           PERMANENT ADDRESS
+           74           4. DIED
+         6323           5. NONRESIDENT
+           82           6. HAVE NO CONTACT
+            6           7. PERSON DOES NOT BELONG IN THIS GRID
+         1078       Blank. Data from prior wave not available
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        (((BA_Respondents[1].X066ACouplenss_V = MARRIED) AND (A020TSameSpP_A =
+        YESANDSPPTRISLIVING)) OR (A020TSameSpP_A = THATPTRISNOWRSSP)) OR (A026_Rmarried
+        = YES); A034_RMarSep = SEPARATED; BA_Respondents[3].X054APNdx = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX060_MC  SEX OF INDIVIDUAL - HHM/KID-UPDATED
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_People.X060ASex
+        ..................................................................................
+         4107           1. MALE
+         4150           2. FEMALE
+            2           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           33       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST);
+        (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR);
+        (ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN);
+        piInitA106_NumContactKids > 0; (E022_NumNewGKids = YES) AND NOT
+        ((puE023MTemp.CARDINAL = 1) AND (92 IN puE023MTemp)); NOT (puE023MTemp[cnt] <>
+        EMPTY AND NOT (93 IN puE023MTemp)); 93 IN puE023MTemp; Name <> EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX061_MC  RELATIONSHIP TO R - HHM/KID-UPDATED
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BE_NewGDKids.X061ARelateR
+        ..................................................................................
+         2001           3. SON
+          251           4. STEPSON OR SON OF PARTNER
+         1389           5. SPOUSE/PARTNER OF DAUGHTER
+         1972           6. DAUGHTER
+          271           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+         1414           8. SPOUSE/PARTNER OF SON
+          192           9. GRANDCHILD OF R OR SP/P
+            2          10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+           12          12. MOTHER
+            2          13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+           96          15. BROTHER
+          103          16. BROTHER-IN-LAW OR BROTHER OF SP/P
+          114          17. SISTER
+          100          18. SISTER-IN-LAW OR SISTER OF SP/P
+           58          19. OTHER RELATIVE
+           86          20. OTHER INDIVIDUAL
+                       21. ORGANIZATION
+                       22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+           40          26. LATE SPOUSE/PARTNER
+           16          27. EX-SPOUSE/PARTNER
+                       28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+            1          30. FORMER STEP-CHILD
+          111          31. FORMER CHILD-IN-LAW
+           38          32. RELATIONSHIP UNKNOWN
+            9          33. SP/P OF GRANDCHILD
+           12          90. UNKNOWN CHILD
+            2       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RTab[1].X007AfinFam IN [FINANCIAL_FAMILYR, FAMILYR]) OR ((piSCVXR1_R2 =
+        FIRST) OR piSCVXR1_R2 = EMPTY)) AND NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT,
+        FIRSTREPEATPOST, SECREPEATPOST]); (piSCVXSplit = NO) OR ((piSCVXSplit = YES)
+        AND (piSCVXNewSp = YES)); aA038ACouplenss_A IN [MARRIED, REMARRIED,
+        PARTNERED_VOL, REPARTNERED_VOL]; ((HHMMain.HHMTab.BA2_Parents[Cnt].X054APNdx <>
+        EMPTY AND (HHMMain.HHMTab.BA2_Parents[Cnt].X056AresStat IN [RESIDENT,
+        AWAY_INST, AWAY_OTHER])) AND (HHMMain.HHMTab.BA2_Parents[Cnt].X063ARelateSp =
+        EMPTY OR (HHMMain.HHMTab.BA2_Parents[Cnt].X063ARelateSp = UNKNOWN))) AND
+        (HHMMain.HHMTab.BA2_Parents[Cnt].X056AresStat <> DIED);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX063_MC  RELATIONSHIP HHM/KID TO SP - UPDATED
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA2_RelateSpLoop.X063ARelateSp
+
+        What (was/is) the relationship of ^aName to ^FLA097PXSP?) to (you/[RESPONDENT
+        FIRST NAME]'s (current) (husband/wife/partner))?
+        ..................................................................................
+          900           3. SON
+          234           4. STEPSON OR SON OF PARTNER
+          714           5. SPOUSE/PARTNER OF DAUGHTER
+          891           6. DAUGHTER
+          217           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+          692           8. SPOUSE/PARTNER OF SON
+           76           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+            1          11. FATHER OF SPOUSE/PARTNER
+            2          12. MOTHER
+            5          13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+          118          15. BROTHER
+           71          16. BROTHER-IN-LAW OR BROTHER OF SP/P
+          110          17. SISTER
+           77          18. SISTER-IN-LAW OR SISTER OF SP/P
+           18          19. OTHER RELATIVE
+           41          20. OTHER INDIVIDUAL
+                       21. ORGANIZATION
+                       22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+            4          24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+            3          26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+            1          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+            4          32. RELATIONSHIP UNKNOWN
+            4          33. SP/P OF GRANDCHILD
+            2          90. UNKNOWN CHILD
+                       91. UNKNOWN IN LAW
+         4107       Blank. R not coupled
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); ptSCVXR1_R2 <> SECOND; NOT (((piHHX024_ReIwHH_V = NO) OR
+        (BA_Respondents[1].X066ACouplenss_V = OTHER)) OR (A020TSameSpP_A = NO));
+        A020TSameSpP_A = THATPTRISNOWRSSP;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX065_MC  COUPLENESS STATUS HHM/KID - UPDATED
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_People.X065ACouplenss
+        ..................................................................................
+         5786           1. MARRIED
+                        2. REMARRIED
+          146           3. PARTNERED (VOLUNTEERED)
+                        4. REPARTNERED (VOLUNTEERED)
+         2301           6. OTHER
+           59       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; (piHHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = MARRIED) OR
+        (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL)); A020TSameSpP_A = NO;
+        BA_Respondents[3].X054APNdx = EMPTY AND (A025_YrStopCoHabit = RESPONSE);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SZ066_MC  PREV WAVE COUPLENESS-INDIVIDUAL
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_People.X066ACouplenss_V
+        ..................................................................................
+         5666           1. MARRIED
+                        2. REMARRIED
+          102           3. PARTNERED (VOLUNTEERED)
+                        4. REPARTNERED (VOLUNTEERED)
+         1971           6. OTHER
+          553       Blank. Data from prior wave not available
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        (((BA_Respondents[1].X066ACouplenss_V = MARRIED) AND (A020TSameSpP_A =
+        YESANDSPPTRISLIVING)) OR (A020TSameSpP_A = THATPTRISNOWRSSP)) OR (A026_Rmarried
+        = YES); A034_RMarSep = SEPARATED; BA_Respondents[3].X054APNdx = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX067_MC  YEAR BORN - HHM/KID-UPDATED
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: B_People.X067AYrBorn
+        ..................................................................................
+         7035               1897-2000. Actual Value
+         1257                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); ptSCVXR1_R2 <> SECOND; (piHHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = MARRIED) OR
+        (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL)); A020TSameSpP_A = NO;
+        BA_Respondents[3].X054APNdx = EMPTY AND (A025_YrStopCoHabit = RESPONSE);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SZ068_MC  PREV WAVE MEM YR BORN - CHILDREN
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: B_People.X068AYrBorn_V
+        ..................................................................................
+         7035               1897-2000. Actual Value
+         1257                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); ptSCVXR1_R2 <> SECOND; (piHHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = MARRIED) OR
+        (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL)); A020TSameSpP_A = NO;
+        BA_Respondents[3].X054APNdx = EMPTY AND (A025_YrStopCoHabit = RESPONSE);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX069_MC  RELATION HHM/KID TO HHM/KID - UPDATED
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_People.X069ARelateOth
+        ..................................................................................
+         2973           2. SPOUSE/PARTNER
+           89           3. SON
+            2           4. STEPSON OR SON OF PARTNER
+            1           5. SPOUSE/PARTNER OF DAUGHTER
+           78           6. DAUGHTER
+            3           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+                        8. SPOUSE/PARTNER OF SON
+                        9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+                       12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+         5146       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); ptSCVXR1_R2 <> SECOND; (piHHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = MARRIED) OR
+        (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL)); A020TSameSpP_A = NO;
+        BA_Respondents[3].X054APNdx = EMPTY AND (A025_YrStopCoHabit = RESPONSE);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX070_MC  INDEX # KID/HHMEM RELATED TO-UPDATED
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_People.X070AWhoRelOth
+        ..................................................................................
+         3128                    3-28. Child Index Number
+         5164                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RTab[1].X007AfinFam IN [FINANCIAL_FAMILYR, FAMILYR]) OR ((piSCVXR1_R2 =
+        FIRST) OR piSCVXR1_R2 = EMPTY)) AND NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT,
+        FIRSTREPEATPOST, SECREPEATPOST]); (((Parents[cnt].X056AresStat IN [RESIDENT,
+        AWAY_INST, AWAY_OTHER]) AND (HHMMain.HHMTab.BA2_Parents[cnt].X056AresStat IN
+        [NONRESIDENT, HAVENOCONTACT, NOTACHILD])) OR (((Parents[cnt].X056AresStat IN
+        [NONRESIDENT, HAVENOCONTACT, NOTACHILD]) OR Parents[cnt].X056AresStat = EMPTY)
+        AND (HHMMain.HHMTab.BA2_Parents[cnt].X056AresStat IN [RESIDENT, AWAY_INST,
+        AWAY_OTHER]))) OR ((Parents[cnt].X056AresStat <> EMPTY AND
+        (Parents[cnt].X056AresStat <> DIED)) AND
+        (HHMMain.HHMTab.BA2_Parents[cnt].X056AresStat = DIED)); X072AMoChgResStat =
+        EMPTY AND piMonth <> EMPTY; ((RTab[1].X007AfinFam IN [FINANCIAL_FAMILYR,
+        FAMILYR]) OR ((piSCVXR1_R2 = FIRST) OR piSCVXR1_R2 = EMPTY)) AND NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((Parents[cnt].X056AresStat IN [RESIDENT, AWAY_INST, AWAY_OTHER]) AND
+        (HHMMain.HHMTab.BA2_Parents[cnt].X056AresStat IN [NONRESIDENT, HAVENOCONTACT,
+        NOTACHILD])) OR (((Parents[cnt].X056AresStat IN [NONRESIDENT, HAVENOCONTACT,
+        NOTACHILD]) OR Parents[cnt].X056AresStat = EMPTY) AND
+        (HHMMain.HHMTab.BA2_Parents[cnt].X056AresStat IN [RESIDENT, AWAY_INST,
+        AWAY_OTHER]))) OR ((Parents[cnt].X056AresStat <> EMPTY AND
+        (Parents[cnt].X056AresStat <> DIED)) AND
+        (HHMMain.HHMTab.BA2_Parents[cnt].X056AresStat = DIED));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX072_MC  HHM/KID MOVE IN/OUT/DIE-MNTH -UPDATED
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA2_ResidencyLoop.X072AMoChgResStat
+
+        In what month and year did ([Name] die/[RESPONDENT FIRST NAME] and [Name]
+        start living in the same (house or apartment/house/apartment)/[RESPONDENT
+        FIRST NAME] and [Name] stop living together/[Name] stop living in your home)?
+
+        MONTH:
+
+        YEAR:
+        ..................................................................................
+           32           1. JAN
+           13           2. FEB
+           30           3. MAR
+           19           4. APR
+           27           5. MAY
+           25           6. JUN
+           10           7. JUL
+           35           8. AUG
+           31           9. SEP
+           25          10. OCT
+           19          11. NOV
+           18          12. DEC
+           90          98. DK (Don't Know); NA (Not Ascertained)
+           12          99. RF (Refused)
+         7906       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; (piHHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = MARRIED) OR
+        (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL)); A020TSameSpP_A = NO;
+        BA_Respondents[3].X054APNdx = EMPTY AND (A025_YrStopCoHabit = RESPONSE);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX073_MC  HHM/KID MOVE IN/OUT/DIE-YEAR-UPDATED
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: B_People.X073AYrChgResStat
+        ..................................................................................
+          331               1959-2002. Actual Value
+           44                    9998. DK (Don't Know); NA (Not Ascertained)
+           11                    9999. RF (Refused)
+         7906                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SX076_MC  CHILDS FORMER SPOUSE_INFO-UPDATED
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_People.X076AWhySplit
+        ..................................................................................
+           21           1. He/She died
+           54           2. They separated
+           40           3. Other
+         8177       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SVDATE    2002 DATA MODEL VERSION
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 1    Decimals: 0
+
+
+        User Note:  This variable identifies which data model was used to interview
+        the proxy respondent.  Please reference the data description for a summary of
+        changes in each data model.
+        ..................................................................................
+         3323           1. Version 1
+         1943           2. Version 2
+         2421           3. Version 3
+          605           4. Version 4
+
+==========================================================================================
+
+SVERSION  2002 EXIT FINAL RELEASE VERSION NUMBER
+          Section: PR     Level: HHMemberCh  Type: Numeric     Width: 1    Decimals: 0
+
+        ..................................................................................
+         8292           1. HRS 2002 Exit Final Release #1
+
+==========================================================================================
+
+SQNR      BLAISE IDENTIFICATION NUMBER
+          Section: PR     Level: HHMemberCh  Type: Character   Width: 11   Decimals: 0
+
+        ..................................................................................
+         8292 00000200010-21339900010. Blaise Identifier
+

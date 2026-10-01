@@ -1,0 +1,433 @@
+==========================================================================================
+2000 HRS Exit (Final Release)
+ODBC Reference: [HRS2000x]
+Perl script: CodebkD9.pl v5.043 Tue Mar  1  9:49:05 2005
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Surveycraft metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION D: Family Structure (FromChild)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFIER
+          Section: D            Level: FromChild          CAI Reference: Q9001
+          Type: Character       Width: 6                  Decimals: 0
+          ................................................................................
+            133       012483-213433. Household ID
+
+==========================================================================================
+
+RSUBHH    2000 SUB-HOUSEHOLD IDENTIFIER
+          Section: D            Level: FromChild          CAI Reference: Q9004
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+            125         3. 1st deceased respondent from a household
+              8         4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+OPN       OTHER PERSON NUMBER
+          Section: D            Level: FromChild          CAI Reference: Q9008
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+                      037. DECEASED CHILD
+              9       038. ALL CHILDREN EQUALLY
+                      039. ALL GRANDCHILDREN EQUALLY
+                      040. ALL CHILDREN AND GRANDCHILDREN EQUALLY
+            117   041-995. Other Person Number
+              4       997. OTHER
+              2       998. DK (Don't Know); NA (Not Ascertained)
+              1       999. RF (Refused)
+
+==========================================================================================
+
+RTRANNUM  2000 TRANSFER NUMBER
+          Section: D            Level: FromChild          CAI Reference: Q9009
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            106         1. First Transfer From Child
+             22         2. Second Transfer From Child
+              5         3. Third Transfer From Child
+
+==========================================================================================
+
+FSUBHH    1998 SUB-HOUSEHOLD IDENTIFIER
+          Section: D            Level: FromChild          CAI Reference: Q9003
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+            129         0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+              3         1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+              1         2. Split household - other half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+                        3. 1st deceased respondent from a household
+                        5. Split household - one half of couple from SUBHH 1 or 2
+                        6. Split household - one half of couple from SUBHH 1 or 2
+                        7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+RQNR      SURVEYCRAFT CASE NUMBER
+          Section: D            Level: FromChild          CAI Reference: Q9006
+          Type: Numeric         Width: 5                  Decimals: 0
+          ................................................................................
+            100         80022-80985. AHEAD/CODA Surveycraft Case Number
+             33         90030-90349. HRS/WAR BABY Surveycraft Case Number
+
+==========================================================================================
+
+R1697     D62.TRANSFER FROM CHILDREN LARGEST-1
+          Section: D            Level: FromChild          CAI Reference: Q1697
+          Type: Character       Width: 3                  Decimals: 0
+
+          D62.
+          IF Q1696 IS (1)
+          IF Q514 IS (NE2)
+                  Which child gave (him/her) (or (his/her) husband/or (his/her)
+          wife/or (his/her) partner/.../or (his/her) late husband/or (his/her) late
+          wife/or (his/her) late partner)
+                  the largest amount?
+          ELSE
+                  Which child gave (him/her) or you the largest amount?
+          END
+
+          ELSE
+          IF Q514 IS (NE2)
+                  Which child gave (him/her) (or (his/her) husband/or (his/her)
+          wife/or (his/her) partner/.../or (his/her) late husband/or (his/her) late
+          wife/or (his/her) late partner)
+                  the next largest amount?
+          ELSE
+                  Which child gave (him/her) or you the next largest amount?
+          END
+
+          END
+
+                  IF GRANDCHILD:
+                  (Which of (his/her) children is the parent of that grandchild?)
+          ................................................................................
+                      037. DECEASED CHILD
+              9       038. ALL CHILDREN EQUALLY
+                      039. ALL GRANDCHILDREN EQUALLY
+                      040. ALL CHILDREN AND GRANDCHILDREN EQUALLY
+            117   041-950. Other Person Number
+              4       997. OTHER (SPECIFY)
+              2       998. DK (Don't Know); NA (Not Ascertained)
+              1       999. RF (Refused)
+                    Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0); [Q1695:D61] IS
+                           (5 OR DK OR RF); [Q1706:D64] IS (5 OR DK OR RF) OR [Q1697:D62]
+                           IS (38-40) OR [Q1699:D62b] IS (38-40); [Q1696:D62S] IS (GE
+                           Q1526) OR [Q1697:D62] IS (RF) OR [Q1698:D62a] IS (5 OR DK OR
+                           RF)
+
+==========================================================================================
+
+R1698     D62a.RECEIVE SAME FROM EACH
+          Section: D            Level: FromChild          CAI Reference: Q1698
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D62a.
+                  Did more than one child give (him/her) about the same amount?
+          ................................................................................
+              1         1. YES
+                        5. NO
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            131     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0); [Q1695:D61] IS
+                           (5 OR DK OR RF); [Q1706:D64] IS (5 OR DK OR RF) OR [Q1697:D62]
+                           IS (38-40) OR [Q1699:D62b] IS (38-40); [Q1696:D62S] IS (GE
+                           Q1526) OR [Q1697:D62] IS (RF) OR [Q1698:D62a] IS (5 OR DK OR
+                           RF); [Q1697:D62] IS (RF OR 97); [Q1697:D62] IS (NE DK)
+
+==========================================================================================
+
+R1699M1   D62b.WHICH CHILDREN-1
+          Section: D            Level: FromChild          CAI Reference: Q1699
+          Type: Character       Width: 3                  Decimals: 0
+
+          D62b.
+                  Which children?
+
+                  IF GRANDCHILD:
+                  (Which of (his/her) children is the parent of those grandchildren?)
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL CHILDREN EQUALLY
+                      039. ALL GRANDCHILDREN EQUALLY
+                      040. ALL CHILDREN AND GRANDCHILDREN EQUALLY
+                  041-950. Other Person Number
+                      997. OTHER
+              1       998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+            132     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0); [Q1695:D61] IS
+                           (5 OR DK OR RF); [Q1706:D64] IS (5 OR DK OR RF) OR [Q1697:D62]
+                           IS (38-40) OR [Q1699:D62b] IS (38-40); [Q1696:D62S] IS (GE
+                           Q1526) OR [Q1697:D62] IS (RF) OR [Q1698:D62a] IS (5 OR DK OR
+                           RF); [Q1697:D62] IS (RF OR 97); [Q1697:D62] IS (NE DK)
+
+==========================================================================================
+
+R1699M2   D62b.WHICH CHILDREN-2
+          Section: D            Level: FromChild          CAI Reference: Q1699
+          Type: Character       Width: 3                  Decimals: 0
+
+          D62b.
+                  Which children?
+
+                  IF GRANDCHILD:
+                  (Which of (his/her) children is the parent of those grandchildren?)
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL CHILDREN EQUALLY
+                      039. ALL GRANDCHILDREN EQUALLY
+                      040. ALL CHILDREN AND GRANDCHILDREN EQUALLY
+                  041-950. Other Person Number
+                      997. OTHER
+              1       998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+            132     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0); [Q1695:D61] IS
+                           (5 OR DK OR RF); [Q1706:D64] IS (5 OR DK OR RF) OR [Q1697:D62]
+                           IS (38-40) OR [Q1699:D62b] IS (38-40); [Q1696:D62S] IS (GE
+                           Q1526) OR [Q1697:D62] IS (RF) OR [Q1698:D62a] IS (5 OR DK OR
+                           RF); [Q1697:D62] IS (RF OR 97); [Q1697:D62] IS (NE DK)
+
+==========================================================================================
+
+R1699M3   D62b.WHICH CHILDREN-3
+          Section: D            Level: FromChild          CAI Reference: Q1699
+          Type: Character       Width: 3                  Decimals: 0
+
+          D62b.
+                  Which children?
+
+                  IF GRANDCHILD:
+                  (Which of (his/her) children is the parent of those grandchildren?)
+          ................................................................................
+              1       037. DECEASED CHILD
+                      038. ALL CHILDREN EQUALLY
+                      039. ALL GRANDCHILDREN EQUALLY
+                      040. ALL CHILDREN AND GRANDCHILDREN EQUALLY
+                  041-950. Other Person Number
+                      997. OTHER
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+            132     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0); [Q1695:D61] IS
+                           (5 OR DK OR RF); [Q1706:D64] IS (5 OR DK OR RF) OR [Q1697:D62]
+                           IS (38-40) OR [Q1699:D62b] IS (38-40); [Q1696:D62S] IS (GE
+                           Q1526) OR [Q1697:D62] IS (RF) OR [Q1698:D62a] IS (5 OR DK OR
+                           RF); [Q1697:D62] IS (RF OR 97); [Q1697:D62] IS (NE DK)
+
+==========================================================================================
+
+R1699M4   D62b.WHICH CHILDREN-4
+          Section: D            Level: FromChild          CAI Reference: Q1699
+          Type: Character       Width: 3                  Decimals: 0
+
+          D62b.
+                  Which children?
+
+                  IF GRANDCHILD:
+                  (Which of (his/her) children is the parent of those grandchildren?)
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL CHILDREN EQUALLY
+                      039. ALL GRANDCHILDREN EQUALLY
+                      040. ALL CHILDREN AND GRANDCHILDREN EQUALLY
+                  041-950. Other Person Number
+                      997. OTHER
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+            133     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0); [Q1695:D61] IS
+                           (5 OR DK OR RF); [Q1706:D64] IS (5 OR DK OR RF) OR [Q1697:D62]
+                           IS (38-40) OR [Q1699:D62b] IS (38-40); [Q1696:D62S] IS (GE
+                           Q1526) OR [Q1697:D62] IS (RF) OR [Q1698:D62a] IS (5 OR DK OR
+                           RF); [Q1697:D62] IS (RF OR 97); [Q1697:D62] IS (NE DK)
+
+==========================================================================================
+
+R1700     D63.TRANSFER FROM CHILD $
+          Section: D            Level: FromChild          CAI Reference: Q1700
+          Type: Numeric         Width: 7                  Decimals: 0
+
+          D63.
+          IF Q1697 IS (37)
+                  About how much did that amount to from (his/her) deceased child?
+          ELSE Q1697 IS (39) OR Q1699 IS (39)
+                  About how much did that amount to from each grandchild
+          ELSE Q1697 IS (40) OR Q1699 IS (40)
+                  About how much did that amount to from each child and grandchild
+          ELSE Q1697 IS (NE38 AND NEK1) AND Q480 IS (1)
+          IF Q765 IS (1)
+                  About how much did that amount to from
+                  [Q8-PR8.HH1 FIRST NAME]  (
+                  [Q11-PR11.HH1 REL TO IDFM] )
+          ELSE
+                  About how much did that amount to from
+                  [Q8-PR8.HH1 FIRST NAME]  (
+                  [Q12-PR12.HH1 REL TO IDNFM] )
+          END
+
+          ELSE Q1697 IS (NE38 AND NEK1) AND Q480 IS (NE1)
+          IF Q765 IS (1)
+                  About how much did that amount to from
+                  [Q61-PR61.HH2 MEM FIRST NAME]  (
+                  [Q64-PR64.HH2 REL TO IDFM] )
+          ELSE
+                  About how much did that amount to from
+                  [Q61-PR61.HH2 MEM FIRST NAME]  (
+                  [Q65-PR65.HH2 REL TO IDNFM] )
+          END
+
+          ELSE
+                  About how much did that amount to from each child
+          END
+                  (since Q133-PR133.PREV WAVE IW MONTH OF FAMILY R / Q134-PR134.PREV
+          WAVE IW YEAR OF FAMILY R/in the last two years)?
+
+                  DO NOT PROBE DK/RF
+
+                  AMOUNT:
+          ................................................................................
+             71            0-100000. Actual Value
+                     100001-9999996. Actual Value (verified)
+             54             9999998. DK (Don't Know); NA (Not Ascertained)
+              2             9999999. RF (Refused)
+              6               Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND
+                                     [Q1623:D40] IS (0 OR 95 OR DK OR RF);
+                                     [Q1526:D049Y17] IS (0); [Q1695:D61] IS (5 OR DK OR
+                                     RF); [Q1706:D64] IS (5 OR DK OR RF) OR [Q1697:D62]
+                                     IS (38-40) OR [Q1699:D62b] IS (38-40); [Q1696:D62S]
+                                     IS (GE Q1526) OR [Q1697:D62] IS (RF) OR
+                                     [Q1698:D62a] IS (5 OR DK OR RF); [Q1697:D62] IS (RF
+                                     OR 97); [Q1699:D62b] IS (DK OR RF OR 97)
+
+==========================================================================================
+
+R1701     D63a.DK D13-1
+          Section: D            Level: FromChild          CAI Reference: Q1701
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D63a.
+                  Did it amount to less than $2,000, more than
+                  $2,000, or what?
+          ................................................................................
+             17         1. LESS THAN $2,000
+              7         3. ABOUT $2,000
+             19         5. MORE THAN $2,000
+             10         8. DK (Don't Know); NA (Not Ascertained)
+              3         9. RF (Refused)
+             77     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0); [Q1695:D61] IS
+                           (5 OR DK OR RF); [Q1706:D64] IS (5 OR DK OR RF) OR [Q1697:D62]
+                           IS (38-40) OR [Q1699:D62b] IS (38-40); [Q1696:D62S] IS (GE
+                           Q1526) OR [Q1697:D62] IS (RF) OR [Q1698:D62a] IS (5 OR DK OR
+                           RF); [Q1697:D62] IS (RF OR 97); [Q1699:D62b] IS (DK OR RF OR
+                           97); [Q1700:D63] IS (NE DK AND NE RF)
+
+==========================================================================================
+
+R1702     D63b.DK D13-2
+          Section: D            Level: FromChild          CAI Reference: Q1702
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D63b.
+                  (Did it amount to) less than $5,000, more than
+                  $5,000, or what?
+          ................................................................................
+             11         1. LESS THAN $5,000
+              3         3. ABOUT $5,000
+              5         5. MORE THAN $5,000
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            114     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0); [Q1695:D61] IS
+                           (5 OR DK OR RF); [Q1706:D64] IS (5 OR DK OR RF) OR [Q1697:D62]
+                           IS (38-40) OR [Q1699:D62b] IS (38-40); [Q1696:D62S] IS (GE
+                           Q1526) OR [Q1697:D62] IS (RF) OR [Q1698:D62a] IS (5 OR DK OR
+                           RF); [Q1697:D62] IS (RF OR 97); [Q1699:D62b] IS (DK OR RF OR
+                           97); [Q1700:D63] IS (NE DK AND NE RF); [Q1701:D63a] IS (1);
+                           [Q1701:D63a] IS (3 OR DK OR RF)
+
+==========================================================================================
+
+R1703     D63c. DK D13-3
+          Section: D            Level: FromChild          CAI Reference: Q1703
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D63c.
+                  (Did it amount to) less than $1,000, more than
+                  $1,000, or what?
+          ................................................................................
+              6         1. LESS THAN $1,000
+              2         3. ABOUT $1,000
+              8         5. MORE THAN $1,000
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            116     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0); [Q1695:D61] IS
+                           (5 OR DK OR RF); [Q1706:D64] IS (5 OR DK OR RF) OR [Q1697:D62]
+                           IS (38-40) OR [Q1699:D62b] IS (38-40); [Q1696:D62S] IS (GE
+                           Q1526) OR [Q1697:D62] IS (RF) OR [Q1698:D62a] IS (5 OR DK OR
+                           RF); [Q1697:D62] IS (RF OR 97); [Q1699:D62b] IS (DK OR RF OR
+                           97); [Q1700:D63] IS (NE DK AND NE RF); [Q1701:D63a] IS (3 OR
+                           DK OR RF); [Q1702:D63b] IS (A)
+
+==========================================================================================
+
+R1706     D64.NEXT CHILD
+          Section: D            Level: FromChild          CAI Reference: Q1706
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D64.
+          IF Q514 IS (NE2)
+                  (Since Q133-PR133.PREV WAVE IW MONTH OF FAMILY R / Q134-PR134.PREV
+          WAVE IW YEAR OF FAMILY R/In the last two years) did (he/she) (or (his/her)
+          husband/or (his/her) wife/or (his/her) partner/.../or (his/her) late
+          husband/or (his/her) late wife/or (his/her) late partner) receive
+          ELSE
+                  (Since Q133-PR133.PREV WAVE IW MONTH OF FAMILY R / Q134-PR134.PREV
+          WAVE IW YEAR OF FAMILY R/In the last two years) did (he/she) or you receive
+          END
+                  financial help totaling $500 or more from any other
+                  child (or grandchild)?
+
+                  BY FINANCIAL HELP WE MEAN GIVING MONEY, HELPING PAY
+                  BILLS, OR COVERING SPECIFIC TYPES OF COSTS SUCH AS
+                  THOSE FOR MEDICAL CARE OR INSURANCE, SCHOOLING,
+                  DOWN PAYMENT FOR A HOME, RENT, ETC.  THE FINANCIAL
+                  HELP CAN BE CONSIDERED SUPPORT, A GIFT OR A LOAN.
+          ................................................................................
+             27         1. YES
+             70         5. NO
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+             35     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0); [Q1695:D61] IS
+                           (5 OR DK OR RF); [Q1706:D64] IS (5 OR DK OR RF) OR [Q1697:D62]
+                           IS (38-40) OR [Q1699:D62b] IS (38-40); [Q1696:D62S] IS (GE
+                           Q1526) OR [Q1697:D62] IS (RF) OR [Q1698:D62a] IS (5 OR DK OR
+                           RF); [Q1697:D62] IS (RF OR 97); [Q1699:D62b] IS (DK OR RF OR
+                           97)
+
+==========================================================================================
+
+RVERSION  2000 EXIT FINAL RELEASE VERSION NUMBER
+          Section: D            Level: FromChild          CAI Reference: Q9007
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            133         1. First Data Release
+

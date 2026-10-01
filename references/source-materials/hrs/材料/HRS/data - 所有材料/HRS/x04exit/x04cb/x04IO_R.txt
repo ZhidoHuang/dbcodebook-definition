@@ -1,0 +1,2233 @@
+==========================================================================================
+2004 HRS Exit (Final Release)
+ODBC Reference: [HRS2004x]
+Perl script: CodebkD11.pl v6.161 Tue Feb  6 13:58:39 2007
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION IO: Interviewer Observations (Respondent)
+
+==========================================================================================
+
+HHID       HOUSEHOLD IDENTIFICATION NUMBER
+         Section: IO    Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+        ..................................................................................
+         1227           010240-213434. Household Identification Number
+
+==========================================================================================
+
+PN         RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: IO    Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+          861         010. Person Identifier
+           19         011. Person Identifier
+          274         020. Person Identifier
+           39         030. Person Identifier
+            1         031. Person Identifier
+           33         040. Person Identifier
+
+==========================================================================================
+
+TSUBHH     2004 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: IO    Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+         1176           3. 1st deceased respondent from a household
+           51           4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+HSUBHH     2002 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: IO    Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+         1180           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+           21           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           21           2. Split household - other half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+            4           3. 1st deceased respondent from a household
+                        5. Split household - one half of couple from SUBHH 1 or 2
+                        6. Split household - one half of couple from SUBHH 1 or 2
+            1           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+TPN_SP     2004 SPOUSE PERSON IDENTIFICATION NUMBER
+         Section: IO    Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+          184         010. Person Identifier
+           16         011. Person Identifier
+          233         020. Person Identifier
+            5         021. Person Identifier
+           21         030. Person Identifier
+            2         031. Person Identifier
+           22         040. Person Identifier
+            3         041. Person Identifier
+            1         811. New Spouse of Non-Original Respondent
+          740       Blank. R not coupled
+
+==========================================================================================
+
+T085       NUMBER OF CALLS TO RESPONDENT/HH
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        CallNum
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           1208        1          52          6.26          5.41      19
+         -----------------------------------------------------------------
+
+==========================================================================================
+
+TRESCD     RESULT CODE
+         Section: IO    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+
+
+        ResultCode
+
+        User Note: This is the result code of the call when obs were completed.
+        ..................................................................................
+         1202        1001. Respondent Complete
+            2        1005. Respondent Accepted Partial
+                     1080. Complete MBB Cohort Respondent
+            1        4001. Contact No Resistance, General Callback(Informant)
+                     4002. Contact No Resistance,General Callback(Respondent)
+                     4004. Contact No Resistance, General Callback(Proxy)
+                     4101. Contact No Resistance, Best Time Known (Informant)
+                     4102. Contact No Resistance, Best Time Known (Respondent
+                     4104. Contact No Resistance, Best Time Known (Proxy)
+                     4201. Cntc  No Resis, Appt made (Informant)
+                     4202. Cntc  No Resis, Appt made (Respondent)
+            3        4204. Cntc  No Resis, Appt made ( Proxy )
+                     4301. Cntc Initial Refusal (Informant)
+                     4302. Cntc Initial Refusal (Respondent)
+                     4304. Cntc Initial Refusal  ( Proxy )
+                     4510. Tracking By Interviewer ( Resp. Tracking )
+                     4520. Tracking By Interviewer ( Contact/Other Tracking )
+                     4530. Tracking By Interviewer ( Proxy Tracking )
+                     4610. Tracking By Tracking Team ( Resp. Tracking )
+                     4620. Tracking By Tracking Team (Contact/Other Tracking)
+                     4630. Tracking By Tracking Team ( Proxy Tracking)
+                     4901. Problem Code (Hold for Review)-Technical Problem
+                     4902. Problem Code (Hold for Review)-Procedural
+                     5001. Final Refusals - Final Refusal, Respondent
+                     5002. Final Refusals - Final Refusal, Informant
+                     5004. Final Refusals - Final Refusal, Proxy
+                     5005. FR (Final Refusal, Never Reached for Conversion)
+                     5006. FR (Final Refusal, Conversion Not Attempted )
+                     5080. FR ( Final Refusal. Exit Proxy )
+                     6001. OTH NI (NI:Tracking Exhausted)
+                     6002. OTH NI (NI: Never Answered. )
+                     6003. OTH NI (NI: Incomplete Interview )
+                     6004. OTH NI (NI:Permanent Condition)
+                     6005. OTH NI (NI: Language Barrier )
+                     6006. OTH NI (NI: Unable to Identify Proxy )
+                     6007. OTH NI (NI:Other Reason)
+                     6009. OTH NI (NI:Locked Building/Gated Community)
+                     6010. OTH NI (NI:Respondent Incarcerated)
+           19       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+        Assign:
+         IF ((HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES) AND (A007TRAlive_A
+        = YES))
+          OR (HH.X024_ReIwHH_V = YES) OR ((HH.X024_ReIwHH_V <> YES) AND (A007TRAlive_A
+        = YES)))
+         AND (A009_SelfPrxy = EMPTY
+          OR A009_SelfPrxy = EMPTY)
+         AND (A155_SelfPrxy = PXYSPISREPORTERNOTSAME
+          OR NOT (A155_SelfPrxy = PXYSPISREPORTERNOTSAME))
+         AND (A155_SelfPrxy <> EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+T086       TYPE OF INTERVIEW
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        S_attr1
+        ..................................................................................
+            1           1. NEW SPOUSE OF ORIGINAL R
+          119           2. RECONTACT (NON-RESPONSE IN 2002)
+         1088           3. REINTERVIEW
+           19       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T087       MODE OF INTERVIEW
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Mode
+        ..................................................................................
+          513           1. FACE TO FACE
+          695           2. PHONE
+           19       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T090       PREFERRED MODE
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Pref_Mode
+        ..................................................................................
+          101           1. PHONE
+         1107           2. FACE TO FACE
+           19       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T091       EXTERNAL OBS COMPLETED
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        External Obs completion status
+        ..................................................................................
+          226           1. DONE
+                        2. NOT DONE
+         1001       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T003       VERIFY ASSIGNED FTF CONTACT
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        This was a FTF contact, how was it conducted?
+        ..................................................................................
+            2           1. SPOKE OVER INTERCOM
+                        2. SPOKE THROUGH A CLOSED DOOR
+            1           3. SPOKE THROUGH AN OPEN DOOR/SCREEN DOOR/STORM DOOR
+           19           4. FACE-TO-FACE, BOTH OF US OUTSIDE THE HH
+          489           5. FACE-TO-FACE, BOTH OF US INSIDE THE HH
+            2           8. DK (Don't Know); NA (Not Ascertained)
+          714       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T005       RATE VOCABULARY
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How would you describe the (Respondent/Proxy/Informant)'s vocabulary (the
+        variety of words used to describe his/her thoughts)?
+        ..................................................................................
+           55           1. BELOW AVERAGE
+          847           2. AVERAGE
+          305           3. ABOVE AVERAGE
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           19       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T006M1     R ASK QUESTIONS ABOUT SURVEY - 1
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Did the (Respondent/Proxy/Informant) ask questions about any of the following
+                topics?
+
+                INTERVIEWER:CHOOSE ALL THAT APPLY
+        ..................................................................................
+          156           1. WHAT'S THE PURPOSE OF THE SURVEY/WHAT'S THIS ALL ABOUT?
+            1           2. WHO IS PAYING FOR THIS?/WHO IS THE SPONSOR?
+           12           3. WHY/HOW WAS RESPONDENT CHOSEN?
+           86           4. HOW LONG WILL THE INTERVIEW TAKE?
+            6           5. WHO'S GOING TO SEE R'S ANSWERS?
+            2           6. CAN RESPONDENT GET A COPY OF THE RESULTS?
+            8           7. HOW MUCH IS THE INCENTIVE?
+          912           8. NO QUESTIONS
+           24          97. OTHER
+            1          98. DK (Don't Know); NA (Not Ascertained)
+           19       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T006M2     R ASK QUESTIONS ABOUT SURVEY - 2
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Did the (Respondent/Proxy/Informant) ask questions about any of the following
+                topics?
+
+                INTERVIEWER:CHOOSE ALL THAT APPLY
+        ..................................................................................
+            3           1. WHAT'S THE PURPOSE OF THE SURVEY/WHAT'S THIS ALL ABOUT?
+           15           2. WHO IS PAYING FOR THIS?/WHO IS THE SPONSOR?
+           25           3. WHY/HOW WAS RESPONDENT CHOSEN?
+           52           4. HOW LONG WILL THE INTERVIEW TAKE?
+            4           5. WHO'S GOING TO SEE R'S ANSWERS?
+            2           6. CAN RESPONDENT GET A COPY OF THE RESULTS?
+            4           7. HOW MUCH IS THE INCENTIVE?
+                        8. NO QUESTIONS
+            4          97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1118       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T006M3     R ASK QUESTIONS ABOUT SURVEY - 3
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Did the (Respondent/Proxy/Informant) ask questions about any of the following
+                topics?
+
+                INTERVIEWER:CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. WHAT'S THE PURPOSE OF THE SURVEY/WHAT'S THIS ALL ABOUT?
+            1           2. WHO IS PAYING FOR THIS?/WHO IS THE SPONSOR?
+            6           3. WHY/HOW WAS RESPONDENT CHOSEN?
+           21           4. HOW LONG WILL THE INTERVIEW TAKE?
+            3           5. WHO'S GOING TO SEE R'S ANSWERS?
+            3           6. CAN RESPONDENT GET A COPY OF THE RESULTS?
+            6           7. HOW MUCH IS THE INCENTIVE?
+                        8. NO QUESTIONS
+                       97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1187       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T006M4     R ASK QUESTIONS ABOUT SURVEY - 4
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Did the (Respondent/Proxy/Informant) ask questions about any of the following
+                topics?
+
+                INTERVIEWER:CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. WHAT'S THE PURPOSE OF THE SURVEY/WHAT'S THIS ALL ABOUT?
+            1           2. WHO IS PAYING FOR THIS?/WHO IS THE SPONSOR?
+                        3. WHY/HOW WAS RESPONDENT CHOSEN?
+            4           4. HOW LONG WILL THE INTERVIEW TAKE?
+            9           5. WHO'S GOING TO SEE R'S ANSWERS?
+            1           6. CAN RESPONDENT GET A COPY OF THE RESULTS?
+                        7. HOW MUCH IS THE INCENTIVE?
+                        8. NO QUESTIONS
+                       97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1212       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T006M5     R ASK QUESTIONS ABOUT SURVEY - 5
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Did the (Respondent/Proxy/Informant) ask questions about any of the following
+                topics?
+
+                INTERVIEWER:CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. WHAT'S THE PURPOSE OF THE SURVEY/WHAT'S THIS ALL ABOUT?
+                        2. WHO IS PAYING FOR THIS?/WHO IS THE SPONSOR?
+                        3. WHY/HOW WAS RESPONDENT CHOSEN?
+                        4. HOW LONG WILL THE INTERVIEW TAKE?
+                        5. WHO'S GOING TO SEE R'S ANSWERS?
+            1           6. CAN RESPONDENT GET A COPY OF THE RESULTS?
+            2           7. HOW MUCH IS THE INCENTIVE?
+                        8. NO QUESTIONS
+                       97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1224       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T006M6     R ASK QUESTIONS ABOUT SURVEY - 6
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Did the (Respondent/Proxy/Informant) ask questions about any of the following
+                topics?
+
+                INTERVIEWER:CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. WHAT'S THE PURPOSE OF THE SURVEY/WHAT'S THIS ALL ABOUT?
+                        2. WHO IS PAYING FOR THIS?/WHO IS THE SPONSOR?
+                        3. WHY/HOW WAS RESPONDENT CHOSEN?
+                        4. HOW LONG WILL THE INTERVIEW TAKE?
+                        5. WHO'S GOING TO SEE R'S ANSWERS?
+                        6. CAN RESPONDENT GET A COPY OF THE RESULTS?
+                        7. HOW MUCH IS THE INCENTIVE?
+                        8. NO QUESTIONS
+                       97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1227       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T009       PROXY/INFORMANT RELATIONSHIP TO R
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        What was the (Respondent/Proxy/Informant)'s relationship to R?
+        ..................................................................................
+          363           1. SPOUSE/PARTNER
+          539           2. CHILD
+          242           7. OTHER RELATIVE
+           52          97. OTHER NON-RELATIVE
+                       98. DK (Don't Know); NA (Not Ascertained)
+           31       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T011M1     ANY IMPAIRMENTS INFLUENCE RESPONSE - 1
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Did the (Respondent/Proxy/Informant) any of the following impairments making
+        it difficult to respond?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            2           1. MENTALLY HANDICAPPED/RETARDED
+            1           2. HARD OF HEARING/HEARING IMPAIRED
+            3           3. PHYSICALLY HANDICAPPED
+                        4. SPEECH IMPEDIMENT
+            2           5. POOR SPOKEN ENGLISH
+                        6. UNDER THE INFLUENCE OF ALCOHOL OR DRUGS
+            6           7. SOME OTHER IMPAIRMENT
+          193           8. NONE OF THE ABOVE
+          997           9. NOT APPLICABLE (EXIT PROXY)
+                       98. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T011M2     ANY IMPAIRMENTS INFLUENCE RESPONSE - 2
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Did the (Respondent/Proxy/Informant) any of the following impairments making
+        it difficult to respond?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            2           1. MENTALLY HANDICAPPED/RETARDED
+                        2. HARD OF HEARING/HEARING IMPAIRED
+            1           3. PHYSICALLY HANDICAPPED
+                        4. SPEECH IMPEDIMENT
+                        5. POOR SPOKEN ENGLISH
+                        6. UNDER THE INFLUENCE OF ALCOHOL OR DRUGS
+            1           7. SOME OTHER IMPAIRMENT
+                        8. NONE OF THE ABOVE
+                        9. NOT APPLICABLE (EXIT PROXY)
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1223       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T011M3     ANY IMPAIRMENTS INFLUENCE RESPONSE - 3
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Did the (Respondent/Proxy/Informant) any of the following impairments making
+        it difficult to respond?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. MENTALLY HANDICAPPED/RETARDED
+                        2. HARD OF HEARING/HEARING IMPAIRED
+                        3. PHYSICALLY HANDICAPPED
+                        4. SPEECH IMPEDIMENT
+                        5. POOR SPOKEN ENGLISH
+                        6. UNDER THE INFLUENCE OF ALCOHOL OR DRUGS
+                        7. SOME OTHER IMPAIRMENT
+                        8. NONE OF THE ABOVE
+                        9. NOT APPLICABLE (EXIT PROXY)
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1227       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T012M1     ANY COMMENTS MADE BY R - 1
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Whether or not he/she used these exact words, did the
+        (Respondent/Proxy/Informant) make any of the following comments?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+           18           1. TOO BUSY/ DOESN'T HAVE TIME
+            8           2. THIS IS A BAD TIME/CAN YOU COME/CALL BACK LATER
+            6           3. LET ME THINK ABOUT IT
+            2           4. SURVEYS ARE A WASTE OF TIME
+                        5. DOESN'T TRUST SURVEYS
+                        6. SURVEYS ARE A WASTE OF TAXPAYERS' MONEY
+            2           7. NEVER DOES SURVEYS
+           26           8. LIKES TO DO THINGS THAT HELP THE COMMUNITY
+           19           9. ENJOYS DOING SURVEYS
+            7          10. YOU'LL ASK TOO MANY PERSONAL QUESTIONS/ DOESN'T WANT TO TALK
+                           ABOUT THESE KINDS OF THINGS
+            3          11. IS NOT INTERESTED
+            4          12. DOESN'T KNOW ANYTHING ABOUT THE SURVEY TOPIC
+            1          13. THE GOVERNMENT KNOWS EVERYTHING ABOUT RESPONDENT ALREADY
+         1038          14. NO COMMENTS
+           69          97. OTHER
+            1          98. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T012M2     ANY COMMENTS MADE BY R - 2
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Whether or not he/she used these exact words, did the
+        (Respondent/Proxy/Informant) make any of the following comments?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            1           1. TOO BUSY/ DOESN'T HAVE TIME
+            7           2. THIS IS A BAD TIME/CAN YOU COME/CALL BACK LATER
+            2           3. LET ME THINK ABOUT IT
+            1           4. SURVEYS ARE A WASTE OF TIME
+            1           5. DOESN'T TRUST SURVEYS
+            1           6. SURVEYS ARE A WASTE OF TAXPAYERS' MONEY
+                        7. NEVER DOES SURVEYS
+                        8. LIKES TO DO THINGS THAT HELP THE COMMUNITY
+            4           9. ENJOYS DOING SURVEYS
+            3          10. YOU'LL ASK TOO MANY PERSONAL QUESTIONS/ DOESN'T WANT TO TALK
+                           ABOUT THESE KINDS OF THINGS
+            2          11. IS NOT INTERESTED
+            2          12. DOESN'T KNOW ANYTHING ABOUT THE SURVEY TOPIC
+                       13. THE GOVERNMENT KNOWS EVERYTHING ABOUT RESPONDENT ALREADY
+                       14. NO COMMENTS
+            7          97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1196       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T012M3     ANY COMMENTS MADE BY R - 3
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Whether or not he/she used these exact words, did the
+        (Respondent/Proxy/Informant) make any of the following comments?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. TOO BUSY/ DOESN'T HAVE TIME
+            2           2. THIS IS A BAD TIME/CAN YOU COME/CALL BACK LATER
+            2           3. LET ME THINK ABOUT IT
+                        4. SURVEYS ARE A WASTE OF TIME
+                        5. DOESN'T TRUST SURVEYS
+                        6. SURVEYS ARE A WASTE OF TAXPAYERS' MONEY
+            1           7. NEVER DOES SURVEYS
+            1           8. LIKES TO DO THINGS THAT HELP THE COMMUNITY
+                        9. ENJOYS DOING SURVEYS
+            1          10. YOU'LL ASK TOO MANY PERSONAL QUESTIONS/ DOESN'T WANT TO TALK
+                           ABOUT THESE KINDS OF THINGS
+                       11. IS NOT INTERESTED
+                       12. DOESN'T KNOW ANYTHING ABOUT THE SURVEY TOPIC
+                       13. THE GOVERNMENT KNOWS EVERYTHING ABOUT RESPONDENT ALREADY
+                       14. NO COMMENTS
+            2          97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1218       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T012M4     ANY COMMENTS MADE BY R - 4
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Whether or not he/she used these exact words, did the
+        (Respondent/Proxy/Informant) make any of the following comments?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. TOO BUSY/ DOESN'T HAVE TIME
+                        2. THIS IS A BAD TIME/CAN YOU COME/CALL BACK LATER
+                        3. LET ME THINK ABOUT IT
+                        4. SURVEYS ARE A WASTE OF TIME
+                        5. DOESN'T TRUST SURVEYS
+                        6. SURVEYS ARE A WASTE OF TAXPAYERS' MONEY
+                        7. NEVER DOES SURVEYS
+                        8. LIKES TO DO THINGS THAT HELP THE COMMUNITY
+                        9. ENJOYS DOING SURVEYS
+            1          10. YOU'LL ASK TOO MANY PERSONAL QUESTIONS/ DOESN'T WANT TO TALK
+                           ABOUT THESE KINDS OF THINGS
+                       11. IS NOT INTERESTED
+                       12. DOESN'T KNOW ANYTHING ABOUT THE SURVEY TOPIC
+                       13. THE GOVERNMENT KNOWS EVERYTHING ABOUT RESPONDENT ALREADY
+                       14. NO COMMENTS
+                       97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1226       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T012M5     ANY COMMENTS MADE BY R - 5
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Whether or not he/she used these exact words, did the
+        (Respondent/Proxy/Informant) make any of the following comments?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. TOO BUSY/ DOESN'T HAVE TIME
+                        2. THIS IS A BAD TIME/CAN YOU COME/CALL BACK LATER
+                        3. LET ME THINK ABOUT IT
+                        4. SURVEYS ARE A WASTE OF TIME
+                        5. DOESN'T TRUST SURVEYS
+                        6. SURVEYS ARE A WASTE OF TAXPAYERS' MONEY
+                        7. NEVER DOES SURVEYS
+                        8. LIKES TO DO THINGS THAT HELP THE COMMUNITY
+                        9. ENJOYS DOING SURVEYS
+                       10. YOU'LL ASK TOO MANY PERSONAL QUESTIONS/ DOESN'T WANT TO TALK
+                           ABOUT THESE KINDS OF THINGS
+                       11. IS NOT INTERESTED
+            1          12. DOESN'T KNOW ANYTHING ABOUT THE SURVEY TOPIC
+                       13. THE GOVERNMENT KNOWS EVERYTHING ABOUT RESPONDENT ALREADY
+                       14. NO COMMENTS
+                       97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1226       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T012M6     ANY COMMENTS MADE BY R - 6
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Whether or not he/she used these exact words, did the
+        (Respondent/Proxy/Informant) make any of the following comments?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. TOO BUSY/ DOESN'T HAVE TIME
+                        2. THIS IS A BAD TIME/CAN YOU COME/CALL BACK LATER
+                        3. LET ME THINK ABOUT IT
+                        4. SURVEYS ARE A WASTE OF TIME
+                        5. DOESN'T TRUST SURVEYS
+                        6. SURVEYS ARE A WASTE OF TAXPAYERS' MONEY
+                        7. NEVER DOES SURVEYS
+                        8. LIKES TO DO THINGS THAT HELP THE COMMUNITY
+                        9. ENJOYS DOING SURVEYS
+                       10. YOU'LL ASK TOO MANY PERSONAL QUESTIONS/ DOESN'T WANT TO TALK
+                           ABOUT THESE KINDS OF THINGS
+                       11. IS NOT INTERESTED
+                       12. DOESN'T KNOW ANYTHING ABOUT THE SURVEY TOPIC
+                       13. THE GOVERNMENT KNOWS EVERYTHING ABOUT RESPONDENT ALREADY
+                       14. NO COMMENTS
+                       97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1227       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T014       IW COMPLETED WITH CELL PHONE
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Did the respondent complete the interview by cell phone?
+        ..................................................................................
+           16           1. YES
+          600           5. NO
+           67           8. DK (Don't Know); NA (Not Ascertained)
+          544       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T021A      ASSISTED INTERVIEW
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Was this an assisted interview?
+        ..................................................................................
+           11           1. NEVER
+                        2. A FEW TIMES
+            1           3. MOST OF ALL OF THE TIME
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1215       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T021B      ASSISTANT RELATIONSHIP TO R
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        What was the relationship of the person who assisted R?
+        ..................................................................................
+                        1. SPOUSE
+                        2. CHILD/CHILD-IN-LAW
+            1           3. OTHER RELATIVE
+                        4. OTHER INDIVIDUAL
+                        5. PROFESSIONAL
+                        7. OTHER
+         1226       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T021C      PERCENT IW CONDUCTED IN SPANISH
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        About what percent, if any, of this interview was conducted in Spanish?
+        ..................................................................................
+         1170           1. 0% ALL IN ENGLISH
+                        2. 25% MOSTLY IN ENGLISH, THE REST IN SPANISH
+                        3. 50% ABOUT HALF IN SPANISH AND HALF IN ENGLISH
+                        4. 75% MOSTLY IN SPANISH THE REST IN ENGLISH
+           32           5. 100% ALL IN SPANISH
+            2           7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T021G      REASON FOR SUSPEND/PROB
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Please choose the circumstance that best describes this case in terms of
+        suspends or other problems.
+        ..................................................................................
+         1069           1. NO PROBLEMS, INTERVIEW COMPLETED IN ONE SESSION (INCLUDING
+                           IWER OBS)
+          124           2. ONE OR MORE SUSPENDS, NO OTHER PROBLEMS
+           11           3. OTHER PROBLEMS SUCH AS FREEZES, BUT SUCCESSFUL RECOVERY
+                        8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T022A      OFTEN ASK HOW LONG IW
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        During the interview, how often did the (Respondent/Proxy/Informant) ask how
+        much longer the interview would last?
+        ..................................................................................
+         1091           1. NEVER
+           88           2. SELDOM
+           22           3. OFTEN
+            2           4. INAP (Interviewer Volunteered)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T022B      OFTEN ASK WHY NEED INFORMATION
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        During the interview, how often did the (Respondent/Proxy/Informant) ask you
+        why you needed to know the answer to some questions?
+        ..................................................................................
+         1147           1. NEVER
+           47           2. SELDOM
+            7           3. OFTEN
+            2           4. INAP (Interviewer Volunteered)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T022C      OFTEN SEEM EMBARRASSED
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        During the interview, how often did the (Respondent/Proxy/Informant)
+        appear/sound embarrassed by a question?
+        ..................................................................................
+         1173           1. NEVER
+           25           2. SELDOM
+            2           3. OFTEN
+            3           4. INAP (Interviewer Volunteered)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T022D      OFTEN GUESS ANSWER
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        During the interview, how often did the (Respondent/Proxy/Informant) seem to
+        simply guess at an answer?
+        ..................................................................................
+          642           1. NEVER
+          493           2. SELDOM
+           67           3. OFTEN
+            1           4. INAP (Interviewer Volunteered)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T022E      OFTEN USE POOR GRAMMAR
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        During the interview, how often did the (Respondent/Proxy/Informant) use poor
+        grammar?
+        ..................................................................................
+         1065           1. NEVER
+          106           2. SELDOM
+           31           3. OFTEN
+            1           4. INAP (Interviewer Volunteered)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T022F      OFTEN AVOID EYE CONTACT
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How often did the (Respondent/Proxy/Informant) avoid making eye contact with
+        you?
+        ..................................................................................
+          466           1. NEVER
+           27           2. SELDOM
+           15           3. OFTEN
+            5           4. INAP (Interviewer Volunteered)
+                        8. DK (Don't Know); NA (Not Ascertained)
+          714       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T022G      OFTEN TALK SOFT
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        During the interview, how often did the (Respondent/Proxy/Informant) talk so
+        softly you had trouble hearing the (Respondent/Proxy/Informant)?
+        ..................................................................................
+         1131           1. NEVER
+           58           2. SELDOM
+           13           3. OFTEN
+            1           4. INAP (Interviewer Volunteered)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T022H      OFTEN DISTRACTED
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        During the interview, how often did the (Respondent/Proxy/Informant) appear
+        distracted by other things happening around the interview?
+        ..................................................................................
+          996           1. NEVER
+          183           2. SELDOM
+           23           3. OFTEN
+            1           4. INAP (Interviewer Volunteered)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T022I      OFTEN CONCERNED ABOUT CONFIDENTIALITY
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        During the interview, how often did the (Respondent/Proxy/Informant) express
+        concern about whether his/her answers would be kept confidential?
+        ..................................................................................
+         1156           1. NEVER
+           41           2. SELDOM
+            5           3. OFTEN
+            1           4. INAP (Interviewer Volunteered)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T022J      OFTEN ASK REPEAT QUESTION
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        During the interview, how often did the (Respondent/Proxy/Informant) ask you
+        to repeat a question?
+        ..................................................................................
+          759           1. NEVER
+          408           2. SELDOM
+           35           3. OFTEN
+            1           4. INAP (Interviewer Volunteered)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T022K      OFTEN ASK MEANING OF QUESTION
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        During the interview, how often did the (Respondent/Proxy/Informant) ask you
+        what a question meant?
+        ..................................................................................
+          933           1. NEVER
+          258           2. SELDOM
+           11           3. OFTEN
+            1           4. INAP (Interviewer Volunteered)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T022L      OFTEN ANSWER INAPPROPRIATE
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        During the interview, how often did the (Respondent/Proxy/Informant) give an
+        answer inappropriate for the question?
+        ..................................................................................
+         1035           1. NEVER
+          150           2. SELDOM
+           17           3. OFTEN
+            1           4. INAP (Interviewer Volunteered)
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T023       RATE FRIENDLINESS
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        In general, how friendly was the (Respondent/Proxy/Informant) toward you
+        during the interview?
+        ..................................................................................
+            6           1. HOSTILE
+          120           2. NEITHER HOSTILE NOR FRIENDLY
+         1077           3. FRIENDLY
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T024       RATE ATTENTIVENESS
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How attentive was the (Respondent/Proxy/Informant) to the questions during the
+        interview?
+        ..................................................................................
+            6           1. NOT AT ALL ATTENTIVE
+          109           2. SOMEWHAT ATTENTIVE
+         1088           3. VERY ATTENTIVE
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T025       RATE UNDERSTANDING
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How was (Respondent/Proxy/Informant)'s understanding of the questions?
+        ..................................................................................
+          681           1. EXCELLENT
+          466           2. GOOD
+           51           3. FAIR
+            5           4. POOR
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T026       RATE COOPERATION
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How was (Respondent/Proxy/Informant)'s cooperation during the interview?
+        ..................................................................................
+          956           1. EXCELLENT
+          221           2. GOOD
+           23           3. FAIR
+            3           4. POOR
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T027       RATE TIREDNESS
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How tiring did the interview seem to be to (Respondent/Proxy/Informant)?
+        ..................................................................................
+           22           1. VERY TIRING
+          183           2. A LITTLE TIRING
+          997           3. NOT TIRING
+            2           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T028       RATE ENJOYMENT
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How much did the (Respondent/Proxy/Informant) seem to enjoy the interview?
+        ..................................................................................
+          234           1. A GREAT DEAL
+          332           2. QUITE A BIT
+          377           3. SOME
+          172           4. A LITTLE
+           86           5. NOT AT ALL
+            3           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T029       RATE MEMORY - IO
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How much difficulty did (Respondent/Proxy/Informant) have remembering things
+        that you asked (him/her) about?
+        ..................................................................................
+          808           1. NO DIFFICULTY
+          290           2. A LITTLE DIFFICULTY
+           92           3. SOME DIFFICULTY
+           12           4. A LOT OF DIFFICULTY
+            1           5. COULD NOT DO AT ALL
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T030       RATE HEARING - IO
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How much difficulty did (Respondent/Proxy/Informant) have hearing you when you
+        talked to (him/her)?
+        ..................................................................................
+         1120           1. NO DIFFICULTY
+           51           2. A LITTLE DIFFICULTY
+           25           3. SOME DIFFICULTY
+            7           4. A LOT OF DIFFICULTY
+                        5. COULD NOT DO AT ALL
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T031M1     IWER OBS/IMPRESSION - 1
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Did you observe any of the following?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+           26           1. (Respondent/Proxy/Informant) REQUIRED FREQUENT REPETITION OF
+                           QUESTIONS.
+           21           2. (Respondent/Proxy/Informant) APPEARED STRAINED BY LEANING
+                           FORWARD AND/OR WATCHING YOUR LIPS VERY CAREFULLY.
+                        3. (Respondent/Proxy/Informant) FAILED TO REACT TO YOUR QUESTIONS
+                           AND COMMENTS, IF (Respondent/Proxy/Informant) DID NOT WATCH
+                           YOUR LIPS.
+         1156           4. NONE OF THE ABOVE
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T031M2     IWER OBS/IMPRESSION - 2
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Did you observe any of the following?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. (Respondent/Proxy/Informant) REQUIRED FREQUENT REPETITION OF
+                           QUESTIONS.
+            8           2. (Respondent/Proxy/Informant) APPEARED STRAINED BY LEANING
+                           FORWARD AND/OR WATCHING YOUR LIPS VERY CAREFULLY.
+            1           3. (Respondent/Proxy/Informant) FAILED TO REACT TO YOUR QUESTIONS
+                           AND COMMENTS, IF (Respondent/Proxy/Informant) DID NOT WATCH
+                           YOUR LIPS.
+                        4. NONE OF THE ABOVE
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1218       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T031M3     IWER OBS/IMPRESSION - 3
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Did you observe any of the following?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. (Respondent/Proxy/Informant) REQUIRED FREQUENT REPETITION OF
+                           QUESTIONS.
+                        2. (Respondent/Proxy/Informant) APPEARED STRAINED BY LEANING
+                           FORWARD AND/OR WATCHING YOUR LIPS VERY CAREFULLY.
+            2           3. (Respondent/Proxy/Informant) FAILED TO REACT TO YOUR QUESTIONS
+                           AND COMMENTS, IF (Respondent/Proxy/Informant) DID NOT WATCH
+                           YOUR LIPS.
+                        4. NONE OF THE ABOVE
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1225       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T032       RATE TRUTH IN FINANCIAL QUESTIONS
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How truthful do you believe the (Respondent/Proxy/Informant) was regarding
+        his/her answers on financial questions?
+        ..................................................................................
+         1012           1. COMPLETELY TRUTHFUL
+          152           2. MAINLY TRUTHFUL
+           29           3. ABOUT HALF AND HALF
+            4           4. MAINLY UNTRUTHFUL
+            7           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T033       RATE TRUTH TO QUESTIONS - GENERAL
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        On other questions in the interview, how truthful did the
+        (Respondent/Proxy/Informant) seem?
+        ..................................................................................
+         1084           1. COMPLETELY TRUTHFUL
+          109           2. MAINLY TRUTHFUL
+            8           3. ABOUT HALF AND HALF
+            2           4. MAINLY UNTRUTHFUL
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T034       R UPSET DURING IW
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Did the (Respondent/Proxy/Informant) become upset during the interview,
+        stopping the interview for more than a few seconds?
+        ..................................................................................
+           72           1. YES, (Respondent/Proxy/Informant) HAD TO STOP ONCE
+           48           2. YES, (Respondent/Proxy/Informant) STOPPED MORE THAN ONCE
+         1082           5. NO
+            2           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T035       WHAT DO WHEN UPSET
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        When the (Respondent/Proxy/Informant) became upset, what did the
+        (Respondent/Proxy/Informant) do?
+        ..................................................................................
+           89           1. CRY
+            4           2. BECOME ANGRY
+                        3. ASK YOU FOR HELP
+            8           4. NOTHING
+           18           7. OTHER
+            1           8. DK (Don't Know); NA (Not Ascertained)
+         1107       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T036       UPSET AT END OF INTERVIEW
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Was the (Respondent/Proxy/Informant) still upset at the end of the interview?
+        ..................................................................................
+           31           1. YES
+           89           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1107       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T037       TIRED AT END OF INTERVIEW
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        At the end of the interview, did the (Respondent/Proxy/Informant) seem to be:
+        ..................................................................................
+           27           1. VERY TIRED
+          195           2. A LITTLE TIRED
+          979           3. NOT TIRED AT ALL
+            3           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T038       RATE GENERAL QUALITY OF IW
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Overall, what is your opinion of the quality of this interview? Was it of:
+        ..................................................................................
+          813           1. HIGH QUALITY
+          371           2. ADEQUATE QUALITY
+           18           3. QUESTIONABLE QUALITY
+            2           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T039M1     WHY QUESTIONABLE QUALITY - 1
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        The IW was of questionable quality because the (Respondent/Proxy/Informant)
+        was:
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY'
+        ..................................................................................
+            6           1. BORED, DISINTERESTED
+            1           2. EMBARRASSED
+                        3. HOSTILE OR SUSPICIOUS
+                        4. NOT SERIOUS
+                        5. NOT TRUTHFUL
+            2           6. DISTRACTED/COULD NOT CONCENTRATE
+            7           7. NOT ABLE TO REMEMBER DATES
+            2           8. NONE OF THE ABOVE - IW QUALITY WAS OK
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1209       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T039M2     WHY QUESTIONABLE QUALITY - 2
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        The IW was of questionable quality because the (Respondent/Proxy/Informant)
+        was:
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY'
+        ..................................................................................
+                        1. BORED, DISINTERESTED
+                        2. EMBARRASSED
+            2           3. HOSTILE OR SUSPICIOUS
+                        4. NOT SERIOUS
+            2           5. NOT TRUTHFUL
+                        6. DISTRACTED/COULD NOT CONCENTRATE
+            2           7. NOT ABLE TO REMEMBER DATES
+                        8. NONE OF THE ABOVE - IW QUALITY WAS OK
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1221       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T039M3     WHY QUESTIONABLE QUALITY - 3
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        The IW was of questionable quality because the (Respondent/Proxy/Informant)
+        was:
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY'
+        ..................................................................................
+                        1. BORED, DISINTERESTED
+                        2. EMBARRASSED
+            1           3. HOSTILE OR SUSPICIOUS
+            1           4. NOT SERIOUS
+            1           5. NOT TRUTHFUL
+            1           6. DISTRACTED/COULD NOT CONCENTRATE
+                        7. NOT ABLE TO REMEMBER DATES
+                        8. NONE OF THE ABOVE - IW QUALITY WAS OK
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1223       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T039M4     WHY QUESTIONABLE QUALITY - 4
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        The IW was of questionable quality because the (Respondent/Proxy/Informant)
+        was:
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY'
+        ..................................................................................
+                        1. BORED, DISINTERESTED
+                        2. EMBARRASSED
+                        3. HOSTILE OR SUSPICIOUS
+                        4. NOT SERIOUS
+                        5. NOT TRUTHFUL
+            1           6. DISTRACTED/COULD NOT CONCENTRATE
+            1           7. NOT ABLE TO REMEMBER DATES
+                        8. NONE OF THE ABOVE - IW QUALITY WAS OK
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1225       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T039M5     WHY QUESTIONABLE QUALITY - 5
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        The IW was of questionable quality because the (Respondent/Proxy/Informant)
+        was:
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY'
+        ..................................................................................
+                        1. BORED, DISINTERESTED
+                        2. EMBARRASSED
+                        3. HOSTILE OR SUSPICIOUS
+                        4. NOT SERIOUS
+                        5. NOT TRUTHFUL
+                        6. DISTRACTED/COULD NOT CONCENTRATE
+                        7. NOT ABLE TO REMEMBER DATES
+                        8. NONE OF THE ABOVE - IW QUALITY WAS OK
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T040       SEATING ARRANGEMENT
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Please choose the answer that best describes your seating arrangement during
+        the CAPI portion of the interview
+        ..................................................................................
+                        1. SEATED NEXT TO (Respondent/Proxy/Informant)
+            8           2. SEATED ACROSS FROM (Respondent/Proxy/Informant)
+                        3. SOME OTHER ARRANGEMENT
+            1           8. DK (Don't Know); NA (Not Ascertained)
+         1218       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T041       WAS SCREEN VISIBLE
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Was the (Respondent/Proxy/Informant) able to see the computer screen during
+        the CAPI portion of the interview?
+        ..................................................................................
+                        1. YES
+            9           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1218       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T042       LAPTOP LOCATION
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        What support did you have for the laptop during the CAPI part of the
+        interview?
+        ..................................................................................
+            3           1. SEATED NEXT TO TABLE
+            6           2. LAP
+                        7. OTHER
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1218       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T043       RATE EFFORT
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How much effort did (Respondent/Proxy/Informant) put into answering the
+        questions?
+        ..................................................................................
+          981           1. A LOT
+          209           2. SOME
+           11           3. VERY LITTLE
+            2           4. NONE
+            1           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T044       ANYONE PRESENT DURING INTERVIEW
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Was anyone else present during any portion of the interview?
+        ..................................................................................
+          211           1. YES
+          947           5. NO
+           46           8. DK (Don't Know); NA (Not Ascertained)
+           23       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T045M1     WHO PRESENT INTERVIEW - 1
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Who was present?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            7           1. PARENT(S)
+           73           2. SPOUSE/PARTNER
+           27           3. CHILD/CHILDREN UNDER AGE 6
+           20           4. PERSON(S) AGE 6 - 17
+           80           5. OTHER ADULT(S)
+            4           8. DK (Don't Know); NA (Not Ascertained)
+         1016       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T045M2     WHO PRESENT INTERVIEW - 2
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Who was present?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. PARENT(S)
+                        2. SPOUSE/PARTNER
+            4           3. CHILD/CHILDREN UNDER AGE 6
+            8           4. PERSON(S) AGE 6 - 17
+            8           5. OTHER ADULT(S)
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1207       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T045M3     WHO PRESENT INTERVIEW - 3
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Who was present?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. PARENT(S)
+            1           2. SPOUSE/PARTNER
+                        3. CHILD/CHILDREN UNDER AGE 6
+            1           4. PERSON(S) AGE 6 - 17
+            3           5. OTHER ADULT(S)
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1222       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T045M4     WHO PRESENT INTERVIEW - 4
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Who was present?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. PARENT(S)
+                        2. SPOUSE/PARTNER
+                        3. CHILD/CHILDREN UNDER AGE 6
+                        4. PERSON(S) AGE 6 - 17
+            1           5. OTHER ADULT(S)
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1226       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T045M5     WHO PRESENT INTERVIEW - 5
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Who was present?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. PARENT(S)
+                        2. SPOUSE/PARTNER
+                        3. CHILD/CHILDREN UNDER AGE 6
+                        4. PERSON(S) AGE 6 - 17
+                        5. OTHER ADULT(S)
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T046       AMOUNT PRESENT INTERVIEW
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        During how much of the interview was one of these persons present?
+        ..................................................................................
+           81           1. ALL
+           31           2. MOST
+           22           3. ABOUT HALF
+           11           4. ABOUT ONE QUARTER
+           63           5. LESS THAN ONE QUARTER
+            3           8. DK (Don't Know); NA (Not Ascertained)
+         1016       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T047       AMOUNT DISTRACTED
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How much was (Respondent/Proxy/Informant) distracted by (this person/ these
+        persons)?
+        ..................................................................................
+            5           1. A LOT
+           36           2. SOME
+           45           3. A LITTLE
+          125           4. NONE
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1016       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T050       INFORMANT PROVIDE USEFUL INFO
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        If an informant informed you that the Respondent had died or provided useful
+        information on his or her location, was that informant a contact person from a
+        previous wave?
+        ..................................................................................
+                        1. YES
+                        5. NO
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T051       KNOW ABOUT CONTACTING OTHERS
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        If you have contacted one of the contact people from a previous wave, did he
+        or she know that the Respondent had participated in a study with the
+        University of Michigan?
+        ..................................................................................
+                        1. YES
+                        5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T059       CONTACT AT HOME
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Did you talk with the (Respondent/Proxy/Informant) in the place where the
+        (Respondent/Proxy/Informant) lives?
+        ..................................................................................
+            8           1. YES
+            1           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1218       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T060       IWR FIRST TIME IN NEIGHBORHOOD
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Is this the first time for HRS 2004 that you have been in this neighborhood
+        looking for or in contact with this (Respondent/Proxy/Informant)?
+        ..................................................................................
+            4           1. YES
+            4           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T061       TYPE OF HOME
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Type of structure in which (Respondent/Proxy/Informant) lives:
+        ..................................................................................
+                        1. MOBILE/MANUFACTURED HOME
+                        2. RANCH OR FARM
+            5           3. DETACHED SINGLE FAMILY HOUSE
+                        4. TWO FAMILY HOUSE; DUPLEX
+                        5. HOUSE CONVERTED TO APARTMENT
+            2           6. ROW HOUSE OR TOWNHOUSE (3 OR MORE ATTACHED UNITS)
+            1           7. APARTMENT HOUSE (3 OR MORE UNITS, 3 STORIES OR LESS)
+                        8. APARTMENT HOUSE (4 OR MORE UNITS, 4 STORIES OR MORE)
+                        9. APARTMENT IN A PARTLY COMMERCIAL STRUCTURE
+                       97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T062       HOUSING UNIT LOCKED
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Was the HU inside a locked secure area?
+        ..................................................................................
+            1           1. YES
+            7           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T066       NUMBER OF ROOMS IN HOUSING UNIT
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Your best estimate of the number of rooms in the dwelling/housing unit (not
+        counting dining - Ls, hallways, bathrooms, unfinished basement)
+        ..................................................................................
+                        1. 3 ROOMS OR LESS (EXAMPLE: LIVING ROOM, KITCHEN, BEDROOM)
+            1           2. 4-5 ROOMS (EXAMPLE: LIVING ROOM, KITCHEN, DINING ROOM, 2
+                           BEDROOMS)
+            6           3. 6-7 ROOMS (EXAMPLE: LIVING ROOM, KITCHEN, DINING ROOM, FAMILY
+                           ROOM, 2-3 BEDROOMS)
+            1           4. 8 ROOMS OR MORE
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T067       RATE SIZE OF ROOMS
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        In general, rooms appear:
+        ..................................................................................
+            1           1. SMALL IN SIZE
+            5           2. AVERAGE SIZE
+            2           3. LARGE IN SIZE
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T068       RATE CLEANLINESS
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How clean was the interior of the dwelling unit?
+        ..................................................................................
+            4           1. VERY CLEAN
+            2           2. CLEAN
+            2           3. SO-SO
+                        4. NOT VERY CLEAN
+                        5. DIRTY
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable); Data Not Collected
+
+==========================================================================================
+
+T069M1     IWER OBS HOUSING UNIT - 1
+         Section: IO    Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+
+
+        Does (Respondent/Proxy/Informant)'s house/apartment have any of the following?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            8           1. DECORATIONS (PAINTINGS, POSTERS, FRAMED PHOTOGRAPHS, PLANTS,
+                           FIGURINES ETC)
+                        2. ROOMS ARE RELATIVELY CLEAR WITH EXITS FREELY ACCESSIBLE
+                        3. ROOMS ARE OVERCROWDED WITH FURNITURE OR OBJECTS, LEAVING VERY
+                           LITTLE FREE FLOOR SPACE
+                        4. ALL VISIBLE ROOMS ARE CLEAN AND MINIMALLY CLUTTERED
+                        5. THE HOUSE/APARTMENT IS FREE OF POTENTIALLY DANGEROUS
+                           STRUCTURAL/HEALTH DEFECTS (FALLING PLASTER, RODENTS,
+                           COCKROACHES, BOARD MISSING ON STAIRS OR ON FLOOR, PRESENCE OF
+                           CLEANING FLUIDS WITHIN CHILD'S EASY REACH)
+                        6. A SHELF FULL OF BOOKS
+                       98. NONE OF THE ABOVE ARE OBSERVED
+                      998. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T069M2     IWER OBS HOUSING UNIT - 2
+         Section: IO    Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+
+
+        Does (Respondent/Proxy/Informant)'s house/apartment have any of the following?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. DECORATIONS (PAINTINGS, POSTERS, FRAMED PHOTOGRAPHS, PLANTS,
+                           FIGURINES ETC)
+            8           2. ROOMS ARE RELATIVELY CLEAR WITH EXITS FREELY ACCESSIBLE
+                        3. ROOMS ARE OVERCROWDED WITH FURNITURE OR OBJECTS, LEAVING VERY
+                           LITTLE FREE FLOOR SPACE
+                        4. ALL VISIBLE ROOMS ARE CLEAN AND MINIMALLY CLUTTERED
+                        5. THE HOUSE/APARTMENT IS FREE OF POTENTIALLY DANGEROUS
+                           STRUCTURAL/HEALTH DEFECTS (FALLING PLASTER, RODENTS,
+                           COCKROACHES, BOARD MISSING ON STAIRS OR ON FLOOR, PRESENCE OF
+                           CLEANING FLUIDS WITHIN CHILD'S EASY REACH)
+                        6. A SHELF FULL OF BOOKS
+                       98. NONE OF THE ABOVE ARE OBSERVED
+                      998. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T069M3     IWER OBS HOUSING UNIT - 3
+         Section: IO    Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+
+
+        Does (Respondent/Proxy/Informant)'s house/apartment have any of the following?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. DECORATIONS (PAINTINGS, POSTERS, FRAMED PHOTOGRAPHS, PLANTS,
+                           FIGURINES ETC)
+                        2. ROOMS ARE RELATIVELY CLEAR WITH EXITS FREELY ACCESSIBLE
+                        3. ROOMS ARE OVERCROWDED WITH FURNITURE OR OBJECTS, LEAVING VERY
+                           LITTLE FREE FLOOR SPACE
+            8           4. ALL VISIBLE ROOMS ARE CLEAN AND MINIMALLY CLUTTERED
+                        5. THE HOUSE/APARTMENT IS FREE OF POTENTIALLY DANGEROUS
+                           STRUCTURAL/HEALTH DEFECTS (FALLING PLASTER, RODENTS,
+                           COCKROACHES, BOARD MISSING ON STAIRS OR ON FLOOR, PRESENCE OF
+                           CLEANING FLUIDS WITHIN CHILD'S EASY REACH)
+                        6. A SHELF FULL OF BOOKS
+                       98. NONE OF THE ABOVE ARE OBSERVED
+                      998. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T069M4     IWER OBS HOUSING UNIT - 4
+         Section: IO    Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+
+
+        Does (Respondent/Proxy/Informant)'s house/apartment have any of the following?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. DECORATIONS (PAINTINGS, POSTERS, FRAMED PHOTOGRAPHS, PLANTS,
+                           FIGURINES ETC)
+                        2. ROOMS ARE RELATIVELY CLEAR WITH EXITS FREELY ACCESSIBLE
+                        3. ROOMS ARE OVERCROWDED WITH FURNITURE OR OBJECTS, LEAVING VERY
+                           LITTLE FREE FLOOR SPACE
+                        4. ALL VISIBLE ROOMS ARE CLEAN AND MINIMALLY CLUTTERED
+            8           5. THE HOUSE/APARTMENT IS FREE OF POTENTIALLY DANGEROUS
+                           STRUCTURAL/HEALTH DEFECTS (FALLING PLASTER, RODENTS,
+                           COCKROACHES, BOARD MISSING ON STAIRS OR ON FLOOR, PRESENCE OF
+                           CLEANING FLUIDS WITHIN CHILD'S EASY REACH)
+                        6. A SHELF FULL OF BOOKS
+                       98. NONE OF THE ABOVE ARE OBSERVED
+                      998. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T069M5     IWER OBS HOUSING UNIT - 5
+         Section: IO    Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+
+
+        Does (Respondent/Proxy/Informant)'s house/apartment have any of the following?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. DECORATIONS (PAINTINGS, POSTERS, FRAMED PHOTOGRAPHS, PLANTS,
+                           FIGURINES ETC)
+                        2. ROOMS ARE RELATIVELY CLEAR WITH EXITS FREELY ACCESSIBLE
+                        3. ROOMS ARE OVERCROWDED WITH FURNITURE OR OBJECTS, LEAVING VERY
+                           LITTLE FREE FLOOR SPACE
+                        4. ALL VISIBLE ROOMS ARE CLEAN AND MINIMALLY CLUTTERED
+                        5. THE HOUSE/APARTMENT IS FREE OF POTENTIALLY DANGEROUS
+                           STRUCTURAL/HEALTH DEFECTS (FALLING PLASTER, RODENTS,
+                           COCKROACHES, BOARD MISSING ON STAIRS OR ON FLOOR, PRESENCE OF
+                           CLEANING FLUIDS WITHIN CHILD'S EASY REACH)
+            6           6. A SHELF FULL OF BOOKS
+                       98. NONE OF THE ABOVE ARE OBSERVED
+                      998. DK (Don't Know); NA (Not Ascertained)
+         1221       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T069M6     IWER OBS HOUSING UNIT - 6
+         Section: IO    Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+
+
+        Does (Respondent/Proxy/Informant)'s house/apartment have any of the following?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. DECORATIONS (PAINTINGS, POSTERS, FRAMED PHOTOGRAPHS, PLANTS,
+                           FIGURINES ETC)
+                        2. ROOMS ARE RELATIVELY CLEAR WITH EXITS FREELY ACCESSIBLE
+                        3. ROOMS ARE OVERCROWDED WITH FURNITURE OR OBJECTS, LEAVING VERY
+                           LITTLE FREE FLOOR SPACE
+                        4. ALL VISIBLE ROOMS ARE CLEAN AND MINIMALLY CLUTTERED
+                        5. THE HOUSE/APARTMENT IS FREE OF POTENTIALLY DANGEROUS
+                           STRUCTURAL/HEALTH DEFECTS (FALLING PLASTER, RODENTS,
+                           COCKROACHES, BOARD MISSING ON STAIRS OR ON FLOOR, PRESENCE OF
+                           CLEANING FLUIDS WITHIN CHILD'S EASY REACH)
+                        6. A SHELF FULL OF BOOKS
+                       98. NONE OF THE ABOVE ARE OBSERVED
+                      998. DK (Don't Know); NA (Not Ascertained)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T070       DISTANCE TO NEAREST HOME/BLDG
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How far is it from (Respondent/Proxy/Informant)'s home (building) to the
+        nearest home or other building (on either side or across the road)?
+        ..................................................................................
+            1           1. LESS THAN 15 FEET (LESS THAN 1 CAR LENGTH)
+            2           2. 15-29 FEET (1 TO 2 CAR LENGTHS)
+            2           3. 30-49 FEET (2 TO 3 CAR LENGTHS)
+            2           4. 50-99 FEET (3 TO 6 CAR LENGTHS)
+            1           5. MORE THAN 100 FEET (MORE THAN 6 CAR LENGTHS)
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T071M1     TYPE OF HOUSING IN AREA - 1
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Are any of the following types of structures present on R's block?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            1           1. NO OTHER STRUCTURES
+                        2. MOBILE HOMES
+                        3. RANCH OR FARM
+            5           4. DETACHED SINGLE FAMILY HOUSE
+                        5. TWO FAMILY HOUSE; DUPLEX
+                        6. HOUSE CONVERTED TO APARTMENT
+            1           7. ROW HOUSE OR TOWNHOUSE (3 OR MORE ATTACHED UNITS)
+                        8. APARTMENT HOUSE (3 OR MORE UNITS, 3 STORIES OR LESS)
+                        9. APARTMENT HOUSE (4 OR MORE UNITS, 4 STORIES OR MORE)
+                       10. APARTMENT IN A PARTLY COMMERCIAL STRUCTURE
+                       11. COMMERCIAL OR INDUSTRIAL STRUCTURE
+                       12. PARK
+                       13. SCHOOL OR OTHER GOVERNMENTAL BUILDING; CHURCH
+                       14. VACANT BUILDING
+            1          97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T071M2     TYPE OF HOUSING IN AREA - 2
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Are any of the following types of structures present on R's block?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. NO OTHER STRUCTURES
+                        2. MOBILE HOMES
+                        3. RANCH OR FARM
+                        4. DETACHED SINGLE FAMILY HOUSE
+                        5. TWO FAMILY HOUSE; DUPLEX
+                        6. HOUSE CONVERTED TO APARTMENT
+                        7. ROW HOUSE OR TOWNHOUSE (3 OR MORE ATTACHED UNITS)
+                        8. APARTMENT HOUSE (3 OR MORE UNITS, 3 STORIES OR LESS)
+                        9. APARTMENT HOUSE (4 OR MORE UNITS, 4 STORIES OR MORE)
+                       10. APARTMENT IN A PARTLY COMMERCIAL STRUCTURE
+                       11. COMMERCIAL OR INDUSTRIAL STRUCTURE
+            1          12. PARK
+                       13. SCHOOL OR OTHER GOVERNMENTAL BUILDING; CHURCH
+                       14. VACANT BUILDING
+            1          97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1225       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T071M3     TYPE OF HOUSING IN AREA - 3
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Are any of the following types of structures present on R's block?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. NO OTHER STRUCTURES
+                        2. MOBILE HOMES
+                        3. RANCH OR FARM
+                        4. DETACHED SINGLE FAMILY HOUSE
+                        5. TWO FAMILY HOUSE; DUPLEX
+                        6. HOUSE CONVERTED TO APARTMENT
+                        7. ROW HOUSE OR TOWNHOUSE (3 OR MORE ATTACHED UNITS)
+                        8. APARTMENT HOUSE (3 OR MORE UNITS, 3 STORIES OR LESS)
+                        9. APARTMENT HOUSE (4 OR MORE UNITS, 4 STORIES OR MORE)
+                       10. APARTMENT IN A PARTLY COMMERCIAL STRUCTURE
+                       11. COMMERCIAL OR INDUSTRIAL STRUCTURE
+                       12. PARK
+            1          13. SCHOOL OR OTHER GOVERNMENTAL BUILDING; CHURCH
+                       14. VACANT BUILDING
+                       97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1226       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T071M4     TYPE OF HOUSING IN AREA - 4
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Are any of the following types of structures present on R's block?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. NO OTHER STRUCTURES
+                        2. MOBILE HOMES
+                        3. RANCH OR FARM
+                        4. DETACHED SINGLE FAMILY HOUSE
+                        5. TWO FAMILY HOUSE; DUPLEX
+                        6. HOUSE CONVERTED TO APARTMENT
+                        7. ROW HOUSE OR TOWNHOUSE (3 OR MORE ATTACHED UNITS)
+                        8. APARTMENT HOUSE (3 OR MORE UNITS, 3 STORIES OR LESS)
+                        9. APARTMENT HOUSE (4 OR MORE UNITS, 4 STORIES OR MORE)
+                       10. APARTMENT IN A PARTLY COMMERCIAL STRUCTURE
+                       11. COMMERCIAL OR INDUSTRIAL STRUCTURE
+                       12. PARK
+                       13. SCHOOL OR OTHER GOVERNMENTAL BUILDING; CHURCH
+                       14. VACANT BUILDING
+                       97. OTHER
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T072       RATE UPKEEP NEAR-BY STRUCTURES
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        How well kept are the structures in the neighborhood?
+        ..................................................................................
+            7           1. VERY WELL
+            1           2. MIXED - COULD USE A PAINT JOB
+                        3. POORLY - NEED PAINTING AND MINOR REPAIRS
+                        4. VERY POORLY - DILAPIDATED
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T073M1     PRESENT NEAR HOUSING UNIT - 1
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Which of the following are present within sight of the housing unit?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. VANDALISM (GRAFFITI, BROKEN MAILBOXES, DAMAGED ELEVATORS)
+                        2. BOARDED HOUSES
+                        3. ABANDONED CARS
+                        4. ABANDONED OR DEMOLISHED HOUSES
+                        5. TRASH, LITTER, OR JUNK IN STREET/ROAD
+                        6. TRASH, LITTER, OR JUNK AROUND BUILDINGS IN NEIGHBORHOOD
+                        7. FACTORIES OR WAREHOUSES
+            1           8. STORES OR OTHER RETAIL OUTLETS
+                        9. RUN DOWN OR POORLY KEPT YARDS OR COMMUNAL AREAS
+                       10. HOMELESS PEOPLE
+                       11. PROSTITUTION
+                       12. WINOS OR JUNKIES
+                       13. DRUG USE OR DRUG DEALING IN THE OPEN
+            1          14. A PARK, PLAYGROUND, OR GARDEN AREA
+            6          15. NONE OF THE ABOVE
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T073M2     PRESENT NEAR HOUSING UNIT - 2
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        Which of the following are present within sight of the housing unit?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. VANDALISM (GRAFFITI, BROKEN MAILBOXES, DAMAGED ELEVATORS)
+                        2. BOARDED HOUSES
+                        3. ABANDONED CARS
+                        4. ABANDONED OR DEMOLISHED HOUSES
+                        5. TRASH, LITTER, OR JUNK IN STREET/ROAD
+                        6. TRASH, LITTER, OR JUNK AROUND BUILDINGS IN NEIGHBORHOOD
+                        7. FACTORIES OR WAREHOUSES
+                        8. STORES OR OTHER RETAIL OUTLETS
+                        9. RUN DOWN OR POORLY KEPT YARDS OR COMMUNAL AREAS
+                       10. HOMELESS PEOPLE
+                       11. PROSTITUTION
+                       12. WINOS OR JUNKIES
+                       13. DRUG USE OR DRUG DEALING IN THE OPEN
+                       14. A PARK, PLAYGROUND, OR GARDEN AREA
+                       15. NONE OF THE ABOVE
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T076       RATE RELATIVE MAINTANANCE
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        Relative to the other buildings on the same road/street, how well maintained
+        is the (Respondent/Proxy/Informant)'s housing unit?
+        ..................................................................................
+            1           1. BETTER THAN OTHERS
+            6           2. SAME AS OTHERS
+                        3. WORSE THAN OTHERS
+            1           4. NO OTHER BUILDINGS
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1219       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T077       MOBILE HOME HAVE FOUNDATION
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        If structure is a manufactured or mobile home, was there an underlying
+        foundation?
+        ..................................................................................
+                        1. YES
+                        5. NO
+                        8. DON'T KNOW/NOT OBSERVED
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T078       MOBILE HOME LOCK DOWN CABINETS
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        If structure is a manufactured or mobile home, were lockdown cabinets present?
+        ..................................................................................
+                        1. YES
+                        5. NO
+                        8. DON'T KNOW/NOT OBSERVED
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T079       NUMBER ABOVE GROUND STORIES
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        What is the estimated number of above-ground stories in the structure where
+        (Respondent/Proxy/Informant) lives?
+        ..................................................................................
+            5           1. ONE
+            1           2. TWO
+            1           3. THREE
+                        4. 4-9
+                        5. 10-19
+                        6. 20+
+                        8. DK (Don't Know); NA (Not Ascertained)
+         1220       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T080       ESTIMATED STORIES TO APARTMENT
+         Section: IO    Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+
+
+        INTERVIEWER: ENTER ESTIMATED NUMBER OF STORIES BETWEEN THE MAIN AND APARTMENT
+        ENTRANCE. (RANGE IS FROM 1-200)
+        ..................................................................................
+                      998. DK (Don't Know); NA (Not Ascertained)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T081M1     LIGHTS IN WORKING ORDER - 1
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        If public halls or foyers were present, were the lights in working order?
+
+        INTERVIEWER: CHOOSE UP TO THREE ANSWERS. DO NOT CHOOSE CODES 4 OR 5 IF YOU
+        HAVE SELECTED CODES 1, 2, OR 3.
+        ..................................................................................
+            2           1. ALL WORKING
+                        2. SOME WORKING
+                        3. NONE WORKING
+                        4. NO LIGHTS PRESENT IN PUBLIC HALLS OR FOYERS
+                        5. NO PUBLIC HALLS OR FOYERS PRESENT
+                        8. DON'T KNOW/NOT OBSERVED
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1225       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T081M2     LIGHTS IN WORKING ORDER - 2
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        If public halls or foyers were present, were the lights in working order?
+
+        INTERVIEWER: CHOOSE UP TO THREE ANSWERS. DO NOT CHOOSE CODES 4 OR 5 IF YOU
+        HAVE SELECTED CODES 1, 2, OR 3.
+        ..................................................................................
+                        1. ALL WORKING
+                        2. SOME WORKING
+                        3. NONE WORKING
+                        4. NO LIGHTS PRESENT IN PUBLIC HALLS OR FOYERS
+                        5. NO PUBLIC HALLS OR FOYERS PRESENT
+                        8. DON'T KNOW/NOT OBSERVED
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T082       ELEVATORS IN WORKING ORDER
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        If one or more elevators were present, were the elevators in working order?
+        INTERVIEWER: CHOOSE ONE ANSWERS
+        ..................................................................................
+                        1. ALL WORKING
+                        2. SOME WORKING
+                        3. NONE WORKING
+            2           4. NO ELEVATORS PRESENT
+                        8. DON'T KNOW/NOT OBSERVED
+         1225       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T083M1     STAIRWAY OBSERVATION - 1
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        If interior or exterior stairways were present, which of the following did you
+        observe?
+
+        INTERVIEWER: CHOOSE UP TO THREE ANSWERS. DO NOT CHOOSE CODES 4 OR 5 IF YOU
+        HAVE SELECTED CODES 1, 2, OR 3.
+        ..................................................................................
+                        1. LOOSE RAILINGS
+                        2. NO RAILINGS
+                        3. LOOSE STEPS
+            6           4. NONE OF THE ABOVE
+            1           5. NO INTERIOR OR EXTERIOR STAIRWAY PRESENT
+                        8. DON'T KNOW/NOT OBSERVED
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1220       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T083M2     STAIRWAY OBSERVATION - 2
+         Section: IO    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+
+        If interior or exterior stairways were present, which of the following did you
+        observe?
+
+        INTERVIEWER: CHOOSE UP TO THREE ANSWERS. DO NOT CHOOSE CODES 4 OR 5 IF YOU
+        HAVE SELECTED CODES 1, 2, OR 3.
+        ..................................................................................
+                        1. LOOSE RAILINGS
+                        2. NO RAILINGS
+                        3. LOOSE STEPS
+                        4. NONE OF THE ABOVE
+                        5. NO INTERIOR OR EXTERIOR STAIRWAY PRESENT
+                        8. DON'T KNOW/NOT OBSERVED
+                       98. DK (Don't Know); NA (Not Ascertained)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T084M1     EXTERIOR BUILDING QUALITY - 1
+         Section: IO    Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+
+
+        Checklist on visible exterior building quality:
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. SAGGING ROOF?
+                        2. MISSING ROOF MATERIALS?
+                        3. HOLE IN THE ROOF?
+                        4. MISSING BRICKS, SIDING, OR OTHER WALL MATERIAL?
+                        5. SLOPING OUTSIDE WALLS?
+                        6. BOARDED-UP WINDOWS?
+                        7. BARS ON WINDOWS?
+                        8. VISIBLE FOUNDATION CRUMBLING OR HAS OBVIOUS CRACKS?
+                        9. BUILDING PROPERTY HAS STANDING WATER?
+                       10. BUILDING PROPERTY HAS A SEWAGE SMELL?
+                       11. LOCKED LOBBY/DOORMAN?
+                       12. LOCKED GATE?
+            7          98. NONE OF THE ABOVE ARE OBSERVED
+                      998. DK (Don't Know); NA (Not Ascertained)
+         1220       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+T084M2     EXTERIOR BUILDING QUALITY - 2
+         Section: IO    Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+
+
+        Checklist on visible exterior building quality:
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. SAGGING ROOF?
+                        2. MISSING ROOF MATERIALS?
+                        3. HOLE IN THE ROOF?
+                        4. MISSING BRICKS, SIDING, OR OTHER WALL MATERIAL?
+                        5. SLOPING OUTSIDE WALLS?
+                        6. BOARDED-UP WINDOWS?
+                        7. BARS ON WINDOWS?
+                        8. VISIBLE FOUNDATION CRUMBLING OR HAS OBVIOUS CRACKS?
+                        9. BUILDING PROPERTY HAS STANDING WATER?
+                       10. BUILDING PROPERTY HAS A SEWAGE SMELL?
+                       11. LOCKED LOBBY/DOORMAN?
+                       12. LOCKED GATE?
+                       98. NONE OF THE ABOVE ARE OBSERVED
+                      998. DK (Don't Know); NA (Not Ascertained)
+         1227       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+TOBSVER    IWER OBS VERSION NUMBER
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+            9           1. Version 1
+           74           2. Version 2
+         1125           3. Version 3
+           19       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+TVERSION   2004 EXIT FINAL RELEASE VERSION NUMBER
+         Section: IO    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+         1227           1. HRS 2004 Exit Final Release #1
+

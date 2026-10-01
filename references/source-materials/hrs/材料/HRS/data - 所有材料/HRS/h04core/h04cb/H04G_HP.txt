@@ -1,0 +1,640 @@
+==========================================================================================
+2004 HRS Core (Final Release)
+ODBC Reference: [HRS2004]
+Perl script: CodebkD11.pl v6.16 Tue Oct  3 17:15:11 2006
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION G: Functional Limitations and Helpers (Helper)
+
+==========================================================================================
+
+HHID     HOUSEHOLD IDENTIFICATION NUMBER
+         Section: G     Level: Helper          Type: Character  Width: 6   Decimals: 0
+
+        ..................................................................................
+         5026           000003-502761. Household Identification Number
+
+==========================================================================================
+
+PN       RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: G     Level: Helper          Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+         3245         010. Person Identifier
+           70         011. Person Identifier
+            2         012. Person Identifier
+            1         013. Person Identifier
+         1322         020. Person Identifier
+           18         021. Person Identifier
+                      022. Person Identifier
+          129         030. Person Identifier
+           13         031. Person Identifier
+                      032. Person Identifier
+          210         040. Person Identifier
+           16         041. Person Identifier
+                      042. Person Identifier
+
+==========================================================================================
+
+JSUBHH   2004 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: G     Level: Helper          Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+         4832           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+          101           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           75           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+            7           5. Split household - one half of couple from SUBHH 1 or 2
+                        6. Split household - one half of couple from SUBHH 1 or 2
+           11           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+HSUBHH   2002 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: G     Level: Helper          Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+         4417           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+           83           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           64           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+            7           5. Split household - one half of couple from SUBHH 1 or 2
+                        6. Split household - one half of couple from SUBHH 1 or 2
+           10           7. Reunited household - respondents from split household reunite
+          445       Blank. NEW COHORT HH
+
+==========================================================================================
+
+JPN_SP   2004 SPOUSE/PARTNER PERSON NUMBER
+         Section: G     Level: Helper          Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+          950         010. Person Identifier
+           43         011. Person Identifier
+            1         012. Person Identifier
+                      013. Person Identifier
+          951         020. Person Identifier
+           18         021. Person Identifier
+            1         022. Person Identifier
+           95         030. Person Identifier
+            3         031. Person Identifier
+                      032. Person Identifier
+          129         040. Person Identifier
+            8         041. Person Identifier
+                      042. Person Identifier
+            1         811. Spouse of Non-Original Respondent
+                      812. Spouse of Non-Original Respondent
+            2         821. Spouse of Non-Original Respondent
+            2         831. Spouse of Non-Original Respondent
+                      832. Spouse of Non-Original Respondent
+            1         841. Spouse of Non-Original Respondent
+         2821       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+JCSR     2004 WHETHER COVERSHEET RESPONDENT
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+         3915           1. Yes
+            1           3. 2nd Coverscreen  R, answers not retained
+         1110           5. No
+
+==========================================================================================
+
+JFAMR    2004 WHETHER FAMILY RESPONDENT
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+         3882           1. Family R
+                        3. 2nd Family R, answers not retained
+         1144           5. Non-Family R
+
+==========================================================================================
+
+JFINR    2004 WHETHER FINANCIAL RESPONDENT
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+         3841           1. Financial R
+                        3. 2nd Financial R, answers not retained
+         1185           5. Non-Financial R
+
+==========================================================================================
+
+OPN      OTHER PERSON NUMBER
+         Section: G     Level: Helper          Type: Character  Width: 3   Decimals: 0
+
+
+        PERSON NUMBER OF KID/HHM/SIB AND THEIR SPOUSES
+        ..................................................................................
+         1394                 010-082. Other Person Number
+         1136                 083-095. New Helper
+          405                     096. Employee of Institution
+         2091                 101-995. Other Person Number
+
+==========================================================================================
+
+        Assign:
+         IF (MoneyLoop[1].G065_MnyHlprOth = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG069    HELPER RELATIONSHIP
+         Section: G     Level: Helper          Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G069AHlprRel
+        ..................................................................................
+         1241           2. SPOUSE/PARTNER
+          579           3. SON
+           16           4. STEPSON
+           71           5. SPOUSE/PARTNER OF DAUGHTER
+         1108           6. DAUGHTER
+           27           7. STEPDAUGH
+          162           8. SPOUSE/PARTNER OF SON
+          288           9. GRANDCHILD
+            2          10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+           17          12. MOTHER
+            1          13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+           15          15. BROTHER
+            4          16. BROTHER OF SPOUSE/PARTNER
+           30          17. SISTER
+            4          18. SISTER OF SPOUSE/PARTNER
+          264          19. OTHER RELATIVE
+          558          20. OTHER INDIVIDUAL
+          212          21. ORGANIZATION
+          388          22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+            2          27. FORMER SPOUSE
+           22          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+            1          31. FORMER CHILD-IN-LAW
+            2          32. RELATIONSHIP UNKNOWN
+            3          33. SP/P OF GRANDCHILD
+            3          90. UNKNOWN CHILD
+            6          91. UNKNOWN IN-LAW
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (MoneyLoop[1].G065_MnyHlprOth = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG066    WHO HELPED LOOP
+         Section: G     Level: Helper          Type: Numeric    Width: 3   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G066AHlprIndx
+        ..................................................................................
+         3471                    1-82. Person Index
+         1555                  83-105. Helper Not On List
+
+==========================================================================================
+
+JADLNDX  INDEX CONNECTION TO THE ADL TABLE
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G177_ADLNDX
+        ..................................................................................
+         1722           1. Helper named at JG032_1
+          517           2. Helper named at JG032_2
+          205           3. Helper named at JG032_3
+           83           4. Helper named at JG032_4
+           30           5. Helper named at JG032_5
+           12           6. Helper named at JG032_6
+            6           7. Helper named at JG032_7
+         2451       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (AskHelpIADL[i - 1].G057_IADLHlprOth = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JIADLNDX INDEX CONNECTION TO THE IADL TABLE
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G178_IAdlNdx
+        ..................................................................................
+         2096           1. Helper named at JG054_1
+          700           2. Helper named at JG054_2
+          218           3. Helper named at JG054_3
+           65           4. Helper named at JG054_4
+           25           5. Helper named at JG054_5
+            7           6. Helper named at JG054_6
+         1915       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (MoneyLoop[1].G065_MnyHlprOth = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JMNYNDX  INDEX CONNECTION TO THE MONEY TABLE
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G179_MoneyNdx
+        ..................................................................................
+         1150           1. Helper named at JG062_1
+          141           2. Helper named at JG062_2
+         3735       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG070    FREQ OF HELP GIVEN-DAYS LAST MONTH
+         Section: G     Level: Helper          Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G070A
+
+         (Let's think for a moment about the help you received that we just talked
+        about.  [First\Next] the help from  ([your\husband\wife\partner]\[Helper
+        Name]) During the last month, on about how many days did  (Helper Name) help
+        you?
+        INTERVIEWER: ENTER 0 IN ''DAYS IN LAST MONTH'' IF THE PERSON DID NOT HELP IN
+        THE LAST MONTH
+
+        DAYS IN LAST MONTH:
+         OR
+        DAYS PER WEEK:
+         OR
+        EVERY DAY:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           3504        0          31         13.27         12.46    1403
+         -----------------------------------------------------------------
+          112          98. DK (Don't Know); NA (Not Ascertained)
+            7          99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+         AND (G070A = EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG071    # DAYS HELPER HELPED
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G071A
+
+         (Let's think for a moment about the help you received that we just talked
+        about.  [First\Next] the help from  ([your\husband\wife\partner]\[Helper
+        Name]) During the last month, on about how many days did  (Helper Name) help
+        you?
+        INTERVIEWER: ENTER 0 IN ''DAYS IN LAST MONTH'' IF THE PERSON DID NOT HELP IN
+        THE LAST MONTH
+
+        DAYS IN LAST MONTH:
+         OR
+        DAYS PER WEEK:
+         OR
+        EVERY DAY:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            349        1           7          2.70          1.74    4676
+         -----------------------------------------------------------------
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+         AND (G070A = EMPTY)
+         AND (G071A = EMPTY)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG072    DID HELPER HELP EVERY DY
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G072A
+
+         (Let's think for a moment about the help you received that we just talked
+        about.  [First\Next] the help from  ([your\husband\wife\partner]\[Helper
+        Name]) During the last month, on about how many days did  (Helper Name) help
+        you?
+        INTERVIEWER: ENTER 0 IN ''DAYS IN LAST MONTH'' IF THE PERSON DID NOT HELP IN
+        THE LAST MONTH
+
+        DAYS IN LAST MONTH:
+         OR
+        DAYS PER WEEK:
+         OR
+        EVERY DAY:
+        ..................................................................................
+          658           1. EVERY DAY
+            2           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         4366       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+         AND (NOT ((G070A = RESPONSE) AND (G070A = 0)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG073    #HRS OF HELP
+         Section: G     Level: Helper          Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G073A
+
+        On the days  ([Helper Name/ your\[husband\wife\partner]) helps you, about how
+        many hours per day is that?
+        INTERVIEWER: LESS THAN AN HOUR = 1
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           4030        1          24          4.35          5.71     722
+         -----------------------------------------------------------------
+          266          98. DK (Don't Know); NA (Not Ascertained)
+            8          99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+         AND (NOT ((G070A = RESPONSE) AND (G070A = 0)))
+         AND (G069AHlprRel <> SPOUSEPARTNER)
+         AND (((G066AHlprIndx >= 83) OR (G069AHlprRel.ORD < 21)) OR (G069AHlprRel =
+        EXSPOUSE_PARTNER))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG074    HELPERS SEX
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G074A
+
+        INTERVIEWER: ASK ONLY IF NECESSARY:
+        AFFIRM SEX OF HELPER:
+        (IS  (Helper Name) MALE OR FEMALE?)
+        ..................................................................................
+          860           1. MALE
+         2124           2. FEMALE
+          153           3. AGENCY/PROFESSIONAL/EMPLOYEE OF 'INSTITUTION'
+           10           8. DK (Don't Know); NA (Not Ascertained)
+            3           9. RF (Refused)
+         1876       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+         AND (NOT ((G070A = RESPONSE) AND (G070A = 0)))
+         AND (G069AHlprRel <> SPOUSEPARTNER)
+         AND ((G069AHlprRel = GRCHILD) OR (G069AHlprRel = GRCHILD_IN_LAW))
+         AND (G180_G075ATemp <> NONRESPONSE
+          OR NOT (G180_G075ATemp <> NONRESPONSE))
+         AND (G180_G075ATemp = DONTKNOW
+          OR NOT (G180_G075ATemp = DONTKNOW))
+         AND (G180_G075ATemp = REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG075    GRANDCHILD OF WHICH CHILD
+         Section: G     Level: Helper          Type: Character  Width: 3   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G075A
+
+        INTERVIEWER: IF GRANDCHILD: (Which of your children is the parent of that
+        grandchild?)
+        ..................................................................................
+          246                 041-991. Other Person Number
+           16                     992. DECEASED CHILD
+            6                     998. DK (Don't Know); NA (Not Ascertained)
+            1                     999. RF(Refused)
+         4757                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+         AND (NOT ((G070A = RESPONSE) AND (G070A = 0)))
+         AND (G069AHlprRel <> SPOUSEPARTNER)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG076     HELPER GIVEN MONEY TO HELP
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G076A
+
+        Is  (Helper Name) paid to help you?
+        ..................................................................................
+          550           1. YES
+         2591           5. NO
+           12           8. DK (Don't Know); NA (Not Ascertained)
+            3           9. RF (Refused)
+         1870       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+         AND (NOT ((G070A = RESPONSE) AND (G070A = 0)))
+         AND (G069AHlprRel <> SPOUSEPARTNER)
+         AND (G076A = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG077    DOES INS PAY
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G077A
+
+        Does (Medicaid/STATE NAME FOR MEDICAID) or insurance help pay  (Helper Name)?
+        ..................................................................................
+          218           1. YES
+          301           5. NO
+           30           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+         4476       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+         AND (NOT ((G070A = RESPONSE) AND (G070A = 0)))
+         AND (G069AHlprRel <> SPOUSEPARTNER)
+         AND (G076A = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG078    AMT R/SP/P PAID
+         Section: G     Level: Helper          Type: Numeric    Width: 5   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G078A
+
+         (Not counting expenses paid by (Medicaid/STATE NAME FOR MEDICAID) or
+        insurance) about how much did you  (and your [husband\wife\partner]) end up
+        paying  (Helper Name) for the last month?
+        AMOUNT:
+        PER:
+        ..................................................................................
+          443                 0-15000. Actual Value
+           83                   99998. DK (Don't Know); NA (Not Ascertained)
+           24                   99999. RF (Refused)
+         4476                   Blank. INAP (Innapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+         AND (NOT ((G070A = RESPONSE) AND (G070A = 0)))
+         AND (G069AHlprRel <> SPOUSEPARTNER)
+         AND (G076A = YES)
+         AND (G078A > 0)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG079    AMT R/SP/P PAID HELPER
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G079A
+
+        (Not counting expenses paid by (Medicaid/STATE NAME FOR MEDICAID or insurance)
+        about how much did you  (and your [husband\wife\partner]) end up paying
+        (Helper Name) for the last month?)
+        AMOUNT:  (AMT R/SP/P PAID)
+        PER:
+        ..................................................................................
+          198           1. MONTH
+           30           2. WEEK
+           11           3. DAY
+            2           5. YEAR
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         4785       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+         AND (NOT ((G070A = RESPONSE) AND (G070A = 0)))
+         AND (G069AHlprRel <> SPOUSEPARTNER)
+         AND (G076A = YES)
+         AND (G078A = NONRESPONSE)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG080    AMT $100
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G080A
+
+        Did it amount to less than $100 per month, more than $100 per month or what?
+        ..................................................................................
+           11           1. LESS THAN $100 PER MONTH
+            8           3. ABOUT $100 PER MONTH
+           28           5. MORE THAN $100 PER MONTH
+           42           8. DK (Don't Know); NA (Not Ascertained)
+           18           9. RF (Refused)
+         4919       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+         AND (NOT ((G070A = RESPONSE) AND (G070A = 0)))
+         AND (G069AHlprRel <> SPOUSEPARTNER)
+         AND (G076A = YES)
+         AND ((G078A > 0) OR G078A = NONRESPONSE)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG081    OTR FIN HELP
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G081A
+
+        Does any other person help you  (and your [husband\wife\partner]) pay this
+        cost?
+        ..................................................................................
+           20           1. YES
+          319           5. NO
+            6           8. DK (Don't Know); NA (Not Ascertained)
+            3           9. RF (Refused)
+         4678       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+         AND (NOT ((G070A = RESPONSE) AND (G070A = 0)))
+         AND (G069AHlprRel <> SPOUSEPARTNER)
+         AND (G076A = YES)
+         AND ((G078A > 0) OR G078A = NONRESPONSE)
+         AND (G081A = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG082    HELPER CHLD REL OTR
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G082A
+
+        Is that a (child or other) relative of yours  (and your
+        [husband\wife\partner]), or is that someone else?
+        ..................................................................................
+           13           1. CHILD/CHILD-IN-LAW/GRANDCHILD
+            2           2. OTHER RELATIVE
+            5           3. SOMEONE ELSE
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         5006       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (AskHelperInfoInOrder[CNT].G066AHlprIndx > 0)
+         AND (G069AHlprRel <> EMPLOYEEOFINSTITUTION)
+         AND (NOT ((G070A = RESPONSE) AND (G070A = 0)))
+         AND (G069AHlprRel <> SPOUSEPARTNER)
+         AND (G076A = YES)
+         AND ((G078A > 0) OR G078A = NONRESPONSE)
+         AND (G081A = YES)
+         AND (G082A = CHILDCHILDLAWGRANDCHILD)
+         AND (G181_G083ATemp <> NONRESPONSE
+          OR NOT (G181_G083ATemp <> NONRESPONSE))
+         AND (G181_G083ATemp = DONTKNOW
+          OR NOT (G181_G083ATemp = DONTKNOW))
+         AND (G181_G083ATemp = REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JG083    WHICH CHILD
+         Section: G     Level: Helper          Type: Character  Width: 3   Decimals: 0
+         CAI: SecG.AskHelperInfoInOrder[1].G083A
+
+        (Which child is that?)
+
+        INTERVIEWER: IF GRANDCHILD: (Which of your children is the parent of that
+        grandchild?)
+        ..................................................................................
+           12                 041-991. Other Person Number
+                                  992. DECEASED CHILD
+            1                     998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         5013                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+JVDATE   2004 DATA MODEL VERSION
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+
+
+        User Note:  This variable identifies which data model was used to interview
+        the household.  Please reference the data description for a summary of changes
+        in each data model.
+        ..................................................................................
+           13           1. Version 1
+          212           2. Version 2
+          371           3. Version 3
+          594           4. Version 4
+          777           5. Version 5
+          388           6. Version 6
+          803           7. Version 7
+         1770           8. Version 8
+           98           9. Version 9
+
+==========================================================================================
+
+JVERSION 2004 DATA RELEASE VERSION
+         Section: G     Level: Helper          Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+         5026           1. First Final Release
+

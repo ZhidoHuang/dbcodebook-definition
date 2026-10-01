@@ -1,0 +1,3624 @@
+==========================================================================================
+
+HRS 2018 Final Exit
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section G: FUNCTIONAL LIMITATIONS AND HELPERS  (Respondent)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: G     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+           980           010475-919959.  Household Identification Number
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           557         010.  Person Identifier
+            39         011.  Person Identifier
+             1         012.  Person Identifier
+           293         020.  Person Identifier
+             9         021.  Person Identifier
+            32         030.  Person Identifier
+             2         031.  Person Identifier
+            44         040.  Person Identifier
+             2         041.  Person Identifier
+             1         042.  Person Identifier
+
+
+==========================================================================================
+
+XQSUBHH                       2018 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: G     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           948           3.  1st deceased respondent from a household
+            32           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+PSUBHH                        2016 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: G     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           895           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+            33           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            34           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+             5           3.  1st deceased respondent from a household
+             1           4.  2nd deceased respondent from a household
+             2           5.  Split household - one half of couple from SUBHH 1 or 2
+                         6.  Split household - one half of couple from SUBHH 1 or 2
+            10           7.  Reunited household - respondents from split household
+                             reunite
+
+
+==========================================================================================
+
+XQPN_SP                       2018 SPOUSE/PARTNER PERSON NUMBER
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           150         010.  Person Identifier
+            38         011.  Person Identifier
+             3         012.  Person Identifier
+           145         020.  Person Identifier
+            11         021.  Person Identifier
+            12         030.  Person Identifier
+             3         031.  Person Identifier
+            32         040.  Person Identifier
+             4         041.  Person Identifier
+             1         811.  Spouse of Non-Original Respondent
+           581       Blank.  R not coupled
+
+
+==========================================================================================
+
+         IF NOT(RVARS.Z145_TypeExit_V IN [2,3,4]) THEN 
+
+         IF NOT((ActiveLanguage <> ENG OR gp5 <> EXT) AND (ActiveLanguage <> SPN OR gp5 
+         <> EXT)) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG129                        NUMBER DAYS IN BED
+         Section: G     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecG.ADL.G129TDaysInBed_A
+
+         We need to understand difficulties people may have with various activities
+         because of a health or physical problem.
+         
+         About how many days did [he/she] stay in bed more than half the day because of
+         illness or injury during the last three months before [his/her] death?
+         
+         INSTR: Enter '0' for none
+         
+         INSTR: Use 993 for every day
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            680        0         100         15.12         21.58       3
+         -----------------------------------------------------------------
+           245         993.  EVERY DAY
+            51         998.  DK (Don't Know); NA (Not Ascertained)
+             1         999.  RF (Refused)
+
+
+==========================================================================================
+
+         IF NOT(RVARS.Z145_TypeExit_V IN [2,3,4]) THEN 
+
+         IF SecG.ADL.G013TNagiCkpt_A > 0 OR (ActiveLanguage = ENG AND IWType = EXT OR 
+         ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+         IF SecG.ADL.G129TDaysInBed_A < 86 OR SecG.ADL.G129TDaysInBed_A = Empty THEN 
+
+         IF SecG.ADL.G014_DiffDress <> NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG015                        HELP W/DRESS
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.ADL.G015_HelpDress
+
+         The next questions are about help [First Name] received with various activities.
+         Please tell me if [he/she] had received any help with these because of a
+         physical, mental, emotional or memory problem.
+         
+         We want to know about the help that [he/she] received during the last three
+         months of [his/her] life.
+         
+         Because of a health or memory problem did anyone help [him/her] with dressing,
+         including putting on shoes and socks in the last three months of [his/her] life?
+
+         .................................................................................
+           453           1.  YES
+           261           5.  NO
+             1           6.  [(IF VOL) COULDN'T DO]
+                         7.  [(IF VOL) DIDN'T DO]
+             6           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           259       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF NOT(RVARS.Z145_TypeExit_V IN [2,3,4]) THEN 
+
+         IF SecG.ADL.G013TNagiCkpt_A > 0 OR (ActiveLanguage = ENG AND IWType = EXT OR 
+         ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+         IF SecG.ADL.G129TDaysInBed_A < 86 OR SecG.ADL.G129TDaysInBed_A = Empty THEN 
+
+         IF SecG.ADL.G015_HelpDress <> NO AND SecG.ADL.G015_HelpDress <> SpecialAnswer 
+         AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG130                        HELP DRESSING - MONTHS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G130_
+
+         How long had [he/she] needed help with dressing?
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            335        0          93          5.60          9.12     630
+         -----------------------------------------------------------------
+            14          98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G130_ 
+
+         IF ActiveMode = 'IWERADMIN' THEN 
+
+         IF SecG.ADL.G130_ = Empty OR SecG.ADL.G130_ = DontKnow THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG131                        HELP DRESSING - YEARS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G131_
+
+         (How long had [he/she] needed help with dressing?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             92        1          40          3.14          4.34     885
+         -----------------------------------------------------------------
+             3          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G131_ 
+
+         IF SecG.ADL.G131_ = Empty OR SecG.ADL.G131_ = DontKnow THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG132                        HELP DRESSING - SINCE AGE
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G132_
+
+         (How long had [he/she] needed help with dressing?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+             6                   80-91.  Actual Value
+             2                      98.  DK (Don't Know); NA (Not Ascertained)
+                                    99.  RF (Refused)
+           972                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG133                        HELP DRESSING - SINCE YEAR
+         Section: G     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecG.ADL.G133_
+
+         (How long had [he/she] needed help with dressing?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+                      9998.  DK (Don't Know); NA (Not Ascertained)
+                      9999.  RF (Refused)
+           980       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF NOT(RVARS.Z145_TypeExit_V IN [2,3,4]) THEN 
+
+         IF SecG.ADL.G013TNagiCkpt_A > 0 OR (ActiveLanguage = ENG AND IWType = EXT OR 
+         ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+         IF SecG.ADL.G129TDaysInBed_A < 86 OR SecG.ADL.G129TDaysInBed_A = Empty THEN 
+
+         IF SecG.ADL.G013TNagiCkpt_A <> 1 OR SecG.ADL.G014_DiffDress <> NO THEN 
+
+         IF SecG.ADL.G016_DiffWalk <> NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG020                        ADL WALK HELP
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.ADL.G020_HelpWalk
+
+         Because of a health or memory problem did anyone help [him/her] get across a
+         room (in the last three months of [his/her] life)?
+
+         .................................................................................
+           361           1.  YES
+           345           5.  NO
+             8           6.  [(IF VOL) COULDN'T DO]
+             2           7.  [(IF VOL) DIDN'T DO]
+             4           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           260       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G020_HelpWalk 
+
+         IF SecG.ADL.G020_HelpWalk <> NO AND SecG.ADL.G020_HelpWalk <> SpecialAnswer AND 
+         (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG134                        HELP WALKING - MONTHS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G134_
+
+         How long had [he/she] needed help with walking?
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            275        0          70          5.15          9.29     697
+         -----------------------------------------------------------------
+             7          98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G134_ 
+
+         IF ActiveMode = 'IWERADMIN' THEN 
+
+         IF SecG.ADL.G134_ = Empty OR SecG.ADL.G134_ = DontKnow THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG135                        HELP WALKING - YEARS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G135_
+
+         (How long had [he/she] needed help with walking?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             80        1          17          3.45          2.70     899
+         -----------------------------------------------------------------
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G135_ 
+
+         IF SecG.ADL.G135_ = Empty OR SecG.ADL.G135_ = DontKnow THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG136                        HELP WALKING - SINCE AGE
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G136_
+
+         (How long had [he/she] needed help with walking?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+             4                   63-93.  Actual Value
+             3                      98.  DK (Don't Know); NA (Not Ascertained)
+                                    99.  RF (Refused)
+           973                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG137                        HELP WALKING - SINCE YEAR
+         Section: G     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecG.ADL.G137_
+
+         (How long had [he/she] needed help with walking?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+                      9998.  DK (Don't Know); NA (Not Ascertained)
+                      9999.  RF (Refused)
+           980       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF NOT(RVARS.Z145_TypeExit_V IN [2,3,4]) THEN 
+
+         IF SecG.ADL.G013TNagiCkpt_A > 0 OR (ActiveLanguage = ENG AND IWType = EXT OR 
+         ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+         IF SecG.ADL.G129TDaysInBed_A < 86 OR SecG.ADL.G129TDaysInBed_A = Empty THEN 
+
+         IF SecG.ADL.G013TNagiCkpt_A <> 1 OR SecG.ADL.G014_DiffDress <> NO THEN 
+
+         IF SecG.ADL.G021_DiffBathe <> NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG022                        ADL BATHE HELP
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.ADL.G022_HelpBathe
+
+         (Because of a health or memory problem)
+         
+         Did anyone help [him/her] with bathing or showering (in the last three months of
+         [his/her] life)?
+
+         .................................................................................
+           459           1.  YES
+           249           5.  NO
+             4           6.  [(IF VOL) COULDN'T DO]
+                         7.  [(IF VOL) DIDN'T DO]
+             8           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           260       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G022_HelpBathe 
+
+         IF SecG.ADL.G022_HelpBathe <> NO AND SecG.ADL.G022_HelpBathe <> SpecialAnswer 
+         AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG138                        HELP BATHING - MONTHS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G138_
+
+         How long had [he/she] needed help with bathing or showering?
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            324        0          66          5.38          8.34     646
+         -----------------------------------------------------------------
+            10          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G138_ 
+
+         IF SecG.ADL.G138_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG139                        HELP BATHING - YEARS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G139_
+
+         (How long had [he/she] needed help with bathing or showering?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            110        1          42          3.95          4.82     869
+         -----------------------------------------------------------------
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G139_ 
+
+         IF SecG.ADL.G139_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG140                        HELP BATHING - SINCE AGE
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G140_
+
+         (How long had [he/she] needed help with bathing or showering?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+             4                    2-87.  Actual Value
+             2                      98.  DK (Don't Know); NA (Not Ascertained)
+                                    99.  RF (Refused)
+           974                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G140_ 
+
+         IF SecG.ADL.G140_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG141                        HELP BATHING - SINCE YEAR
+         Section: G     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecG.ADL.G141_
+
+         (How long had [he/she] needed help with bathing or showering?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+            10               2006-2018.  Actual Value
+             2                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           968                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF NOT(RVARS.Z145_TypeExit_V IN [2,3,4]) THEN 
+
+         IF SecG.ADL.G013TNagiCkpt_A > 0 OR (ActiveLanguage = ENG AND IWType = EXT OR 
+         ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+         IF SecG.ADL.G129TDaysInBed_A < 86 OR SecG.ADL.G129TDaysInBed_A = Empty THEN 
+
+         IF SecG.ADL.G013TNagiCkpt_A <> 1 OR SecG.ADL.G014_DiffDress <> NO THEN 
+
+         IF SecG.ADL.G023_DiffEat <> NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG024                        ADL EAT HELP
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.ADL.G024_HelpEat
+
+         (Because of a health or memory problem)
+         
+         Did anyone help [him/her] with eating, such as cutting up [his/her] food (in the
+         last three months of [his/her] life)?
+
+         .................................................................................
+           311           1.  YES
+           397           5.  NO
+             3           6.  [(IF VOL) COULDN'T DO]
+             3           7.  [(IF VOL) DIDN'T DO]
+             6           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           260       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G024_HelpEat 
+
+         IF SecG.ADL.G024_HelpEat <> NO AND SecG.ADL.G024_HelpEat <> SpecialAnswer AND 
+         (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG142                        HELP EATING - MONTHS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G142_
+
+         (How long had [he/she] needed help with eating?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            244        0          36          3.51          4.76     727
+         -----------------------------------------------------------------
+             8          98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G142_ 
+
+         IF SecG.ADL.G142_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG143                        HELP EATING - YEARS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G143_
+
+         (How long had [he/she] needed help with eating?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             51        1          42          4.33          6.24     927
+         -----------------------------------------------------------------
+             2          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G143_ 
+
+         IF SecG.ADL.G143_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG144                        HELP EATING - SINCE AGE
+         Section: G     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecG.ADL.G144_
+
+         (How long had [he/she] needed help with eating?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+             2                  63-102.  Actual Value
+             3                     998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           975                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G144_ 
+
+         IF SecG.ADL.G144_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG170                        HELP EATING - SINCE YEAR
+         Section: G     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecG.ADL.G170_
+
+         (How long had [he/she] needed help with eating?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+             5               1987-2017.  Actual Value
+             1                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           974                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF NOT(RVARS.Z145_TypeExit_V IN [2,3,4]) THEN 
+
+         IF SecG.ADL.G013TNagiCkpt_A > 0 OR (ActiveLanguage = ENG AND IWType = EXT OR 
+         ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+         IF SecG.ADL.G129TDaysInBed_A < 86 OR SecG.ADL.G129TDaysInBed_A = Empty THEN 
+
+         IF SecG.ADL.G013TNagiCkpt_A <> 1 OR SecG.ADL.G014_DiffDress <> NO THEN 
+
+         IF SecG.ADL.G025_DiffBed <> NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG029                        ADL BED HELP
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.ADL.G029_HelpBed
+
+         (Because of a health or memory problem)
+         
+         Did anyone help [him/her] with getting in or out of bed in the last three months
+         of [his/her] life?
+
+         .................................................................................
+           378           1.  YES
+           329           5.  NO
+             1           6.  [(IF VOL) COULDN'T DO]
+             3           7.  [(IF VOL) DIDN'T DO]
+            10           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           259       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G029_HelpBed 
+
+         IF SecG.ADL.G029_HelpBed <> NO AND SecG.ADL.G029_HelpBed <> SpecialAnswer AND 
+         (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG145                        HELP IN/OUT BED - MONTHS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G145_
+
+         How long had [he/she] needed help getting in or out of bed?
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            294        0          66          4.25          7.40     673
+         -----------------------------------------------------------------
+            13          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G145_ 
+
+         IF SecG.ADL.G145_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG146                        HELP IN/OUT BED - YEARS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G146_
+
+         (How long had [he/she] needed help getting in or out of bed?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             67        1          42          3.76          5.51     912
+         -----------------------------------------------------------------
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G146_ 
+
+         IF SecG.ADL.G146_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG147                        HELP IN/OUT BED - SINCE AGE
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G147_
+
+         (How long had [he/she] needed help getting in or out of bed?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age: 
+         Since year:
+
+         .................................................................................
+             2                   63-87.  Actual Value
+                                    98.  DK (Don't Know); NA (Not Ascertained)
+                                    99.  RF (Refused)
+           978                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G147_ 
+
+         IF SecG.ADL.G147_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG148                        HELP IN/OUT BED - SINCE YEAR
+         Section: G     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecG.ADL.G148_
+
+         (How long had [he/she] needed help getting in or out of bed?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         SINCE YEAR :
+
+         .................................................................................
+             4               2006-2017.  Actual Value
+             1                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           975                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF NOT(RVARS.Z145_TypeExit_V IN [2,3,4]) THEN 
+
+         IF SecG.ADL.G013TNagiCkpt_A > 0 OR (ActiveLanguage = ENG AND IWType = EXT OR 
+         ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+         IF SecG.ADL.G129TDaysInBed_A < 86 OR SecG.ADL.G129TDaysInBed_A = Empty THEN 
+
+         IF SecG.ADL.G013TNagiCkpt_A <> 1 OR SecG.ADL.G014_DiffDress <> NO THEN 
+
+         IF SecG.ADL.G030_DiffToilet <> NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG031                        ADL TOILET HELP
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.ADL.G031_HelpToilet
+
+         (Because of a health or memory problem)
+         
+         Did anyone help [him/her] with using the toilet, including getting up and down
+         in the last three months of [his/her] life?
+
+         .................................................................................
+           377           1.  YES
+           321           5.  NO
+             2           6.  [(IF VOL) COULDN'T DO]
+             7           7.  [(IF VOL) DIDN'T DO]
+            14           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           259       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G031_HelpToilet 
+
+         IF SecG.ADL.G031_HelpToilet <> NO AND SecG.ADL.G031_HelpToilet <> SpecialAnswer 
+         AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG149                        HELP USING TOILET - MONTHS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G149_
+
+         How long had [he/she] needed help with using the toilet?
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            290        0          58          4.18          6.42     683
+         -----------------------------------------------------------------
+             7          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G149_ 
+
+         IF SecG.ADL.G149_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG150                        HELP USING TOILET - YEARS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G150_
+
+         (How long had [he/she] needed help with using the toilet?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             75        0          42          4.12          5.51     902
+         -----------------------------------------------------------------
+             3          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G150_ 
+
+         IF SecG.ADL.G150_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG151                        HELP USING TOILET - SINCE AGE
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.G151_
+
+         (How long had [he/she] needed help with using the toilet?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+             3                   63-87.  Actual Value
+             1                      98.  DK (Don't Know); NA (Not Ascertained)
+                                    99.  RF (Refused)
+           976                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.G151_ 
+
+         IF SecG.ADL.G151_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG152                        HELP USING TOILET - SINCE YEAR
+         Section: G     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecG.ADL.G152_
+
+         (How long had [he/she] needed help with using the toilet?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         SINCE YEAR:
+
+         .................................................................................
+             6               2006-2018.  Actual Value
+             1                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           973                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG032_1                      WHO HELPS MOST - ADL - 1
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.ADL.AskHelp[1].G032_ADLHlpr
+
+         IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH (G129>85):
+         When [First Name] was (mostly) bedridden, who helped [him/her] with doing things
+         like bathing and dressing in the last three months of [his/her] life?
+         
+         OTHERWISE:
+         Who most often helped [him/her] with [getting across a
+         room/dressing/bathing/eating/getting (in/out) of bed/using the toilet] in the
+         last three months of [his/her]life?
+                 
+         NOTE: INCLUDED IN THE QUESTION, ABOVE, ARE ANY ACTIVITIES WITH WHICH R REPORTED
+         RECEIVING HELP IN PRIOR QUESTIONS.
+                           	
+         IF THIS IS THE SECOND OR LATER TIME THROUGH THE ADL HELPER LOOP:
+         
+         [Banner: Other Helper]
+         
+         Who was that?
+
+         .................................................................................
+           165                 010-082.  Other Person Number
+           164                 083-095.  New Helper
+           253                     096.  Employee of Institution
+           213                 101-995.  Other Person Number
+             2                     998.  DK (Don't Know); NA (Not Ascertained)
+             1                     999.  RF (Refused)
+           182                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[1].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[1].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr = 97 THEN 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[I].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[I].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr = 97 THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG033_1                      ADL HELPER RELATIONSHIP TO R - 1
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.AskHelp[1].G033_ADLHlprRel
+
+         [Banner: Primary Helper/Other Helper]
+         
+         What was that person's relationship to [First Name] [, or are they an employee
+         of the place [First Name] lived]?
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+           172           2.  SPOUSE OR PARTNER
+            43           3.  SON
+             1           4.  STEPSON
+                         5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+           126           6.  DAUGHTER
+             4           7.  STEPDAUGHTER
+             8           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+            18           9.  GRANDCHILD
+             1          10.  FATHER
+                        11.  FATHER-IN-LAW
+             1          12.  MOTHER
+                        13.  MOTHER-IN-LAW
+             5          15.  BROTHER
+                        16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+             5          17.  SISTER
+             1          18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+             3          19.  OTHER RELATIVE
+            29          20.  OTHER INDIVIDUAL
+            52          21.  ORGANIZATION
+           253          22.  EMPLOYEE OF FACILITY
+            68          23.  PAID HELPER
+                        27.  EX-SPOUSE OR EX-PARTNER
+             1          31.  FORMER CHILD-IN-LAW
+             2          33.  GRANDCHILD'S SPOUSE OR PARTNER
+                        90.  AMBIGUOUS CHILD RELATIONSHIP
+                        98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+           186       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+
+         IF  < 7 THEN 
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+
+         IF SecG.ADL.I < 7 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG035_1                      ADL ANYONE ELSE HELP - 1
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.ADL.AskHelp[1].G035_ADLHlprOth
+
+         [Banner: Other Helper]
+         
+         Did anyone else help [him/her] with (this activity/these activities)?
+
+         .................................................................................
+           482           1.  YES
+           307           5.  NO
+             9           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+           181       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG032_2                      WHO HELPS - ADL - 2
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.ADL.AskHelp[2].G032_ADLHlpr
+
+         IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH (G129>85):
+         When [First Name] was (mostly) bedridden, who helped [him/her] with doing things
+         like bathing and dressing in the last three months of [his/her] life?
+         
+         OTHERWISE:
+         Who most often helped [him/her] with [getting across a
+         room/dressing/bathing/eating/getting (in/out) of bed/using the toilet] in the
+         last three months of [his/her]life?
+                 
+         NOTE: INCLUDED IN THE QUESTION, ABOVE, ARE ANY ACTIVITIES WITH WHICH R REPORTED
+         RECEIVING HELP IN PRIOR QUESTIONS.
+                           	
+         IF THIS IS THE SECOND OR LATER TIME THROUGH THE ADL HELPER LOOP:
+         
+         [Banner: Other Helper]
+         
+         Who was that?
+
+         .................................................................................
+            32                 010-082.  Other Person Number
+           154                 083-095.  New Helper
+            11                     096.  Employee of Institution
+           280                 101-995.  Other Person Number
+             3                     998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           500                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[1].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[1].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr = 97 THEN 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[I].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[I].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr = 97 THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG033_2                      ADL HELPER RELATIONSHIP TO R - 2
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.AskHelp[2].G033_ADLHlprRel
+
+         [Banner: Primary Helper/Other Helper]
+         
+         What was that person's relationship to [First Name] [, or are they an employee
+         of the place [First Name] lived]?
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+            31           2.  SPOUSE OR PARTNER
+            66           3.  SON
+             8           4.  STEPSON
+            12           5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+           159           6.  DAUGHTER
+             9           7.  STEPDAUGHTER
+            12           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+            24           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+             2          12.  MOTHER
+                        13.  MOTHER-IN-LAW
+             5          15.  BROTHER
+                        16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+            13          17.  SISTER
+             2          18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+            11          19.  OTHER RELATIVE
+            28          20.  OTHER INDIVIDUAL
+            33          21.  ORGANIZATION
+            11          22.  EMPLOYEE OF FACILITY
+            49          23.  PAID HELPER
+                        27.  EX-SPOUSE OR EX-PARTNER
+             1          31.  FORMER CHILD-IN-LAW
+             2          33.  GRANDCHILD'S SPOUSE OR PARTNER
+             1          90.  AMBIGUOUS CHILD RELATIONSHIP
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           501       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+
+         IF  < 7 THEN 
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+
+         IF SecG.ADL.I < 7 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG035_2                      ADL ANYONE ELSE HELP - 2
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.ADL.AskHelp[2].G035_ADLHlprOth
+
+         [Banner: Other Helper]
+         
+         Did anyone else help [him/her] with (this activity/these activities)?
+
+         .................................................................................
+           273           1.  YES
+           206           5.  NO
+             3           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           498       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG032_3                      WHO HELPS - ADL - 3
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.ADL.AskHelp[3].G032_ADLHlpr
+
+         IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH (G129>85):
+         When [First Name] was (mostly) bedridden, who helped [him/her] with doing things
+         like bathing and dressing in the last three months of [his/her] life?
+         
+         OTHERWISE:
+         Who most often helped [him/her] with [getting across a
+         room/dressing/bathing/eating/getting (in/out) of bed/using the toilet] in the
+         last three months of [his/her]life?
+                 
+         NOTE: INCLUDED IN THE QUESTION, ABOVE, ARE ANY ACTIVITIES WITH WHICH R REPORTED
+         RECEIVING HELP IN PRIOR QUESTIONS.
+                           	
+         IF THIS IS THE SECOND OR LATER TIME THROUGH THE ADL HELPER LOOP:
+         
+         [Banner: Other Helper]
+         
+         Who was that?
+
+         .................................................................................
+             9                 010-082.  Other Person Number
+            90                 083-095.  New Helper
+             6                     096.  Employee of Institution
+           163                 101-995.  Other Person Number
+             4                     998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           708                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[1].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[1].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr = 97 THEN 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[I].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[I].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr = 97 THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG033_3                      ADL HELPER RELATIONSHIP TO R - 3
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.AskHelp[3].G033_ADLHlprRel
+
+         [Banner: Primary Helper/Other Helper]
+         
+         What was that person's relationship to [First Name] [, or are they an employee
+         of the place [First Name] lived]?
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+             9           2.  SPOUSE OR PARTNER
+            47           3.  SON
+             4           4.  STEPSON
+            15           5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+            71           6.  DAUGHTER
+             4           7.  STEPDAUGHTER
+            15           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+            24           9.  GRANDCHILD
+             1          10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+             4          15.  BROTHER
+                        16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+            13          17.  SISTER
+                        18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+            11          19.  OTHER RELATIVE
+            13          20.  OTHER INDIVIDUAL
+            12          21.  ORGANIZATION
+             6          22.  EMPLOYEE OF FACILITY
+            19          23.  PAID HELPER
+                        27.  EX-SPOUSE OR EX-PARTNER
+                        31.  FORMER CHILD-IN-LAW
+             1          33.  GRANDCHILD'S SPOUSE OR PARTNER
+                        90.  AMBIGUOUS CHILD RELATIONSHIP
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           711       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+
+         IF  < 7 THEN 
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+
+         IF SecG.ADL.I < 7 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG035_3                      ADL ANYONE ELSE HELP - 3
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.ADL.AskHelp[3].G035_ADLHlprOth
+
+         [Banner: Other Helper]
+         
+         Did anyone else help [him/her] with (this activity/these activities)?
+
+         .................................................................................
+           125           1.  YES
+           148           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           707       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG032_4                      WHO HELPS - ADL - 4
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.ADL.AskHelp[4].G032_ADLHlpr
+
+         IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH (G129>85):
+         When [First Name] was (mostly) bedridden, who helped [him/her] with doing things
+         like bathing and dressing in the last three months of [his/her] life?
+         
+         OTHERWISE:
+         Who most often helped [him/her] with [getting across a
+         room/dressing/bathing/eating/getting (in/out) of bed/using the toilet] in the
+         last three months of [his/her]life?
+                 
+         NOTE: INCLUDED IN THE QUESTION, ABOVE, ARE ANY ACTIVITIES WITH WHICH R REPORTED
+         RECEIVING HELP IN PRIOR QUESTIONS.
+                           	
+         IF THIS IS THE SECOND OR LATER TIME THROUGH THE ADL HELPER LOOP:
+         
+         [Banner: Other Helper]
+         
+         Who was that?
+
+         .................................................................................
+             3                 010-082.  Other Person Number
+            53                 083-095.  New Helper
+             3                     096.  Employee of Institution
+            65                 101-995.  Other Person Number
+             1                     998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           855                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[1].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[1].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr = 97 THEN 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[I].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[I].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr = 97 THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG033_4                      ADL HELPER RELATIONSHIP TO R - 4
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.AskHelp[4].G033_ADLHlprRel
+
+         [Banner: Primary Helper/Other Helper]
+         
+         What was that person's relationship to [First Name] [, or are they an employee
+         of the place [First Name] lived]?
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+             4           2.  SPOUSE OR PARTNER
+            25           3.  SON
+             1           4.  STEPSON
+             3           5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+            28           6.  DAUGHTER
+             1           7.  STEPDAUGHTER
+             3           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+            15           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+             2          15.  BROTHER
+                        16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+             2          17.  SISTER
+             2          18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+            10          19.  OTHER RELATIVE
+             8          20.  OTHER INDIVIDUAL
+             5          21.  ORGANIZATION
+             3          22.  EMPLOYEE OF FACILITY
+            11          23.  PAID HELPER
+             1          27.  EX-SPOUSE OR EX-PARTNER
+                        31.  FORMER CHILD-IN-LAW
+                        33.  GRANDCHILD'S SPOUSE OR PARTNER
+                        90.  AMBIGUOUS CHILD RELATIONSHIP
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           856       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+
+         IF  < 7 THEN 
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+
+         IF SecG.ADL.I < 7 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG035_4                      ADL ANYONE ELSE HELP - 4
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.ADL.AskHelp[4].G035_ADLHlprOth
+
+         [Banner: Other Helper]
+         
+         Did anyone else help [him/her] with (this activity/these activities)?
+
+         .................................................................................
+            61           1.  YES
+            64           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           855       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG032_5                      WHO HELPS - ADL - 5
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.ADL.AskHelp[5].G032_ADLHlpr
+
+         IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH (G129>85):
+         When [First Name] was (mostly) bedridden, who helped [him/her] with doing things
+         like bathing and dressing in the last three months of [his/her] life?
+         
+         OTHERWISE:
+         Who most often helped [him/her] with [getting across a
+         room/dressing/bathing/eating/getting (in/out) of bed/using the toilet] in the
+         last three months of [his/her]life?
+                 
+         NOTE: INCLUDED IN THE QUESTION, ABOVE, ARE ANY ACTIVITIES WITH WHICH R REPORTED
+         RECEIVING HELP IN PRIOR QUESTIONS.
+                           	
+         IF THIS IS THE SECOND OR LATER TIME THROUGH THE ADL HELPER LOOP:
+         
+         [Banner: Other Helper]
+         
+         Who was that?
+
+         .................................................................................
+                               010-082.  Other Person Number
+            29                 083-095.  New Helper
+                                   096.  Employee of Institution
+            32                 101-995.  Other Person Number
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           919                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[1].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[1].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr = 97 THEN 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[I].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[I].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr = 97 THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG033_5                      ADL HELPER RELATIONSHIP TO R - 5
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.AskHelp[5].G033_ADLHlprRel
+
+         [Banner: Primary Helper/Other Helper]
+         
+         What was that person's relationship to [First Name] [, or are they an employee
+         of the place [First Name] lived]?
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+                         2.  SPOUSE OR PARTNER
+            11           3.  SON
+             1           4.  STEPSON
+             1           5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+            13           6.  DAUGHTER
+             2           7.  STEPDAUGHTER
+             3           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+            12           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+             2          15.  BROTHER
+             1          16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+                        17.  SISTER
+                        18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+             2          19.  OTHER RELATIVE
+             5          20.  OTHER INDIVIDUAL
+             3          21.  ORGANIZATION
+                        22.  EMPLOYEE OF FACILITY
+             5          23.  PAID HELPER
+                        27.  EX-SPOUSE OR EX-PARTNER
+                        31.  FORMER CHILD-IN-LAW
+                        33.  GRANDCHILD'S SPOUSE OR PARTNER
+                        90.  AMBIGUOUS CHILD RELATIONSHIP
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           919       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+
+         IF  < 7 THEN 
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+
+         IF SecG.ADL.I < 7 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG035_5                      ADL ANYONE ELSE HELP - 5
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.ADL.AskHelp[5].G035_ADLHlprOth
+
+         [Banner: Other Helper]
+         
+         Did anyone else help [him/her] with (this activity/these activities)?
+
+         .................................................................................
+            31           1.  YES
+            30           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           919       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG032_6                      WHO HELPS - ADL - 6
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.ADL.AskHelp[6].G032_ADLHlpr
+
+         IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH (G129>85):
+         When [First Name] was (mostly) bedridden, who helped [him/her] with doing things
+         like bathing and dressing in the last three months of [his/her] life?
+         
+         OTHERWISE:
+         Who most often helped [him/her] with [getting across a
+         room/dressing/bathing/eating/getting (in/out) of bed/using the toilet] in the
+         last three months of [his/her]life?
+                 
+         NOTE: INCLUDED IN THE QUESTION, ABOVE, ARE ANY ACTIVITIES WITH WHICH R REPORTED
+         RECEIVING HELP IN PRIOR QUESTIONS.
+                           	
+         IF THIS IS THE SECOND OR LATER TIME THROUGH THE ADL HELPER LOOP:
+         
+         [Banner: Other Helper]
+         
+         Who was that?
+
+         .................................................................................
+             1                 010-082.  Other Person Number
+            14                 083-095.  New Helper
+             1                     096.  Employee of Institution
+            14                 101-995.  Other Person Number
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+             1                     999.  RF (Refused)
+           949                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[1].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[1].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr = 97 THEN 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[I].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[I].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr = 97 THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG033_6                      ADL HELPER RELATIONSHIP TO R - 6
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.AskHelp[6].G033_ADLHlprRel
+
+         [Banner: Primary Helper/Other Helper]
+         
+         What was that person's relationship to [First Name] [, or are they an employee
+         of the place [First Name] lived]?
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+             1           2.  SPOUSE OR PARTNER
+             3           3.  SON
+                         4.  STEPSON
+             3           5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+             4           6.  DAUGHTER
+             1           7.  STEPDAUGHTER
+             3           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+             3           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+                        15.  BROTHER
+             1          16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+             2          17.  SISTER
+                        18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+             2          19.  OTHER RELATIVE
+             2          20.  OTHER INDIVIDUAL
+                        21.  ORGANIZATION
+             1          22.  EMPLOYEE OF FACILITY
+             3          23.  PAID HELPER
+                        27.  EX-SPOUSE OR EX-PARTNER
+             1          31.  FORMER CHILD-IN-LAW
+                        33.  GRANDCHILD'S SPOUSE OR PARTNER
+                        90.  AMBIGUOUS CHILD RELATIONSHIP
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           950       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+
+         IF  < 7 THEN 
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+
+         IF SecG.ADL.I < 7 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG035_6                      ADL ANYONE ELSE HELP - 6
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.ADL.AskHelp[6].G035_ADLHlprOth
+
+         [Banner: Other Helper]
+         
+         Did anyone else help [him/her] with (this activity/these activities)?
+
+         .................................................................................
+            10           1.  YES
+            20           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+           949       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG032_7                      WHO HELPS - ADL - 7
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.ADL.AskHelp[7].G032_ADLHlpr
+
+         IF R STAYED IN BED MORE THAN 85 DAYS IN THE THREE MONTHS BEFORE DEATH (G129>85):
+         When [First Name] was (mostly) bedridden, who helped [him/her] with doing things
+         like bathing and dressing in the last three months of [his/her] life?
+         
+         OTHERWISE:
+         Who most often helped [him/her] with [getting across a
+         room/dressing/bathing/eating/getting (in/out) of bed/using the toilet] in the
+         last three months of [his/her]life?
+                 
+         NOTE: INCLUDED IN THE QUESTION, ABOVE, ARE ANY ACTIVITIES WITH WHICH R REPORTED
+         RECEIVING HELP IN PRIOR QUESTIONS.
+                           	
+         IF THIS IS THE SECOND OR LATER TIME THROUGH THE ADL HELPER LOOP:
+         
+         [Banner: Other Helper]
+         
+         Who was that?
+
+         .................................................................................
+                               010-082.  Other Person Number
+             6                 083-095.  New Helper
+                                   096.  Employee of Institution
+             4                 101-995.  Other Person Number
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           970                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[1].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[1].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[1].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[1].G032_ADLHlpr = 97 THEN 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr <> 97 AND SecG.ADL.AskHelp[I].G032_ADLHlpr 
+         <> SpecialAnswer THEN 
+         ASSIGN: SecG.ADL.AskHelp[I].G033_ADLHlprRel := OrdEnum(SecG.ADL.aArrayRelation 
+         [OrdEnum(G176_G032_ADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.ADL.AskHelp[].G176_G032_ADLHlprTemp 
+         IF SecG.ADL.AskHelp[I].G176_G032_ADLHlprTemp <> Empty THEN 
+         IF SecG.ADL.AskHelp[I].G032_ADLHlpr = 97 THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG033_7                      ADL HELPER RELATIONSHIP TO R - 7
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.ADL.AskHelp[7].G033_ADLHlprRel
+
+         [Banner: Primary Helper/Other Helper]
+         
+         What was that person's relationship to [First Name] [, or are they an employee
+         of the place [First Name] lived]?
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+                         2.  SPOUSE OR PARTNER
+             1           3.  SON
+                         4.  STEPSON
+             1           5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+                         6.  DAUGHTER
+                         7.  STEPDAUGHTER
+             2           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+             2           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+                        15.  BROTHER
+                        16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+                        17.  SISTER
+                        18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+                        19.  OTHER RELATIVE
+                        20.  OTHER INDIVIDUAL
+             2          21.  ORGANIZATION
+                        22.  EMPLOYEE OF FACILITY
+             1          23.  PAID HELPER
+                        27.  EX-SPOUSE OR EX-PARTNER
+                        31.  FORMER CHILD-IN-LAW
+             1          33.  GRANDCHILD'S SPOUSE OR PARTNER
+                        90.  AMBIGUOUS CHILD RELATIONSHIP
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           970       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL 
+
+         IF SecG.IADL.G041_DiffMeals <> NO AND SecG.IADL.G042_ProbMeals <> NO AND 
+         SecA.relations.A028_RInNHome <> YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG043                        IADL MEAL PREPARATION HELP
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.G043_HelpMeals
+
+         (Because of a health or memory problem,)
+         
+         Did anyone help [him/her] prepare hot meals in the last three months of
+         [his/her] life?
+
+         .................................................................................
+           329           1.  YES
+           223           5.  NO
+            12           6.  [(IF VOL) COULDN'T DO]
+            68           7.  [(IF VOL) DIDN'T DO]
+             5           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           343       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL 
+
+         IF SecG.IADL.G043_HelpMeals <> NO AND SecG.IADL.G043_HelpMeals <> SpecialAnswer 
+         AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+         IF SecG.IADL.G043_HelpMeals = CANTDO OR SecG.IADL.G043_HelpMeals = DONTDO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG171                        HELP HOT MEALS - MEM PROB
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.G171_
+
+         Was that because of a health or memory problem?
+
+         .................................................................................
+            38           1.  YES
+            40           5.  NO
+             2           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           900       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL 
+
+         IF SecG.IADL.G043_HelpMeals <> NO AND SecG.IADL.G043_HelpMeals <> SpecialAnswer 
+         AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+         IF SecG.IADL.G043_HelpMeals = YES OR SecG.IADL.G171_ = YES OR SecG.IADL.G171_ = 
+         SpecialAnswer THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG153                        HELP HOT MEALS - MONTHS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.G153_
+
+         How long had [he/she] needed help with preparing hot meals?
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months: 
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            222        0          36          5.58          6.31     740
+         -----------------------------------------------------------------
+            17          98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G153_ 
+
+         IF SecG.IADL.G153_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG154                        HELP HOT MEALS - YEARS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.G154_
+
+         (How long had [he/she] needed help with preparing hot meals?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            108        1          63          6.06          9.82     869
+         -----------------------------------------------------------------
+             3          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G154_ 
+
+         IF SecG.IADL.G154_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG155                        HELP HOT MEALS - SINCE AGE
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.G155_
+
+         (How long had [he/she] needed help with preparing hot meals?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age: 
+         Since year:
+
+         .................................................................................
+             6                    0-84.  Actual Value
+             1                      98.  DK (Don't Know); NA (Not Ascertained)
+             1                      99.  RF (Refused)
+           972                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G155_ 
+
+         IF SecG.IADL.G155_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG156                        HELP HOT MEALS - SINCE YEAR
+         Section: G     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecG.IADL.G156_
+
+         (How long had [he/she] needed help with preparing hot meals?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+             9               1997-2017.  Actual Value
+             1                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           970                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL 
+
+         IF SecG.IADL.G044_DiffShop <> NO AND SecG.IADL.G045_ <> NO AND 
+         SecA.relations.A028_RInNHome <> YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG046                        IADL GROC SHOP HELP
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.G046_HelpShop
+
+         (Because of a health or memory problem,)
+         
+         Did anyone help [him/her] shop for groceries in the last three months of
+         [his/her] life?
+
+         .................................................................................
+           324           1.  YES
+           206           5.  NO
+            20           6.  [(IF VOL) COULDN'T DO]
+            83           7.  [(IF VOL) DIDN'T DO]
+             4           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           343       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL 
+
+         IF SecG.IADL.G046_HelpShop <> NO AND SecG.IADL.G046_HelpShop <> SpecialAnswer 
+         AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+         IF SecG.IADL.G046_HelpShop = CANTDO OR SecG.IADL.G046_HelpShop = DONTDO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG173                        GROCERY SHOPPING - MEM PROB
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.G173_
+
+         Was that because of a health or memory problem?
+
+         .................................................................................
+            68           1.  YES
+            35           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           877       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL 
+
+         IF SecG.IADL.G046_HelpShop <> NO AND SecG.IADL.G046_HelpShop <> SpecialAnswer 
+         AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+         IF SecG.IADL.G046_HelpShop = YES OR SecG.IADL.G173_ = YES OR SecG.IADL.G173_ = 
+         SpecialAnswer THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG157                        HELP GROC SHOPPING - MONTHS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.G157_
+
+         How long had [he/she] needed help with shopping for groceries?
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            225        1          72          6.19          7.30     740
+         -----------------------------------------------------------------
+            14          98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G157_ 
+
+         IF SecG.IADL.G157_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG158                        HELP GROC SHOPPING - YEARS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.G158_
+
+         (How long had [he/she] needed help with shopping for groceries?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            134        1          60          5.91          9.29     841
+         -----------------------------------------------------------------
+             5          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G158_ 
+
+         IF SecG.IADL.G158_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG159                        HELP GROC SHOPPING - SINCE AGE
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.G159_
+
+         (How long had [he/she] needed help with shopping for groceries?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+             2                   81-84.  Actual Value
+                                    98.  DK (Don't Know); NA (Not Ascertained)
+                                    99.  RF (Refused)
+           978                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G159_ 
+
+         IF SecG.IADL.G159_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG160                        HELP GROC SHOPPING - SINCE YEAR
+         Section: G     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecG.IADL.G160_
+
+         (How long had [he/she] needed help with shopping for groceries?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+            10               1996-2017.  Actual Value
+             1                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           969                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL 
+
+         IF SecG.IADL.G047_DiffPhone <> NO AND SecG.IADL.G048_ProbPhone <> NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG049                        IADL MAKING PHONE CALLS HELP
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.G049_HelpPhone
+
+         (Because of a health or memory problem,)
+         
+         Did anyone help [him/her] make phone calls in the last three months of [his/her]
+         life?
+
+         .................................................................................
+           333           1.  YES
+           562           5.  NO
+            17           6.  [(IF VOL) COULDN'T DO]
+            58           7.  [(IF VOL) DIDN'T DO]
+             7           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+             3       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G049_HelpPhone 
+
+         IF SecG.IADL.G049_HelpPhone <> NO AND SecG.IADL.G049_HelpPhone <> SpecialAnswer 
+         AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+         IF SecG.IADL.G049_HelpPhone = CANTDO OR SecG.IADL.G049_HelpPhone = DONTDO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG161                        HELP W/ PHONE CALLS - MEM PROB
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.G161_
+
+         Was that because of a health or memory problem?
+
+         .................................................................................
+            62           1.  YES
+            13           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           905       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G049_HelpPhone 
+
+         IF SecG.IADL.G049_HelpPhone <> NO AND SecG.IADL.G049_HelpPhone <> SpecialAnswer 
+         AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+         IF SecG.IADL.G049_HelpPhone = YES OR SecG.IADL.G161_ = YES OR SecG.IADL.G161_ = 
+         SpecialAnswer THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG162                        HELP PHONE CALLS - MONTHS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.G162_
+
+         How long had [he/she] needed help making telephone calls?
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            257        0          30          5.12          5.47     716
+         -----------------------------------------------------------------
+             7          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G162_ 
+
+         IF SecG.IADL.G162_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG163                        HELP PHONE CALLS - YEARS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.G163_
+
+         (How long had [he/she] needed help making telephone calls?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            115        0          42          4.01          5.05     861
+         -----------------------------------------------------------------
+             3          98.  DK (Don't Know); NA (Not Ascertained)
+             1          99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G163_ 
+
+         IF SecG.IADL.G163_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG164                        HELP PHONE CALLS - SINCE AGE
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.G164_
+
+         (How long had [he/she] needed help making telephone calls?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+             2                   81-84.  Actual Value
+                                    98.  DK (Don't Know); NA (Not Ascertained)
+                                    99.  RF (Refused)
+           978                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G164_ 
+
+         IF SecG.IADL.G164_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG165                        HELP PHONE CALLS - SINCE YEAR
+         Section: G     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecG.IADL.G165_
+
+         (How long had [he/she] needed help making telephone calls?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+             9               2006-2017.  Actual Value
+             1                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           970                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL 
+
+         IF SecG.IADL.G051_DiffMeds2 <> NO AND SecG.IADL.G050_DiffMeds <> NO AND 
+         SecG.IADL.G052_ProbMeds <> NO AND SecA.relations.A028_RInNHome <> YES AND 
+         SecG.IADL.G050_DiffMeds <> DONTDO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG053                        IADL TAKING MEDICATIONS HELP
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.G053_HelpMeds
+
+         (Because of a health or memory problem,)
+         
+         Did anyone help [him/her] with taking medication in the last three months of
+         [his/her] life?
+
+         .................................................................................
+           385           1.  YES
+           248           5.  NO
+                         6.  [(IF VOL) COULDN'T DO]
+             1           7.  [(IF VOL) DIDN'T DO]
+             3           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           343       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G053_HelpMeds 
+
+         IF SecG.IADL.G053_HelpMeds <> NO AND SecG.IADL.G053_HelpMeds <> SpecialAnswer 
+         AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+         IF SecG.IADL.G053_HelpMeds = CANTDO OR SecG.IADL.G053_HelpMeds = DONTDO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG174                        HELP W/ MEDICATION - MEM PROB
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.G174_ProbMeds
+
+         [Difficulty Taking Medications]
+         
+         Was that because of a health or memory problem?
+
+         .................................................................................
+             1           1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           979       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G053_HelpMeds 
+
+         IF SecG.IADL.G053_HelpMeds <> NO AND SecG.IADL.G053_HelpMeds <> SpecialAnswer 
+         AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT) THEN 
+
+         IF SecG.IADL.G053_HelpMeds = YES OR SecG.IADL.G174_ProbMeds = YES OR 
+         SecG.IADL.G174_ProbMeds = SpecialAnswer THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG166                        HELP W/ MEDICATION - MONTHS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.G166_
+
+         How long had [he/she] needed help taking medications?
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            242        1          20          4.09          3.90     728
+         -----------------------------------------------------------------
+             8          98.  DK (Don't Know); NA (Not Ascertained)
+             2          99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G166_ 
+
+         IF SecG.IADL.G166_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG167                        HELP W/ MEDICATION - YEARS
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.G167_
+
+         (How long had [he/she] needed help taking medications?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            116        1          42          4.97          5.37     861
+         -----------------------------------------------------------------
+             3          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G167_ 
+
+         IF SecG.IADL.G167_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG168                        HELP W/ MEDICATION - SINCE AGE
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.G168_
+
+         (How long had [he/she] needed help taking medications?)
+         
+         INSTR: RECORD months or years, or since age, or
+         since year
+         
+         Months:
+         Years:
+         Since age:
+         Since year:
+
+         .................................................................................
+             5                    1-84.  Actual Value
+             1                      98.  DK (Don't Know); NA (Not Ascertained)
+                                    99.  RF (Refused)
+           974                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G168_ 
+
+         IF SecG.IADL.G168_ = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG169                        HELP W/ MEDICATION - SINCE YEAR
+         Section: G     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecG.IADL.G169_
+
+         (How long had [he/she] needed help taking medications?)
+         
+         INSTR: RECORD months or years, or since age, or since year
+         
+         Months:
+         Years:
+         Since age:
+         SINCE YEAR :
+
+         .................................................................................
+             9               1935-2017.  Actual Value
+                                  9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           971                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG054_1                      IADLS - WHO HELPS MOST - 1
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[1].G054_IADLHlpr
+
+         IF THIS IS THE FIRST TIME THROUGH THE IADL HELPER LOOP:
+         Who most often helped [him/her] [prepare meals,/shop for groceries,/make
+         telephone calls,/take medications]?
+         
+         NOTE: INCLUDED IN THE QUESTION, ABOVE, ARE ANY ACTIVITIES WITH WHICH R REPORTED
+         RECEIVING HELP IN PRIOR QUESTIONS.
+         
+         IF THIS IS THE SECOND OR LATER TIME THROUGH THE IADL HELPER LOOP:
+         
+         [Banner: Other Helper]
+         
+         Who else helped [him/her]?
+
+         .................................................................................
+           179                 010-082.  Other Person Number
+           121                 083-095.  New Helper
+            43                     096.  Employee of Institution
+           308                 101-995.  Other Person Number
+            13                     998.  DK (Don't Know); NA (Not Ascertained)
+             3                     999.  RF (Refused)
+           313                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[1].G054_IADLHlpr <> 97 AND 
+         G188_SecG.IADL.AskHelpIADL[1].G054_IADLHlpr Temp <> SpecialAnswer THEN 
+         ASSIGN: SecG.IADL.AskHelpIADL[1].G055_IADLHlprRel := 
+         OrdEnum(SecG.IADL.aArrayRelation [OrdEnum(G188_G054_IADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[1].G054_IADLHlpr = 97 THEN 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[I].G054_IADLHlpr <> 97 AND 
+         G188_SecG.IADL.AskHelpIADL[I].G054_IADLHlpr Temp <> SpecialAnswer THEN 
+         ASSIGN: SecG.IADL.AskHelpIADL[I].G055_IADLHlprRel := 
+         OrdEnum(SecG.IADL.aArrayRelation [OrdEnum(G188_G054_IADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[I].G054_IADLHlpr = 97 THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG055_1                      IADL HELPER RELATIONSHIP TO R - 1
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[1].G055_IADLHlprRel
+
+         [Primary Helper/Other Helper]
+         
+         What was that person's relationship to [First Name] [, or are they an employee
+         of the place [he/she] lives?/?]
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+           187           2.  SPOUSE OR PARTNER
+            70           3.  SON
+             1           4.  STEPSON
+             2           5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+           192           6.  DAUGHTER
+             6           7.  STEPDAUGHTER
+            10           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+            20           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+             3          12.  MOTHER
+                        13.  MOTHER-IN-LAW
+             6          15.  BROTHER
+                        16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+            12          17.  SISTER
+                        18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+            11          19.  OTHER RELATIVE
+            28          20.  OTHER INDIVIDUAL
+            26          21.  ORGANIZATION
+            43          22.  EMPLOYEE OF FACILITY
+            34          23.  PAID HELPER
+                        27.  EX-SPOUSE OR EX-PARTNER
+             1          31.  FORMER CHILD-IN-LAW
+             1          33.  GRANDCHILD'S SPOUSE OR PARTNER
+           327       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+
+         IF  < 6 THEN 
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+
+         IF SecG.IADL.i < 6 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG057_1                      IADL ANYONE ELSE HELP  - 1
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[1].G057_IADLHlprOth
+
+         [Banner: Other Helper]
+         
+         Did anyone else help [him/her] [prepare hot meals/shop for groceries,/make
+         telephone calls,/take medications]?
+
+         .................................................................................
+           347           1.  YES
+           320           5.  NO
+             3           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+           309       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG054_2                      IADLS - WHO HELPS - 2
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[2].G054_IADLHlpr
+
+         IF THIS IS THE FIRST TIME THROUGH THE IADL HELPER LOOP:
+         Who most often helped [him/her] [prepare meals,/shop for groceries,/make
+         telephone calls,/take medications]?
+         
+         NOTE: INCLUDED IN THE QUESTION, ABOVE, ARE ANY ACTIVITIES WITH WHICH R REPORTED
+         RECEIVING HELP IN PRIOR QUESTIONS.
+         
+         IF THIS IS THE SECOND OR LATER TIME THROUGH THE IADL HELPER LOOP:
+         
+         [Banner: Other Helper]
+         
+         Who else helped [him/her]?
+
+         .................................................................................
+            18                 010-082.  Other Person Number
+            99                 083-095.  New Helper
+            17                     096.  Employee of Institution
+           210                 101-995.  Other Person Number
+             2                     998.  DK (Don't Know); NA (Not Ascertained)
+             1                     999.  RF (Refused)
+           633                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[1].G054_IADLHlpr <> 97 AND 
+         G188_SecG.IADL.AskHelpIADL[1].G054_IADLHlpr Temp <> SpecialAnswer THEN 
+         ASSIGN: SecG.IADL.AskHelpIADL[1].G055_IADLHlprRel := 
+         OrdEnum(SecG.IADL.aArrayRelation [OrdEnum(G188_G054_IADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[1].G054_IADLHlpr = 97 THEN 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[I].G054_IADLHlpr <> 97 AND 
+         G188_SecG.IADL.AskHelpIADL[I].G054_IADLHlpr Temp <> SpecialAnswer THEN 
+         ASSIGN: SecG.IADL.AskHelpIADL[I].G055_IADLHlprRel := 
+         OrdEnum(SecG.IADL.aArrayRelation [OrdEnum(G188_G054_IADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[I].G054_IADLHlpr = 97 THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG055_2                      IADL HELPER RELATIONSHIP TO R - 2
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[2].G055_IADLHlprRel
+
+         [Primary Helper/Other Helper]
+         
+         What was that person's relationship to [First Name] [, or are they an employee
+         of the place [he/she] lives?/?]
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+            15           2.  SPOUSE OR PARTNER
+            52           3.  SON
+             8           4.  STEPSON
+            10           5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+           106           6.  DAUGHTER
+             6           7.  STEPDAUGHTER
+            16           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+            22           9.  GRANDCHILD
+             1          10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+             1          13.  MOTHER-IN-LAW
+                        15.  BROTHER
+                        16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+            10          17.  SISTER
+             3          18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+             4          19.  OTHER RELATIVE
+            19          20.  OTHER INDIVIDUAL
+            14          21.  ORGANIZATION
+            17          22.  EMPLOYEE OF FACILITY
+            37          23.  PAID HELPER
+                        27.  EX-SPOUSE OR EX-PARTNER
+             1          31.  FORMER CHILD-IN-LAW
+             1          33.  GRANDCHILD'S SPOUSE OR PARTNER
+           637       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+
+         IF  < 6 THEN 
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+
+         IF SecG.IADL.i < 6 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG057_2                      IADL ANYONE ELSE HELP  - 2
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[2].G057_IADLHlprOth
+
+         [Banner: Other Helper]
+         
+         Did anyone else help [him/her] [prepare hot meals/shop for groceries,/make
+         telephone calls,/take medications]?
+
+         .................................................................................
+           148           1.  YES
+           195           5.  NO
+             4           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           633       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG054_3                      IADLS - WHO HELPS - 3
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[3].G054_IADLHlpr
+
+         IF THIS IS THE FIRST TIME THROUGH THE IADL HELPER LOOP:
+         Who most often helped [him/her] [prepare meals,/shop for groceries,/make
+         telephone calls,/take medications]?
+         
+         NOTE: INCLUDED IN THE QUESTION, ABOVE, ARE ANY ACTIVITIES WITH WHICH R REPORTED
+         RECEIVING HELP IN PRIOR QUESTIONS.
+         
+         IF THIS IS THE SECOND OR LATER TIME THROUGH THE IADL HELPER LOOP:
+         
+         [Banner: Other Helper]
+         
+         Who else helped [him/her]?
+
+         .................................................................................
+             1                 010-082.  Other Person Number
+            56                 083-095.  New Helper
+             5                     096.  Employee of Institution
+            84                 101-995.  Other Person Number
+             1                     998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           833                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[1].G054_IADLHlpr <> 97 AND 
+         G188_SecG.IADL.AskHelpIADL[1].G054_IADLHlpr Temp <> SpecialAnswer THEN 
+         ASSIGN: SecG.IADL.AskHelpIADL[1].G055_IADLHlprRel := 
+         OrdEnum(SecG.IADL.aArrayRelation [OrdEnum(G188_G054_IADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[1].G054_IADLHlpr = 97 THEN 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[I].G054_IADLHlpr <> 97 AND 
+         G188_SecG.IADL.AskHelpIADL[I].G054_IADLHlpr Temp <> SpecialAnswer THEN 
+         ASSIGN: SecG.IADL.AskHelpIADL[I].G055_IADLHlprRel := 
+         OrdEnum(SecG.IADL.aArrayRelation [OrdEnum(G188_G054_IADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[I].G054_IADLHlpr = 97 THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG055_3                      IADL HELPER RELATIONSHIP TO R - 3
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[3].G055_IADLHlprRel
+
+         [Primary Helper/Other Helper]
+         
+         What was that person's relationship to [First Name] [, or are they an employee
+         of the place [he/she] lives?/?]
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+             5           2.  SPOUSE OR PARTNER
+            25           3.  SON
+             1           4.  STEPSON
+             7           5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+            31           6.  DAUGHTER
+             1           7.  STEPDAUGHTER
+            12           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+            20           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+                        15.  BROTHER
+                        16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+             8          17.  SISTER
+             1          18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+             8          19.  OTHER RELATIVE
+            10          20.  OTHER INDIVIDUAL
+             3          21.  ORGANIZATION
+             5          22.  EMPLOYEE OF FACILITY
+             9          23.  PAID HELPER
+             1          27.  EX-SPOUSE OR EX-PARTNER
+                        31.  FORMER CHILD-IN-LAW
+                        33.  GRANDCHILD'S SPOUSE OR PARTNER
+           833       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+
+         IF  < 6 THEN 
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+
+         IF SecG.IADL.i < 6 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG057_3                      IADL ANYONE ELSE HELP  - 3
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[3].G057_IADLHlprOth
+
+         [Banner: Other Helper]
+         
+         Did anyone else help [him/her] [prepare hot meals/shop for groceries,/make
+         telephone calls,/take medications]?
+
+         .................................................................................
+            53           1.  YES
+            94           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           832       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG054_4                      IADLS - WHO HELPS - 4
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[4].G054_IADLHlpr
+
+         IF THIS IS THE FIRST TIME THROUGH THE IADL HELPER LOOP:
+         Who most often helped [him/her] [prepare meals,/shop for groceries,/make
+         telephone calls,/take medications]?
+         
+         NOTE: INCLUDED IN THE QUESTION, ABOVE, ARE ANY ACTIVITIES WITH WHICH R REPORTED
+         RECEIVING HELP IN PRIOR QUESTIONS.
+         
+         IF THIS IS THE SECOND OR LATER TIME THROUGH THE IADL HELPER LOOP:
+         
+         [Banner: Other Helper]
+         
+         Who else helped [him/her]?
+
+         .................................................................................
+             1                 010-082.  Other Person Number
+            18                 083-095.  New Helper
+             1                     096.  Employee of Institution
+            33                 101-995.  Other Person Number
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           927                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[1].G054_IADLHlpr <> 97 AND 
+         G188_SecG.IADL.AskHelpIADL[1].G054_IADLHlpr Temp <> SpecialAnswer THEN 
+         ASSIGN: SecG.IADL.AskHelpIADL[1].G055_IADLHlprRel := 
+         OrdEnum(SecG.IADL.aArrayRelation [OrdEnum(G188_G054_IADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[1].G054_IADLHlpr = 97 THEN 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[I].G054_IADLHlpr <> 97 AND 
+         G188_SecG.IADL.AskHelpIADL[I].G054_IADLHlpr Temp <> SpecialAnswer THEN 
+         ASSIGN: SecG.IADL.AskHelpIADL[I].G055_IADLHlprRel := 
+         OrdEnum(SecG.IADL.aArrayRelation [OrdEnum(G188_G054_IADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[I].G054_IADLHlpr = 97 THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG055_4                      IADL HELPER RELATIONSHIP TO R - 4
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[4].G055_IADLHlprRel
+
+         [Primary Helper/Other Helper]
+         
+         What was that person's relationship to [First Name] [, or are they an employee
+         of the place [he/she] lives?/?]
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+             1           2.  SPOUSE OR PARTNER
+            13           3.  SON
+                         4.  STEPSON
+             1           5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+            13           6.  DAUGHTER
+             1           7.  STEPDAUGHTER
+             2           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+            10           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+             1          15.  BROTHER
+                        16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+                        17.  SISTER
+                        18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+             2          19.  OTHER RELATIVE
+             5          20.  OTHER INDIVIDUAL
+                        21.  ORGANIZATION
+             1          22.  EMPLOYEE OF FACILITY
+             3          23.  PAID HELPER
+                        27.  EX-SPOUSE OR EX-PARTNER
+                        31.  FORMER CHILD-IN-LAW
+                        33.  GRANDCHILD'S SPOUSE OR PARTNER
+           927       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+
+         IF  < 6 THEN 
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+
+         IF SecG.IADL.i < 6 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG057_4                      IADL ANYONE ELSE HELP  - 4
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[4].G057_IADLHlprOth
+
+         [Banner: Other Helper]
+         
+         Did anyone else help [him/her] [prepare hot meals/shop for groceries,/make
+         telephone calls,/take medications]?
+
+         .................................................................................
+            20           1.  YES
+            33           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           927       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG054_5                      IADLS - WHO HELPS - 5
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[5].G054_IADLHlpr
+
+         IF THIS IS THE FIRST TIME THROUGH THE IADL HELPER LOOP:
+         Who most often helped [him/her] [prepare meals,/shop for groceries,/make
+         telephone calls,/take medications]?
+         
+         NOTE: INCLUDED IN THE QUESTION, ABOVE, ARE ANY ACTIVITIES WITH WHICH R REPORTED
+         RECEIVING HELP IN PRIOR QUESTIONS.
+         
+         IF THIS IS THE SECOND OR LATER TIME THROUGH THE IADL HELPER LOOP:
+         
+         [Banner: Other Helper]
+         
+         Who else helped [him/her]?
+
+         .................................................................................
+                               010-082.  Other Person Number
+             7                 083-095.  New Helper
+             1                     096.  Employee of Institution
+            12                 101-995.  Other Person Number
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           960                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[1].G054_IADLHlpr <> 97 AND 
+         G188_SecG.IADL.AskHelpIADL[1].G054_IADLHlpr Temp <> SpecialAnswer THEN 
+         ASSIGN: SecG.IADL.AskHelpIADL[1].G055_IADLHlprRel := 
+         OrdEnum(SecG.IADL.aArrayRelation [OrdEnum(G188_G054_IADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[1].G054_IADLHlpr = 97 THEN 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[I].G054_IADLHlpr <> 97 AND 
+         G188_SecG.IADL.AskHelpIADL[I].G054_IADLHlpr Temp <> SpecialAnswer THEN 
+         ASSIGN: SecG.IADL.AskHelpIADL[I].G055_IADLHlprRel := 
+         OrdEnum(SecG.IADL.aArrayRelation [OrdEnum(G188_G054_IADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[I].G054_IADLHlpr = 97 THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG055_5                      IADL HELPER RELATIONSHIP TO R - 5
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[5].G055_IADLHlprRel
+
+         [Primary Helper/Other Helper]
+         
+         What was that person's relationship to [First Name] [, or are they an employee
+         of the place [he/she] lives?/?]
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+                         2.  SPOUSE OR PARTNER
+             2           3.  SON
+                         4.  STEPSON
+                         5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+             5           6.  DAUGHTER
+             2           7.  STEPDAUGHTER
+             3           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+             3           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+                        15.  BROTHER
+                        16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+                        17.  SISTER
+                        18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+             1          19.  OTHER RELATIVE
+             2          20.  OTHER INDIVIDUAL
+                        21.  ORGANIZATION
+             1          22.  EMPLOYEE OF FACILITY
+             1          23.  PAID HELPER
+                        27.  EX-SPOUSE OR EX-PARTNER
+                        31.  FORMER CHILD-IN-LAW
+                        33.  GRANDCHILD'S SPOUSE OR PARTNER
+           960       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+
+         IF  < 6 THEN 
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+
+         IF SecG.IADL.i < 6 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG057_5                      IADL ANYONE ELSE HELP  - 5
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[5].G057_IADLHlprOth
+
+         [Banner: Other Helper]
+         
+         Did anyone else help [him/her] [prepare hot meals/shop for groceries,/make
+         telephone calls,/take medications]?
+
+         .................................................................................
+             6           1.  YES
+            14           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           960       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG054_6                      IADLS - WHO HELPS - 6
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[6].G054_IADLHlpr
+
+         IF THIS IS THE FIRST TIME THROUGH THE IADL HELPER LOOP:
+         Who most often helped [him/her] [prepare meals,/shop for groceries,/make
+         telephone calls,/take medications]?
+         
+         NOTE: INCLUDED IN THE QUESTION, ABOVE, ARE ANY ACTIVITIES WITH WHICH R REPORTED
+         RECEIVING HELP IN PRIOR QUESTIONS.
+         
+         IF THIS IS THE SECOND OR LATER TIME THROUGH THE IADL HELPER LOOP:
+         
+         [Banner: Other Helper]
+         
+         Who else helped [him/her]?
+
+         .................................................................................
+                               010-082.  Other Person Number
+             3                 083-095.  New Helper
+                                   096.  Employee of Institution
+             3                 101-995.  Other Person Number
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           974                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[1].G054_IADLHlpr <> 97 AND 
+         G188_SecG.IADL.AskHelpIADL[1].G054_IADLHlpr Temp <> SpecialAnswer THEN 
+         ASSIGN: SecG.IADL.AskHelpIADL[1].G055_IADLHlprRel := 
+         OrdEnum(SecG.IADL.aArrayRelation [OrdEnum(G188_G054_IADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[1].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[1].G054_IADLHlpr = 97 THEN 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[I].G054_IADLHlpr <> 97 AND 
+         G188_SecG.IADL.AskHelpIADL[I].G054_IADLHlpr Temp <> SpecialAnswer THEN 
+         ASSIGN: SecG.IADL.AskHelpIADL[I].G055_IADLHlprRel := 
+         OrdEnum(SecG.IADL.aArrayRelation [OrdEnum(G188_G054_IADLHlprTemp)]) 
+         {PREVIOUS ASK} SecG.IADL.AskHelpIADL[].G188_G054_IADLHlprTemp 
+         IF SecG.IADL.AskHelpIADL[I].G188_G054_IADLHlprTemp <> Empty THEN 
+         IF SecG.IADL.AskHelpIADL[I].G054_IADLHlpr = 97 THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG055_6                      IADL HELPER RELATIONSHIP TO R - 6
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.AskHelpIADL[6].G055_IADLHlprRel
+
+         [Primary Helper/Other Helper]
+         
+         What was that person's relationship to [First Name] [, or are they an employee
+         of the place [he/she] lives?/?]
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+                         2.  SPOUSE OR PARTNER
+             2           3.  SON
+                         4.  STEPSON
+                         5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+                         6.  DAUGHTER
+             1           7.  STEPDAUGHTER
+                         8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+             1           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+                        15.  BROTHER
+                        16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+                        17.  SISTER
+                        18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+             1          19.  OTHER RELATIVE
+             1          20.  OTHER INDIVIDUAL
+                        21.  ORGANIZATION
+                        22.  EMPLOYEE OF FACILITY
+                        23.  PAID HELPER
+                        27.  EX-SPOUSE OR EX-PARTNER
+                        31.  FORMER CHILD-IN-LAW
+                        33.  GRANDCHILD'S SPOUSE OR PARTNER
+           974       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL 
+
+         IF SecG.IADL.G059_DiffMoney = YES OR SecG.IADL.G059_DiffMoney = DontKnow OR 
+         SecG.IADL.G059_DiffMoney = Refusal OR SecG.IADL.G059_DiffMoney = Empty OR 
+         SecG.IADL.G060_ProbMoney = YES OR SecG.IADL.G060_ProbMoney = DontKnow OR 
+         SecG.IADL.G060_ProbMoney = Refusal OR (ActiveLanguage = ENG AND IWType = EXT OR 
+         ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG061                        IADL MANAGING MONEY HELP
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.G061_HelpMoney
+
+         Because of a health or memory problem,
+         
+         Did anyone help [him/her] manage [his/her] money -- such as paying [his/her]
+         bills and keeping track of expenses in the last three months of [his/her] life?
+
+         .................................................................................
+           619           1.  YES
+           298           5.  NO
+            10           6.  [(IF VOL) COULDN'T DO]
+            42           7.  [(IF VOL) DIDN'T DO]
+             8           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+             3       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.G059_DiffMoney 
+         IF SecG.IADL.G059_DiffMoney = CANTDO OR SecG.IADL.G059_DiffMoney = DONTDO THEN 
+         {PREVIOUS ASK} SecG.IADL.G061_HelpMoney 
+         IF SecG.IADL.G061_HelpMoney = CANTDO OR SecG.IADL.G061_HelpMoney = DONTDO THEN 
+         ASSIGN: SecG.IADL.G060_ProbMoney := G191_SecG.IADL.G060_ProbMoney 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG060                        WHY - MANAGING MONEY DIFFICULTY
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.G060_ProbMoney
+
+         [Difficulty Managing Money]
+         
+         Was that because of a health or memory problem?
+
+         .................................................................................
+            24           1.  YES
+            28           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           928       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG062_1                      WHO HELPS MANAGE MONEY - 1
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.IADL.MoneyLoop[1].G062_MnyHlpr
+
+         IF THIS IS THE FIRST TIME THROUGH THE FINANCIAL HELPER LOOP:
+         Who most often helped [him/her] manage [his/her] money in the last three
+         months of [his/her] life?
+         
+         IF THIS IS THE SECOND TIME THROUGH THE FINANCIAL HELPER LOOP:
+         
+         [Banner: Other Financial Helper]
+         
+         Who was that?
+
+         .................................................................................
+           151                 010-082.  Other Person Number
+            81                 083-095.  New Helper
+             8                     096.  Employee of Institution
+           393                 101-995.  Other Person Number
+             4                     998.  DK (Don't Know); NA (Not Ascertained)
+             2                     999.  RF (Refused)
+           341                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG063_1                      MONEY HELPER RELATIONSHIP TO R - 1
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.MoneyLoop[1].G063_MnyHlprRel
+
+         [Primary Financial Helper/Other Financial Helper]
+         
+         [What was that person's relationship to [First Name] or are they an employee of
+         the place [First Name] lived?/What was that person's relationship to [First
+         Name]?]
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+           152           2.  SPOUSE OR PARTNER
+           138           3.  SON
+             3           4.  STEPSON
+             5           5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+           242           6.  DAUGHTER
+             6           7.  STEPDAUGHTER
+             7           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+             8           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+             1          12.  MOTHER
+                        13.  MOTHER-IN-LAW
+             7          15.  BROTHER
+             1          16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+            12          17.  SISTER
+             1          18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+            15          19.  OTHER RELATIVE
+            21          20.  OTHER INDIVIDUAL
+             5          21.  ORGANIZATION
+             8          22.  EMPLOYEE OF FACILITY
+             4          23.  PAID HELPER
+                        27.  EX-SPOUSE OR EX-PARTNER
+                        31.  FORMER CHILD-IN-LAW
+             1          33.  GRANDCHILD'S SPOUSE OR PARTNER
+           343       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.IADL.MoneyLoop[].G190_G062_MnyHlprTemp 
+
+         IF SecG.IADL.MoneyLoop[1].G190_G062_MnyHlprTemp <> Empty THEN 
+
+         IF  < 2 THEN 
+
+         {PREVIOUS ASK} SecG.IADL.MoneyLoop[].G190_G062_MnyHlprTemp 
+
+         IF SecG.IADL.MoneyLoop[2].G190_G062_MnyHlprTemp <> Empty THEN 
+
+         IF  < 2 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG065_1                      MANAGING MONEY ANYONE ELSE HELP - 1 - 1
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.IADL.MoneyLoop[1].G065_MnyHlprOth
+
+         [Other Financial Helper]
+         
+         Did anyone else help [him/her] manage [his/her] money in the last three months
+         of [his/her] life?
+
+         .................................................................................
+           108           1.  YES
+           532           5.  NO
+             2           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+           337       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG062_2                      WHO HELPS MANAGE MONEY - 2
+         Section: G     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecG.IADL.MoneyLoop[2].G062_MnyHlpr
+
+         IF THIS IS THE FIRST TIME THROUGH THE FINANCIAL HELPER LOOP:
+         Who most often helped [him/her] manage [his/her] money in the last three
+         months of [his/her] life?
+         
+         IF THIS IS THE SECOND TIME THROUGH THE FINANCIAL HELPER LOOP:
+         
+         [Banner: Other Financial Helper]
+         
+         Who was that?
+
+         .................................................................................
+             3                 010-082.  Other Person Number
+            23                 083-095.  New Helper
+             5                     096.  Employee of Institution
+            77                 101-995.  Other Person Number
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           872                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQG063_2                      MONEY HELPER RELATIONSHIP TO R - 2
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecG.IADL.MoneyLoop[2].G063_MnyHlprRel
+
+         [Primary Financial Helper/Other Financial Helper]
+         
+         [What was that person's relationship to [First Name] or are they an employee of
+         the place [First Name] lived?/What was that person's relationship to [First
+         Name]?]
+         
+         INSTR: Don't use DK or RF
+
+         .................................................................................
+             4           2.  SPOUSE OR PARTNER
+            25           3.  SON
+             1           4.  STEPSON
+             1           5.  SPOUSE OR PARTNER OF DAUGHTER (CHILD-IN-LAW)
+            43           6.  DAUGHTER
+             1           7.  STEPDAUGHTER
+             7           8.  SPOUSE OR PARTNER OF SON (CHILD-IN-LAW)
+             5           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+                        15.  BROTHER
+                        16.  BROTHER OF SPOUSE OR PARTNER (BROTHER-IN-LAW)
+             4          17.  SISTER
+                        18.  SISTER OF SPOUSE OR PARTNER (SISTER-IN-LAW)
+             1          19.  OTHER RELATIVE
+             8          20.  OTHER INDIVIDUAL
+             1          21.  ORGANIZATION
+             5          22.  EMPLOYEE OF FACILITY
+             2          23.  PAID HELPER
+                        27.  EX-SPOUSE OR EX-PARTNER
+                        31.  FORMER CHILD-IN-LAW
+                        33.  GRANDCHILD'S SPOUSE OR PARTNER
+           872       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecG.ADL 
+
+         IF ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQG103                        ANYONE MONITOR OR SUPERVISE R
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecG.EX_SUPERVISE.G103AHelpSupervise
+
+         (Because of a health or memory problem,) in the last three months of [First
+         Name]'s life did anyone help by supervising [him/her] to ensure safety, provide
+         reassurance, or to make sure that nothing went wrong?
+
+         .................................................................................
+           688           1.  YES
+           280           5.  NO
+             9           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+             3       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQVDATE                       2018 DATA MODEL VERSION
+         Section: G     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+         User Note:  This variable identifies which data model was used to interview the
+         household.  Please reference the data description for a summary of changes in
+         each data model.
+
+         .................................................................................
+             7           1.  Version 1
+            28           2.  Version 2
+            20           3.  Version 3
+            28           4.  Version 4
+            66           5.  Version 5
+            63           6.  Version 6
+           163           7.  Version 7
+           200           8.  Version 8
+            50           9.  Version 9
+            10          10.  Version 10
+           237          11.  Version 11
+           108          12.  Version 12
+
+
+==========================================================================================
+
+XQVERSION                     2018 DATA RELEASE VERSION
+         Section: G     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+           980           1.  HRS 2018 Exit Final Release
+
+
+==========================================================================================

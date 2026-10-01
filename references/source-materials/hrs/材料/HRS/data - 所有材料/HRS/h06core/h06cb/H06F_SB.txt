@@ -1,0 +1,771 @@
+==========================================================================================
+
+HRS 2006 Final Release
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section F: PARENTS, SIBLINGS AND TRANSFERS  (Siblings)
+
+==========================================================================================
+
+HHID           HOUSEHOLD IDENTIFICATION NUMBER
+         Section: F     Level: Siblings        Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+          7473           000003-502761.  Household Identification Number
+
+
+==========================================================================================
+
+PN             RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: F     Level: Siblings        Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+          3884         010.  Person Identifier
+           289         011.  Person Identifier
+            22         012.  Person Identifier
+                       013.  Person Identifier
+          2326         020.  Person Identifier
+           107         021.  Person Identifier
+             2         022.  Person Identifier
+           268         030.  Person Identifier
+            27         031.  Person Identifier
+             4         032.  Person Identifier
+           509         040.  Person Identifier
+            33         041.  Person Identifier
+             2         042.  Person Identifier
+
+
+==========================================================================================
+
+KSUBHH         2006 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: F     Level: Siblings        Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+          6954           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+           290           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+           185           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            21           5.  Split household - one half of couple from SUBHH 1 or 2
+             2           6.  Split household - one half of couple from SUBHH 1 or 2
+            21           7.  Reunited household - respondents from split household
+                             reunite
+                         8.  Split household - one half of couple from SUBHH 1 or 2
+
+
+==========================================================================================
+
+JSUBHH         2004 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: F     Level: Siblings        Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+          7125           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+           197           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+           129           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+             8           5.  Split household - one half of couple from SUBHH 1 or 2
+             2           6.  Split household - one half of couple from SUBHH 1 or 2
+            12           7.  Reunited household - respondents from split household
+                             reunite
+
+
+==========================================================================================
+
+KPN_SP         2006 SPOUSE/PARTNER PERSON NUMBER
+         Section: F     Level: Siblings        Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+          2704         010.  Person Identifier
+           161         011.  Person Identifier
+             3         012.  Person Identifier
+                       013.  Person Identifier
+          2195         020.  Person Identifier
+            27         021.  Person Identifier
+                       022.  Person Identifier
+           151         030.  Person Identifier
+            12         031.  Person Identifier
+                       032.  Person Identifier
+           272         040.  Person Identifier
+            27         041.  Person Identifier
+                       042.  Person Identifier
+             6         811.  Spouse of Non-Original Respondent
+             5         812.  Spouse of Non-Original Respondent
+                       821.  Spouse of Non-Original Respondent
+                       831.  Spouse of Non-Original Respondent
+                       832.  Spouse of Non-Original Respondent
+             4         841.  Spouse of Non-Original Respondent
+          1906       Blank.  INAP (Inapplicable); Partial Interview; Single R Household
+
+
+==========================================================================================
+
+KCSR           2006 WHETHER COVERSHEET RESPONDENT
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+          4853           1.  Yes
+          2620           5.  No
+
+
+==========================================================================================
+
+KFAMR          2006 WHETHER FAMILY RESPONDENT
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+          4720           1.  Family R
+          2753           5.  Non-Family R
+
+
+==========================================================================================
+
+KFINR          2006 WHETHER FINANCIAL RESPONDENT
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+          4693           1.  Financial R
+          2780           5.  Non-Financial R
+
+
+==========================================================================================
+
+OPN            OTHER PERSON NUMBER
+         Section: F     Level: Siblings        Type: Character  Width: 3   Decimals: 0
+
+         PERSON NUMBER OF KID/HHM/SIB AND THEIR SPOUSES
+
+         .................................................................................
+          7473                 101-995.  Other Person Number
+
+
+==========================================================================================
+
+         *Assign X054APNdx := piPNDX:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) 
+         AND (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> 
+         YES)) AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+         
+IF StopFlag = 1 
+          
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KFX054         PEOPLE INDEX -1
+         Section: F     Level: Siblings        Type: Numeric    Width: 10  Decimals: 0
+         Ref: SecF.SibFollowup.SibDied[1].X054APNdx
+
+         .................................................................................
+          7473                    3-34.  Actual Value
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF083          MONTH SIBLING DIED
+         Section: F     Level: Siblings        Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecF.SibFollowup.SibDied[1].F083_MoSibDie
+
+         In what  month  and year did ([Relation to R]) [FIRST NAME] die?
+         
+          Month: 
+         
+         Year:
+
+         .................................................................................
+            32           1.  JAN
+            41           2.  FEB
+            26           3.  MAR
+            34           4.  APR
+            39           5.  MAY
+            35           6.  JUN
+            33           7.  JUL
+            30           8.  AUG
+            30           9.  SEP
+            29          10.  OCT
+            26          11.  NOV
+            27          12.  DEC
+            87          98.  DK (Don't Know); NA (Not Ascertained)
+             5          99.  RF (Refused)
+          6999       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF084          YR SIBLING DIED
+         Section: F     Level: Siblings        Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecF.SibFollowup.SibDied[1].F084_YrSibDie
+
+         (In what month and  year  did ([Relation to R]) [FIRST NAME] die?)
+         
+         Month: [MONTH SIBLING/SIBLING-IN-LAW DIED]
+         
+          Year:
+
+         .................................................................................
+           442               1958-2007.  Actual Value
+            27                    9998.  DK (Don't Know); NA (Not Ascertained)
+             5                    9999.  RF (Refused)
+          6999                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF086          SIB AGE
+         Section: F     Level: Siblings        Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecF.SibFollowup.SibAdded[1].F086_AgeSib
+
+         How old is [FIRST NAME] ([Relation to R])?
+         
+         Age:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            897        0          82         49.55         11.06    6482
+         -----------------------------------------------------------------
+            83         998.  DK (Don't Know); NA (Not Ascertained)
+            11         999.  RF (Refused)
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+         
+IF (piF207_ = 0) OR (piRVarsZ076_ReIwR_V <> REIWR) 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF087          NUM CHILDREN- SIBLING
+         Section: F     Level: Siblings        Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecF.SibFollowup.SibAdded[1].F087_NumSibKid
+
+         How many children does ([BROTHER/SISTER])  SIBLING NAME  have?
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            271        0          40          2.14          2.97    7192
+         -----------------------------------------------------------------
+            10          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+         
+IF (piF207_ = 0) OR (piRVarsZ076_ReIwR_V <> REIWR) 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF088          NUM GRANDKIDS- SIBLING
+         Section: F     Level: Siblings        Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecF.SibFollowup.SibAdded[1].F088_NumSibGKid
+
+         How many grandchildren does ([BROTHER/SISTER])  SIBLING NAME  have?
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            264        0          20          1.24          2.29    7192
+         -----------------------------------------------------------------
+            17          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF092          SIB WORK HRS PER WEEK
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecF.SibFollowup.SibLoop[1].F092_NumHRSibWk
+
+         Is ([Relation to R]) [FIRST NAME] working 30 or more hours per week, under 30
+         hours, or not at all?
+
+         .................................................................................
+          3678           1.  30+ HOURS
+           488           2.  <30 HOURS
+          1767           3.  NOT AT ALL
+           264           8.  DK (Don't Know); NA (Not Ascertained)
+            17           9.  RF (Refused)
+          1259       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF093          HHM UNDER 18 LIV W/SIB
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecF.SibFollowup.SibLoop[1].F093_SibLivWith
+
+         Does [he/she/(he/she)] have anyone under 18 living with [him/her/(him/her)]?
+
+         .................................................................................
+          1627           1.  YES
+          4374           5.  NO
+           199           8.  DK (Don't Know); NA (Not Ascertained)
+            14           9.  RF (Refused)
+          1259       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+         
+IF (piF207_ = 0) OR (piRVarsZ076_ReIwR_V <> REIWR) 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF094          SIB FIN SITUATION COMP TO R
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecF.SibFollowup.SibLoop[1].F094_SibFinSitu
+
+         Would you say [his/her/(his/her)] financial situation is better, worse, or about
+         the same as yours?
+
+         .................................................................................
+            58           1.  BETTER
+            44           2.  ABOUT THE SAME
+            90           3.  WORSE
+            16           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+          7264       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+         
+IF (piF207_ = 0) OR (piRVarsZ076_ReIwR_V <> REIWR) 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF095          SIB OWN HOME
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecF.SibFollowup.SibLoop[1].F095_SibOwnHome
+
+         Does SIBLING NAME  own a home?
+
+         .................................................................................
+           127           1.  YES
+            63           5.  NO
+            18           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+          7264       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+         
+IF ((piParentsF021_F056F029_ParLivWSib <> 38) AND 
+         (piParentsF021_F056F045_MaLivWSib <> 38)) AND (piParentsF057_F072F061_PaLivWSib 
+         <> 38) 
+
+         
+IF piParentsF001_F020F001_MaAlive = YES 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF096          SIB LIVE W/IN 10 MI FROM PARENTS/MOTHER
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecF.SibFollowup.SibLoop[1].F096_SibLiv10Mi
+
+         Does [Sibling Name] live within 10 miles of your [parents/mother]?
+
+         .................................................................................
+          1713           1.  YES
+          2701           5.  NO
+           214           6.  (VOL) LIVES WITH PARENT(S)
+            54           8.  DK (Don't Know); NA (Not Ascertained)
+            14           9.  RF (Refused)
+          2777       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+         
+IF ((piParentsF021_F056F029_ParLivWSib <> 38) AND 
+         (piParentsF021_F056F045_MaLivWSib <> 38)) AND (piParentsF057_F072F061_PaLivWSib 
+         <> 38) 
+
+         
+IF (piParentsF001_F020F011_PaAlive = YES) AND 
+         (piParentsF021_F056F021_StillMarr <> YES) 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF097          SIB LIVE W/IN 10 MI FROM FATHER
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecF.SibFollowup.SibLoop[1].F097_SibLiv10MiPa
+
+         Does [Sibling Name] live within 10 miles of your father?
+
+         .................................................................................
+           266           1.  YES
+           639           5.  NO
+            26           6.  (VOL) LIVES WITH PARENT(S)
+            27           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+          6514       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+         
+IF piX074AChanged = ADDED 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF098          SIB HIGHEST GRADE
+         Section: F     Level: Siblings        Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecF.SibFollowup.SibLoop[1].F098_SibHiGrade
+
+         What is the highest grade of school or year of college [Sibling Name] completed?
+         
+          0  No formal education
+          1-11  Grades
+          12  High school
+          13-15  Some college
+          16  College grad
+          17  Post college (17+ years)
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            188        1          17         12.74          2.88    7261
+         -----------------------------------------------------------------
+            24          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+         
+IF piX074AChanged = ADDED 
+
+         
+IF ((F098_SibHiGrade < 13) OR (F098_SibHiGrade = DONTKNOW)) OR 
+         (F098_SibHiGrade = REFUSAL) 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF099          SIB GET HS DIPLOMA/GED
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecF.SibFollowup.SibLoop[1].F099_SibHSDipl
+
+         Did [he/she/(he/she)] get a high school diploma or pass a high school
+         equivalency test?
+
+         .................................................................................
+            63           1.  YES, DIPLOMA
+            14           2.  YES, EQUIVALENCY [GED]
+            33           5.  NO
+            22           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          7341       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+         
+IF piX074AChanged = ADDED 
+
+         
+*NOT(ELSE)*(IF ((F098_SibHiGrade < 13) OR (F098_SibHiGrade = DONTKNOW)) OR 
+         (F098_SibHiGrade = REFUSAL)) 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF100          SIB GET COLLEGE DEGREE
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecF.SibFollowup.SibLoop[1].F100_SibCollDeg
+
+         (Did [he/she/(he/she)] get a college degree?)
+
+         .................................................................................
+            60           1.  YES
+            20           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          7393       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+         
+IF piX074AChanged = ADDED 
+
+         
+*NOT(ELSE)*(IF ((F098_SibHiGrade < 13) OR (F098_SibHiGrade = DONTKNOW)) OR 
+         (F098_SibHiGrade = REFUSAL)) 
+
+         
+IF F100_SibCollDeg = YES 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF101M         SIB HIGHEST DEGREE- MASKED
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecF.SibFollowup.SibLoop[1].F101_SibHiDeg
+
+         (What is the highest degree [he/she/(he/she)] earned?)
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+            12           1.  LESS THAN BACHELORS
+            35           2.  BACHELORS
+            12           3.  MASTERS/MBA
+             1           7.  OTHER (SPECIFY) (INCLUDES LAW, PHD, AND MD)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+          7413       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         ASK:
+
+*NOT(ELSE)*(IF (((piRTab1X013AMaAlive_V <> YES) AND 
+         (piRTab1X015APaAlive_V <> YES)) AND (Parents.F001_F020.F001_MaAlive <> YES)) 
+         AND (Parents.F001_F020.F011_PaAlive <> YES)) 
+
+         
+IF StopFlag = 1 
+
+         
+IF piCouplenss <> OTHER 
+
+          
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+KF103          SIB SP WORK HRS PER WEEK
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecF.SibFollowup.SibLoop[1].F103_Work30HRS
+
+         Is ([Relation to R]) [FIRST NAME]'s (husband/wife/partner) working 30 or more
+         hours per week, under 30 hours, or not at all?
+
+         .................................................................................
+          2535           1.  30+ HOURS
+           374           2.  <30 HOURS
+          1243           3.  NOT AT ALL
+           246           8.  DK (Don't Know); NA (Not Ascertained)
+             8           9.  RF (Refused)
+          3067       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+KVDATE         2006 DATA MODEL VERSION
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+
+         User Note:  This variable identifies which data model was used to interview the
+         household.  Please reference the data description for a summary of changes in
+         each data model.
+
+         .................................................................................
+           883           1.  Version 1
+           838           2.  Version 2
+          1191           3.  Version 3
+          4219           4.  Version 4
+           342           5.  Version 5
+
+
+==========================================================================================
+
+KVERSION       2006 DATA RELEASE VERSION
+         Section: F     Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+          7473           4.  HRS 2006 Final Release
+
+
+==========================================================================================

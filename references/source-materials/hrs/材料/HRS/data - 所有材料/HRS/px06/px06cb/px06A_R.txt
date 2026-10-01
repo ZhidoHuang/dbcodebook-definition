@@ -1,0 +1,223 @@
+============================================================================
+
+2006 Post Exit (Final Release)
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print in
+portrait orientation using a mono-space 10-point font.
+
+============================================================================
+
+Section A: Coverscreen  (Respondent)
+
+============================================================================
+
+HHID       HOUSEHOLD IDENTIFICATION NUMBER
+           Section: A    Level: R    Type: Character    Width: 6    Decimals: 0
+        .....................................................................
+          147      010646-213345. Household Identifier
+
+============================================================================
+
+PN         RESPONDENT PERSON IDENTIFICATION NUMBER
+           Section: A    Level: R    Type: Character    Width: 3    Decimals: 0
+        .....................................................................
+           98                010. Person Identifier
+            4                011. Person Identifier
+           34                020. Person Identifier
+            9                030. Person Identifier
+            2                040. Person Identifier
+
+============================================================================
+
+UPSUBHH    2006 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+           Section: A    Level: R    Type: Character    Width: 1    Decimals: 0
+        .....................................................................
+          138                  3. 1st deceased respondent from a household
+            9                  4. 2nd deceased respondent from a household
+
+============================================================================
+
+JSUBHH     2004 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+           Section: A    Level: R    Type: Character    Width: 1    Decimals: 0
+        .....................................................................
+          138                  3. 1st deceased respondent from a household
+            9                  4. 2nd deceased respondent from a household
+
+============================================================================
+
+UPPN_SP    2006 SPOUSE PERSON IDENTIFICATION NUMBER
+           Section: A    Level: R    Type: Character    Width: 3    Decimals: 0
+        .....................................................................
+           18                010. Person Identifier
+            2                011. Person Identifier
+           27                020. Person Identifier
+            4                030. Person Identifier
+            1                040. Person Identifier
+           95              Blank. No Spouse
+
+============================================================================
+
+UPEXITIW   YEAR OF EXIT INTERVIEW
+           Section: A    Level: R    Type: Numeric    Width: 4    Decimals: 0
+        .....................................................................
+            1               1995. Year of Exit Interview
+                            1996. Year of Exit Interview
+                            1998. Year of Exit Interview
+                            2000. Year of Exit Interview
+           36               2002. Year of Exit Interview
+          110               2004. Year of Exit Interview
+
+============================================================================
+
+           *Assign A500_CurDate := SYSDATE:                      IF (A120_UPDATER > 0) OR A503_REFRESH <> EMPTY;           
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UPA500     DATE OF INTERVIEW - MONTH
+           Section: A    Level: R    Type: Numeric    Width: 8    Decimals: 0
+           CAI: Init.A500_CurDate
+        .....................................................................
+                               1. JAN
+                               2. FEB
+           33                  3. MAR
+           38                  4. APR
+           20                  5. MAY
+           23                  6. JUN
+            7                  7. JUL
+           12                  8. AUG
+            4                  9. SEP
+            7                 10. OCT
+            3                 11. NOV
+                              12. DEC
+
+============================================================================
+
+           *Assign A501_CurDateYear := A500_CurDate.YEAR:                      IF (A120_UPDATER > 0) OR A503_REFRESH <> EMPTY;           
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UPA501     DATE OF INTERVIEW - YEAR
+           Section: A    Level: R    Type: Numeric    Width: 10    Decimals: 0
+           CAI: Init.A501_CurDateYear
+        .....................................................................
+          147               2006. Actual Year
+
+============================================================================
+
+           ASK:                      IF HH.X024_ReIwHH_V = YES;           IF HH.X024_ReIwHH_V = YES;           
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UPA165     INTRO CONFIDENTIALITY 1
+           Section: A    Level: R    Type: Numeric    Width: 1    Decimals: 0
+           CAI: SecA.ContinuInterview.A165_A013_
+
+           This interview is completely voluntary. If we should come to any question            that you don't want to answer, just let me know and I will go on to the            next question. The answers you give will be kept confidential.                       We are required to report to State officials credible evidence of serious            harm or abuse to any person, but we will not ask you any questions about            such topics.                       Press 1 to continue
+
+        .....................................................................
+          147                  1. CONTINUE
+
+============================================================================
+
+           ASK:                      IF HH.X024_ReIwHH_V = YES;           IF HH.X024_ReIwHH_V = YES;           
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UPA013     INTRO CONFIDENTIALITY 2
+           Section: A    Level: R    Type: Numeric    Width: 1    Decimals: 0
+           CAI: SecA.ContinuInterview.A013_Continue
+
+                       CONTINUE...                        A Department of Health and Human Services Certificate of Confidentiality            covers this research in order to help ensure your privacy. This certificate            can help protect the investigators from being forced to release any research            information that identifies you.                       (This interview will be recorded so that my supervisor can evaluate my            performance.)                         Press 1 to confirm that you have read the above statement to the respondent
+
+        .....................................................................
+          147                  1. CONTINUE
+
+============================================================================
+
+           ASK:                      IF HH.X024_ReIwHH_V = YES;           IF A009_SelfPrxy <> SLF;           IF (piBA_RVarsZ095_SelfPrxyIw_V <> SLF) AND (piBA_RVarsZ076_ReIwR_V            = REIWR);           
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UPA010     CURRENT-WAVE PROXY
+           Section: A    Level: R    Type: Numeric    Width: 1    Decimals: 0
+           CAI: SecA.StartInterview.A010_CurrWavePrxy
+
+           [PW PROXY NAME: [PREV WAVE PROXY NAME]/ PW PROXY RELATIONSHIP: The name            or relationship of the proxy at the previous interview is not recorded.            Unless you learn from the current wave proxy that s/he also did the previous            interview, enter code 3 below./ Previous (exit/post exit) wave proxy was            [PREV WAVE PROXY NAME][PW PROXY RELATIONSHIP] Is current wave proxy the            same person or someone else?
+
+        .....................................................................
+          132                  1. SAME PERSON AS IN PRIOR-WAVE
+           13                  2. DIFFERENT/NEW PERSON
+            2                  3. NOT KNOWN IF SAME OR DIFFERENT AS IN PRIOR WAVE
+
+============================================================================
+
+           *Assign A103_PrxyRTR := piBA_RVarsZ096_PrxyRTR_V.ORD:                      IF HH.X024_ReIwHH_V = YES;           IF A009_SelfPrxy <> SLF;           IF A009_SelfPrxy <> PXYSPISREPORTER;           *NOT(ELSE)*(IF (piBA_RVarsZ096_PrxyRTR_V = EMPTY OR (piBA_RVarsZ096_PrxyRTR_V            = UNKNOWN)) OR (A010_CurrWavePrxy <> SAMEPERSONASINPRIORWAVE));           IF piBA_RVarsZ096_PrxyRTR_V <> EMPTY AND (A010_CurrWavePrxy = SAMEPERSONASINPRIORWAVE);                                 *Assign            A103_PrxyRTR := SPOUSEPARTNER:                      IF HH.X024_ReIwHH_V = YES;           IF A009_SelfPrxy <> SLF;           *NOT(ELSE)*(IF A009_SelfPrxy <> PXYSPISREPORTER);           IF A009_SelfPrxy = PXYSPISREPORTER;                                 ASK:                      IF HH.X024_ReIwHH_V = YES;           IF A009_SelfPrxy <> SLF;           IF A009_SelfPrxy <> PXYSPISREPORTER;           IF (piBA_RVarsZ096_PrxyRTR_V = EMPTY OR (piBA_RVarsZ096_PrxyRTR_V            = UNKNOWN)) OR (A010_CurrWavePrxy <> SAMEPERSONASINPRIORWAVE);           
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UPA103     PROXY RELATIONSHIP TO R
+           Section: A    Level: R    Type: Numeric    Width: 2    Decimals: 0
+           CAI: SecA.StartInterview.A103_PrxyRTR
+
+                        Designate the proxy reporter`s relationship to [FIRST NAME]
+
+        .....................................................................
+           36                  2. SPOUSE/PARTNER
+           21                  3. SON
+                               4. STEPSON OR SON OF PARTNER
+                               5. SPOUSE/PARTNER OF DAUGHTER
+           45                  6. DAUGHTER
+            3                  7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+            3                  8. SPOUSE/PARTNER OF SON
+            7                  9. GRANDCHILD OF R OR SP/P
+            3                 15. BROTHER
+            8                 17. SISTER
+           12                 19. OTHER RELATIVE
+            8                 20. OTHER INDIVIDUAL
+                              23. PAID HELPER
+            1                 24. PROFESSIONAL
+                              33. SP/P OF GRANDCHILD
+                              98. DK (Don't Know)
+                              99. RF (Refused)
+                           Blank. INAP (Inapplicable)
+
+============================================================================
+
+UPA152     INTRO TO POST EXIT
+           Section: A    Level: R    Type: Numeric    Width: 1    Decimals: 0
+           CAI: SecA.StartInterview.A152_IntroPostExit
+
+           (As you may know, [R's First Name] was a part of the Health and Retirement            Study, an important study about issues of aging.) In [Last Interview Month],            [Last Interview Year], after [He/She] died, ^FLA152 and the health conditions            surrounding [His/Her] death. At that time, final settlement of the estate            had not taken place, and we would like to ask a few questions now about            the final estate settlement.
+
+        .....................................................................
+          147              Blank. Continue - No Data Collected
+
+============================================================================
+
+           ASK:                      IF HH.X024_ReIwHH_V = YES;           
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UPA012     CHANGE LANGUAGE
+           Section: A    Level: R    Type: Numeric    Width: 1    Decimals: 0
+           CAI: SecA.StartInterview.A012_LangSwitch
+
+                                                    Select English or Spanish
+
+        .....................................................................
+          146                  1. ENGLISH
+            1                  2. SPANISH
+
+============================================================================
+
+UPVDATE    2006 DATA MODEL VERSION
+           Section: A    Level: R    Type: Numeric    Width: 1    Decimals: 0
+
+           User Note:  This variable identifies which data model was used to interview            the household.  Please reference the data description for a summary of            changes in each data model.
+
+        .....................................................................
+           38                  1. Version 1
+           33                  2. Version 2
+           27                  3. Version 3
+           49                  4. Version 4
+
+============================================================================
+
+UPVERSN    2006 POST-EXIT RELEASE VERSION NUMBER
+           Section: A    Level: R    Type: Numeric    Width: 1    Decimals: 0
+        .....................................................................
+          147                  1. HRS 2006 Post-Exit Release #1
+
+============================================================================
+

@@ -1,0 +1,467 @@
+==========================================================================================
+
+HRS 2016 Final Release 
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section W: EVENT HISTORY, INTERNET USE AND SOCIAL SECURITY  (Respondent)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: W     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+         20912           010001-959738.  Household Identification Number
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: W     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+         11991         010.  Person Identifier
+           696         011.  Person Identifier
+            33         012.  Person Identifier
+             1         013.  Person Identifier
+          6697         020.  Person Identifier
+           214         021.  Person Identifier
+            18         022.  Person Identifier
+             1         023.  Person Identifier
+           432         030.  Person Identifier
+            47         031.  Person Identifier
+             4         032.  Person Identifier
+             1         033.  Person Identifier
+           719         040.  Person Identifier
+            51         041.  Person Identifier
+             6         042.  Person Identifier
+             1         043.  Person Identifier
+
+
+==========================================================================================
+
+PSUBHH                        2016 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: W     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+         19158           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+           869           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+           691           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            66           5.  Split household - one half of couple from SUBHH 1 or 2
+             7           6.  Split household - one half of couple from SUBHH 1 or 2
+           120           7.  Reunited household - respondents from split household
+                             reunite
+             1           8.  Split household - one half of couple from SUBHH 1 or 2
+
+
+==========================================================================================
+
+OSUBHH                        2014 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: W     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+         14933           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+           773           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+           627           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            55           5.  Split household - one half of couple from SUBHH 1 or 2
+             6           6.  Split household - one half of couple from SUBHH 1 or 2
+            99           7.  Reunited household - respondents from split household
+                             reunite
+             1           8.  Split household - one half of couple from SUBHH 1 or 2
+          4418       Blank.  NEW COHORT HH
+
+
+==========================================================================================
+
+PPN_SP                        2016 SPOUSE/PARTNER PERSON NUMBER
+         Section: W     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+          5750         010.  Person Identifier
+           503         011.  Person Identifier
+            27         012.  Person Identifier
+             1         013.  Person Identifier
+          5435         020.  Person Identifier
+           175         021.  Person Identifier
+            14         022.  Person Identifier
+             1         023.  Person Identifier
+           255         030.  Person Identifier
+            29         031.  Person Identifier
+             1         032.  Person Identifier
+             1         033.  Person Identifier
+           454         040.  Person Identifier
+            38         041.  Person Identifier
+             3         042.  Person Identifier
+             2         043.  Person Identifier
+             8         810.  Spouse of Original R, Never Entered Sample
+            36         811.  Spouse of Non-Original Respondent
+             3         812.  Spouse of Non-Original Respondent
+             6         821.  Spouse of Non-Original Respondent
+             2         822.  Spouse of Non-Original Respondent
+             3         831.  Spouse of Non-Original Respondent
+             2         832.  Spouse of Non-Original Respondent
+             4         841.  Spouse of Non-Original Respondent
+          8159       Blank.  Single Respondent Household
+
+
+==========================================================================================
+
+PCSR                          2016 WHETHER COVERSHEET RESPONDENT
+         Section: W     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+         15018           1.  Yes
+            55           3.  2nd Coverscreen  R, answers not retained
+          5839           5.  No
+
+
+==========================================================================================
+
+PFAMR                         2016 WHETHER FAMILY RESPONDENT
+         Section: W     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+         14561           1.  Family R
+            25           3.  2nd Family R, answers not retained
+          6326           5.  Non-Family R
+
+
+==========================================================================================
+
+PFINR                         2016 WHETHER FINANCIAL RESPONDENT
+         Section: W     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+         14766           1.  Financial R
+            25           3.  2nd Financial R, answers not retained
+          6121           5.  Non-Financial R
+
+
+==========================================================================================
+
+         IF ((((SecA.ContinuInterview.A218_AgeGreaterThan17 > 17) OR 
+         (SecA.ContinuInterview.A019_RAge > 17)) AND (SecA.StartInterview.A007TRAlive_A 
+         = YES)) OR ((((RVARS.Z145_TypeExit_V = NEWPOSTEXIT) OR (RVARS.Z145_TypeExit_V = 
+         FIRSTREPEATPOST)) OR (RVARS.Z145_TypeExit_V = SECREPEATPOST)) AND 
+         (SecA.StartInterview.A007TRAlive_A = NO))) OR 
+         ((SecA.StartInterview.A007TRAlive_A = NO) AND 
+         SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn <> EMPTY) THEN 
+
+         IF SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE THEN 
+
+         IF ((piRvarsZ145_TypeExit_V <> NEWPOSTEXIT) AND (piRvarsZ145_TypeExit_V <> 
+         FIRSTREPEATPOST)) AND (piRvarsZ145_TypeExit_V <> SECREPEATPOST) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PW303                         REGULAR USE OF WEB FOR EMAIL
+         Section: W     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: EventHistory.W303_
+
+         Do you regularly use the Internet (or the World Wide Web) for sending and
+         receiving e-mail or for any other purpose, such as making purchases, searching
+         for information, or making travel reservations?
+
+         .................................................................................
+         11806           1.  YES
+          8932           5.  NO
+            16           8.  DK (Don't Know); NA (Not Ascertained)
+            19           9.  RF (Refused)
+           139       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} EventHistory.W303_ 
+
+         IF ((piSecAStartInterviewA009_SelfPrxy = SLF) OR 
+         (piSecAStartInterviewA009_SelfPrxy = PXYSPISREPORTER)) OR 
+         (piSecAStartInterviewA009_SelfPrxy = PXYNONSPISREPORTER) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PW311                         MODE OF INTERVIEW
+         Section: W     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: EventHistory.W311_IWMODE
+
+         IWER: ENTER current mode of interview:
+
+         .................................................................................
+          8061           1.  TELEPHONE
+         12712           2.  FACE-TO-FACE
+           139       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} EventHistory.W303_ 
+
+         IF ((piRTab1X090_PrefMode_V = EnhancedFTF) AND (piRvarsZ120_AskSSPerm_V <> 
+         NOPERMISSIONGIVEN)) OR (piHHX024_ReIwHH_V <> YES) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PW314                         SOC SEC PERM INTRO PART 1
+         Section: W     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: EventHistory.SSN_Permission.W314_W306
+
+         One of the most important parts of our study is to understand the financial
+         situations of people in their retirement years. This is an important and
+         challenging part of our research, and in order to obtain complete data for this
+         research, we are asking our participants to complete a form authorizing us to
+         obtain social security data on earnings and benefits.
+         
+         [You were kind enough to provide us with this form in the past.  However, in
+         order to obtain the social security data, we need to have you include your full
+         social security number on the form.]
+         
+         We want to assure you that the Health and Retirement Study is committed to
+         taking the utmost care to protect the confidentiality of any information you
+         give us, including the information on the form.
+         
+         IWER: Press 1 to continue.
+
+         .................................................................................
+          7445           1.  CONTINUE
+         13467       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} EventHistory.SSN_Permission.W314_W306 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PW306                         SOCIAL SECURITY INTRODUCTION
+         Section: W     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: EventHistory.SSN_Permission.W306_
+
+         IF FACE-TO-FACE INTERVIEW (W311=2):
+         Please take a minute to read the form.
+                 
+         IWER:  Hand form to R. Give R time to read the form, then explain it and answer
+         any questions as needed.
+                 
+         (I have a letter here from the Social Security Administration describing the
+         purpose of our research and supporting our research efforts. Please take a
+         minute to read it.)
+                 
+         IF TELEPHONE INTERVIEW (W311=1):
+         I will be sending you the form and also a letter from the Social Security
+         Administration describing the purpose of our research and supporting our
+         research efforts.
+                 
+         IF REINTERVIEW R (Z076=1) AND R HAS REFUSED SSN IN PRIOR WAVE (Z120=1):
+         You may have been asked to provide this consent to us in the past. We are asking
+         now that you allow us to update our records in order to obtain additional data
+         from the Social Security Administration.
+                         
+         IWER: Press 1 to continue.
+
+         .................................................................................
+          7480           1.  CONTINUE
+         13432       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} EventHistory.SSN_Permission.W306_ 
+
+         IF EventHistory.SSN_Permission.W306_ <> REFUSAL THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PW310                         SOCIAL SECURITY PERMISSION
+         Section: W     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: EventHistory.SSN_Permission.W310_SocSecPermit
+
+         For the study's research purposes, would you authorize us to obtain your history
+         of earnings and benefits administered by the Social Security Administration?
+         
+         IWER: Use the Social Security permission form for R's social security number.
+
+         .................................................................................
+          2511           1.  RESPONDENT AGREES - SIGNED FORM OBTAINED BY INTERVIEWER
+           308           2.  RESPONDENT AGREES - FORM AND LETTER BEING MAILED TO R
+           534           3.  RESPONDENT AGREES - FORM (AND LETTER) LEFT WITH R
+          2821           4.  R REFUSED
+           230           5.  R NOT ABLE TO CONSENT
+            31           6.  FORM AND LETTER LEFT WITH PROXY TO GIVE TO R
+           118           7.  PROXY-FORM AND LETTER BEING MAILED TO R
+            68           8.  PROXY REFUSED FOR RESPONDENT
+           841           9.  R UNDECIDED - FORM AND LETTER LEFT WITH R / R UNDECIDED -
+                             FORM AND LETTER BEING MAILED TO R
+         13450       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} EventHistory.W303_ 
+
+         IF ((((((SecA.StartInterview.A007TRAlive_A = YES) AND 
+         (SecA.StartInterview.A012_LangSwitch = ENGLISH)) AND (piW311_IWMODE = 
+         FACETOFACE)) AND (piRTab1X090_PrefMode_V = EnhancedFTF)) AND (piHHX024_ReIwHH_V 
+         = YES)) AND (piW311_IWMODE = FACETOFACE)) AND (((piRvarsZ076_ReIwR_V <> REIWR) 
+         AND (SecB.OtherBackground.B035_ = YES)) OR ((piRvarsZ076_ReIwR_V = REIWR) AND 
+         (RVARS.Z269_AskVAPerm = YES))) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PW319                         VA CONSENT INTRO
+         Section: W     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: EventHistory.SSN_Permission.W319_
+
+         The health of our Veterans is an important national concern. There is great
+         interest in how Veterans get their health care, how they use or don't use the
+         Veterans Affairs health care system and how the care they receive affects
+         Veterans' health. We are working together with the Department of Veterans
+         Affairs to study these important issues, and you can make an important
+         contribution to those efforts.
+         
+         We are asking our participants who have served in the active military of the
+         United States to complete a form authorizing us to obtain information on the
+         health care services that they may have obtained in the VA health care system.
+         This information, when combined with the other information you have provided to
+         us, will be a unique and valuable resource for answering key questions about the
+         health of the country's military Veterans. Even if you don't normally use VA
+         services it will be helpful to this research to have your authorization.
+         
+         We want to assure you that the Health and Retirement Study is committed to
+         taking the utmost care to protect the confidentiality of any information you
+         give us, including the information on your VA health care.
+
+         .................................................................................
+           328           1.  CONTINUE
+            22           7.  R DISPUTES HAVING EVER SERVED IN MILITARY
+         20562       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} EventHistory.SSN_Permission.W319_ 
+
+         IF EventHistory.SSN_Permission.W319_ <> DISPUTES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PW320                         PRESENT AND EXPLAIN CONSENT FORM
+         Section: W     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: EventHistory.SSN_Permission.W320_
+
+         [Please take a minute to read the form.
+         
+         IWER: Hand form to R. Give R time to read the form, then explain it and answer
+         any questions as needed.]
+         
+         [(I have a letter here from the Veterans Affairs Health System describing the
+         purpose of our research and supporting our research efforts. Please take a
+         minute to read it.)]
+         
+         IWER: Press 1 to continue
+
+         .................................................................................
+           330           1.  CONTINUE
+         20582       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} EventHistory.SSN_Permission.W320_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PW321                         PRESENT AND EXPLAIN CONSENT FORM
+         Section: W     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: EventHistory.SSN_Permission.W321_
+
+         [For the study`s research purposes, would you authorize us to obtain information
+         on the health care services that you may have obtained from the VA health care
+         system?]
+         
+         [IWER: IF R IS AVAILABLE, USE CODES 1 OR 3 ; OTHERWISE USE CODES 4, 5 OR 9]
+
+         .................................................................................
+           159           1.  R AGREES - SIGNED FORM OBTAINED BY INTERVIEWER
+            31           3.  R AGREES - FORM (AND LETTER) LEFT WITH R
+            98           4.  R REFUSED
+            11           5.  R NOT ABLE TO CONSENT
+            28           9.  R UNDECIDED - FORM AND LETTER LEFT WITH R
+             2          98.  DK (Don't Know); NA (Not Ascertained)
+         20583       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} EventHistory.W303_ 
+
+         IF (((((ACTIVELANGUAGE = CORENG) OR (ACTIVELANGUAGE = CORSPN)) OR 
+         (ACTIVELANGUAGE = PRXENG)) OR (ACTIVELANGUAGE = PRXSPN)) OR (ACTIVELANGUAGE = 
+         SPPENG)) OR (ACTIVELANGUAGE = SPPSPN) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PW307                         ASSIST SECTION W
+         Section: W     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: EventHistory.W307_Wassist
+
+         IWER: How often did R receive assistance with answers in section W - Internet
+         Use/Social Security Permission?
+
+         .................................................................................
+         19970           1.  NEVER
+           482           2.  A FEW TIMES
+           244           3.  MOST OR ALL OF THE TIME
+            77           4.  THE SECTION WAS DONE BY A PROXY REPORTER
+           139       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+PVDATE                        2016 DATA MODEL VERSION
+         Section: W     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+         User Note:  This variable identifies which data model was used to interview the
+         household.  Please reference the data description for a summary of changes in
+         each data model.
+
+         .................................................................................
+           235           1.  Version 1
+          1172           2.  Version 2
+          1817           3.  Version 3
+          3140           4.  Version 4
+          4251           5.  Version 5
+           702           6.  Version 6
+          2007           7.  Version 7
+          1038           8.  Version 8
+          1330           9.  Version 9
+          3703          10.  Version 10
+           155          11.  Version 11
+           605          12.  Version 12
+           757          13.  Version 13
+
+
+==========================================================================================
+
+PVERSION                      2016 DATA RELEASE VERSION
+         Section: W     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+         20912           2.  HRS 2016 Final Release
+
+
+==========================================================================================

@@ -1,0 +1,1069 @@
+==========================================================================================
+2004 HRS Exit (Final Release)
+ODBC Reference: [HRS2004x]
+Perl script: CodebkD11.pl v6.161 Tue Feb  6 14:00:08 2007
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION E: Family Structure (Children) (Respondent)
+
+==========================================================================================
+
+HHID       HOUSEHOLD IDENTIFICATION NUMBER
+         Section: E     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+        ..................................................................................
+         1227           010240-213434. Household Identifier
+
+==========================================================================================
+
+PN         RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+          861         010. Person Identifier
+           19         011. Person Identifier
+          274         020. Person Identifier
+           39         030. Person Identifier
+            1         031. Person Identifier
+           33         040. Person Identifier
+
+==========================================================================================
+
+TSUBHH     2004 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: E     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+         1176           3. 1st deceased respondent from a household
+           51           4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+HSUBHH     2002 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: E     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+         1180           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+           21           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           21           2. Split household - other half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+            4           3. 1st deceased respondent from a household
+                        5. Split household - one half of couple from SUBHH 1 or 2
+                        6. Split household - one half of couple from SUBHH 1 or 2
+            1           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+TPN_SP     2004 SPOUSE PERSON IDENTIFICATION NUMBER
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+          184         010. Person Identifier
+           16         011. Person Identifier
+          233         020. Person Identifier
+            5         021. Person Identifier
+           21         030. Person Identifier
+            2         031. Person Identifier
+           22         040. Person Identifier
+            3         041. Person Identifier
+            1         811. New Spouse of Non-Original Respondent
+          740       Blank. R not coupled
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND (NOT ((piHHX024_ReIwHH_V = YES) AND (((piRVarsZ114_NumGKids_V < 1) OR
+        (piRVarsZ114_NumGKids_V = 95)) AND (pi022_NumNewGKids <> EMPTY AND
+        (pi022_NumNewGKids <> YES)))))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE046      # GRANDCHILDREN TOTAL
+         Section: E     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecE.GrandKids.E046_NumGKids
+
+        Families and friends often help one another in different ways. Part of our
+        research is finding out how they do that, so we have some questions about
+        family.
+
+        (Please remind me . . .) Altogether, how many grandchildren did R’s FIRST NAME
+        (and [you/[his/her] [husband/wife/partner]]) have?
+
+        INTERVIEWER: ENTER 80 IF R HAS 80 OR MORE GRANDCHILDREN
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           1072        0          80          7.69          8.63     141
+         -----------------------------------------------------------------
+                       95. NOT ASKED BECAUSE ASSUMED TO BE ZERO
+           14          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND (NOT ((piHHX024_ReIwHH_V = YES) AND (((piRVarsZ114_NumGKids_V < 1) OR
+        (piRVarsZ114_NumGKids_V = 95)) AND (pi022_NumNewGKids <> EMPTY AND
+        (pi022_NumNewGKids <> YES)))))
+         AND ((E046_NumGKids > 0) AND (E046_NumGKids <> 95))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE047      GREAT-GRANDCHILDREN
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecE.GrandKids.E047_NumGrGKids
+
+        Did [FIRST NAME OF INDIVIDUAL] (or [you/[his/her] [husband/wife/partner]])
+        have any great-grandchildren?
+        ..................................................................................
+          620           1. YES
+          385           5. NO
+            1           6. ASSIGNED (NO)
+            4           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          217       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND (NOT ((piHHX024_ReIwHH_V = YES) AND (((piRVarsZ114_NumGKids_V < 1) OR
+        (piRVarsZ114_NumGKids_V = 95)) AND (pi022_NumNewGKids <> EMPTY AND
+        (pi022_NumNewGKids <> YES)))))
+         AND ((E046_NumGKids > 0) AND (E046_NumGKids <> 95))
+         AND (E047_NumGrGKids = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE048      #GREAT-GRANDCHILDREN
+         Section: E     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecE.GrandKids.E048_
+
+        Altogether, how many great-grandchildren did [FIRST NAME OF INDIVIDUAL] (or
+        [you/[his/her] [husband/wife/partner]]) have?
+
+        INTERVIEWER: ENTER 80 IF R HAS 80 OR MORE GREAT-GRANDCHILDREN
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            605        0          67          7.49          8.20     607
+         -----------------------------------------------------------------
+                       95. NOT ASKED BECAUSE ASSUMED TO BE ZERO
+           15          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+
+        Assign:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND (NOT ((piHHX024_ReIwHH_V = YES) AND (((piRVarsZ114_NumGKids_V < 1) OR
+        (piRVarsZ114_NumGKids_V = 95)) AND (pi022_NumNewGKids <> EMPTY AND
+        (pi022_NumNewGKids <> YES)))))
+         AND ((E046_NumGKids > 0) AND (E046_NumGKids <> 95))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE049      E049- ANY OFFSPRING R/SP
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecE.GrandKids.E049_
+        ..................................................................................
+         1010           1. CONTINUE
+          217       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND (E140_ResNonKid > 0)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE050      INTRO TO CHILD TRANSFERS
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecE.GrandKids.E050_
+
+        Families sometimes help one another in a variety of ways, and each type of
+        help can be important.
+
+        The next questions are about help given or received [[since [Last IW Month],
+        [PREV WAVE IW YEAR OF FAMILY R]/since [PREV WAVE IW YEAR OF FAMILY R]/in the
+        last two years before /her/his death]], but before [she/he] died.
+
+        The financial help we ask about excludes shared housing and shared food, so
+        don't count that type of help.
+
+        It also excludes anything [she/he] left to others after [she/he] died.
+        ..................................................................................
+           33           1. CONTINUE
+         1194       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE059      INTRO TO HELP GIVEN OR RECEIVED
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecE.GrandKids.E059_
+
+        The next questions are about help [FIRST NAME OF INDIVIDUAL] (or
+        [you/[his/her] [husband/wife/partner]]) gave or received [[since [Last IW
+        Month], [PREV WAVE IW YEAR OF FAMILY R]/since [PREV WAVE IW YEAR OF FAMILY
+        R]/in thev last two years before her/his death]].
+
+        INTERVIEWER: ENTER 1 TO CONTINUE
+        ..................................................................................
+         1086           1. CONTINUE
+          141       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND ((E046_NumGKids > 0) AND (E046_NumGKids <> 95))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE060      CARE OF GRANDKIDS- 100 OR MORE HOURS
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecE.GrandKids.E060_
+
+        Did [FIRST NAME OF INDIVIDUAL] (or [you/[his/her] [husband/wife/partner]])
+        spend 100 or more hours in total [[since [Last IW Month], [PREV WAVE IW YEAR
+        OF FAMILY R]/since [PREV WAVE IW YEAR OF FAMILY R]/in the last two years
+        before her/his death]] taking care of [grand or great-
+        grandchildren/grandchildren]?
+        ..................................................................................
+           99           1. YES
+          911           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          217       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND ((E046_NumGKids > 0) AND (E046_NumGKids <> 95)
+          OR (E046_NumGKids > 0) AND (E046_NumGKids <> 95)
+          OR (E046_NumGKids > 0) AND (E046_NumGKids <> 95))
+         AND (E060_ = YES
+          OR E060_ = YES
+          OR E060_ = YES)
+         AND (E125_E061MTemp <> NONRESPONSE
+          OR NOT (E125_E061MTemp <> NONRESPONSE)
+          OR NOT (E125_E061MTemp <> NONRESPONSE))
+         AND (E125_E061MTemp = DONTKNOW
+          OR NOT (E125_E061MTemp = DONTKNOW)
+          OR cnt <= E125_E061MTemp.CARDINAL)
+         AND (E125_E061MTemp = REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE061M1    WHICH CHILD/REN IS PARENT -1
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         CAI: SecE.GrandKids.E061_[1]
+
+        Which of  R’s FIRST NAME’s  children is the parent of those grandchildren (or
+        great-grandchildren)?
+
+        [IWER: CHOOSE ALL THAT APPLY]
+        ..................................................................................
+           87                 041-990. Other Person Number
+            2                     992. DECEASED CHILD
+            6                     993. ALL CHILDREN
+            1                     994. ALL GRANDCHILDREN EQUALLY
+            3                     997. OTHER (Specify)
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1128                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND ((E046_NumGKids > 0) AND (E046_NumGKids <> 95)
+          OR (E046_NumGKids > 0) AND (E046_NumGKids <> 95)
+          OR (E046_NumGKids > 0) AND (E046_NumGKids <> 95))
+         AND (E060_ = YES
+          OR E060_ = YES
+          OR E060_ = YES)
+         AND (E125_E061MTemp <> NONRESPONSE
+          OR NOT (E125_E061MTemp <> NONRESPONSE)
+          OR NOT (E125_E061MTemp <> NONRESPONSE))
+         AND (E125_E061MTemp = DONTKNOW
+          OR NOT (E125_E061MTemp = DONTKNOW)
+          OR cnt <= E125_E061MTemp.CARDINAL)
+         AND (E125_E061MTemp = REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE061M2    WHICH CHILD/REN IS PARENT -2
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         CAI: SecE.GrandKids.E061_[2]
+
+        Which of  R’s FIRST NAME’s  children is the parent of those grandchildren (or
+        great-grandchildren)?
+
+        [IWER: CHOOSE ALL THAT APPLY]
+        ..................................................................................
+           18                 041-990. Other Person Number
+                                  992. DECEASED CHILD
+                                  993. ALL CHILDREN
+                                  994. ALL GRANDCHILDREN EQUALLY
+                                  997. OTHER (Specify)
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1209                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND ((E046_NumGKids > 0) AND (E046_NumGKids <> 95)
+          OR (E046_NumGKids > 0) AND (E046_NumGKids <> 95)
+          OR (E046_NumGKids > 0) AND (E046_NumGKids <> 95))
+         AND (E060_ = YES
+          OR E060_ = YES
+          OR E060_ = YES)
+         AND (E125_E061MTemp <> NONRESPONSE
+          OR NOT (E125_E061MTemp <> NONRESPONSE)
+          OR NOT (E125_E061MTemp <> NONRESPONSE))
+         AND (E125_E061MTemp = DONTKNOW
+          OR NOT (E125_E061MTemp = DONTKNOW)
+          OR cnt <= E125_E061MTemp.CARDINAL)
+         AND (E125_E061MTemp = REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE061M3    WHICH CHILD/REN IS PARENT -3
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         CAI: SecE.GrandKids.E061_[3]
+
+        Which of  R’s FIRST NAME’s  children is the parent of those grandchildren (or
+        great-grandchildren)?
+
+        [IWER: CHOOSE ALL THAT APPLY]
+        ..................................................................................
+            5                 041-990. Other Person Number
+                                  992. DECEASED CHILD
+                                  993. ALL CHILDREN
+            1                     994. ALL GRANDCHILDREN EQUALLY
+                                  997. OTHER (Specify)
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1221                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND ((E046_NumGKids > 0) AND (E046_NumGKids <> 95)
+          OR (E046_NumGKids > 0) AND (E046_NumGKids <> 95)
+          OR (E046_NumGKids > 0) AND (E046_NumGKids <> 95))
+         AND (E060_ = YES
+          OR E060_ = YES
+          OR E060_ = YES)
+         AND (E125_E061MTemp <> NONRESPONSE
+          OR NOT (E125_E061MTemp <> NONRESPONSE)
+          OR NOT (E125_E061MTemp <> NONRESPONSE))
+         AND (E125_E061MTemp = DONTKNOW
+          OR NOT (E125_E061MTemp = DONTKNOW)
+          OR cnt <= E125_E061MTemp.CARDINAL)
+         AND (E125_E061MTemp = REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE061M4    WHICH CHILD/REN IS PARENT -4
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         CAI: SecE.GrandKids.E061_[4]
+
+        Which of  R’s FIRST NAME’s  children is the parent of those grandchildren (or
+        great-grandchildren)?
+
+        [IWER: CHOOSE ALL THAT APPLY]
+        ..................................................................................
+            1                 041-990. Other Person Number
+                                  992. DECEASED CHILD
+                                  993. ALL CHILDREN
+                                  994. ALL GRANDCHILDREN EQUALLY
+                                  997. OTHER (Specify)
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1226                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND ((E046_NumGKids > 0) AND (E046_NumGKids <> 95)
+          OR (E046_NumGKids > 0) AND (E046_NumGKids <> 95)
+          OR (E046_NumGKids > 0) AND (E046_NumGKids <> 95))
+         AND (E060_ = YES
+          OR E060_ = YES
+          OR E060_ = YES)
+         AND (E125_E061MTemp <> NONRESPONSE
+          OR NOT (E125_E061MTemp <> NONRESPONSE)
+          OR NOT (E125_E061MTemp <> NONRESPONSE))
+         AND (E125_E061MTemp = DONTKNOW
+          OR NOT (E125_E061MTemp = DONTKNOW)
+          OR cnt <= E125_E061MTemp.CARDINAL)
+         AND (E125_E061MTemp = REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE061M5    WHICH CHILD/REN IS PARENT -5
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         CAI: SecE.GrandKids.E061_[5]
+
+        Which of  R’s FIRST NAME’s  children is the parent of those grandchildren (or
+        great-grandchildren)?
+
+        [IWER: CHOOSE ALL THAT APPLY]
+        ..................................................................................
+                              041-990. Other Person Number
+                                  992. DECEASED CHILD
+                                  993. ALL CHILDREN
+                                  994. ALL GRANDCHILDREN EQUALLY
+                                  997. OTHER (Specify)
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1227                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND ((E046_NumGKids > 0) AND (E046_NumGKids <> 95))
+         AND (E060_ = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE063      R CARE FOR GRANDCHILD- # HOURS
+         Section: E     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecE.GrandKids.E063_
+
+        Roughly how many hours altogether did [FIRST NAME OF INDIVIDUAL]
+        [[herself/himself]] spend?
+
+        INTERVIEWER: ENTER 9995 IF GRANDCHILD LIVES IN HOUSE, BUT NO SPECIFIC NUMBER
+        OF HOURS GIVEN
+
+        DON'T PROBE DK/RF
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             43        0        5840        499.09       1226.77    1128
+         -----------------------------------------------------------------
+            7        9995. GRANDCHILD LIVES IN HOUSE, BUT NO SPECIFIC NUMBER OF HOURS
+                           GIVEN
+           49        9998. DK (Don't Know); NA (Not Ascertained)
+                     9999. RF (Refused)
+
+==========================================================================================
+
+TE065      R CARE FOR GRANDCHILD- MIN HOURS
+         Section: E     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         CAI: SecE.GrandKids.E065_
+
+        E065_-E067_ Unfolding Sequence
+        Question text: Did it amount to less than ____ hours, more than ____ hours, or
+        what?
+
+        PROCEDURE: UNFM_1UP
+          BREAKPOINTS: 200, 500
+          ENTRY POINT: 200
+        ..................................................................................
+           22           0. Value of Breakpoint
+            7         200. Value of Breakpoint
+            8         201. Value of Breakpoint
+            1         500. Value of Breakpoint
+           11         501. Value of Breakpoint
+         1178       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+TE066      R CARE FOR GRANDCHILD- MAX HOURS
+         Section: E     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecE.GrandKids.E066_
+        ..................................................................................
+           18         199. Value of Breakpoint
+            7         200. Value of Breakpoint
+            7         499. Value of Breakpoint
+            1         500. Value of Breakpoint
+           16        5000. Value of Breakpoint
+         1178       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+TE067      R CARE FOR GRANDCHILD- RESULT
+         Section: E     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecE.GrandKids.E067_
+        ..................................................................................
+                       97. Data Not Available
+            5          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1222       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND ((E046_NumGKids > 0) AND (E046_NumGKids <> 95))
+         AND (E060_ = YES)
+         AND (piRespondents1X065ACouplenss IN [MARRIED, PARTNERED_VOL])
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE068      SP/P CARE FOR GRANDCHILD- # HOURS
+         Section: E     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecE.GrandKids.E068_
+
+        Roughly how many hours altogether did (you/he/she) / (RESPONDENT'S
+        SPOUSE/PARTNER’S FIRST NAME) spend?
+
+        INTERVIEWER: ENTER 9995 IF GRANDCHILD LIVES IN HOUSE, BUT NO SPECIFIC NUMBER
+        OF HOURS GIVEN
+
+        DON'T PROBE DK/RF
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             32        0        2000        386.91        534.42    1159
+         -----------------------------------------------------------------
+            7        9995. GRANDCHILD LIVES IN HOUSE, BUT NO SPECIFIC NUMBER OF HOURS
+                           GIVEN
+           29        9998. DK (Don't Know); NA (Not Ascertained)
+                     9999. RF (Refused)
+
+==========================================================================================
+
+TE070      SP/P CARE FOR GRANDCHILD- MIN HOURS
+         Section: E     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         CAI: SecE.GrandKids.E070_
+
+        E070_-E072_ Unfolding Sequence
+        Question text: Did it amount to less than ____ hours, more than ____ hours, or
+        what?
+
+        PROCEDURE: UNFM_1UP
+          BREAKPOINTS: 200, 500
+          ENTRY POINT: 200
+        ..................................................................................
+           12           0. Value of Breakpoint
+            3         200. Value of Breakpoint
+            6         201. Value of Breakpoint
+            1         500. Value of Breakpoint
+            7         501. Value of Breakpoint
+         1198       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+TE071      SP/P CARE FOR GRANDCHILD- MAX HOURS
+         Section: E     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecE.GrandKids.E071_
+        ..................................................................................
+           10         199. Value of Breakpoint
+            3         200. Value of Breakpoint
+            6         499. Value of Breakpoint
+            1         500. Value of Breakpoint
+            9        5000. Value of Breakpoint
+         1198       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+TE072      SP/P CARE FOR GRANDCHILD- RESULT
+         Section: E     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecE.GrandKids.E072_
+        ..................................................................................
+                       97. Data Not Available
+            2          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1225       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND (((piHHX024_ReIwHH_V = YES) AND (piInitA101_TotalKids > 0)) OR
+        ((E046_NumGKids > 0) AND (E046_NumGKids < 81)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE073      SINCE PREV WAVE CHILD GIVEN DEED TO HOME
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecE.GrandKids.E073_DeedtoKid
+
+        [[Since [Last IW Month], [PREV WAVE IW YEAR OF FAMILY R]/Since [PREV WAVE IW
+        YEAR OF FAMILY R]/In the last two years before /her/his death]], did [FIRST
+        NAME OF INDIVIDUAL] (or [you/[his/her] [husband/wife/partner]]) give any
+        of((your/(his/her) (husband’s/wife’s/partner’s))) children (or grandchildren)
+        a deed to a house?
+        ..................................................................................
+           72           1. YES
+         1001           5. NO
+            9           8. DK (Don't Know); NA (Not Ascertained)
+            4           9. RF (Refused)
+          141       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND (((piHHX024_ReIwHH_V = YES) AND (piInitA101_TotalKids > 0)) OR
+        ((E046_NumGKids > 0) AND (E046_NumGKids < 81))
+          OR ((piHHX024_ReIwHH_V = YES) AND (piInitA101_TotalKids > 0)) OR
+        ((E046_NumGKids > 0) AND (E046_NumGKids < 81))
+          OR ((piHHX024_ReIwHH_V = YES) AND (piInitA101_TotalKids > 0)) OR
+        ((E046_NumGKids > 0) AND (E046_NumGKids < 81)))
+         AND (E073_DeedtoKid = YES
+          OR E073_DeedtoKid = YES
+          OR E073_DeedtoKid = YES)
+         AND (piInitA101_TotalKids > 0
+          OR piInitA101_TotalKids > 0
+          OR piInitA101_TotalKids > 0)
+         AND (E127_E074MTemp <> NONRESPONSE
+          OR NOT (E127_E074MTemp <> NONRESPONSE)
+          OR NOT (E127_E074MTemp <> NONRESPONSE))
+         AND (E127_E074MTemp = DONTKNOW
+          OR NOT (E127_E074MTemp = DONTKNOW)
+          OR cnt <= E127_E074MTemp.CARDINAL)
+         AND (E127_E074MTemp = REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE074M1    WHICH CHILD ON DEED-1
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         CAI: SecE.GrandKids.E074_[1]
+
+        Which child was that?
+
+        [IWER: CHOOSE ALL THAT APPLY]
+
+        IF GRANDCHILD:
+        (Which of  R's FIRST NAME's  children is the parent of that grandchild?)
+        ..................................................................................
+           59                 041-990. Other Person Number
+                                  992. DECEASED CHILD
+           13                     993. ALL CHILDREN
+                                  997. OTHER (SPECIFY)
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1155                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND (((piHHX024_ReIwHH_V = YES) AND (piInitA101_TotalKids > 0)) OR
+        ((E046_NumGKids > 0) AND (E046_NumGKids < 81))
+          OR ((piHHX024_ReIwHH_V = YES) AND (piInitA101_TotalKids > 0)) OR
+        ((E046_NumGKids > 0) AND (E046_NumGKids < 81))
+          OR ((piHHX024_ReIwHH_V = YES) AND (piInitA101_TotalKids > 0)) OR
+        ((E046_NumGKids > 0) AND (E046_NumGKids < 81)))
+         AND (E073_DeedtoKid = YES
+          OR E073_DeedtoKid = YES
+          OR E073_DeedtoKid = YES)
+         AND (piInitA101_TotalKids > 0
+          OR piInitA101_TotalKids > 0
+          OR piInitA101_TotalKids > 0)
+         AND (E127_E074MTemp <> NONRESPONSE
+          OR NOT (E127_E074MTemp <> NONRESPONSE)
+          OR NOT (E127_E074MTemp <> NONRESPONSE))
+         AND (E127_E074MTemp = DONTKNOW
+          OR NOT (E127_E074MTemp = DONTKNOW)
+          OR cnt <= E127_E074MTemp.CARDINAL)
+         AND (E127_E074MTemp = REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE074M2    WHICH CHILD ON DEED-2
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         CAI: SecE.GrandKids.E074_[2]
+
+        Which child was that?
+
+        [IWER: CHOOSE ALL THAT APPLY]
+
+        IF GRANDCHILD:
+        (Which of  R's FIRST NAME's  children is the parent of that grandchild?)
+        ..................................................................................
+            6                 041-990. Other Person Number
+                                  992. DECEASED CHILD
+                                  993. ALL CHILDREN
+            1                     997. OTHER (SPECIFY)
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1220                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Assign:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)
+          OR ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam = FINANCIAL_FAMILYR)
+          OR (piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES)
+          OR (((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND ((piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81))
+          OR (piInitA101_TotalKids > 0) OR ((E046_NumGKids > 0) AND (E046_NumGKids <
+        81)))
+         AND (((piHHX024_ReIwHH_V = YES) AND (piInitA101_TotalKids > 0)) OR
+        ((E046_NumGKids > 0) AND (E046_NumGKids < 81))
+          OR ((piHHX024_ReIwHH_V = YES) AND (piInitA101_TotalKids > 0)) OR
+        ((E046_NumGKids > 0) AND (E046_NumGKids < 81))
+          OR ((piHHX024_ReIwHH_V = YES) AND (piInitA101_TotalKids > 0)) OR
+        ((E046_NumGKids > 0) AND (E046_NumGKids < 81)))
+         AND (E073_DeedtoKid = YES
+          OR E073_DeedtoKid = YES
+          OR E073_DeedtoKid = YES)
+         AND (piInitA101_TotalKids > 0
+          OR piInitA101_TotalKids > 0
+          OR piInitA101_TotalKids > 0)
+         AND (E127_E074MTemp <> NONRESPONSE
+          OR NOT (E127_E074MTemp <> NONRESPONSE)
+          OR NOT (E127_E074MTemp <> NONRESPONSE))
+         AND (E127_E074MTemp = DONTKNOW
+          OR NOT (E127_E074MTemp = DONTKNOW)
+          OR cnt <= E127_E074MTemp.CARDINAL)
+         AND (E127_E074MTemp = REFUSAL)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE074M3    WHICH CHILD ON DEED-3
+         Section: E     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         CAI: SecE.GrandKids.E074_[3]
+
+        Which child was that?
+
+        [IWER: CHOOSE ALL THAT APPLY]
+
+        IF GRANDCHILD:
+        (Which of  R's FIRST NAME's  children is the parent of that grandchild?)
+        ..................................................................................
+                              041-990. Other Person Number
+                                  992. DECEASED CHILD
+                                  993. ALL CHILDREN
+                                  997. OTHER (SPECIFY)
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1227                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND (((GrandKids.E049_ = 1) OR (piInitA101_TotalKids > 0)) OR
+        ((GrandKids.E046_NumGKids > 0) AND (GrandKids.E046_NumGKids < 81)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE075      SINCE PREV WAVE TRANSFER TO KIDS
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecE.KidTransMain.E075_
+
+        Including help with education but not shared housing or shared food [or any
+        deed to a house], [[since[Last IW Month], [PREV WAVE IW YEAR OF FAMILY
+        R]/since [PREV WAVE IW YEAR OF FAMILY R]/in the last two years before /her/his
+        death]] did [FIRST NAME OF INDIVIDUAL] (or [you/[his/her]
+        [husband/wife/partner]]) give financial help totaling $500 or more to
+        ((her/his) child /any of (her/his) children) (or grandchildren)?
+
+        DEF: (By financial help we mean giving money, helping pay bills, or covering
+        specific types of costs such as those for medical care OR insurance,
+        schooling, down payment for a home, rent, etc. The financial help can be
+        considered support, a gift or a loan.) INTERVIEWER: INCLUDE ONLY HELP GIVEN
+        BEFORE R'S DEATH
+
+        User Note: The Follow-up questions to TE075 are located in the Transfer to
+        Child file (x04E_TC).
+        ..................................................................................
+          235           1. YES
+          823           5. NO
+           24           8. DK (Don't Know); NA (Not Ascertained)
+            4           9. RF (Refused)
+          141       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST))
+         AND ((piRTab1X007AFinFam = FAMILYR) OR (piRTab1X007AFinFam =
+        FINANCIAL_FAMILYR))
+         AND ((((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)) OR
+        (piInitA101_TotalKids > 0)) OR (KidStatus.E022_NumNewGKids <> YES))
+         AND (((GrandKids.E049_ = 1) OR (piInitA101_TotalKids > 0)) OR
+        ((GrandKids.E046_NumGKids > 0) AND (GrandKids.E046_NumGKids < 81)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TE087      TRANSFER FROM KIDS- PAST 2YRS
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecE.KidTransMain.E087_
+
+        [Since  R’s LAST IW MONTH, YEAR/In the last two years before [his/her] death]
+        did [he/she] (or [you/[his/her] [husband/wife/partner]])  receive financial
+        help totaling $500 or more from any of [his/her] children (or grandchildren)?
+
+        DEF: (By financial help we mean giving money, helping pay bills, or covering
+        specific types of costs such as those for medical care OR insurance,
+        schooling, down payment for a home, rent, etc. The financial help can be
+        considered support, a gift or a loan.)
+
+        User Note: The Follow-up questions to TE087 are located in the Transfer From
+        Child file (x04E_FC).
+        ..................................................................................
+          118           1. YES
+          951           5. NO
+           13           8. DK (Don't Know); NA (Not Ascertained)
+            4           9. RF (Refused)
+          141       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+TVDATE     2004 DATA MODEL VERSION
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+
+        User Note:  This variable identifies which data model was used to interview
+        the household.  Please reference the data description for a summary of changes
+        in each data model.
+        ..................................................................................
+           14           1. Version 1
+           79           2. Version 2
+          153           3. Version 3
+          150           4. Version 4
+           92           5. Version 5
+          200           6. Version 6
+          515           7. Version 7
+           24           8. Version 8
+
+==========================================================================================
+
+TVERSION   2004 EXIT FINAL RELEASE VERSION NUMBER
+         Section: E     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+         1227           1. HRS 2004 Exit Final Release #1
+

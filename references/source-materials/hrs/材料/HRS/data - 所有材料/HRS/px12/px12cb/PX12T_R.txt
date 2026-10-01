@@ -1,0 +1,2574 @@
+==========================================================================================
+
+HRS 2012 Post Exit (Final Release)
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section T: WILLS AND LIFE INSURANCE  (Respondent)
+
+==========================================================================================
+
+HHID           HOUSEHOLD IDENTIFICATION NUMBER
+         Section: T     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+           150           010568-500295.  Household Identifier
+
+
+==========================================================================================
+
+PN             RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+            86         010.  Person Identifier
+             3         011.  Person Identifier
+             1         012.  Person Identifier
+            48         020.  Person Identifier
+             5         030.  Person Identifier
+             1         031.  Person Identifier
+             6         040.  Person Identifier
+
+
+==========================================================================================
+
+XPSUBHH        2012 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: T     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           145           3.  1st deceased respondent from a household
+             5           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+MSUBHH         2010 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+         Section: T     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           145           3.  1st deceased respondent from a household
+             5           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+XPPN_SP        2012 SPOUSE PERSON IDENTIFICATION NUMBER
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+            13         010.  Person Identifier
+            14         011.  Person Identifier
+            14         020.  Person Identifier
+             6         021.  Person Identifier
+             2         030.  Person Identifier
+             1         041.  Person Identifier
+           100       Blank.  No Spouse
+
+
+==========================================================================================
+
+XPEXITIW       YEAR OF EXIT INTERVIEW
+         Section: T     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+
+         .................................................................................
+            20        2008.  Year of Exit Interview
+           130        2010.  Year of Exit Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.T047_AssistT 
+
+         IF ((((piRvarsZ145_TypeExit_V = NEWPOSTEXIT) OR (piRvarsZ145_TypeExit_V = 
+         FIRSTREPEATPOST)) OR (piRvarsZ145_TypeExit_V = SECREPEATPOST)) AND 
+         ((piRvarsZ146_HomeWillTrust_V = ASKABTHOMEONLY) OR (piRvarsZ146_HomeWillTrust_V 
+         = ASKBTHHOMEANDWILL_TRUST))) OR (((((piRvarsZ145_TypeExit_V <> NEWPOSTEXIT) AND 
+         (piRvarsZ145_TypeExit_V <> FIRSTREPEATPOST)) AND (piRvarsZ145_TypeExit_V <> 
+         SECREPEATPOST)) AND (piSecAStartInterviewA007TRAlive_A = NO)) AND 
+         (piHHX079_OwnRent_V = OWN)) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT101         EX R OWN MAIN RESIDENCE WHEN DIED
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T101_OwnedMainRes
+
+         Our records show that [/you and] [R's First Name] [/and [her/his] [husband/
+         wife/partner]] owned a home in [City, State] in [FIN R's LAST IW MONTH, YEAR/the
+         last two years].
+         
+         Please, let me confirm, did [R's First Name] still own that home when [she/he]
+         died?
+
+         .................................................................................
+           106           1.  YES
+             2           2.  [VOL]RECORDS INCORRECT
+             1           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+            40       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T101_OwnedMainRes 
+
+         IF (SecT.EXITHOUSE.T101_OwnedMainRes = NO) OR (SecT.EXITHOUSE.T101_OwnedMainRes 
+         = RECORDSINCORRECT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT066         EX EVER OWN MAIN RESIDENCE
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T066_EvrOwnedMainRes
+
+         Did [R's First Name] ever own it?
+
+         .................................................................................
+             2           1.  YES
+             1           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           147       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T066_EvrOwnedMainRes 
+
+         IF SecT.EXITHOUSE.T066_EvrOwnedMainRes = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT102         EX WHAT HAPPENED MAIN RESIDENCE - 1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T102_DispoMainRes
+
+         What happened to that home -- did [R's First Name] sell it, give it to someone,
+         or what?
+
+         .................................................................................
+                         1.  GAVE TO SOMEONE
+             1           2.  SOLD
+                         7.  OTHER
+                         8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+           148       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T103_ 
+
+         IF (SecT.EXITHOUSE.T102_DispoMainRes = GAVETOSOMEONE) OR 
+         (SecT.EXITHOUSE.T102_DispoMainRes = SOLD) THEN 
+
+         IF SecT.EXITHOUSE.T102_DispoMainRes = GAVETOSOMEONE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT104M1       EX MAIN RESIDENCE GAVE TO RELATIVE - 1 -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T104_GaveMainRes[1]
+
+         To whom did [she/he] give the house, that is, what was their relationship to
+         [First Name]?
+         
+         CHOOSE all that apply
+
+         .................................................................................
+                         1.  SPOUSE/PARTNER
+                         2.  CHILD/CHILD-IN-LAW
+                         3.  OTHER RELATIVE
+                         4.  FRIEND
+                         5.  CHARITY
+                         6.  GRANDCHILD
+                         7.  SOMEONE ELSE
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+XPT105M1       EX MAIN RESIDENCE WHICH CHILD - 1 -1
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecT.EXITHOUSE.T105_[1]
+
+         (Which child is that?)
+         
+         IWER: CHOOSE ALL THAT APPLY
+
+         .................................................................................
+                               041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           150                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T103_ 
+
+         IF (SecT.EXITHOUSE.T102_DispoMainRes = GAVETOSOMEONE) OR 
+         (SecT.EXITHOUSE.T102_DispoMainRes = SOLD) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT107         EX MAIN RESIDENCE VALUE - 1
+         Section: T     Level: Respondent      Type: Numeric    Width: 7   Decimals: 0
+         Ref: SecT.EXITHOUSE.T107_MainResValue
+
+         What was the [selling price?/value of that house? I mean, what would it have
+         brought if it had been sold?]
+         
+         Do not probe DK/RF
+
+         .................................................................................
+             1     9999998.  DK (Don't Know); NA (Not Ascertained)
+                   9999999.  RF (Refused)
+           149       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T108_ :=  EMPTY:{PREVIOUS ASK} SecT.EXITHOUSE.T107_MainResValue 
+         IF SecT.EXITHOUSE.T107_MainResValue <> EMPTY AND 
+         SecT.EXITHOUSE.T107_MainResValue <> NONRESPONSE THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT108         EX VALUE MAIN RESIDENCE VALUE - MIN - 1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T108_
+
+         Did it amount to a total of less than $____ , more than $____ , or what?
+         
+         PROCEDURES: 1Up1Down, 2Down
+         BREAKPOINTS: $15,000, $50,000, $200,000
+         RANDOM ENTRY POINTS:  $50,000, $200,000
+         ENTRY POINT ASSIGNMENT 1 or {NOT 1} AT X502
+
+         .................................................................................
+             1           0.  Value of Breakpoint
+           149       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T109_ :=  EMPTY:{PREVIOUS ASK} SecT.EXITHOUSE.T107_MainResValue 
+         IF SecT.EXITHOUSE.T107_MainResValue <> EMPTY AND 
+         SecT.EXITHOUSE.T107_MainResValue <> NONRESPONSE THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT109         EX VALUE MAIN RESIDENCE VALUE - MAX - 1
+         Section: T     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecT.EXITHOUSE.T109_
+
+         *
+
+         .................................................................................
+             1    99999996.  Greater than Maximum Breakpoint
+           149       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T110_ :=  EMPTY:{PREVIOUS ASK} SecT.EXITHOUSE.T107_MainResValue 
+         IF SecT.EXITHOUSE.T107_MainResValue <> EMPTY AND 
+         SecT.EXITHOUSE.T107_MainResValue <> NONRESPONSE THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT110         EX VALUE MAIN RESIDENCE VALUE - RESULT - 1
+         Section: T     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecT.EXITHOUSE.T110_
+
+         *
+
+         .................................................................................
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           149       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T066_EvrOwnedMainRes 
+
+         IF SecT.EXITHOUSE.T101_OwnedMainRes = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT111         EX WHAT HAPPENED MAIN RESIDENCE - 2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T111_DispMainRes2
+
+         What happened to that home after [R's First Name]'s death:
+         [Do you own it now, w/ Does [her/his] [husband/wife/partner] own it now, w/ W]
+         as it sold, was it inherited by someone else, has it not yet been disposed of,
+         or what?
+
+         .................................................................................
+             6           1.  SURVIVING SPOUSE OR PARTNER STILL OWNS IT
+            40           2.  SOLD
+            29           3.  INHERITED
+            18           4.  NOT YET DISPOSED
+             2           6.  Home was foreclosed
+             4           7.  OTHER SPECIFY
+             5           8.  DK (Don't Know); NA (Not Ascertained)
+             2           9.  RF (Refused)
+            44       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T112_ 
+
+         IF SecT.EXITHOUSE.T111_DispMainRes2 = INHERITED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT113M1       EX MAIN RESIDENCE GAVE TO RELATIVE - 2 -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T113_GaveMainRes2[1]
+
+         Who inherited the house, (that is, what was their relationship to [First Name])?
+         
+         CHOOSE all that apply
+
+         .................................................................................
+             2           1.  SPOUSE/PARTNER
+            18           2.  CHILD/CHILD-IN-LAW
+             1           3.  OTHER RELATIVE
+                         4.  FRIEND
+                         5.  CHARITY
+             2           6.  GRANDCHILD
+             3           7.  SOMEONE ELSE
+             3           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           121       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T112_ 
+
+         IF SecT.EXITHOUSE.T111_DispMainRes2 = INHERITED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT113M2       EX MAIN RESIDENCE GAVE TO RELATIVE - 2 -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T113_GaveMainRes2[2]
+
+         Who inherited the house, (that is, what was their relationship to [First Name])?
+         
+         CHOOSE all that apply
+
+         .................................................................................
+                         1.  SPOUSE/PARTNER
+                         2.  CHILD/CHILD-IN-LAW
+                         3.  OTHER RELATIVE
+                         4.  FRIEND
+                         5.  CHARITY
+                         6.  GRANDCHILD
+                         7.  SOMEONE ELSE
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T114_[1] :=  DONTKNOW:{PREVIOUS ASK} SecT.EXITHOUSE.T055_T114MTemp 
+         IF NOT(SecT.EXITHOUSE.T055_T114MTemp <> NONRESPONSE) THEN 
+         IF SecT.EXITHOUSE.T055_T114MTemp = DONTKNOW THEN 
+         ASSIGN: T114_[1] :=  REFUSAL:{PREVIOUS ASK} SecT.EXITHOUSE.T055_T114MTemp 
+         IF NOT(SecT.EXITHOUSE.T055_T114MTemp <> NONRESPONSE) THEN 
+         IF NOT(SecT.EXITHOUSE.T055_T114MTemp = DONTKNOW) THEN 
+         IF SecT.EXITHOUSE.T055_T114MTemp = REFUSAL THEN 
+         ASSIGN: T114_[cnt] := aArrayInteger[T055_T114MTemp[cnt.ORD]:{PREVIOUS ASK} 
+         SecT.EXITHOUSE.T055_T114MTemp 
+         IF SecT.EXITHOUSE.T055_T114MTemp <> NONRESPONSE THEN 
+         IF SecT.EXITHOUSE.cnt <= T055_T114MTemp.CARDINAL THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT114M1       EX MAIN RESIDENCE WHICH CHILD - 2 -1
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecT.EXITHOUSE.T114_[1]
+
+         (Which child is that?)
+         
+         IWER: CHOOSE ALL THAT APPLY
+
+         .................................................................................
+             7                 041-990.  Other Person Number
+             2                     992.  DECEASED CHILD
+            11                     993.  ALL CHILDREN
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           130                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T114_[1] :=  DONTKNOW:{PREVIOUS ASK} SecT.EXITHOUSE.T055_T114MTemp 
+         IF NOT(SecT.EXITHOUSE.T055_T114MTemp <> NONRESPONSE) THEN 
+         IF SecT.EXITHOUSE.T055_T114MTemp = DONTKNOW THEN 
+         ASSIGN: T114_[1] :=  REFUSAL:{PREVIOUS ASK} SecT.EXITHOUSE.T055_T114MTemp 
+         IF NOT(SecT.EXITHOUSE.T055_T114MTemp <> NONRESPONSE) THEN 
+         IF NOT(SecT.EXITHOUSE.T055_T114MTemp = DONTKNOW) THEN 
+         IF SecT.EXITHOUSE.T055_T114MTemp = REFUSAL THEN 
+         ASSIGN: T114_[cnt] := aArrayInteger[T055_T114MTemp[cnt.ORD]:{PREVIOUS ASK} 
+         SecT.EXITHOUSE.T055_T114MTemp 
+         IF SecT.EXITHOUSE.T055_T114MTemp <> NONRESPONSE THEN 
+         IF SecT.EXITHOUSE.cnt <= T055_T114MTemp.CARDINAL THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT114M2       EX MAIN RESIDENCE WHICH CHILD - 2 -2
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecT.EXITHOUSE.T114_[2]
+
+         (Which child is that?)
+         
+         IWER: CHOOSE ALL THAT APPLY
+
+         .................................................................................
+                               041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           150                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T111_DispMainRes2 
+
+         IF (SecT.EXITHOUSE.T111_DispMainRes2 = SOLD) OR 
+         (SecT.EXITHOUSE.T111_DispMainRes2 = INHERITED) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT116         EX MAIN RESIDENCE VALUE - 2
+         Section: T     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecT.EXITHOUSE.T116_MainResValue2
+
+         What was the [selling price?/value of that house? I mean, what would it have
+         brought if it had been sold?]
+         
+         Do not probe DK/RF
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             40    12000      750000     147187.50     149457.30      81
+         -----------------------------------------------------------------
+            22      999998.  DK (Don't Know); NA (Not Ascertained)
+             7      999999.  RF (Refused)
+
+
+==========================================================================================
+
+         ASSIGN: T117_ :=  EMPTY:{PREVIOUS ASK} SecT.EXITHOUSE.T116_MainResValue2 
+         IF SecT.EXITHOUSE.T116_MainResValue2 <> EMPTY AND 
+         SecT.EXITHOUSE.T116_MainResValue2 <> NONRESPONSE THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT117         EX MAIN RESIDENCE VALUE - 2 MIN - 2
+         Section: T     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecT.EXITHOUSE.T117_
+
+         Did it amount to a total of less than $____ , more than $____ , or what?
+         
+         PROCEDURES: 1Up1Down, 2Down
+         BREAKPOINTS: $15,000, $50,000, $200,000
+         RANDOM ENTRY POINTS:  $50,000, $200,000
+         ENTRY POINT ASSIGNMENT 1 or {NOT 1} AT X503
+
+         .................................................................................
+             8           0.  Value of Breakpoint
+             2       15000.  Value of Breakpoint
+             3       15001.  Value of Breakpoint
+             7       50001.  Value of Breakpoint
+             1      200001.  Value of Breakpoint
+           129       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T118_ :=  EMPTY:{PREVIOUS ASK} SecT.EXITHOUSE.T116_MainResValue2 
+         IF SecT.EXITHOUSE.T116_MainResValue2 <> EMPTY AND 
+         SecT.EXITHOUSE.T116_MainResValue2 <> NONRESPONSE THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT118         EX MAIN RESIDENCE VALUE - 2 MAX - 2
+         Section: T     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecT.EXITHOUSE.T118_
+
+         *
+
+         .................................................................................
+             1       14999.  Value of Breakpoint
+             2       15000.  Value of Breakpoint
+             3       49999.  Value of Breakpoint
+             8      199999.  Value of Breakpoint
+             7    99999996.  Greater than Maximum Breakpoint
+           129       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T119_ :=  EMPTY:{PREVIOUS ASK} SecT.EXITHOUSE.T116_MainResValue2 
+         IF SecT.EXITHOUSE.T116_MainResValue2 <> EMPTY AND 
+         SecT.EXITHOUSE.T116_MainResValue2 <> NONRESPONSE THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT119         EX MAIN RESIDENCE VALUE - 2 RESULT - 2
+         Section: T     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecT.EXITHOUSE.T119_
+
+         *
+
+         .................................................................................
+             8          97.  Data Not Available
+             4          98.  DK (Don't Know); NA (Not Ascertained)
+             4          99.  RF (Refused)
+           134       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T116_MainResValue2 
+
+         IF SecT.EXITHOUSE.T111_DispMainRes2 = NOTYETDISPOSED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT120         EX MAIN RESIDENCE - OCCUPIED
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T120_
+
+         Is that home now vacant, or is someone living there?
+
+         .................................................................................
+            10           1.  VACANT
+             7           5.  OCCUPIED
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           133       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T120_ 
+
+         IF SecT.EXITHOUSE.T120_ = OCCUPIED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT121M1       EX MAIN RESIDENCE - WHO OCCUPIED -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T121_[1]
+
+         Who lives in the house, (that is, what was their relationship to [First Name])?
+         
+         CHOOSE all that apply
+
+         .................................................................................
+                         1.  SPOUSE/PARTNER
+             1           2.  CHILD/CHILD-IN-LAW
+             1           3.  OTHER RELATIVE
+                         4.  FRIEND
+                         5.  CHARITY
+             2           6.  GRANDCHILD
+             2           7.  SOMEONE ELSE
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           144       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITHOUSE.T120_ 
+
+         IF SecT.EXITHOUSE.T120_ = OCCUPIED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT121M2       EX MAIN RESIDENCE - WHO OCCUPIED -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITHOUSE.T121_[2]
+
+         Who lives in the house, (that is, what was their relationship to [First Name])?
+         
+         CHOOSE all that apply
+
+         .................................................................................
+                         1.  SPOUSE/PARTNER
+                         2.  CHILD/CHILD-IN-LAW
+                         3.  OTHER RELATIVE
+                         4.  FRIEND
+                         5.  CHARITY
+                         6.  GRANDCHILD
+                         7.  SOMEONE ELSE
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T122_[1] :=  DONTKNOW:{PREVIOUS ASK} SecT.EXITHOUSE.T056_T122MTemp 
+         IF NOT(SecT.EXITHOUSE.T056_T122MTemp <> NONRESPONSE) THEN 
+         IF SecT.EXITHOUSE.T056_T122MTemp = DONTKNOW THEN 
+         ASSIGN: T122_[1] :=  REFUSAL:{PREVIOUS ASK} SecT.EXITHOUSE.T056_T122MTemp 
+         IF NOT(SecT.EXITHOUSE.T056_T122MTemp <> NONRESPONSE) THEN 
+         IF NOT(SecT.EXITHOUSE.T056_T122MTemp = DONTKNOW) THEN 
+         IF SecT.EXITHOUSE.T056_T122MTemp = REFUSAL THEN 
+         ASSIGN: T122_[cnt] := aArrayInteger[T056_T122MTemp[cnt.ORD]:{PREVIOUS ASK} 
+         SecT.EXITHOUSE.T056_T122MTemp 
+         IF SecT.EXITHOUSE.T056_T122MTemp <> NONRESPONSE THEN 
+         IF SecT.EXITHOUSE.cnt <= T056_T122MTemp.CARDINAL THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT122M1       EX WHICH CHILD HOUSE-1 -1
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecT.EXITHOUSE.T122_[1]
+
+         (Which child is that?)
+         
+         IWER: CHOOSE ALL THAT APPLY
+
+         .................................................................................
+             1                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+             2                     997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           147                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T122_[1] :=  DONTKNOW:{PREVIOUS ASK} SecT.EXITHOUSE.T056_T122MTemp 
+         IF NOT(SecT.EXITHOUSE.T056_T122MTemp <> NONRESPONSE) THEN 
+         IF SecT.EXITHOUSE.T056_T122MTemp = DONTKNOW THEN 
+         ASSIGN: T122_[1] :=  REFUSAL:{PREVIOUS ASK} SecT.EXITHOUSE.T056_T122MTemp 
+         IF NOT(SecT.EXITHOUSE.T056_T122MTemp <> NONRESPONSE) THEN 
+         IF NOT(SecT.EXITHOUSE.T056_T122MTemp = DONTKNOW) THEN 
+         IF SecT.EXITHOUSE.T056_T122MTemp = REFUSAL THEN 
+         ASSIGN: T122_[cnt] := aArrayInteger[T056_T122MTemp[cnt.ORD]:{PREVIOUS ASK} 
+         SecT.EXITHOUSE.T056_T122MTemp 
+         IF SecT.EXITHOUSE.T056_T122MTemp <> NONRESPONSE THEN 
+         IF SecT.EXITHOUSE.cnt <= T056_T122MTemp.CARDINAL THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT122M2       EX WHICH CHILD HOUSE-1 -2
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecT.EXITHOUSE.T122_[2]
+
+         (Which child is that?)
+         
+         IWER: CHOOSE ALL THAT APPLY
+
+         .................................................................................
+                               041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           150                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.T047_AssistT 
+
+         IF ((piSecAStartInterviewA007TRAlive_A = NO) AND NOT (piRvarsZ145_TypeExit_V IN 
+         [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST])) OR ((piRvarsZ145_TypeExit_V IN 
+         [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND 
+         ((piRvarsZ146_HomeWillTrust_V = ASKABTWILL_TRUSTONLY) OR 
+         (piRvarsZ146_HomeWillTrust_V = ASKBTHHOMEANDWILL_TRUST))) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT155         EX ASSETS INTO TRUST
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T155_
+
+         Sometimes people make provisions to leave things to specific family members if
+         something happens to them, others do not. Because we are trying to get a
+         complete picture of family situations, I have a few questions about inheritance.
+         
+         Before [her/his] death, had [R's First Name] put any of [her/his] assets into a
+         trust?
+
+         .................................................................................
+             4           1.  YES
+            54           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+            92       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T155_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT156         EX WILL
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T156_HaveWill
+
+         [In addition to the trust, did/Did] [R's First Name] have a will that was
+         written and witnessed?
+
+         .................................................................................
+            54           1.  YES
+             4           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+            92       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T156_HaveWill 
+
+         IF SecT.EXITWILLANDDEATH.T156_HaveWill = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT157         EX WILL PROBATED
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T157_WillProbated
+
+         Has [her/his] will been probated?
+
+         .................................................................................
+            31           1.  YES
+             6           2.  NO: PROBATE NOT NEEDED
+             1           3.  VOL: NO: NO ASSETS REMAINED TO BE PROBATED
+             2           4.  VOL: NO: ALL ASSETS WERE HELD IN JOINT TENANCY OR IN A TRUST
+            13           5.  NO
+                         7.  [VOL] R DISPUTES RECORD
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+            96       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T157_WillProbated 
+
+         IF SecT.EXITWILLANDDEATH.T157_WillProbated = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT158M        EX STATE PROBATED-MASKED
+         Section: T     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T158_StateProbate
+
+         In what state was it probated?
+         
+         State:
+         
+         County:
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+             1           1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+             7           2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+             3           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+             4           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+             5           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+             4           6.  South Region: East South Central Division (KY, TN, AL, MS)
+             2           7.  South Region: West South Central Division (AR, LA, OK, TX)
+                         8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+             1           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+                        10.  U.S., NA state
+                        11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+                        96.  Same State (see questionnaire)
+                        97.  OTHER COUNTRY
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (refused)
+           123       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T156_HaveWill 
+
+         IF (SecT.EXITWILLANDDEATH.T155_ <> YES) AND 
+         (SecT.EXITWILLANDDEATH.T157_WillProbated <> YES) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT161         EX HAPPENED TO ESTATE
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T161_
+
+         The next questions are about [R's First Name]'s assets and possessions,
+         excluding any life insurance. Have they been divided up among the heirs, have
+         they not yet been distributed, was there nothing of much value to distribute, or
+         what?
+
+         .................................................................................
+            15           1.  DIVIDED AMONG THE HEIRS, OR RETAINED BY THOSE WITH JOINT
+                             TENANCY
+             7           2.  NOT YET DISTRIBUTED
+             2           3.  NOTHING MUCH OF VALUE
+             1           7.  OTHER (SPECIFY)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           125       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T156_HaveWill 
+
+         IF (((SecT.EXITWILLANDDEATH.T155_ = YES) OR 
+         (SecT.EXITWILLANDDEATH.T157_WillProbated = YES)) OR 
+         (SecT.EXITWILLANDDEATH.T161_ = DIVIDED)) OR (SecT.EXITWILLANDDEATH.T161_ = 
+         OTHERSPECIFY) THEN 
+
+         IF (piRespondents1X065ACouplenss = MARRIED) OR (piRespondents1X065ACouplenss = 
+         PARTNERED_VOL) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT163         EX WILL/INS PROVIDE - SPOUSE/PARTNER
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T163_WillSpouseP
+
+         [Did [she/he] make provisions in [either the trust or the will/the trust/the
+         will] for]/Were any of [her/his] possessions or assets left to] [you?/[her/his]
+         [husband/wife/partner]?]
+
+         .................................................................................
+             2           1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           148       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T163_WillSpouseP 
+
+         IF SecT.EXITWILLANDDEATH.T163_WillSpouseP = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9002        EX WILL/INS AMOUNT - INDIVIDUAL -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 7   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T902_WillInsAmt
+
+         [Excluding any life insurance, [how much did you receive/how much did [her/his]
+         [husband/wife/partner] receive] from [her/his] estate?]
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+             2           0.  Actual Value
+                   9999998.  DK (Don't Know); NA (Not Ascertained)
+                   9999999.  RF (Refused)
+           148       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_1.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_1.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9003        EX WILL/INS PERCENT - INDIVIDUAL -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T903_WillInsPercent
+
+         [Excluding any life insurance, [how much did you receive/how much did [her/his]
+         [husband/wife/partner] receive] from [her/his] estate?]
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount:
+         Percent:
+
+         .................................................................................
+                       998.  DK (Don't Know); NA (Not Ascertained)
+                       999.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_1.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_1.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_1.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9004        EX MORE THAN HALF -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T904_Half
+
+         Was it more than half of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_1.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_1.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9005        EX MORE THAN 75 PERCENT -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T905_More75
+
+         Was it more than 75 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_1.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_1.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9006        EX MORE THAN 90 PERCENT -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T906_More90
+
+         Was it more than 90 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_1.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_1.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9007        EX MORE THAN 25 PERCENT -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T907_More25
+
+         Was it more than 25 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_1.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_1.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9008        EX MORE THAN 10 PERCENT -1
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_1.T908_More10
+
+         Was it more than 10 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T156_HaveWill 
+
+         IF (((SecT.EXITWILLANDDEATH.T155_ = YES) OR 
+         (SecT.EXITWILLANDDEATH.T157_WillProbated = YES)) OR 
+         (SecT.EXITWILLANDDEATH.T161_ = DIVIDED)) OR (SecT.EXITWILLANDDEATH.T161_ = 
+         OTHERSPECIFY) THEN 
+
+         IF (piInitA101_TotalKids > 0) OR ((piE046orZ114_NumGKids > 0) AND 
+         (piE046orZ114_NumGKids < 81)) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT164         EX WILL PROVIDE - CHILD/FAMILY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T164_WillChildren
+
+         (Again,) excluding any life insurance, [did [she/he] make provisions in [either
+         the trust or the will/the trust/the will] for]/were any of [her/his] possessions
+         or assets left to] any of [her/his] [children or grandchildren (or
+         great-grandchildren)?/children?/grandchildren (or great-grandchildren)?]
+
+         .................................................................................
+             8           1.  YES
+            26           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           116       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T164_WillChildren 
+
+         IF SecT.EXITWILLANDDEATH.T164_WillChildren = YES THEN 
+
+         IF piInitA101_TotalKids > 1 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT165         EX WILL SAME AMT - CHILD/FAMILY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T165_WillSameAmtChld
+
+         Did [R's First Name]'s will provide equally for all of [her/his] children and
+         their families?
+         
+         IWER:  We are interested in the total amount given to each of R's children and
+         their spouses and children.
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T166_WillSameAmtGChld := YES:{PREVIOUS ASK} 
+         SecT.EXITWILLANDDEATH.T165_WillSameAmtChld 
+         IF (piE046orZ114_NumGKids = 1) AND (piInitA101_TotalKids = 0) THEN 
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T165_WillSameAmtChld 
+         IF NOT((piE046orZ114_NumGKids = 1) AND (piInitA101_TotalKids = 0)) THEN 
+         IF (piE046orZ114_NumGKids > 1) AND (piInitA101_TotalKids = 0) THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT166         EX WILL SAME AMT - GRCHILDREN
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T166_WillSameAmtGChld
+
+         Did [she/he] leave the same amount to each of [her/his] grandchildren?
+
+         .................................................................................
+             7           1.  YES
+             1           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           142       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T164_WillChildren 
+
+         IF SecT.EXITWILLANDDEATH.T164_WillChildren = YES THEN 
+
+         IF (((piInitA101_TotalKids = 1) OR (SecT.EXITWILLANDDEATH.T165_WillSameAmtChld 
+         = YES)) OR (SecT.EXITWILLANDDEATH.T166_WillSameAmtGChld = RESPONSE)) OR 
+         SecT.EXITWILLANDDEATH.T166_WillSameAmtGChld = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9012        EX WILL/INS AMOUNT - INDIVIDUAL -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T902_WillInsAmt
+
+         [Altogether, how much did [he/she] leave for his (his/her) [children and their
+         families/child and (his/her) family/(grandchild/grandchildren)]]?
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+             6                0-500000.  Actual Value
+             1                  999998.  DK (Don't Know); NA (Not Ascertained)
+             1                  999999.  RF (Refused)
+           142                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_2.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_2.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9013        EX WILL/INS PERCENT - INDIVIDUAL -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T903_WillInsPercent
+
+         [Altogether, how much did [he/she] leave for his (his/her) [children and their
+         families/child and (his/her) family/(grandchild/grandchildren)]]?
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+                       998.  DK (Don't Know); NA (Not Ascertained)
+                       999.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_2.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_2.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_2.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9014        EX MORE THAN HALF -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T904_Half
+
+         Was it more than half of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+             1           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           148       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_2.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_2.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9015        EX MORE THAN 75 PERCENT -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T905_More75
+
+         Was it more than 75 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_2.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_2.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9016        EX MORE THAN 90 PERCENT -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T906_More90
+
+         Was it more than 90 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_2.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_2.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9017        EX MORE THAN 25 PERCENT -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T907_More25
+
+         Was it more than 25 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+             1           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           149       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_2.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_2.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9018        EX MORE THAN 10 PERCENT -2
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_2.T908_More10
+
+         Was it more than 10 percent of [her/his] estate?
+
+         .................................................................................
+             1           1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           149       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+XPT9020_1      PNDX OF CHILD IF APPLICABLE -3
+         Section: T     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T900_
+
+         *
+
+         .................................................................................
+                               041-990.  Child Person Number
+           150                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T164_WillChildren 
+
+         IF SecT.EXITWILLANDDEATH.T164_WillChildren = YES THEN 
+
+         IF NOT((((piInitA101_TotalKids = 1) OR 
+         (SecT.EXITWILLANDDEATH.T165_WillSameAmtChld = YES)) OR 
+         (SecT.EXITWILLANDDEATH.T166_WillSameAmtGChld = RESPONSE)) OR 
+         SecT.EXITWILLANDDEATH.T166_WillSameAmtGChld = NONRESPONSE) THEN 
+
+         IF (SecT.EXITWILLANDDEATH.T165_WillSameAmtChld = NO) OR 
+         SecT.EXITWILLANDDEATH.T165_WillSameAmtChld = NONRESPONSE THEN 
+
+         IF SecT.EXITWILLANDDEATH.icurr <> 0 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9022_1      EX WILL/INS AMOUNT - INDIVIDUAL -3
+         Section: T     Level: Respondent      Type: Numeric    Width: 7   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T902_WillInsAmt
+
+         [(Excluding any life insurance,) how much did [she/he] leave for [Child Name]
+         and (his/her) family?]
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+                   9999998.  DK (Don't Know); NA (Not Ascertained)
+                   9999999.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9023_1      EX WILL/INS PERCENT - INDIVIDUAL -3
+         Section: T     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T903_WillInsPercent
+
+         [(Excluding /any life insurance,) how much did [she/he] leave for [Child Name]
+         and (his/her) family?]
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+                       998.  DK (Don't Know); NA (Not Ascertained)
+                       999.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9024_1      EX MORE THAN HALF -3
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T904_Half
+
+         Was it more than half of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9025_1      EX MORE THAN 75 PERCENT -3
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T905_More75
+
+         Was it more than 75 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9026_1      EX MORE THAN 90 PERCENT -3
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T906_More90
+
+         Was it more than 90 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9027_1      EX MORE THAN 25 PERCENT -3
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T907_More25
+
+         Was it more than 25 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_3[cnt].T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9028_1      EX MORE THAN 10 PERCENT -3
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_3[1].T908_More10
+
+         Was it more than 10 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T156_HaveWill 
+
+         IF (((SecT.EXITWILLANDDEATH.T155_ = YES) OR 
+         (SecT.EXITWILLANDDEATH.T157_WillProbated = YES)) OR 
+         (SecT.EXITWILLANDDEATH.T161_ = DIVIDED)) OR (SecT.EXITWILLANDDEATH.T161_ = 
+         OTHERSPECIFY) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT168         EX WILL PROVIDE - CHARITIES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T168_WillCharity
+
+         (Excluding any life insurance,) [did [she/he] make provisions in [either the
+         trust or the will/the trust/the will] for]/were any of [her/his] possessions or
+         assets left to] charities?
+
+         .................................................................................
+             8           1.  YES
+            38           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           103       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T168_WillCharity 
+
+         IF SecT.EXITWILLANDDEATH.T168_WillCharity = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9032        AMOUNT TRANSFER -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T902_WillInsAmt
+
+         [How much did charities receive from [her/his] estate?]
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+             3                0-100000.  Actual Value
+             5                  999998.  DK (Don't Know); NA (Not Ascertained)
+                                999999.  RF (Refused)
+           142                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_4.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_4.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9033        PERCENT TRANSFER -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T903_WillInsPercent
+
+         [How much did charities receive from [her/his] estate?]
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+                       998.  DK (Don't Know); NA (Not Ascertained)
+                       999.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_4.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_4.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_4.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9034        MORE THAN HALF ESTATE -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T904_Half
+
+         Was it more than half of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+             4           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           145       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_4.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_4.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9035        MORE THAN 75PCT ESTATE -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T905_More75
+
+         Was it more than 75 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_4.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_4.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9036        MORE THAN 90PCT ESTATE -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T906_More90
+
+         Was it more than 90 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_4.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_4.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9037        MORE THAN 25PCT ESTATE -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T907_More25
+
+         Was it more than 25 percent of [her/his] estate?
+
+         .................................................................................
+             1           1.  YES
+             3           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           146       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_4.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_4.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9038        MORE THAN 10PCT ESTATE -  CHARITY
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_4.T908_More10
+
+         Was it more than 10 percent of [her/his] estate?
+
+         .................................................................................
+             1           1.  YES
+             2           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           147       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T168_WillCharity 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT169         EX WILL PROVIDE - SIBLINGS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T169_WillSibs
+
+         (Excluding any life insurance,) [did [she/he] make provisions in [either the
+         trust or the will/the trust/the will] for]/were any of [her/his] possessions or
+         assets left to] any of [her/his] brothers or sisters?
+
+         .................................................................................
+             3           1.  YES
+            44           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           103       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T169_WillSibs 
+
+         IF SecT.EXITWILLANDDEATH.T169_WillSibs = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9042        AMOUNT TRANSFER - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T902_WillInsAmt
+
+         [Altogether, how much did [her/his] brothers and sisters receive from [her/his]
+         estate?]
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+             1       50000.  Actual Value
+             2       99998.  DK (Don't Know); NA (Not Ascertained)
+                     99999.  RF (Refused)
+           147       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_5.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_5.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9043        PERCENT TRANSFER - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T903_WillInsPercent
+
+         [Altogether, how much did [her/his] brothers and sisters receive from [her/his]
+         estate?]
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+                       998.  DK (Don't Know); NA (Not Ascertained)
+                       999.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_5.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_5.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_5.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9044        MORE THAN HALF ESTATE - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T904_Half
+
+         Was it more than half of [her/his] estate?
+
+         .................................................................................
+             1           1.  YES
+                         5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           148       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_5.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_5.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9045        MORE THAN 75PCT ESTATE - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T905_More75
+
+         Was it more than 75 percent of [her/his] estate?
+
+         .................................................................................
+             1           1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           149       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_5.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_5.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9046        MORE THAN 90PCT ESTATE - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T906_More90
+
+         Was it more than 90 percent of [her/his] estate?
+
+         .................................................................................
+             1           1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           149       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_5.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_5.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9047        MORE THAN 25PCT ESTATE - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T907_More25
+
+         Was it more than 25 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_5.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_5.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9048        MORE THAN 10PCT ESTATE - SIBS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_5.T908_More10
+
+         Was it more than 10 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T169_WillSibs 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT170         EX WILL PROVIDE - RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T170_WillRelative
+
+         (Excluding any life insurance,) [did [she/he] make provisions in [either the
+         trust or the will/the trust/the will] for]/Were any of [her/his] possessions or
+         assets left to] any other of [her/his] relatives?
+
+         .................................................................................
+            15           1.  YES
+            32           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           103       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T170_WillRelative 
+
+         IF SecT.EXITWILLANDDEATH.T170_WillRelative = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9052        AMOUNT TRANSFER - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T902_WillInsAmt
+
+         [Altogether, how much did these other relatives receive from [his/her] estate?]
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+             8            10000-300000.  Actual Value
+             3                  999998.  DK (Don't Know); NA (Not Ascertained)
+             3                  999999.  RF (Refused)
+           136                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_6.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_6.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9053        PERCENT TRANSFER - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T903_WillInsPercent
+
+         [Altogether, how much did these other relatives receive from [his/her] estate?] 
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount:
+         Percent:
+
+         .................................................................................
+             1          25.  Actual Value
+                       998.  DK (Don't Know); NA (Not Ascertained)
+                       999.  RF (Refused)
+           149       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_6.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_6.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_6.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9054        MORE THAN HALF ESTATE - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T904_Half
+
+         Was it more than half of [her/his] estate?
+
+         .................................................................................
+             3           1.  YES
+             3           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           144       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_6.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_6.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9055        MORE THAN 75PCT ESTATE - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T905_More75
+
+         Was it more than 75 percent of [her/his] estate?
+
+         .................................................................................
+             2           1.  YES
+             1           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           147       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_6.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_6.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9056        MORE THAN 90PCT ESTATE - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T906_More90
+
+         Was it more than 90 percent of [her/his] estate?
+
+         .................................................................................
+             2           1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           148       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_6.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_6.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9057        MORE THAN 25PCT ESTATE - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T907_More25
+
+         Was it more than 25 percent of [her/his] estate?
+
+         .................................................................................
+             3           1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           147       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_6.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_6.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9058        MORE THAN 10PCT ESTATE - OTHER RELATIVES
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_6.T908_More10
+
+         Was it more than 10 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T170_WillRelative 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT171         EX WILL PROVIDE - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T171_WillFriends
+
+         (Excluding any life insurance,) [did [she/he] make provisions in [either the
+         trust or the will/the trust/the will] for]/Were any of [her/his] possessions or
+         assets left to] any of [her/his] friends?
+
+         .................................................................................
+             2           1.  YES
+            45           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           103       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T171_WillFriends 
+
+         IF SecT.EXITWILLANDDEATH.T171_WillFriends = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9062        AMOUNT TRANSFER - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T902_WillInsAmt
+
+         [Altogether, how much did [her/his] friends receive from [her/his] estate?]
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+             2                 10-1000.  Actual Value
+                                  9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           148                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_7.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_7.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9063        PERCENT TRANSFER - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T903_WillInsPercent
+
+         [Altogether, how much did [her/his] friends receive from [her/his] estate?]
+         
+         IWER: ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER: DO NOT PROBE DK/RF 
+         
+         Amount: 
+         Percent:
+
+         .................................................................................
+                       998.  DK (Don't Know); NA (Not Ascertained)
+                       999.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_7.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_7.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_7.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9064        MORE THAN HALF ESTATE - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T904_Half
+
+         Was it more than half of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_7.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_7.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9065        MORE THAN 75PCT ESTATE - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T905_More75
+
+         Was it more than 75 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_7.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_7.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9066        MORE THAN 90PCT ESTATE - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T906_More90
+
+         Was it more than 90 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_7.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_7.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9067        MORE THAN 25PCT ESTATE - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T907_More25
+
+         Was it more than 25 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_7.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_7.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9068        MORE THAN 10PCT ESTATE - FRIENDS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_7.T908_More10
+
+         Was it more than 10 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T171_WillFriends 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT172         EX WILL PROVIDE - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T172_WillOthers
+
+         (Excluding any life insurance,) [did [she/he] make provisions in [either the
+         trust or the will/the trust/the will] for]/Were any of [her/his] possessions or
+         assets left to] anyone else or anything else that we have not yet listed?
+
+         .................................................................................
+             2           1.  YES
+            43           5.  NO
+             2           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           103       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T172_WillOthers 
+
+         IF SecT.EXITWILLANDDEATH.T172_WillOthers = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9072        AMOUNT TRANSFER - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T902_WillInsAmt
+
+         [Altogether, how much did those others receive from [his/her] estate?]
+         
+         IWER:  ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER:  DO NOT PROBE DK/RF
+
+         .................................................................................
+             2           110000-500000.  Actual Value
+                                999998.  DK (Don't Know); NA (Not Ascertained)
+                                999999.  RF (Refused)
+           148                   Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_8.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_8.T902_WillInsAmt = EMPTY THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9073        PERCENT TRANSFER - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T903_WillInsPercent
+
+         [Altogether, how much did those others receive from [his/her] estate?]
+         
+         IWER:  ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+         IWER:  DO NOT PROBE DK/RF
+
+         .................................................................................
+                       998.  DK (Don't Know); NA (Not Ascertained)
+                       999.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_8.T902_WillInsAmt 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_8.T902_WillInsAmt = NONRESPONSE OR 
+         SecT.EXITWILLANDDEATH.AMOUNT_8.T903_WillInsPercent = NONRESPONSE THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9074        MORE THAN HALF ESTATE - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T904_Half
+
+         Was it more than half of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_8.T904_Half 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_8.T904_Half = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9075        MORE THAN 75PCT ESTATE - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T905_More75
+
+         Was it more than 75 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_8.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_8.T905_More75 = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9076        MORE THAN 90PCT ESTATE - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T906_More90
+
+         Was it more than 90 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_8.T905_More75 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_8.T904_Half = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9077        MORE THAN 25PCT ESTATE - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T907_More25
+
+         Was it more than 25 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.AMOUNT_8.T907_More25 
+
+         IF SecT.EXITWILLANDDEATH.AMOUNT_8.T907_More25 = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT9078        MORE THAN 10PCT ESTATE - OTHERS
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.AMOUNT_8.T908_More10
+
+         Was it more than 10 percent of [her/his] estate?
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           150       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.T047_AssistT 
+
+         IF (T155_ <> EMPTY AND ((((T155_ = YES) OR (T157_WillProbated = YES)) OR (T161_ 
+         = DIVIDED)) OR (T161_ = OTHERSPECIFY))) OR ((piRvarsZ145_TypeExit_V IN 
+         [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND (piRvarsZ146_HomeWillTrust_V 
+         = ASKABTHOMEONLY)) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT173         EX $ VALUE ESTATE
+         Section: T     Level: Respondent      Type: Numeric    Width: 7   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T173_ValueEstate
+
+         Excluding any life insurance, altogether what was the value of [her/his] total
+         estate?
+         
+         IWER:  Do not probe DK/RF
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             75        0     3000000     261086.81     433359.67      13
+         -----------------------------------------------------------------
+            42     9999998.  DK (Don't Know); NA (Not Ascertained)
+            20     9999999.  RF (Refused)
+
+
+==========================================================================================
+
+         ASSIGN: T174_ :=  EMPTY:{PREVIOUS ASK} SecT.EXITWILLANDDEATH.T173_ValueEstate 
+         IF SecT.EXITWILLANDDEATH.T173_ValueEstate <> EMPTY AND 
+         SecT.EXITWILLANDDEATH.T173_ValueEstate <> NONRESPONSE THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT174         EX $ VALUE ESTATE - MIN
+         Section: T     Level: Respondent      Type: Numeric    Width: 6   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T174_
+
+         Did it amount to a total of less than $____ , more than $____ , or what?
+         
+         PROCEDURES: 3Up1Down, 2Up2Down, 1Up3Down
+         BREAKPOINTS: $10,000, $25,000, $100,000, $500,000, $2,000,000
+         RANDOM ENTRY POINTS: $25,000, $100,000, $500,000
+         ENTRY POINT ASSIGNMENT [1 ($100,000)] or [2 ($25,000] or
+         [{NOT 1 and NOT 2} ($500,000)]  AT X511
+
+         .................................................................................
+            19           0.  Value of Breakpoint
+             3       10001.  Value of Breakpoint
+             1       25000.  Value of Breakpoint
+            17       25001.  Value of Breakpoint
+            17      100001.  Value of Breakpoint
+             1      500000.  Value of Breakpoint
+             4      500001.  Value of Breakpoint
+            88       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T175_ :=  EMPTY:{PREVIOUS ASK} SecT.EXITWILLANDDEATH.T173_ValueEstate 
+         IF SecT.EXITWILLANDDEATH.T173_ValueEstate <> EMPTY AND 
+         SecT.EXITWILLANDDEATH.T173_ValueEstate <> NONRESPONSE THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT175         EX $ VALUE ESTATE - MAX
+         Section: T     Level: Respondent      Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T175_
+
+         *
+
+         .................................................................................
+             1        9999.  Value of Breakpoint
+             3       24999.  Value of Breakpoint
+             1       25000.  Value of Breakpoint
+            19       99999.  Value of Breakpoint
+            10      499999.  Value of Breakpoint
+             1      500000.  Value of Breakpoint
+             3     1999999.  Value of Breakpoint
+            24    99999996.  Greater than Maximum Breakpoint
+            88       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         ASSIGN: T176_ :=  EMPTY:{PREVIOUS ASK} SecT.EXITWILLANDDEATH.T173_ValueEstate 
+         IF SecT.EXITWILLANDDEATH.T173_ValueEstate <> EMPTY AND 
+         SecT.EXITWILLANDDEATH.T173_ValueEstate <> NONRESPONSE THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT176         EX $ VALUE ESTATE - RESULT
+         Section: T     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T176_
+
+         *
+
+         .................................................................................
+            17          98.  DK (Don't Know); NA (Not Ascertained)
+            15          99.  RF (Refused)
+           118       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecT.EXITWILLANDDEATH.T173_ValueEstate 
+
+         IF (NOT (piRvarsZ145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, 
+         SECREPEATPOST]) AND (piHHX079_OwnRent_V = OWN)) OR ((piRvarsZ145_TypeExit_V IN 
+         [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND 
+         (piSecTEXITHOUSET101_OwnedMainRes = YES)) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XPT242         EX INCLUDE VALUE HOUSE
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecT.EXITWILLANDDEATH.T242_IncValue
+
+         Does that include the value of the home?
+
+         .................................................................................
+            75           1.  YES
+            14           5.  NO
+             8           8.  DK (Don't Know); NA (Not Ascertained)
+             5           9.  RF (Refused)
+            48       Blank.  INAP (Inapplicable)
+
+
+==========================================================================================
+
+XPVDATE        2012 DATA MODEL VERSION
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+            51           1.  Version 1
+            21           2.  Version 2
+            32           3.  Version 3
+            46           4.  Version 4
+
+
+==========================================================================================
+
+XPVERSN        2012 POST-EXIT RELEASE VERSION NUMBER
+         Section: T     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+           150           1.  HRS 2012 Post-Exit Final Release
+
+
+==========================================================================================

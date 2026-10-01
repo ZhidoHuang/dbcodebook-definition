@@ -1,0 +1,304 @@
+==========================================================================================
+2000 HRS Post-Exit (Final Release)
+ODBC Reference: [h2000pstx]
+Perl script: CodebkD9.pl v5.2 Fri May 19 14:34:25 2006
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Surveycraft metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION CS: Cover Screen (Respondent)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFIER
+          Section: CS           Level: Respondent         CAI Reference: Q9001
+          Type: Character       Width: 6                  Decimals: 0
+          ................................................................................
+            359       011549-208827. Household ID
+
+==========================================================================================
+
+PN        PERSON NUMBER
+          Section: CS           Level: Respondent         CAI Reference: Q9002
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+            255       010. Person Number
+              5       011. Person Number
+             82       020. Person Number
+              6       030. Person Number
+                      031. Person Number
+             11       040. Person Number
+
+==========================================================================================
+
+RPSUBHH   HRS 2000 SUB-HOUSEHOLD IDENTIFIER
+          Section: CS           Level: Respondent         CAI Reference: Q9003
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+            354         3. 1st deceased respondent from a household
+              5         4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+RPPN_SP   SPOUSE/PARTNER PERSON NUMBER
+          Section: CS           Level: Respondent         CAI Reference: Q9004
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+             62       010. Person Number
+             54       020. Person Number
+              7       030. Person Number
+              8       040. Person Number
+              2       210. Person Number
+              2       220. Person Number
+            224     Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+RPQNR     2000 HRS POST EXIT CASE NUMBER
+          Section: CS           Level: Respondent         CAI Reference: Q9005
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+            274           8001-8086. AHEAD/CODA Surveycraft Case Number
+             85           9001-9276. HRS/WAR BABY Surveycraft Case Number
+
+==========================================================================================
+
+RPEXITIW  WAVE OF EXIT INTERVIEW
+          Section: CS           Level: Respondent         CAI Reference: Q9006
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+              5      1995. Wave of Exit Interview
+            354      1998. Wave of Exit Interview
+
+==========================================================================================
+
+RPPX98    HRS 1998 POST EXIT INTERVIEW
+          Section: CS           Level: Respondent         CAI Reference: Q9007
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+              5         1. In the 1998 Post Exit Interview
+            354         5. Not in the 1998 Post Exit Interview
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R480 when [Q474:CS0Y3] IS (3) AND {When Q72 is (Q474), [Q73:PR73]
+             IS (Q473)}
+          *  Jump from R480 when [Q474:CS0Y3] IS (1 OR 2) AND {When Q19 is (Q474),
+             [Q43:PR43] IS (2)}
+
+          *   If [Q0] IS (0 OR 5) AND [Q480:CS0Y7] IS (1) AND {When Q19 is (Q474),
+             [Q44:PR44] IS (NE 2)=39{When Q19 is (Q474)=} then [R481.CS0Y8.PRELOAD
+             COUPLENESS] = 6
+          *   If [Q0] IS (0 OR 5) AND [Q480:CS0Y7] IS (2) AND {When Q72 is (Q474),
+             [Q97:PR97] IS (NE 2)=92{When Q72 is (Q474)=} then [R481.CS0Y8.PRELOAD
+             COUPLENESS] = 6
+          *   If {When Q19 is (Q474), [Q44:PR44] IS (1) AND [Q480:CS0Y7] IS (1-2)} then
+             [R481.CS0Y8.PRELOAD COUPLENESS] = system calculation using matched filter:
+             178M160(Q474)=
+          *   If [Q480:CS0Y7] IS (1) then [R481.CS0Y8.PRELOAD COUPLENESS] = system
+             calculation using matched filter: 37M19(Q474)=
+          *   If [Q480:CS0Y7] IS (2) then [R481.CS0Y8.PRELOAD COUPLENESS] = system
+             calculation using matched filter: 90M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RP481     CS0Y8.PRELOAD COUPLENESS
+          Section: CS           Level: Respondent         CAI Reference: Q481
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            125         1. PART OF A MARRIED COUPLE
+              8         3. PART OF A PARTNERED COUPLE
+            226         6. NOT PART OF A COUPLE
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R481 [CS0Y8.PRELOAD COUPLENESS] when {When Q19 is (Q474),
+             [Q44:PR44] IS (1) AND [Q480:CS0Y7] IS (1-2)}
+          *  Jump from R481 [CS0Y8.PRELOAD COUPLENESS] when [Q480:CS0Y7] IS (1)
+          *  Jump from R481 [CS0Y8.PRELOAD COUPLENESS] when [Q0] IS (0 OR 5) AND
+             [Q480:CS0Y7] IS (1) AND {When Q19 is (Q474), [Q44:PR44] IS (NE 2)=39{When
+             Q19 is (Q474)=}
+          *  Jump from R481 [CS0Y8.PRELOAD COUPLENESS] when [Q480:CS0Y7] IS (2)
+          *  Jump from R481 [CS0Y8.PRELOAD COUPLENESS] when [Q0] IS (0 OR 5) AND
+             [Q480:CS0Y7] IS (2) AND {When Q72 is (Q474), [Q97:PR97] IS (NE 2)=92{When
+             Q72 is (Q474)=}
+
+          *   If {When Q19 is (Q474), [Q44:PR44] IS (1) AND [Q480:CS0Y7] IS (1-2)} then
+             [R482.CS0Y9.PRELOAD COHORT] = system calculation using matched filter:
+             166M160(Q474)=
+          *   If [Q480:CS0Y7] IS (1) then [R482.CS0Y9.PRELOAD COHORT] = system
+             calculation using matched filter: 25M19(Q474)=
+          *   If [Q480:CS0Y7] IS (2) then [R482.CS0Y9.PRELOAD COHORT] = system
+             calculation using matched filter: 78M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RP482     CS0Y9.PRELOAD COHORT
+          Section: CS           Level: Respondent         CAI Reference: Q482
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            274         1. AHEAD3 (born before 1924)
+                        2. CODA (1924-1930)
+             85         3. HRS (1931-1941)
+                        4. WAR BABIES (1942-1947)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If {When Q19 is (Q474), [Q44:PR44] IS (1) AND [Q480:CS0Y7] IS (1-2)} then
+             [R490.CS0Y16.R GENDER] = system calculation using matched filter:
+             176M160(Q474)=
+          *   If [Q480:CS0Y7] IS (1) then [R490.CS0Y16.R GENDER] = system calculation
+             using matched filter: 35M19(Q474)=
+          *   If [Q480:CS0Y7] IS (2) then [R490.CS0Y16.R GENDER] = system calculation
+             using matched filter: 88M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RP490     CS0Y16.R GENDER
+          Section: CS           Level: Respondent         CAI Reference: Q490
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            137         1. MALE
+            222         2. FEMALE
+
+==========================================================================================
+
+RP514     CS1A.PROXY/SELF INTERVIEW
+          Section: CS           Level: Respondent         CAI Reference: Q514
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS1A.
+                  IWER:  DESIGNATE TYPE OF INTERVIEW:
+          ................................................................................
+             81         2. PROXY IS SURVIVING SPOUSE
+            278         3. PROXY IS NON-SPOUSE
+
+==========================================================================================
+
+RP515     CS1Bxx.CURRENT-WAVE PROXY SAME
+          Section: CS           Level: Respondent         CAI Reference: Q515
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS1Bxx.
+                  PREVIOUS WAVE (EXIT/POST-EXIT) PROXY WAS
+                  [Q221-PR221.PREV WAVE PROXY NAME] ,
+                  [Q224.] .
+
+                  CURRENT WAVE POST-EXIT PROXY IS:
+          ................................................................................
+            249         1. SAME PERSON AS IN PRIOR-WAVE
+             41         2. DIFFERENT/NEW PERSON
+             69     Blank. INAP (Inapplicable); [Q221:PR221] IS ("|") OR [Q224:PR224] IS
+                           (0)
+
+==========================================================================================
+
+RP516     CS49xx1.(CS2)-PROXY REL TO DECEASED
+          Section: CS           Level: Respondent         CAI Reference: Q516
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS49xx1.
+                  DESIGNATE THIS PROXY REPORTER`S RELATIONSHIP TO THE DECEASED R.
+
+                  RELATIONSHIP:
+
+                  WHAT IS THE PROXY`S NAME?
+          ................................................................................
+                        1. SPOUSE
+             20         2. DAUGHTER/STEPDAUGH
+             13         3. SON/STEPSON
+              7         4. DAUGHTER-IN-LAW
+              2         5. SON-IN-LAW
+              3         6. GRANDDAUGHTER
+              2         7. GRANDSON
+              1         8. SISTER
+              2         9. BROTHER
+              5        10. OTHER RELATIVE
+              6        11. FRIEND
+                       12. PAID HELPER
+                       13. PROFESSIONAL (SPECIFY)
+            298     Blank. INAP (Inapplicable); [Q515:CS1Bxx] IS (1) OR [Q514:CS1A] IS
+                           (2)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R603 [CS15Y17.R ALIVE] when [Q508:CS1] IS (NE 1)
+          *  Jump from R603 [CS15Y17.R ALIVE] when [Q508:CS1] IS (1)
+
+          *   If [Q543:CS4x] IS (1 OR 3 OR 4) OR [Q545:CS5x] IS (1) then [R604.CS15Y18.SP
+             ALIVE] = 1
+          *   If [Q545:CS5x] IS (NE 1) then [R604.CS15Y18.SP ALIVE] = 5
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RP604     CS15Y18.SP ALIVE
+          Section: CS           Level: Respondent         CAI Reference: Q604
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            133         1. ALIVE
+                        5. DEAD
+            226     Blank. INAP (Inapplicable)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R756 [CS22Y33.R BIRTH YEAR TE] when [Q1:PR1] IS (GE 0 OR LE 0)
+          *  Jump from R756 [CS22Y33.R BIRTH YEAR TE] when [Q480:CS0Y7] IS (1)
+
+          *   If [Q480:CS0Y7] IS (1) then [R757.CS22Y34.R SEX] = system calculation using
+             matched filter: 35M19(Q474)=
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R757.CS22Y34.R SEX] = system
+             calculation using matched filter: 88M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RP757     CS22Y34.R SEX
+          Section: CS           Level: Respondent         CAI Reference: Q757
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            137         1. MALE
+            222         2. FEMALE
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+RP768     CSCALC2.CUR MONTH TEXT
+          Section: CS           Level: Respondent         CAI Reference: Q768
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+                        1. JAN
+                        2. FEB
+                        3. MAR
+                        4. APR
+                        5. MAY
+             73         6. JUN
+            173         7. JUL
+             62         8. AUG
+             17         9. SEP
+             30        10. OCT
+              4        11. NOV
+                       12. DEC
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+RP770     CS22Y45.CUR YEAR YYYY
+          Section: CS           Level: Respondent         CAI Reference: Q770
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+            359      2000. CURRENT YEAR
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R892 when [Q1:PR1] IS (GE 0 OR LE 0)
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RP893     CS49Y16.CS # CHILDREN
+          Section: CS           Level: Respondent         CAI Reference: Q893
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+            234                1-30. Actual Value
+            125               Blank. No Children or Data Not Available
+
+==========================================================================================
+
+RPVERSN   2000 POST EXIT VERSION NUMBER
+          Section: CS           Level: Respondent         CAI Reference: Q9008
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            359         1. First Final Release
+

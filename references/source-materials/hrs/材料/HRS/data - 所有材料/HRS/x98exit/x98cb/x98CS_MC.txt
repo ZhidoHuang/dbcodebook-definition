@@ -1,0 +1,178 @@
+==========================================================================================
+1998 HRS Exit (Final Release)
+ODBC Reference: [HRS98Exit]
+Perl script: CodebkD9.pl v5.042 Wed Jan  5 14:26:31 2005
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Surveycraft metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION CS: Cover Sheet (HHMemberChild)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFIER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9002
+          Type: Character       Width: 6                  Decimals: 0
+          ................................................................................
+            260       010433-208897. Household ID
+
+==========================================================================================
+
+QSUBHH    HRS 1998 SUB-HOUSEHOLD IDENTIFIER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9004
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+            253         3. Deceased respondent household
+              7         4. 2ND Deceased respondent household
+
+==========================================================================================
+
+ESUBHH    HRS 1996 SUB-HOUSEHOLD IDENTIFIER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9006
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+             70         0. Intact household or previous wave spouse/partner has died
+              4         1. Split household - first half of split couple
+              1         2. Split household - second half of split couple
+              1         3. Deceased respondent household
+                        4. 2ND Deceased respondent household
+            184     Blank. AHEAD Respondent, No 1996 Subhh
+
+==========================================================================================
+
+DSUBHH    AHD 1995 SUB-HOUSEHOLD IDENTIFIER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9005
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+            180         0. Intact household or previous wave spouse/partner has died
+                        1. Split household - first half of split couple
+              1         2. Split household - second half of split couple
+              3         3. Deceased respondent household
+                        4. 2ND Deceased respondent household
+             76     Blank. HRS Respondent, No 1995 Subhh
+
+==========================================================================================
+
+OPN       OTHER PERSON NUMBER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q793
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+            260             021-950. Person Number
+
+==========================================================================================
+
+QQNR      1998 SURVEYCRAFT CASE NUMBER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9001
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+            260              1-1255. 1998 Surveycraft Case Number
+
+==========================================================================================
+
+Q794      CS48.GRID MONTH
+          Section: CS           Level: HHMemberChild      CAI Reference: Q794
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS48.
+                  In what month and year did
+          IF Q459 IS (1)
+          IF {When Q4 IS (Q793), Q7 IS (4)}
+
+                  [Q8-HH1 FIRST NAME]  die?
+          ELSE {When Q4 IS (Q793), Q5 IS (0 OR 5) AND Q7 IS (1 OR 2 OR 3)}
+                  (he/she) and
+                  [Q8-HH1 FIRST NAME]  start living in the same
+                  (house or apartment/house/apartment)?
+          ELSE {When Q4 IS (Q793), Q5 IS (1) AND Q7 IS (5)}
+                  (he/she) and
+                  [Q8-HH1 FIRST NAME]  stop living together?
+          ELSE
+
+                  [Q8-HH1 FIRST NAME]  stop living in (his/her) home?
+          END
+
+          ELSE
+          IF {When Q57 IS (Q793), Q60 IS (4)}
+
+                  [Q61-HH2 MEM FIRST NAME]  die?
+          ELSE {When Q57 IS (Q793), Q58 IS (0 OR 5) AND Q60 IS (1 OR 2 OR 3)}
+                  (he/she) and
+                  [Q61-HH2 MEM FIRST NAME]  start living in the same
+                  (house or apartment/house/apartment)?
+
+          ELSE {When Q57 IS (Q793), Q58 IS (1) AND Q60 IS (5)}
+                  (he/she) and
+                  [Q61-HH2 MEM FIRST NAME]  stop living together?
+          ELSE
+
+                  [Q61-HH2 MEM FIRST NAME]  stop living in (his/her) home?
+          END
+
+          END
+
+                  MONTH:
+                  YEAR:
+          ................................................................................
+             57         1. JAN
+             19         2. FEB
+             12         3. MAR
+             19         4. APR
+              9         5. MAY
+             18         6. JUN
+             11         7. JUL
+             17         8. AUG
+             17         9. SEP
+             18        10. OCT
+             20        11. NOV
+             22        12. DEC
+             22        98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+                    Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q475:WHICH IW
+                           1ST R-2ND R] IS (NE 1); [Q475:WHICH IW 1ST R-2ND R] IS (2);
+                           [Q792:CS52 CKPT] IS (NE 1)
+
+==========================================================================================
+
+Q795      CS48a.GRID YEAR
+          Section: CS           Level: HHMemberChild      CAI Reference: Q795
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+            250           1950-1998. Actual Value
+             10                9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+                              Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5);
+                                     [Q475:WHICH IW 1ST R-2ND R] IS (NE 1); [Q475:WHICH
+                                     IW 1ST R-2ND R] IS (2); [Q792:CS52 CKPT] IS (NE 1)
+
+==========================================================================================
+
+Q796      CS48bx.TEMP/PERM MOVE
+          Section: CS           Level: HHMemberChild      CAI Reference: Q796
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS48bx.
+                  Was the move intended to be temporary or was it thought
+                  of as permanent?
+          ................................................................................
+             77         1. TEMPORARY
+            155         2. PERMANENT
+              5         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+             23     Blank. INAP (Inapplicable): [Q456:CS CONTINUE] IS (5); [Q475:WHICH IW
+                           1ST R-2ND R] IS (NE 1); [Q475:WHICH IW 1ST R-2ND R] IS (2);
+                           [Q792:CS52 CKPT] IS (NE 1)
+
+==========================================================================================
+
+QVERSION  1998 EXIT RELEASE VERSION NUMBER
+          Section: CS           Level: HHMemberChild      CAI Reference: Q9008
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            260         1. First Final Release
+

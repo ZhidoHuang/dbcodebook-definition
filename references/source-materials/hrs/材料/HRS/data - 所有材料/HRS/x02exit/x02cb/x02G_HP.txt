@@ -1,0 +1,531 @@
+==========================================================================================
+2002 HRS Exit (Final Release)
+ODBC Reference: [HRS2002x]
+Perl script: CodebkD11.pl v6.132 Mon Dec 11 11:20:53 2006
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION G: Functional Limitations and Helpers (Helper)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFICATION NUMBER
+          Section: G      Level: Helper      Type: Character   Width: 6    Decimals: 0
+
+        ..................................................................................
+         2736           000002-213399. Household Identifier
+
+==========================================================================================
+
+PN        RESPONDENT PERSON IDENTIFICATION NUMBER
+          Section: G      Level: Helper      Type: Character   Width: 3    Decimals: 0
+
+        ..................................................................................
+         1927         010. Person Identifier
+           19         011. Person Identifier
+          609         020. Person Identifier
+            4         021. Person Identifier
+           91         030. Person Identifier
+           86         040. Person Identifier
+
+==========================================================================================
+
+OPN       OTHER PERSON NUMBER
+          Section: G      Level: Helper      Type: Character   Width: 3    Decimals: 0
+
+        ..................................................................................
+          524                 010-082. Person Number
+          720                 083-095. New Helper
+          403                     096. Employee of Institution
+         1089                 101-990. Person Number
+
+==========================================================================================
+
+SSUBHH    2002 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+          Section: G      Level: Helper      Type: Character   Width: 1    Decimals: 0
+
+        ..................................................................................
+         2584           3. 1st deceased respondent from a household
+          152           4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+GSUBHH    2000 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+          Section: G      Level: Helper      Type: Character   Width: 1    Decimals: 0
+
+        ..................................................................................
+         2658           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+           19           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           25           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           32           3. 1st deceased respondent from a household
+                        4. 2nd deceased respondent from a household
+            2           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+SPN_SP    2002 SPOUSE PERSON IDENTIFICATION NUMBER
+          Section: G      Level: Helper      Type: Character   Width: 3    Decimals: 0
+
+        ..................................................................................
+          427         010. Person Identifier
+           34         011. Person Identifier
+            2         012. Person Identifier
+          541         020. Person Identifier
+            6         021. Person Identifier
+           30         030. Person Identifier
+            1         031. Person Identifier
+           53         040. Person Identifier
+            1         041. Person Identifier
+            4         810. Person Identifier
+            1         811. Person Identifier
+         1636       Blank. R not coupled
+
+==========================================================================================
+
+SG066     HELPER INDEX NUMBER
+          Section: G      Level: Helper      Type: Numeric     Width: 3    Decimals: 0
+
+        ..................................................................................
+         2736                   1-104. Helper Index Number
+                                Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((G043_HelpMeals IN [YES, CANTDO, DONTDO]) OR (G046_HelpShop IN [YES, CANTDO,
+        DONTDO])) OR (G049_HelpPhone IN [YES, CANTDO, DONTDO])) OR (G053_HelpMeds IN
+        [YES, CANTDO, DONTDO]); puG054_IADLHlprTemp <> EMPTY; (G054_IADLHlpr <> 97) AND
+        puG054_IADLHlprTemp <> NONRESPONSE;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG069     HELPER RELATIONSHIP
+          Section: G      Level: Helper      Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_helpers.G069AHlprRel
+        ..................................................................................
+          441           2. SPOUSE/PARTNER
+          326           3. SON
+            9           4. STEPSON OR SON OF PARTNER
+           45           5. SPOUSE/PARTNER OF DAUGHTER
+          594           6. DAUGHTER
+           16           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+           97           8. SPOUSE/PARTNER OF SON
+           90           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+            2          12. MOTHER
+            1          13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+            3          15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+           12          17. SISTER
+            1          18. SISTER-IN-LAW OR SISTER OF SP/P
+          193          19. OTHER RELATIVE
+          229          20. OTHER INDIVIDUAL
+          243          21. ORGANIZATION
+          402          22. EMPLOYEE OF 'INSTITUTION'
+                       23. PAID HELPER
+                       24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+            3          27. EX-SPOUSE/PARTNER
+           19          28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+            2          30. FORMER STEP-CHILD
+            4          31. FORMER CHILD-IN-LAW
+                       32. RELATIONSHIP UNKNOWN
+            2          33. SP/P OF GRANDCHILD
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+            2       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG070     FREQ OF HELP GIVEN- DAYS IN LAST MONTH
+          Section: G      Level: Helper      Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_helpers.G070A
+
+        (Let's think for a moment about the help [he/she] received that we just talked
+        about.)
+
+        (First/Next), the help from ([HELPER
+        NAME]/you/(his/her)(husband/wife/partner)). If no help was given just say so.
+
+        In a typical month, on about how many days did ([HELPER NAME]/you/(his/her)
+        (husband/wife/partner)) help (him/her)?
+
+        INTERVIEWER: ENTER 0 IN "DAYS IN A TYPICAL MONTH" IF THE PERSON WAS NOT A
+        HELPER
+
+        DAYS IN A TYPICAL MONTH:
+
+        User note:  The respondent could answer in terms of SG070 (days per month), or
+        SG071 (days per week), or SG072 (every day). There should be valid data in
+        only one of these variables, depending on how the respondent chose to answer
+        the question.
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           1605          1         31         18.94         11.80     957
+         -----------------------------------------------------------------
+           94           0. NOT A HELPER
+           78          98. DK (Don't Know); NA (Not Ascertained)
+            2          99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION; G070A = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG071     FREQ OF HELP GIVEN- DAYS PER WEEK
+          Section: G      Level: Helper      Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_helpers.G071A
+
+        (Let's think for a moment about the help [he/she] received that we just talked
+        about.)
+
+        (First/Next), the help from ([HELPER
+        NAME]/you/(his/her)(husband/wife/partner)). If no help was given just say so.
+
+        In a typical month, on about how many days did ([HELPER NAME]/you/(his/her)
+        (husband/wife/partner)) help (him/her)?
+
+        DAYS PER WEEK:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            189          1          7          3.30          1.70    2544
+         -----------------------------------------------------------------
+            3           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION; G070A = EMPTY; G071A = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG072     FREQ OF HELP GIVEN- EVERY DAY
+          Section: G      Level: Helper      Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_helpers.G072A
+
+        (Let's think for a moment about the help [he/she] received that we just
+        talked about.)
+
+        (First/Next), the help from ([HELPER NAME]/you/(his/her)
+        (husband/wife/partner)). If no help was given just say so.
+        In a typical month, on about how many days did ([HELPER NAME]/you/(his/her)
+        (husband/wife/partner)) help (him/her)?
+
+        EVERY DAY:
+        ..................................................................................
+          362           1. EVERY DAY
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         2373       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION; NOT ((G070A = RESPONSE) AND (G070A = 0));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG073     #HRS OF HELP
+          Section: G      Level: Helper      Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BG_helpers.G073A
+
+        On the days ([HELPER NAME]/you/(his/her) (husband/wife/partner)) helped
+        (him/her), about how many hours per day was that?
+
+        INTERVIEWER: LESS THAN AN HOUR = 1
+
+        HOURS:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           2127          1         24          7.44          8.09     496
+         -----------------------------------------------------------------
+          111          98. DK (Don't Know); NA (Not Ascertained)
+            2          99. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION; NOT ((G070A = RESPONSE) AND (G070A = 0)); G069AHlprRel
+        <> SPOUSEPARTNER; ((G066AHlprIndx >= 83) OR (G069AHlprRel.ORD < 21)) OR
+        (G069AHlprRel = EXSPOUSE_PARTNER);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG074     HELPERS SEX
+          Section: G      Level: Helper      Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_helpers.G074A
+
+        INTERVIEWER: ASK ONLY IF NECESSARY:
+
+        AFFIRM SEX OF HELPER:
+
+        IS [HELPER NAME] MALE OR FEMALE?
+        ..................................................................................
+          493           1. MALE
+         1128           2. FEMALE
+          187           3. AGENCY/PROFESSIONAL/EMPLOYEE OF 'INSTITUTION'
+            7           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+          920       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION; NOT ((G070A = RESPONSE) AND (G070A = 0)); G069AHlprRel
+        <> SPOUSEPARTNER; (G069AHlprRel = GRCHILD) OR (G069AHlprRel = GRCHILD_IN_LAW);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG075     GRANDCHILD OF WHICH CHILD
+          Section: G      Level: Helper      Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_helpers.G075A
+
+        INTERVIEWER:
+
+        IF GRANDCHILD: (Which of (his/her) children is the parent of that grandchild?)
+        ..................................................................................
+           80                 041-990. Other Person Number
+            6                     992. DECEASED CHILD
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         2650                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION; NOT ((G070A = RESPONSE) AND (G070A = 0)); G069AHlprRel
+        <> SPOUSEPARTNER;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG076     HELPER PAID TO HELP
+          Section: G      Level: Helper      Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_helpers.G076A
+
+        Was [HELPER NAME] paid to help (her/him)?
+        ..................................................................................
+          337           1. YES
+         1473           5. NO
+           10           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+          915       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION; NOT ((G070A = RESPONSE) AND (G070A = 0)); G069AHlprRel
+        <> SPOUSEPARTNER; G076A = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG077     DOES INS PAY
+          Section: G      Level: Helper      Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_helpers.G077A
+
+        Did (Medicaid/STATE NAME FOR MEDICAID) or insurance help pay [HELPER NAME]?
+        ..................................................................................
+          162           1. YES
+          165           5. NO
+           10           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         2399       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION; NOT ((G070A = RESPONSE) AND (G070A = 0)); G069AHlprRel
+        <> SPOUSEPARTNER; G076A = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG078     AMOUNT R/SP/P PAID HELPER
+          Section: G      Level: Helper      Type: Numeric     Width: 5    Decimals: 0
+         CAI Reference: BG_helpers.G078A
+
+        Not counting expenses paid by (Medicaid/STATE NAME FOR MEDICAID) or insurance)
+        about how much did ((she/he) (and [you/(his/her)
+        [husband/wife/partner]]) end up paying [HELPER NAME] per month?
+
+        AMOUNT:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            259          0      14000        610.27       1532.44    2397
+         -----------------------------------------------------------------
+           79       99998. DK (Don't Know); NA (Not Ascertained)
+            1       99999. RF (Refused)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION; NOT ((G070A = RESPONSE) AND (G070A = 0)); G069AHlprRel
+        <> SPOUSEPARTNER; G076A = YES; G078A > 0;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG079     AMOUNT R/SP/P PAID HELPER- PER
+          Section: G      Level: Helper      Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_helpers.G079A
+
+        Not counting expenses paid by (Medicaid/STATE NAME FOR MEDICAID or insurance)
+        about how much did (she/he) (and [you/(his/her)
+        [husband/wife/partner]]) end up paying [HELPER NAME] per month?)
+
+        PER:
+        ..................................................................................
+           80           1. MONTH
+           17           2. WEEK
+            9           3. DAY
+            6           5. YEAR
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         2624       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION; NOT ((G070A = RESPONSE) AND (G070A = 0)); G069AHlprRel
+        <> SPOUSEPARTNER; G076A = YES; G078A = NONRESPONSE;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG080     AMT R/SP/P PAID HELPER- LESS/MORE $100
+          Section: G      Level: Helper      Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_helpers.G080A
+
+        Did it amount to less than $100 per month, more than $100 per month or what?
+        ..................................................................................
+            5           1. LESS THAN $100 PER MONTH
+            1           3. ABOUT $100 PER MONTH
+           40           5. MORE THAN $100 PER MONTH
+           34           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         2656       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION; NOT ((G070A = RESPONSE) AND (G070A = 0)); G069AHlprRel
+        <> SPOUSEPARTNER; G076A = YES; (G078A > 0) OR G078A = NONRESPONSE;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG081     OTHER PERSON HELP PAY HELPER
+          Section: G      Level: Helper      Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_helpers.G081A
+
+        Did any other person help [him/her] (and [you/(his/her)
+        [husband/wife/partner]]) pay this cost?
+        ..................................................................................
+           17           1. YES
+          169           5. NO
+            4           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         2546       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION; NOT ((G070A = RESPONSE) AND (G070A = 0)); G069AHlprRel
+        <> SPOUSEPARTNER; G076A = YES; (G078A > 0) OR G078A = NONRESPONSE; G081A = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG082     OTHER PERSON HELP PAY HELPER- RLTNSHIP
+          Section: G      Level: Helper      Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BG_helpers.G082A
+
+        Was that a (child or other) relative of ([RESPONDENT FIRST
+        NAME]'s/hers/his/yours) (and yours) and (her/his)[husband/wife/partner]'s), or
+        was that someone else?
+        ..................................................................................
+           13           1. CHILD/CHILD-IN-LAW/GRANDCHILD
+            1           2. OTHER RELATIVE
+            3           3. SOMEONE ELSE
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         2719       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        AskHelperInfoInOrder[CNT].G066AHlprIndx > 0; G069AHlprRel <>
+        EMPLOYEEOFINSTITUTION; NOT ((G070A = RESPONSE) AND (G070A = 0)); G069AHlprRel
+        <> SPOUSEPARTNER; G076A = YES; (G078A > 0) OR G078A = NONRESPONSE; G081A = YES;
+        G082A = CHILDCHILDLAWGRANDCHILD;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SG083     WHICH CHILD HELPS PAY HELPER
+          Section: G      Level: Helper      Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BG_helpers.G083A
+
+        (Which child is that?)
+
+        INTERVIEWER: IF GRANDCHILD: (Which of (his/her) children is the parent of that
+        grandchild?)
+        ..................................................................................
+           13                 041-990. Other Person Number
+                                  993. All Children
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         2723                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SVDATE    2002 DATA MODEL VERSION
+          Section: G      Level: Helper      Type: Numeric     Width: 1    Decimals: 0
+
+
+        User Note:  This variable identifies which data model was used to interview
+        the proxy respondent.  Please reference the data description for a summary of
+        changes in each data model.
+        ..................................................................................
+         1112           1. Version 1
+          615           2. Version 2
+          841           3. Version 3
+          168           4. Version 4
+
+==========================================================================================
+
+SVERSION  2002 EXIT FINAL RELEASE VERSION NUMBER
+          Section: G      Level: Helper      Type: Numeric     Width: 1    Decimals: 0
+
+        ..................................................................................
+         2736           1. HRS 2002 Exit Final Release #1
+
+==========================================================================================
+
+SQNR      BLAISE IDENTIFICATION NUMBER
+          Section: G      Level: Helper      Type: Character   Width: 11   Decimals: 0
+
+        ..................................................................................
+         2736 00000200010-21339900010. Blaise Identifier
+

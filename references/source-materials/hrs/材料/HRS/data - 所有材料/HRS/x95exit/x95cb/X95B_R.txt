@@ -1,0 +1,1208 @@
+==========================================================================================
+1995 AHEAD Exit (Final Release)
+ODBC Reference: [a1995x]
+Perl script: CodebkD9.pl v5.04 Thu Jun 26 15:26:20 2003
+
+Note to Users: The program that generated this codebook is under development. 
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION B: HEALTH STATUS (Respondent)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFIER
+          Section: B            Level: Respondent         CAI Reference: Q9001
+          Type: Character       Width: 6                  Decimals: 0
+          ................................................................................
+            775       200000-209999. HOUSEHOLD IDENTIFICATION NUMBER
+
+==========================================================================================
+
+PN        RESPONDENT PERSON NUMBER
+          Section: B            Level: Respondent         CAI Reference: Q9002
+          Type: Character       Width: 3                  Decimals: 0
+
+          User Note: The range 010-040 is reserved for respondent person numbers.
+          Respondent person numbers ending in zero are generally original sample
+          members, while respondent person numbers ending in one are generally new
+          spouses added after the original sample.
+          ................................................................................
+            607       010. RESPONDENT PERSON NUMBER
+            168       020. RESPONDENT PERSON NUMBER
+
+==========================================================================================
+
+NSUBHH    1995 SUB-HOUSEHOLD IDENTIFIER
+          Section: B            Level: Respondent         CAI Reference: Q9003
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+            754         3. Deceased respondent household
+             21         4. 2ND Deceased respondent household
+
+==========================================================================================
+
+BSUBHH    1993 SUB-HOUSEHOLD IDENTIFIER
+          Section: B            Level: Respondent         CAI Reference: Q9004
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+            775         0. Original Sample Household - No Split From Divorce or
+                           Separation of Spouses or Partners
+
+==========================================================================================
+
+NPN_SP    SPOUSE / PARTNER  PERSON NUMBER
+          Section: B            Level: Respondent         CAI Reference: Q9005
+          Type: Character       Width: 3                  Decimals: 0
+
+          User Note: New Spouses of deceased respondents are not considered
+          respondents, thus are not assigned a person number.
+          ................................................................................
+            163       010. Person Number
+              9       011. Person Number
+            216       020. Person Number
+            387     Blank. No Spouse
+
+==========================================================================================
+
+N769      B0x.INTRO
+          Section: B            Level: Respondent         CAI Reference: Q769
+          Type: Character       Width: 1                  Decimals: 0
+
+          B0x.
+                  Next I would like to ask you some questions about
+                  [Q95-W1 IW MONTH] 's
+          IF Q370 IS (1)
+                  health since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] .
+          ELSE
+                  health during the last two years.
+          END
+
+          User note: This preamble variable has been included in this data set in
+          order to document questionnaire flow; all data values are blanks.
+          ................................................................................
+            775     Blank. No Data Collected
+
+==========================================================================================
+
+N801      B5.CANCER
+          Section: B            Level: Respondent         CAI Reference: Q801
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5.
+          IF Q370 IS (1)
+                  WAVE 1:
+                  [Q111-W1 CANCER V225]    SITE:
+                  [Q189-W1 CANCER SITE]
+
+          END
+          IF Q370 IS (NE1)
+                  Did a doctor ever say that (he/she) had cancer or a
+                  malignant tumor, excluding minor skin cancers?
+          ELSE Q111 IS (1)
+                  Our records from (his/her) last interview in
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR]
+                  show that (he/she) had had cancer.
+
+                  IWER:  PRESS 1 THEN PRESS ENTER UNLESS R VOLUNTARILY
+                         DISPUTES W1 RECORD.
+          ELSE
+                  Since we talked to (him/her) in
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] ,
+                  did a doctor say that (he/she) had a cancer or
+                  malignant tumor, excluding minor skin cancer?
+          END
+          ................................................................................
+            267         1. YES
+              7         3. [VOL] DISPUTES W1 RECORD
+            501         5. NO
+                        8. DK
+                        9. RF
+
+==========================================================================================
+
+N803      B5b.PAST CANCER TREATED
+          Section: B            Level: Respondent         CAI Reference: Q803
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5b.
+                  Did (he/she) receive treatment for cancer
+          IF Q370 IS (1)
+                  since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR]
+          ELSE
+                  in the two years preceding (his/her) death?
+          END
+          ................................................................................
+            148         1. YES
+            118         5. NO
+              1         8. DK
+                        9. RF
+            508     Blank. INAP(inapplicable): [Q801:B5] IS (NE 1)
+
+==========================================================================================
+
+N804M1    B5c.CANCER TREATMENT
+          Section: B            Level: Respondent         CAI Reference: Q804
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5c.
+          IF Q370 IS (NE1)
+                  During the last two years,
+          ELSE
+                  Since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] ,
+          END
+                  what sort of treatments did (he/she) receive for cancer?
+
+                  CHOOSE ALL THAT APPLY
+
+          User Note: Up to six mentions were allowed, maximum used was five.
+          ................................................................................
+             50         1. CHEMOTHERAPY OR MEDICATION
+             35         2. SURGERY OR BIOPSY
+             37         3. RADIATION/ X-RAY
+             17         4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+              3         5. NONE
+              5         7. OTHER, SPECIFY
+              1         8. DK
+                        9. RF
+            627     Blank. INAP(inapplicable): [Q801:B5] IS (NE 1);  [Q803:B5b] IS (5)
+                           AND [Q111:W1 CANCER V225] IS (1); [Q803:B5b] IS (NE 1) AND
+                           [Q111:W1 CANCER V225] IS (1); [Q803:B5b] IS (NE 1) AND
+                           [Q111:W1 CANCER V225] IS (NE 1)
+
+==========================================================================================
+
+N804M2    B5c.CANCER TREATMENT
+          Section: B            Level: Respondent         CAI Reference: Q804
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5c.
+          IF Q370 IS (NE1)
+                  During the last two years,
+          ELSE
+                  Since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] ,
+          END
+                  what sort of treatments did (he/she) receive for cancer?
+
+                  CHOOSE ALL THAT APPLY
+
+          User Note: Up to six mentions were allowed, maximum used was five.
+          ................................................................................
+             10         1. CHEMOTHERAPY OR MEDICATION
+             16         2. SURGERY OR BIOPSY
+             19         3. RADIATION/ X-RAY
+             20         4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+              2         7. OTHER, SPECIFY
+                        8. DK
+                        9. RF
+            708     Blank. INAP(inapplicable): [Q801:B5] IS (NE 1);  [Q803:B5b] IS (5)
+                           AND [Q111:W1 CANCER V225] IS (1); [Q803:B5b] IS (NE 1) AND
+                           [Q111:W1 CANCER V225] IS (1); [Q803:B5b] IS (NE 1) AND
+                           [Q111:W1 CANCER V225] IS (NE 1)
+
+==========================================================================================
+
+N804M3    B5c.CANCER TREATMENT
+          Section: B            Level: Respondent         CAI Reference: Q804
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5c.
+          IF Q370 IS (NE1)
+                  During the last two years,
+          ELSE
+                  Since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] ,
+          END
+                  what sort of treatments did (he/she) receive for cancer?
+
+                  CHOOSE ALL THAT APPLY
+
+          User Note: Up to six mentions were allowed, maximum used was five.
+          ................................................................................
+              1         1. CHEMOTHERAPY OR MEDICATION
+              3         2. SURGERY OR BIOPSY
+              3         3. RADIATION/ X-RAY
+             16         4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+              1         7. OTHER, SPECIFY
+                        8. DK
+                        9. RF
+            751     Blank. INAP(inapplicable): [Q801:B5] IS (NE 1);  [Q803:B5b] IS (5)
+                           AND [Q111:W1 CANCER V225] IS (1); [Q803:B5b] IS (NE 1) AND
+                           [Q111:W1 CANCER V225] IS (1); [Q803:B5b] IS (NE 1) AND
+                           [Q111:W1 CANCER V225] IS (NE 1)
+
+==========================================================================================
+
+N804M4    B5c.CANCER TREATMENT
+          Section: B            Level: Respondent         CAI Reference: Q804
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5c.
+          IF Q370 IS (NE1)
+                  During the last two years,
+          ELSE
+                  Since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] ,
+          END
+                  what sort of treatments did (he/she) receive for cancer?
+
+                  CHOOSE ALL THAT APPLY
+
+          User Note: Up to six mentions were allowed, maximum used was five.
+          ................................................................................
+                        1. CHEMOTHERAPY OR MEDICATION
+                        2. SURGERY OR BIOPSY
+                        3. RADIATION/ X-RAY
+              3         4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+              1         7. OTHER, SPECIFY
+                        8. DK
+                        9. RF
+            771     Blank. INAP(inapplicable): [Q801:B5] IS (NE 1);  [Q803:B5b] IS (5)
+                           AND [Q111:W1 CANCER V225] IS (1); [Q803:B5b] IS (NE 1) AND
+                           [Q111:W1 CANCER V225] IS (1); [Q803:B5b] IS (NE 1) AND
+                           [Q111:W1 CANCER V225] IS (NE 1)
+
+==========================================================================================
+
+N804M5    B5c.CANCER TREATMENT
+          Section: B            Level: Respondent         CAI Reference: Q804
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5c.
+          IF Q370 IS (NE1)
+                  During the last two years,
+          ELSE
+                  Since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] ,
+          END
+                  what sort of treatments did (he/she) receive for cancer?
+
+                  CHOOSE ALL THAT APPLY
+
+          User Note: Up to six mentions were allowed, maximum used was five.
+          ................................................................................
+                        1. CHEMOTHERAPY OR MEDICATION
+                        2. SURGERY OR BIOPSY
+                        3. RADIATION/ X-RAY
+                        4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+              1         7. OTHER, SPECIFY
+                        8. DK
+                        9. RF
+            774     Blank. INAP(inapplicable): [Q801:B5] IS (NE 1);  [Q803:B5b] IS (5)
+                           AND [Q111:W1 CANCER V225] IS (1); [Q803:B5b] IS (NE 1) AND
+                           [Q111:W1 CANCER V225] IS (1); [Q803:B5b] IS (NE 1) AND
+                           [Q111:W1 CANCER V225] IS (NE 1)
+
+==========================================================================================
+
+N804M6    B5c.CANCER TREATMENT
+          Section: B            Level: Respondent         CAI Reference: Q804
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B5c.
+          IF Q370 IS (NE1)
+                  During the last two years,
+          ELSE
+                  Since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] ,
+          END
+                  what sort of treatments did (he/she) receive for cancer?
+
+                  CHOOSE ALL THAT APPLY
+
+          User Note: Up to six mentions were allowed, maximum used was five.
+          ................................................................................
+                        1. CHEMOTHERAPY OR MEDICATION
+                        2. SURGERY OR BIOPSY
+                        3. RADIATION/ X-RAY
+                        4. MEDICATIONS/TREATMENT FOR SYMPTOMS (PAIN, NAUSEA, RASHES)
+                        5. NONE
+                        7. OTHER, SPECIFY
+                        8. DK
+                        9. RF
+            775     Blank. INAP(inapplicable): [Q801:B5] IS (NE 1);  [Q803:B5b] IS (5)
+                           AND [Q111:W1 CANCER V225] IS (1); [Q803:B5b] IS (NE 1) AND
+                           [Q111:W1 CANCER V225] IS (1); [Q803:B5b] IS (NE 1) AND
+                           [Q111:W1 CANCER V225] IS (NE 1)
+
+==========================================================================================
+
+N813      B5j.DATE RECENT CANCER
+          Section: B            Level: Respondent         CAI Reference: Q813
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          B5j.
+                  In what month and year was (his/her) (most recent)
+                  cancer diagnosed?
+
+                  MONTH:
+                  YEAR:
+          ................................................................................
+             26         1. JAN
+             14         2. FEB
+             14         3. MAR
+             12         4. APR
+             15         5. MAY
+             13         6. JUN
+             14         7. JUL
+             12         8. AUG
+              4         9. SEP
+             14        10. OCT
+             11        11. NOV
+             24        12. DEC
+             19        98. DK
+                       99. RF
+            583     Blank. INAP(inapplicable): [Q801:B5] IS (NE 1);  [Q803:B5b] IS (5)
+                           AND [Q111:W1 CANCER V225] IS (1)
+
+==========================================================================================
+
+N814      B5k.YEAR RECENT CANCER
+          Section: B            Level: Respondent         CAI Reference: Q814
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+            178           1900-1996. Range of Values
+             14                9998. DK
+            583               Blank. INAP(inapplicable): [Q801:B5] IS (NE 1); [Q803:B5b]
+                                     IS (5) AND [Q111:W1 CANCER V225] IS (1)
+
+==========================================================================================
+
+N818      B6.LUNG
+          Section: B            Level: Respondent         CAI Reference: Q818
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B6.
+          IF Q370 IS (1)
+                  WAVE 1:
+                  [Q112-W1 LUNG V235]
+          END
+          IF Q370 IS (NE1)
+                  Not including asthma, did a doctor ever say that
+                  (he/she) had chronic lung disease such as chronic
+                  bronchitis or emphysema?
+
+                  DO NOT INCLUDE ASTHMA
+          ELSE Q112 IS (1)
+                  Our records from (his/her) last interview in
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR]
+                  show that (he/she) had a chronic lung disease, such as
+                  chronic bronchitis or emphysema.
+
+                  IWER:  PRESS 1 THEN PRESS ENTER UNLESS R VOLUNTARILY
+                         DISPUTES W1 RECORD.
+          ELSE
+                  Not including asthma, did a doctor say since we talked
+                  to (him/her) that (he/she) had a chronic lung disease,
+                  such as chronic bronchitis or emphysema?
+
+                  DO NOT INCLUDE ASTHMA
+          END
+          ................................................................................
+            172         1. YES
+             18         3. [VOL] DISPUTES W1 RECORD
+            581         5. NO
+              4         8. DK
+                        9. RF
+
+==========================================================================================
+
+N824      B6c.LUNG OXYGEN
+          Section: B            Level: Respondent         CAI Reference: Q824
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B6c.
+                   Was (he/she) receiving oxygen for (his/her) lung condition?
+          ................................................................................
+             84         1. YES
+             88         5. NO
+                        8. DK
+                        9. RF
+            603     Blank. INAP(inapplicable): [Q818:B6] IS (3 OR 5 OR DK OR RF)
+
+==========================================================================================
+
+N828      B7.HEART CONDITION
+          Section: B            Level: Respondent         CAI Reference: Q828
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B7.
+          IF Q370 IS (1)
+                  WAVE 1:
+                  [Q113-W1 HEART V244/245/252]
+          END
+          IF Q370 IS (NE1)
+                  Did a doctor ever say that (he/she) had a heart
+                  attack, coronary heart disease, angina, congestive
+                  heart failure, or other heart problems?
+          ELSE Q113 IS (1)
+                  Our records from (his/her) interview in
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR]
+                  show that (he/she) had a heart problem.
+
+                  IWER:  PRESS 1 THEN PRESS ENTER UNLESS R VOLUNTARILY
+                         DISPUTES W1 RECORD.
+          ELSE
+                  Since (his/her) interview in
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR]  did a doctor say
+                  that (he/she) had a heart attack, coronary heart disease,
+                  angina, congestive heart failure, or other heart problems?
+          END
+          ................................................................................
+            414         1. YES
+             14         3. [VOL] DISPUTES W1 RECORD
+            344         5. NO
+              3         8. DK
+                        9. RF
+
+==========================================================================================
+
+N834      B7d.HEART ATTACK
+          Section: B            Level: Respondent         CAI Reference: Q834
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B7d.
+                  Had (he/she) had a heart attack or myocardial infarction
+          IF Q370 IS (1)
+                  since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] ?
+          ELSE
+                  in the past two years?
+          END
+          ................................................................................
+            104         1. YES
+            305         5. NO
+              5         8. DK
+                        9. RF
+            361     Blank. INAP(inapplicable): [Q828:B7] IS (3 OR 5 OR DK OR RF)
+
+==========================================================================================
+
+N838      B7g.DATE RECENT HEARTATTACK
+          Section: B            Level: Respondent         CAI Reference: Q838
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          B7g.
+                  In what month and year was (his/her) (most recent) heart attack?
+
+                  MONTH:
+                  YEAR:
+          ................................................................................
+             16         1. JAN
+             12         2. FEB
+              6         3. MAR
+              8         4. APR
+              8         5. MAY
+              9         6. JUN
+             12         7. JUL
+              2         8. AUG
+              2         9. SEP
+              4        10. OCT
+              7        11. NOV
+             11        12. DEC
+              7        98. DK
+                       99. RF
+            671     Blank. INAP(inapplicable): [Q828:B7] IS (3 OR 5 OR DK OR RF);
+                           [Q834:B7d] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+N839      B7y.YEAR RECENT HEARTATTACK
+          Section: B            Level: Respondent         CAI Reference: Q839
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+            101           1993-1996. Range of Values
+              5                9998. DK
+            669               Blank. INAP(inapplicable): [Q828:B7] IS (3 OR 5 OR DK OR
+                                     RF)
+
+==========================================================================================
+
+N843      B7k.CONGESTIVE HEART
+          Section: B            Level: Respondent         CAI Reference: Q843
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B7k.
+          IF Q113 IS (1)
+                  Since we talked to (him/her) in
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] ,
+                  did a doctor say that
+          ELSE Q370 IS (NE1)
+                  In the last two years did a doctor say that
+          ELSE
+                  Did a doctor ever say that
+          END
+                   (he/she) had congestive heart failure?
+          ................................................................................
+            164         1. YES
+            237         5. NO
+             13         8. DK
+                        9. RF
+            361     Blank. INAP(inapplicable): [Q828:B7] IS (3 OR 5 OR DK OR RF)
+
+==========================================================================================
+
+N846      B7p.HEART TREATMENT
+          Section: B            Level: Respondent         CAI Reference: Q846
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B7p.
+          IF Q370 IS (1)
+                   Since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR]
+          ELSE
+                   In the past two years
+          END
+                  did (he/she) have a special test or treatment of (his/her)
+                  heart where tubes were inserted into (his/her) veins or
+                  arteries (cardiac cathetarization, coronary angiogram or
+                  angioplasty)?
+          ................................................................................
+             31         1. YES
+            129         5. NO
+              4         8. DK
+                        9. RF
+            611     Blank. INAP(inapplicable): [Q828:B7] IS (3 OR 5 OR DK OR RF);
+                           [Q843:B7k] IS (NE 1)
+
+==========================================================================================
+
+N847      B7q.HEART SURGERY
+          Section: B            Level: Respondent         CAI Reference: Q847
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B7q.
+          IF Q370 IS (1)
+                  Since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR]
+          ELSE
+                  In the past two years
+          END
+                  did (he/she) have surgery on (his/her) heart?
+          ................................................................................
+             29         1. YES
+            385         5. NO
+                        8. DK
+                        9. RF
+            361     Blank. INAP(inapplicable): [Q828:B7] IS (3 OR 5 OR DK OR RF)
+
+==========================================================================================
+
+N848      B9.STROKE
+          Section: B            Level: Respondent         CAI Reference: Q848
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B9.
+          IF Q370 IS (1)
+                  WAVE 1:
+                  [Q114-W1 STROKE V254]
+          END
+          IF Q370 IS (NE1)
+                  Did a doctor ever say that (he/she) had a stroke?
+          ELSE Q114 IS (1)
+                  Our records from (his/her) last interview in
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR]  show
+                  that (he/she) had had a stroke.
+
+                  IWER:  PRESS 1 THEN PRESS ENTER UNLESS R VOLUNTARILY
+                         DISPUTES W1 RECORD.
+          ELSE
+                  Since (his/her) interview in
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR]  did a doctor say
+                  that (he/she) had a stroke?
+          END
+          ................................................................................
+            228         1. YES
+             25         2. [VOL] POSSIBLE OR TIA
+             12         3. [VOL] DISPUTES W1 RECORD
+            506         5. NO
+              4         8. DK
+                        9. RF
+
+==========================================================================================
+
+N858      B9j.ANOTHER STROKE-2YR
+          Section: B            Level: Respondent         CAI Reference: Q858
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B9j.
+                  Since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] , did a doctor say that (he/she)
+                  had another stroke?
+          ................................................................................
+             50         1. YES
+             80         5. NO
+              3         8. DK
+                        9. RF
+            642     Blank. INAP(inapplicable): [Q848:B9] IS (3 OR 5 OR DK OR RF);
+                           [Q114:W1 STROKE V254] IS (NE 1)
+
+==========================================================================================
+
+N859      B9M.DATE RECENT STROKE
+          Section: B            Level: Respondent         CAI Reference: Q859
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          B9m.
+                  In what month and year was (his/her) (most recent) stroke?
+
+                  MONTH:
+                  YEAR:
+          ................................................................................
+             15         1. JAN
+             10         2. FEB
+             12         3. MAR
+              8         4. APR
+              9         5. MAY
+             11         6. JUN
+             13         7. JUL
+              8         8. AUG
+             14         9. SEP
+             18        10. OCT
+             13        11. NOV
+             10        12. DEC
+              5        98. DK
+                       99. RF
+            629     Blank. INAP(inapplicable): [Q848:B9] IS (3 OR 5 OR DK OR RF);
+                           [Q858:B9j] IS (5 OR DK OR RF) OR [Q848:B9] IS (2)
+
+==========================================================================================
+
+N860      B9n.YEAR RECENT STROKE
+          Section: B            Level: Respondent         CAI Reference: Q860
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+            145           1992-1996. Range of Values
+            630               Blank. INAP(inapplicable): [Q848:B9] IS (3 OR 5 OR DK OR
+                                     RF); [Q858:B9j] IS (5 OR DK OR RF) OR [Q848:B9] IS
+                                     (2)
+
+==========================================================================================
+
+N878      B12.FALL
+          Section: B            Level: Respondent         CAI Reference: Q878
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B12.
+                  Did (he/she) fall down
+          IF Q370 IS (1)
+                  since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] ?
+          ELSE
+                  in the last two years?
+
+          END
+          ................................................................................
+            352         1. YES
+            414         5. NO
+              9         8. DK
+                        9. RF
+
+==========================================================================================
+
+N879      B12a.TIMES FALL
+          Section: B            Level: Respondent         CAI Reference: Q879
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          B12a.
+                  How many times did (he/she) fall
+          IF Q370 IS (1)
+                  since
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] ?
+          ELSE
+                  in the last two years?
+          END
+
+                  # TIMES:
+          ................................................................................
+            335                0-20. Range of Values
+             17                  98. DK
+            423               Blank. INAP(inapplicable): [Q878:B12] IS (NE 1)
+
+==========================================================================================
+
+N884      B12b.INJURE
+          Section: B            Level: Respondent         CAI Reference: Q884
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B12b.
+                  In (any of these falls/that fall), did (he/she) injure
+                  (him/her)self seriously enough to need medical treatment?
+          ................................................................................
+            151         1. YES
+            201         5. NO
+                        8. DK
+                        9. RF
+            423     Blank. INAP(inapplicable): [Q878:B12] IS (NE 1)
+
+==========================================================================================
+
+N887      B13.BROKEN HIP
+          Section: B            Level: Respondent         CAI Reference: Q887
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B13.
+          IF Q370 IS (NE1)
+                  Did (he/she) ever fracture (his/her) hip?
+          ELSE
+                  WAVE 1:
+                  [Q118-W1 BROKEN HIP V277]
+
+                  Did (he/she) fracture (his/her) hip since we talked in
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR] ?
+          END
+          ................................................................................
+             48         1. YES
+            724         5. NO
+              3         8. DK
+                        9. RF
+
+==========================================================================================
+
+N911      B18.PAIN
+          Section: B            Level: Respondent         CAI Reference: Q911
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B18.
+                  Was (he/she) often troubled with pain between
+                  [Q95-W1 IW MONTH]
+                  [Q96-W1 IW YEAR]  and
+                  when (he/she) died?
+          ................................................................................
+            413         1. YES
+            354         5. NO
+              8         8. DK
+                        9. RF
+                    Blank. INAP
+
+==========================================================================================
+
+N912      B18a.DEGREE PAIN
+          Section: B            Level: Respondent         CAI Reference: Q912
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B18a.
+                  When the pain was at its worst, was it mild, moderate
+                  or severe?
+          ................................................................................
+             40         1. MILD
+            127         2. MODERATE
+            240         3. SEVERE
+              6         8. DK
+                        9. RF
+            362     Blank. INAP(inapplicable): [Q911:B18] IS (NE 1)
+
+==========================================================================================
+
+N913      B18b.DEGREE PAIN MOST
+          Section: B            Level: Respondent         CAI Reference: Q913
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B18b.
+                  How bad was the pain most of the time: mild, moderate
+                  or severe?
+          ................................................................................
+             64         1. MILD
+            175         2. MODERATE
+            126         3. SEVERE
+              8         8. DK
+                        9. RF
+            402     Blank. INAP(inapplicable): [Q911:B18] IS (NE 1); [Q912:B18a] IS (1)
+
+==========================================================================================
+
+N915      B19.OTHER HEALTH
+          Section: B            Level: Respondent         CAI Reference: Q915
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B19.
+                  Did (he/she) have any other major health problems
+                  which you haven't told me about?
+
+                  IF YES, SPECIFY ON NEXT SCREEN
+          ................................................................................
+            170         1. YES
+            604         5. NO
+              1         8. DK
+                        9. RF
+
+==========================================================================================
+
+N918M1M   MENTION HEALTH
+          Section: B            Level: Respondent         CAI Reference: Q918
+          Type: Numeric         Width: 3                  Decimals: 0
+
+          B19a.
+                  What was that?
+          ................................................................................
+              6             101-103. Cancers and tumors; skin conditions
+             26             111-119. Musculoskeletal system and connective tissue
+             34             121-129. Heart, circulatory and blood conditions
+              5             131-139. Allergies; hayfever; sinusitis; tonsillitis
+             26             141-149. Endocrine, metabolic and nutritional conditions
+             26             151-159. Digestive system (stomach, liver, gallbladder,
+                                     kidney, bladder)
+             24             161-169. Neurological and sensory conditions
+              1             171-179. Reproductive system and prostate conditions
+              5             181-189. Emotional and psychological conditions
+             11             191-196. Miscellaneous
+              2             595-597. Other symptoms
+                                990. No text displayed
+              1                 997. Other health condition
+              1                 998. DK
+              2                 999. RF
+            605               Blank. INAP(inapplicable): [Q915:B19] IS (NE 1)
+
+==========================================================================================
+
+N918M2M   MENTION HEALTH
+          Section: B            Level: Respondent         CAI Reference: Q918
+          Type: Numeric         Width: 3                  Decimals: 0
+
+          B19a.
+                  What was that?
+          ................................................................................
+              3             101-103. Cancers and tumors; skin conditions
+              6             111-119. Musculoskeletal system and connective tissue
+              8             121-129. Heart, circulatory and blood conditions
+              2             131-139. Allergies; hayfever; sinusitis; tonsillitis
+              2             141-149. Endocrine, metabolic and nutritional conditions
+              6             151-159. Digestive system (stomach, liver, gallbladder,
+                                     kidney, bladder)
+              7             161-169. Neurological and sensory conditions
+                            171-179. Reproductive system and prostate conditions
+                            181-189. Emotional and psychological conditions
+              2             191-196. Miscellaneous
+                            595-597. Other symptoms
+                                990. No text displayed
+                                997. Other health condition
+                                998. DK
+                                999. RF
+            739               Blank. INAP(inapplicable): [Q915:B19] IS (NE 1)
+
+==========================================================================================
+
+N942      B20.SMOKE CIG
+          Section: B            Level: Respondent         CAI Reference: Q942
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B20.
+                  Did (he/she) smoke cigarettes in the last two years
+                  of (his/her) life?
+          ................................................................................
+            112         1. YES
+            663         5. NO
+                        8. DK
+                        9. RF
+
+==========================================================================================
+
+N943      B20a.# CIG-PACKS
+          Section: B            Level: Respondent         CAI Reference: Q943
+          Type: Numeric         Width: 3                  Decimals: 0
+
+          B20a.
+                  About how many cigarettes or packs did (he/she) usually smoke
+                  in a day?
+
+                  PROBE A RANGE
+
+                  CIGARETTES/DAY:
+                  PACKS/DAY:
+          ................................................................................
+             53               0-100. Range of Values
+              5                 998. DK
+                                999. RF
+            717               Blank. INAP(inapplicable): [Q942:B20] IS (5 OR DK OR RF)
+
+==========================================================================================
+
+N944      B20b.PACKS
+          Section: B            Level: Respondent         CAI Reference: Q944
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             54                 1-5. Range of Values
+                                  8. DK
+                                  9. RF
+            721               Blank. INAP(inapplicable): [Q942:B20] IS (5 OR DK OR RF);
+                                     [Q943:B20a] IS (1-100 OR DK OR RF OR Over Limit)
+
+==========================================================================================
+
+N949      B21.ALCOHOL
+          Section: B            Level: Respondent         CAI Reference: Q949
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B21.
+                  Did (he/she) ever drink any alcoholic beverages such as beer,
+                  wine, or liquor in the last two years of (his/her) life?
+          ................................................................................
+            233         1. YES
+             37         3. [VOL] NEVER HAVE USED ALCOHOL
+            503         5. NO
+              2         8. DK
+                        9. RF
+
+==========================================================================================
+
+N955      B22a.CHANGE WEIGHT
+          Section: B            Level: Respondent         CAI Reference: Q955
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B22a.
+                  Did
+                  [Q371-R FIRST NAME]  gain or lose ten or more pounds
+                  in the last 12 months of (his/her) life?
+          ................................................................................
+             42         1. YES, GAINED
+            438         2. YES, LOST
+              6         3. Yes, Gained and Lost
+            282         5. NO
+              7         8. DK
+                        9. RF
+
+==========================================================================================
+
+N956      B23ax.DIF BREATHING
+          Section: B            Level: Respondent         CAI Reference: Q956
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B23ax.
+                  Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had the following
+                  problems:
+
+                  Difficulty breathing?
+          ................................................................................
+            373         1. YES
+              6         3. [VOL] ON RESPIRATOR
+            390         5. NO
+              6         8. DK
+                        9. RF
+
+==========================================================================================
+
+N957      B23bx.NO APPETITE
+          Section: B            Level: Respondent         CAI Reference: Q957
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B23bx.
+                  (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Very little appetite or desire for food?
+          ................................................................................
+            477         1. YES
+             12         3. [VOL] IV FLUIDS OR FEEDING TUBE
+            284         5. NO
+              2         8. DK
+                        9. RF
+
+==========================================================================================
+
+N958      B23cx.FREQ VOMITING
+          Section: B            Level: Respondent         CAI Reference: Q958
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B23cx.
+                  (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Frequent vomiting?
+          ................................................................................
+             75         1. YES
+            688         5. NO
+             12         8. DK
+                        9. RF
+
+==========================================================================================
+
+N959      B23dx.CONTROL ARM/LEG
+          Section: B            Level: Respondent         CAI Reference: Q959
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B23dx.
+                  (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Difficulty controlling (his/her) arms and legs?
+          ................................................................................
+            253         1. YES
+            517         5. NO
+                        8. DK
+              5         9. RF
+
+==========================================================================================
+
+N960      B23ex.DEPRESSION
+          Section: B            Level: Respondent         CAI Reference: Q960
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B23ex.
+                  (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Depression?
+          ................................................................................
+            358         1. YES
+            404         5. NO
+                        8. DK
+             13         9. RF
+
+==========================================================================================
+
+N961      B23fx.CONFUSION
+          Section: B            Level: Respondent         CAI Reference: Q961
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B23fx.
+                  (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Periodic confusion?
+          ................................................................................
+            319         1. YES
+            451         5. NO
+              5         8. DK
+                        9. RF
+                    Blank. INAP
+
+==========================================================================================
+
+N962      B23m.SEVERE FATIGUE
+          Section: B            Level: Respondent         CAI Reference: Q962
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B23m.
+                  (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Severe fatigue or exhaustion?
+          ................................................................................
+            420         1. YES
+            343         5. NO
+             12         8. DK
+                        9. RF
+
+==========================================================================================
+
+N963      B23hx.DIF TO AWAKE
+          Section: B            Level: Respondent         CAI Reference: Q963
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B23hx.
+                  (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Difficulty being aroused or awakened, or loss of consciousness?
+          ................................................................................
+            116         1. YES
+            646         5. NO
+             13         8. DK
+                        9. RF
+
+==========================================================================================
+
+N964      B23n.PERSISTENT COUGH
+          Section: B            Level: Respondent         CAI Reference: Q964
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B23n.
+                  (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Persistent wheezing, cough, or bringing up phlegm?
+          ................................................................................
+            251         1. YES
+            517         5. NO
+              7         8. DK
+                        9. RF
+
+==========================================================================================
+
+N965      B23kx.UNCONTROLLED TEMPER
+          Section: B            Level: Respondent         CAI Reference: Q965
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B23kx.
+                  (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Uncontrolled outbursts of temper?
+          ................................................................................
+            138         1. YES
+            634         5. NO
+              3         8. DK
+                        9. RF
+
+==========================================================================================
+
+N966      B23mx.LOSS OF CONTROL
+          Section: B            Level: Respondent         CAI Reference: Q966
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          B23mx.
+                  (Was there a period of at least one month during the last
+                  year of (his/her) life when (he/she) had)
+
+                  Loss of control of bowel or bladder?
+          ................................................................................
+            328         1. YES
+            438         5. NO
+              9         8. DK
+                        9. RF
+
+==========================================================================================
+
+NQNR      SURVEYCRAFT CASE NUMBER
+          Section: B            Level: Respondent         CAI Reference: Q9008
+          Type: Numeric         Width: 4                  Decimals: 0
+
+          User Note:  NQNR is not an analysis variable.  It is intended for internal
+          use by the HRS staff.  The range is not continuous.
+          ................................................................................
+            775           5057-7800. SURVEYCRAFT CASE NUMBER
+
+==========================================================================================
+
+NVERSION  1995 EXIT RELEASE VERSION NUMBER
+          Section: B            Level: Respondent         CAI Reference: Q9012
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            775         2. Release 2 - June 2003
+

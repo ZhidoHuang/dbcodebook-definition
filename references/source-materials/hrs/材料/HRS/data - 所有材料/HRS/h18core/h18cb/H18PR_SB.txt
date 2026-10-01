@@ -1,0 +1,315 @@
+==========================================================================================
+
+HRS 2018 Final Release 
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section PR: PRELOAD  (Siblings)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: Siblings        Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+         19406           010013-952836.  Household Identification Number
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: PR    Level: Siblings        Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+         11483         010.  Person Identifier
+           726         011.  Person Identifier
+            41         012.  Person Identifier
+             4         013.  Person Identifier
+          6594         020.  Person Identifier
+           180         021.  Person Identifier
+            10         022.  Person Identifier
+             3         023.  Person Identifier
+            52         030.  Person Identifier
+            31         031.  Person Identifier
+             6         032.  Person Identifier
+           253         040.  Person Identifier
+            22         041.  Person Identifier
+             1         042.  Person Identifier
+
+
+==========================================================================================
+
+QSUBHH                        2018 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: Siblings        Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+         17617           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+           829           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+           687           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+           106           5.  Split household - one half of couple from SUBHH 1 or 2
+            12           6.  Split household - one half of couple from SUBHH 1 or 2
+           155           7.  Reunited household - respondents from split household
+                             reunite
+                         8.  Split household - one half of couple from SUBHH 1 or 2
+
+
+==========================================================================================
+
+PSUBHH                        2016 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: Siblings        Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+         17941           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+           647           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+           613           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            75           5.  Split household - one half of couple from SUBHH 1 or 2
+            12           6.  Split household - one half of couple from SUBHH 1 or 2
+           118           7.  Reunited household - respondents from split household
+                             reunite
+                         8.  Split household - one half of couple from SUBHH 1 or 2
+
+
+==========================================================================================
+
+QCSR                          2018 WHETHER COVERSHEET RESPONDENT
+         Section: PR    Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+         13525           1.  Yes
+           114           3.  2nd Coverscreen R, answers not retained
+          5767           5.  No
+
+
+==========================================================================================
+
+QFAMR                         2018 WHETHER FAMILY RESPONDENT
+         Section: PR    Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+         12988           1.  Family R
+            74           3.  2nd Family R, answers not retained
+          6344           5.  Non-Family R
+
+
+==========================================================================================
+
+QFINR                         2018 WHETHER FINANCIAL RESPONDENT
+         Section: PR    Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+         13035           1.  Financial R
+            46           3.  2nd Financial R, answers not retained
+          6325           5.  Non-Financial R
+
+
+==========================================================================================
+
+QPN_SP                        2018 SPOUSE/PARTNER PERSON NUMBER
+         Section: PR    Level: Siblings        Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+          6494         010.  Person Identifier
+           541         011.  Person Identifier
+            27         012.  Person Identifier
+          5716         020.  Person Identifier
+           149         021.  Person Identifier
+             5         022.  Person Identifier
+            30         030.  Person Identifier
+             7         031.  Person Identifier
+            34         040.  Person Identifier
+            26         041.  Person Identifier
+             9         810.  Spouse of Original R, Never Entered Sample
+            74         811.  Spouse of Non-Original Respondent
+            16         821.  Spouse of Non-Original Respondent
+             4         832.  Spouse of Non-Original Respondent
+          6274       Blank.  Single Respondent Household
+
+
+==========================================================================================
+
+OPN                           PN OF KID/HHM/SIB AND THEIR SPOUSES
+         Section: PR    Level: Siblings        Type: Character  Width: 3   Decimals: 0
+
+         PERSON NUMBER OF KID/HHM/SIB AND THEIR SPOUSES
+
+         .................................................................................
+         19406                 101-713.  Other Person Number
+
+
+==========================================================================================
+
+         IF F228ANewPerson = yes OR F241AConfirm = NO THEN 
+
+          IF F228ANewPerson = yes THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+QZ247                         FAMILY MEMBER INDEX - SIB
+         Section: PR    Level: Siblings        Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecF.SiblingTab.Sibling[1].Z247APNdx
+
+         *
+
+         .................................................................................
+         19406                    1-18.  Sibling Index Number
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecF.SiblingTab.Sibling[].Z250AFName 
+         IF SecF.SiblingTab.Sibling[i].Z251ASibRelateR = NOTASIBLING THEN 
+         ASSIGN: SecF.SiblingTab.Sibling[i].Z249AResStat := 'DELETED' 
+         {PREVIOUS ASK} SecF.SiblingTab.Sibling[].Z250AFName 
+         IF NOT(Z251ASibRelateR = NOTASIBLING) THEN 
+         IF SecA.relations.A028_RInNHome <> YES OR SecA.relations.A038TCouplenss_A <> 
+         OTHER AND SecA.relations.A030_LivTogethr <> YES THEN 
+         ASSIGN: SecF.SiblingTab.Sibling[i].Z249AResStat := 
+         OrdEnum(SecF.SiblingTab.Sibling[i].F243AResident ) 
+         {PREVIOUS ASK} SecF.SiblingTab.Sibling[].Z250AFName 
+         IF NOT(Z251ASibRelateR = NOTASIBLING) THEN 
+         IF NOT(gp1 <> YES OR gp2 <> OTHER AND gp3 <> YES) THEN 
+         ASSIGN: SecF.SiblingTab.Sibling[i].Z249AResStat := 'NONRESIDENT' 
+         {PREVIOUS ASK} SecF.SiblingTab.Sibling[].F244ALiving 
+         IF SecF.SiblingTab.Sibling[i].F246A = YES THEN 
+         ASSIGN: SecF.SiblingTab.Sibling[i].Z249AResStat := 'DUPED' 
+         {PREVIOUS ASK} SecF.SiblingTab.Sibling[].F244ALiving 
+         IF SecF.SiblingTab.Sibling[i].F244ALiving = DIED THEN 
+         ASSIGN: SecF.SiblingTab.Sibling[i].Z249AResStat := 'DIED' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+QZ249                         RESIDENCY STATUS - SIBLING
+         Section: PR    Level: Siblings        Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecF.SiblingTab.Sibling[1].Z249AResStat
+
+         (Does [Sibling's First Name] live with you?)
+
+         .................................................................................
+           167           1.  RESIDENT
+                         2.  AWAY/INST: THE PERSON IS TEMPORARILY AWAY (IN SCHOOL, JAIL,
+                             REHAB, ETC.) AND DOES NOT HAVE ANY OTHER PERMANENT ADDRESS
+                         3.  AWAY/OTHER: THE PERSON IS TEMPORARILY AWAY (FOR ANOTHER
+                             REASON, SUCH AS TRAVELLING) AND DOES NOT HAVE ANY OTHER
+                             PERMANENT ADDRESS
+           288           4.  DIED/PASSED AWAY
+         18908           5.  NONRESIDENT
+            29           6.  HAVE NO CONTACT
+                         7.  DELETED
+             2           8.  DUPLICATED
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+            12       Blank.  Data Not Available
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecF.SiblingTab.Sibling[].Z250AFName 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+QZ251                         RELATIONSHIP TO R
+         Section: PR    Level: Siblings        Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecF.SiblingTab.Sibling[1].Z251ASibRelateR
+
+         (What is [Sibling's First Name] Relationship to you?)
+
+         .................................................................................
+          9536          15.  BROTHER
+          9861          17.  SISTER
+                        34.  NOT A SIBLING
+             9       Blank.  Data Not Available
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecF.SiblingTab.Sibling[].F245AMarital 
+         IF SecF.SiblingTab.Sibling[i].F245AMarital = MARRIED THEN 
+         ASSIGN: SecF.SiblingTab.Sibling[i].Z252ACouplenss := 'MARRIED' 
+         {PREVIOUS ASK} SecF.SiblingTab.Sibling[].F245AMarital 
+         IF SecF.SiblingTab.Sibling[i].F245AMarital = PARTNERED THEN 
+         ASSIGN: SecF.SiblingTab.Sibling[i].Z252ACouplenss := 'PARTNERED_VOL' 
+         {PREVIOUS ASK} SecF.SiblingTab.Sibling[].F245AMarital 
+         IF NOT(F245AMarital = PARTNERED) THEN 
+         ASSIGN: SecF.SiblingTab.Sibling[i].Z252ACouplenss := 'OTHER' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+QZ252                         COUPLENESS STATUS SIB
+         Section: PR    Level: Siblings        Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecF.SiblingTab.Sibling[1].Z252ACouplenss
+
+         Is [Sibling's First Name] married or living with a partner?
+
+         .................................................................................
+         11179           1.  MARRIED
+                         2.  REMARRIED
+          1469           3.  PARTNERED (VOLUNTEERED)
+                         4.  REPARTNERED (VOLUNTEERED)
+          6753           6.  OTHER
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+             5       Blank.  Data Not Available
+
+
+==========================================================================================
+
+QZ253                         RANDOM SIB 1 OF 4 - SIBLING
+         Section: PR    Level: Siblings        Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecF.SiblingTab.Sibling[1].Z253ARandomSib
+
+         RANDOM 1 OF 4 SIB FOR FOLLOW UP
+
+         .................................................................................
+                         0.  NOT 1/4 OR NO PERSON
+           887           1.  YES 1/4
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+         18519       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+QVDATE                        2018 DATA MODEL VERSION
+         Section: PR    Level: Siblings        Type: Numeric    Width: 2   Decimals: 0
+
+         User Note:  This variable identifies which data model was used to interview the
+         household.  Please reference the data description for a summary of changes in
+         each data model.
+
+         .................................................................................
+            98           1.  Version 1
+           984           2.  Version 2
+           482           3.  Version 3
+           588           4.  Version 4
+          1129           5.  Version 5
+          1194           6.  Version 6
+          3427           7.  Version 7
+          4083           8.  Version 8
+          1220           9.  Version 9
+           199          10.  Version 10
+          4277          11.  Version 11
+          1725          12.  Version 12
+
+
+==========================================================================================
+
+QVERSION                      2018 DATA RELEASE VERSION
+         Section: PR    Level: Siblings        Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+         19406           2.  HRS 2018 Final Release
+
+
+==========================================================================================

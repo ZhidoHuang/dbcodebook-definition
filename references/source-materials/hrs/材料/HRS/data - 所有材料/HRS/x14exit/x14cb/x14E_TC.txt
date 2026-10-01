@@ -1,0 +1,419 @@
+==========================================================================================
+
+HRS 2014 Final Exit
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section E: FAMILY STRUCTURE AND TRANSFERS  (To Child)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: E     Level: To Child        Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+           419           010756-918914.  Household Identification Number
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: E     Level: To Child        Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           228         010.  Person Identifier
+            21         011.  Person Identifier
+             1         012.  Person Identifier
+           128         020.  Person Identifier
+             3         021.  Person Identifier
+            26         030.  Person Identifier
+            12         040.  Person Identifier
+
+
+==========================================================================================
+
+YSUBHH                        2014 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: E     Level: To Child        Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           394           3.  1st deceased respondent from a household
+            25           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+NSUBHH                        2012 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: E     Level: To Child        Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           384           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+            10           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+             7           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+             1           3.  1st deceased respondent from a household
+             1           4.  2nd deceased respondent from a household
+                         5.  Split household - one half of couple from SUBHH 1 or 2
+                         6.  Split household - one half of couple from SUBHH 1 or 2
+            16           7.  Reunited household - respondents from split household
+                             reunite
+
+
+==========================================================================================
+
+OPN                           OTHER PERSON NUMBER
+         Section: E     Level: To Child        Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           296                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+            22                     993.  ALL CHILDREN EQUALLY
+            21                     994.  ALL GRANDCHILDREN EQUALLY
+            12                     995.  ALL CHILDREN AND GRANDCHILDREN EQUALLY
+            52                     997.  OTHER (SPECIFY)
+            13                     998.  DK (Don't Know); NA (Not Ascertained)
+             3                     999.  RF (Refused)
+                                 Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         IF E075_ = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE076                         WHICH CHILD GIVEN LARGEST AMOUNT
+         Section: E     Level: To Child        Type: Character  Width: 3   Decimals: 0
+         Ref: SecE.KidTransMain.TransToKid[1].E076_
+
+         To which child (or grandchild) did [First Name] [or you/or [his/her]
+         [husband/wife/partner]] [or [his/her]] [late husband/late wife/late partner]
+         give the [(next)] largest amount?
+         
+         IWER: If grandchild: (Which of [First Name]'s children is the parent of that
+         grandchild?)
+
+         .................................................................................
+           296                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+            22                     993.  ALL CHILDREN EQUALLY
+            21                     994.  ALL GRANDCHILDREN EQUALLY
+            12                     995.  ALL CHILDREN AND GRANDCHILDREN EQUALLY
+            52                     997.  OTHER (SPECIFY); including an un-named
+                                         grand-daughter, grand-son, grand-child
+            13                     998.  DK (Don't Know); NA (Not Ascertained)
+             3                     999.  RF (Refused)
+                                 Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecE.KidTransMain.TransToKid[i].E137_E076_Temp 
+
+         IF SecE.KidTransMain.TransToKid[i].E137_E076_Temp = DONTKNOW THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE078                         GIVE SAME AMOUNT TO EACH
+         Section: E     Level: To Child        Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecE.KidTransMain.TransToKid[1].E078A
+
+         Did [First Name] [or you/or [his/her] [husband/wife/partner]] [or [his/her]]
+         [late husband/late wife/late partner] give about the same amount to more than
+         one child (or grandchild)?
+
+         .................................................................................
+             6           1.  YES
+             2           5.  NO
+             5           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           406       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         IF E078A = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE079M1                       WHICH CHILD/REN IS PARENT-1
+         Section: E     Level: To Child        Type: Character  Width: 3   Decimals: 0
+         Ref: SecE.KidTransMain.TransToKid[1].E079A[1]
+
+         Which children (or grandchildren)?
+         
+         IWER: If grandchild: (Which of [his/her] children is the parent of those
+         grandchildren?)
+         
+         IWER: Choose all that apply
+
+         .................................................................................
+             2                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+             2                     993.  ALL CHILDREN EQUALLY
+                                   994.  ALL GRANDCHILDREN EQUALLY
+                                   995.  ALL CHILDREN AND GRANDCHILDREN EQUALLY
+             1                     997.  OTHER (SPECIFY)
+             1                     998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           413                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         IF E078A = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE079M2                       WHICH CHILD/REN IS PARENT-2
+         Section: E     Level: To Child        Type: Character  Width: 3   Decimals: 0
+         Ref: SecE.KidTransMain.TransToKid[1].E079A[2]
+
+         Which children (or grandchildren)?
+         
+         IWER: If grandchild: (Which of [his/her] children is the parent of those
+         grandchildren?)
+         
+         IWER: Choose all that apply
+
+         .................................................................................
+             2                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN EQUALLY
+                                   994.  ALL GRANDCHILDREN EQUALLY
+                                   995.  ALL CHILDREN AND GRANDCHILDREN EQUALLY
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           417                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         IF E078A = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE079M3                       WHICH CHILD/REN IS PARENT-3
+         Section: E     Level: To Child        Type: Character  Width: 3   Decimals: 0
+         Ref: SecE.KidTransMain.TransToKid[1].E079A[3]
+
+         Which children (or grandchildren)?
+         
+         IWER: If grandchild: (Which of [his/her] children is the parent of those
+         grandchildren?)
+         
+         IWER: Choose all that apply
+
+         .................................................................................
+             1                 041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN EQUALLY
+                                   994.  ALL GRANDCHILDREN EQUALLY
+                                   995.  ALL CHILDREN AND GRANDCHILDREN EQUALLY
+             1                     997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           417                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         IF E078A = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE079M4                       WHICH CHILD/REN IS PARENT-4
+         Section: E     Level: To Child        Type: Character  Width: 3   Decimals: 0
+         Ref: SecE.KidTransMain.TransToKid[1].E079A[4]
+
+         Which children (or grandchildren)?
+         
+         IWER: If grandchild: (Which of [his/her] children is the parent of those
+         grandchildren?)
+         
+         IWER: Choose all that apply
+
+         .................................................................................
+                               041-990.  Other Person Number
+                                   992.  DECEASED CHILD
+                                   993.  ALL CHILDREN EQUALLY
+                                   994.  ALL GRANDCHILDREN EQUALLY
+                                   995.  ALL CHILDREN AND GRANDCHILDREN EQUALLY
+                                   997.  OTHER (SPECIFY)
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           419                   Blank.  INAP (Inapplicable); Partial Interview; Data
+                                         Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecE.KidTransMain.TransToKid[i].E137_E076_Temp 
+
+         IF (((SecE.KidTransMain.TransToKid[i].E137_E076_Temp <> REFUSAL) AND 
+         (SecE.KidTransMain.TransToKid[i].E138_E079BTemp <> REFUSAL)) AND 
+         (SecE.KidTransMain.TransToKid[i].E138_E079BTemp <> DONTKNOW)) AND 
+         ((SecE.KidTransMain.TransToKid[i].E078A <> NO) AND 
+         SecE.KidTransMain.TransToKid[i].E078A <> NONRESPONSE) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE081                         AMOUNT TRANSFERRED TO CHILDREN
+         Section: E     Level: To Child        Type: Numeric    Width: 7   Decimals: 0
+         Ref: SecE.KidTransMain.TransToKid[1].E081A
+
+         About how much did that amount to for [that child/[his/her] deceased child/each
+         child/each grandchild/each child and grandchild)/Other (Specify)] [since [Prev
+         Wave Family R IW Month],[Prev Wave Family R IW Year]/Since [Prev Wave Family R
+         IW Year]/in the last two years before [his/her] death]?
+         
+         IWER: Do not probe DK/RF
+         
+         AMOUNT:
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            313        0     1000000      13533.63      74035.31      11
+         -----------------------------------------------------------------
+            84     9999998.  DK (Don't Know); NA (Not Ascertained)
+            11     9999999.  RF (Refused)
+
+
+==========================================================================================
+
+YE083                         TRANSFER TO CHILD - MIN
+         Section: E     Level: To Child        Type: Numeric    Width: 5   Decimals: 0
+         Ref: SecE.KidTransMain.TransToKid[1].E083_
+
+         Did it amount to a total of less than $____ , more than $____ , or what?
+         
+         PROCEDURES: 2Up, 1Up1Down, 2Down
+         BREAKPOINTS:  $1,000, $5,000, $20,000
+         RANDOM ENTRY POINT ASSIGNMENT [1 ($1,000)] or [2 ($5,000)] or [{NOT 1 and NOT 2}
+         ($20,000)] AT X511
+
+         .................................................................................
+            31           0.  Value of Breakpoint
+             5        1000.  Value of Breakpoint
+            29        1001.  Value of Breakpoint
+             3        5000.  Value of Breakpoint
+            14        5001.  Value of Breakpoint
+             3       20000.  Value of Breakpoint
+            10       20001.  Value of Breakpoint
+           324       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+YE084                         TRANSFER TO CHILD - MAX
+         Section: E     Level: To Child        Type: Numeric    Width: 8   Decimals: 0
+         Ref: SecE.KidTransMain.TransToKid[1].E084_
+
+         *
+
+         .................................................................................
+            14         999.  Value of Breakpoint
+             5        1000.  Value of Breakpoint
+            27        4999.  Value of Breakpoint
+             3        5000.  Value of Breakpoint
+            15       19999.  Value of Breakpoint
+             3       20000.  Value of Breakpoint
+            28    99999996.  Greater than Maximum Breakpoint
+           324       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+YE085                         TRANSFER TO CHILD - RESULT
+         Section: E     Level: To Child        Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecE.KidTransMain.TransToKid[1].E085_
+
+         *
+
+         .................................................................................
+            15          98.  DK (Don't Know); NA (Not Ascertained)
+             6          99.  RF (Refused)
+           398       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecE.KidTransMain.TransToKid[i].E137_E076_Temp 
+
+         IF NOT(((SecE.KidTransMain.TransToKid[i].E081A <> EMPTY AND 
+         (SecE.KidTransMain.TransToKid[i].E081A < 500)) AND 
+         SecE.KidTransMain.TransToKid[i].E081A <> NONRESPONSE) OR 
+         ((SecE.KidTransMain.TransToKid[i].E137_E076_Temp = C95) OR (95 IN 
+         SecE.KidTransMain.TransToKid[i].E138_E079BTemp))) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+YE086                         FIN HELP/OTHER KIDS/PAST 2 YRS
+         Section: E     Level: To Child        Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecE.KidTransMain.TransToKid[1].E086A
+
+         [Since [Prev Wave Family R IW Month],[Prev Wave Family R IW Year]/Since [Prev
+         Wave Family R IW Year]/In the last two years before [his/her] death], did [First
+         Name] [or you/or [his/her] [husband/wife/partner]] [or [his/her]] [late
+         husband/late wife/late partner] give financial help totaling $500 or more to any
+         other child (or grandchild)?
+         
+         Def: (By financial help we mean giving money, helping pay bills, or covering
+         specific types of costs such as those for medical care OR insurance, schooling,
+         down payment for a home, rent, etc. The financial help can be considered
+         support, a gift or a loan.)
+
+         .................................................................................
+           133           1.  YES
+           272           5.  NO
+            11           8.  DK (Don't Know); NA (Not Ascertained)
+             3           9.  RF (Refused)
+                     Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+YVDATE                        2014 DATA MODEL VERSION
+         Section: E     Level: To Child        Type: Numeric    Width: 1   Decimals: 0
+
+         User Note:  This variable identifies which data model was used to interview the
+         household.  Please reference the data description for a summary of changes in
+         each data model.
+
+         .................................................................................
+                         1.  Version 1
+            35           2.  Version 2
+            96           3.  Version 3
+            95           4.  Version 4
+                         5.  Version 5
+            95           6.  Version 6
+            98           7.  Version 7
+
+
+==========================================================================================
+
+YVERSION                      2014 DATA RELEASE VERSION
+         Section: E     Level: To Child        Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+           419           1.  HRS 2014 Exit Final Release
+
+
+==========================================================================================

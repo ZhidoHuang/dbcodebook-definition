@@ -1,0 +1,2091 @@
+*** Output of W:\2000HRS\POSTEXIT\DEV\H2KPE.SPC (Q,/,C,G,V,A,=,*,J,R,L) to Text on 
+*** 6/13/2000 2:05:08 PM by SRC Integrated Utility Set
+**************************************************************
+*
+* HRS2000 POST EXIT PROXY
+*
+* CREATED:  05/15/2000
+* MODIFIED: 06/02/2000
+*
+* AUTHOR:   PETER SPARKS, KATHY TERRAZAS
+* COPYRIGHT (C) 2000 REGENTS OF THE UNIVERSITY OF MICHIGAN
+*
+
+/INCLUDE H2KPR
+
+Q<451/473>                   CSX.
+* KT 6/1/00 CHANGED THE DEFAULT OF THIS ASSIGNMENT TO SLOT 1 SO FILLS WOULD WORK
+* NOTE:  ALL POST EXIT PROXY RS ARE BEING PRELOADED IN THE 1ST SLOT
+Q474U                     CS0Y3.R INDEX
+A14                       1X
+
+J475  476                 1(GE0.LE0)=:POST-EXIT 2000 V_1:
+Q475U           12        CS0Y4.HRS2000 VERSION
+
+Q476TE                    CSX.
+Q477TE                    CSX.
+Q478TE                    CSX.
+Q479TE                    CSX.
+
+Q480U           1         CS0Y7.WHICH HH
+A14                       1X
+
+*
+*  WE ARE PULLING FROM VIRGIN PRELOAD FOR 1ST R'S
+*  UNTIL WE GET TO THE R GRID AND KNOW THE SITUATION FOR SURE.
+
+*  Assign an assumption of 'Not \Coupled' for new cohorts
+*  since new cohorts preloaded  as 0
+
+J481  482                 0(0.5)+480(1)+M19(Q474)+44(N2)=39M19(Q474)==:6:
+J481  482                 0(0.5)+480(2)+M72(Q474)+97(N2)=92M72(Q474)==:6:
+
+* GET PRELOAD COUPLENESS
+* 1 Married; 3 Partners; 6 Not Part of a Couple
+
+*  Get Virgin preload coupleness if this is the first R
+J481  482                 M19(Q474)+44(1)+480(1/2)=:/^0=178M160(Q474)=:
+
+*  Get updated preload coupleness for second Rs
+J481  482                 480(1)=:/^0=37M19(Q474)=:
+J481  482                 480(2)=:/^0=90M72(Q474)=:
+Q481                      CS0Y8.PRELOAD COUPLENESS
+C0                        .
+C1                        PART OF A MARRIED COUPLE
+C3                        PART OF A PARTNERED COUPLE
+C6                        NOT PART OF A COUPLE
+*
+* GET PRELOAD COHORT FOR THIS TEST - SHOULD COME EARLIER FOR THE
+* SCREENING QUESTIONS
+
+* NOTE:
+*   1 = AHEAD
+*   2 = CODA
+*   3 = HRS
+*   4 = WAR BABIES
+
+J482  483                 M19(Q474)+44(1)+480(1/2)=:/^0=166M160(Q474)=:
+J482  483                 480(1)=:/^0=25M19(Q474)=:
+J482  483                 480(2)=:/^0=78M72(Q474)=:
+Q482                      CS0Y9.PRELOAD COHORT
+C0                        .
+C1                        AHEAD3 (born before 1924)
+C2                        CODA (1924-1930)
+C3                        HRS (1931-1941)
+C4                        WAR BABIES (1942-1947)
+*
+* GET PRELOAD MARITAL STATUS
+* 1,2,3 Married, 4 Separated/Divorced, 5 Widowed, 6 Never Married
+J483  484                 M19(Q474)+44(1)+480(1/2)=:/^0=177M160(Q474)=:
+J483  484                 480(1)=:/^0=36M19(Q474)=:
+J483  484                 480(2)=:/^0=89M72(Q474)=:
+Q483U                     CS0Y9a.PRELOAD MARITAL STATUS
+*
+* GET PRELOAD REINTERVIEW HH
+* 1 YES, 5 NO
+J484  485                 480(1)=:/^0=39M19(Q474)=:
+J484  485                 480(2)=:/^0=92M72(Q474)=:
+Q484U                     CS0Y10.PRELOAD REINTERVIEW HH
+
+* HH1
+J485  486                 480(1)+474(3)+M19(1)+21(Q473)=:1:
+J485  486                 480(1)+474(3)+M19(2)+21(Q473)=:2:
+* HH2
+J485  486                 480(2)+474(3)+M72(1)+74(Q473)=:1:
+J485  486                 480(2)+474(3)+M72(2)+74(Q473)=:2:
+
+* IF HH1 THEN THE R IS #1 THEN THE SP IS #2 AND VICE VERSA
+J485  486                 480(1)+474(1)+481(1.3)=:2:
+J485  486                 480(1)+474(2)+481(1.3)=:1:
+* IF HH2 THEN THE R HAS NO OLD SPOUSE
+J485  486                 480(2)+474(2)+481(1.3)=:1:
+J485  486                 480(2)+474(1)+481(1.3)=:2:
+J485  486                 1(GE0.LE0)=:0:
+Q485U                     CS0Y11.WHICH SP IS IN THE HH
+A14
+
+*
+*Display "POST-EXIT 2000: V_1" (We can discuss)
+Q486U                     CS0Y12.CUR VQ VERSION
+A48
+Q487TE                    CSX.
+Q488TE                    CSX.
+
+* PZS 6/9/2000 Removed Q488 (Gender of spouse of R) prob#2558
+
+* THIS MARKS THIS CASE AS A LIVING INTERVIEW
+* ALL EXIT PROXY INTERVIEWS/SPANISH HAVE A VALUE OF 2
+J489  490                 1(GE0.LE0)=::3:
+Q489U           1         CS0Y15.PROXY IW FLAG
+*
+
+J490  491                 M19(Q474)+44(1)+480(1/2)=:/^0=176M160(Q474)=:
+J490  491                 480(1)=:/^0=35M19(Q474)=:
+J490  491                 480(2)=:/^0=88M72(Q474)=:
+Q490U           1         CS0Y16.R GENDER
+
+Q491TE                    CSX.
+Q492TE                    CSX.
+Q493TE                    CSX.
+
+* DISPLAY THE CURRENT VQ VERSION IN THE BANNER
+* KT 6/12/00 MODIFIED LONG LABEL TO DELETE ILLEGAL CHARACTER
+Q494U                     CS1Y4.SHOW VERSION
+A35                       CUR VQ VERS #(DX.) ((NTIME1.N START TIME STAMP))
+*
+
+J495  496
+Q495X                     CSTEXT1.CSTEXT
+* SP - THIS IS FOR CS12
+C9                        husband
+C10                       wife
+C11                       partner
+C12
+* R - THE FOLLOWING CODES ARE USED FOR PROXY ONLY
+*C13                       him
+*C14                       her
+C15                       he
+C16                       she
+C17                       his
+C18                       her
+
+C35                       (**Q27**)M19(Q474)=
+C36                       (**Q80**)M72(Q474)=
+
+** SPANISH PROXY FILLS
+*C75                       (you)
+*C76                       (he)
+*C77                       (she)
+*C78                       * ((DX.))
+**
+*C80                       (you)
+*C81                       (he)
+*C82                       (she)
+*
+* kt 6/6/00 replaced get using Current Coupleness and R Sex per probnum=2545
+* PZS 6/9/200 Changed to preloaded sex of R prob#2558
+* Husband:  R is married and is female
+G                         9=597(1)+490(2)
+* kt 6/6/00 replaced get using Current Coupleness and R Sex per probnum=2545
+* Wife:  R is married and Sp is male
+G                         10=597(1)+490(1)
+* kt 6/6/00 replaced get using Current Coupleness and R Sex per probnum=2545
+* Partner: R is partnered
+G                         11=597(3)
+* kt 6/6/00 replaced get using Current Coupleness per probnum=2545
+* All others
+G                         12=597(N1+N3)
+
+* PROXY GETS
+G                         13,15,17=490(1)
+G                         14,16,18=490(2)
+
+G                         35=480(1)
+G                         36=480(N1)
+
+* SPANISH PROXY GETS
+G                         75=514(1)
+G                         76=514(3)+490(1)
+G                         77=514(3)+490(2)
+G                         78=514(2)
+*
+G                         80=514(1)
+G                         81=514(2.3)+490(1)
+G                         82=514(2.3)+490(2)
+Q496TE                    CSX.
+Q<497/505>                   CSX.
+Q506U           1         CS0Y20.WHICH IW 1ST R/2ND R
+A14                       1X
+
+* PZS 6/6/2000 Modified wording for core/exit preload prob#2536
+Q507                      CS0.CORRECT R
+/SCREEN 0
+/~IF 303(N1/2)
+/        THIS IS A CORE/EXIT LINE.  SUSPEND THE CASE AND
+/        RESELECT THE CORRECT LINE.
+/~ELSE
+/        IWER:  YOU SHOULD BE CONDUCTING A POST-EXIT PROXY FOR THE LATE
+/~IF 480(1)
+/        (**Q27**)M19(Q474)= (**Q28**)M19(Q474)=,
+/~ELSE
+/        (**Q80**)M72(Q474)= (**Q81**)M72(Q474)=,
+/~END
+/
+/        IF YOU HAVE THE WRONG R OR R IS ALIVE THEN SUSPEND
+/        THIS CASE AND RESELECT THE CORRECT LINE.
+/~END
+/
+C0                        INAP
+C1                        CORRECT R - GO ON
+G                         1
+J508  507                B507(K1.K2)=YOU MUST ANSWER THIS
+
+* PZS 6/6/2000 Added "protection" against core/exit preload prob#2536
+J508  507                B303(N1/2)+507(1)=THIS IS A CORE/EXIT SAMPLE LINE -- SUSPEND HERE AND RESTART THE CASE
+
+
+Q508                      CS1.R LIVING CHECK
+/CS1.
+/        IWER:  IS (^27M19(Q474)=/^80M72(Q474)=) LIVING?
+C0                        INAP;s
+C1                        YES -- GO BACK TO CSMS AND CHOOSE "Self/Liv Proxy" IW
+C5                        NO
+G                         1,5
+J509  508                B508(N5)=SUSPEND THIS CASE. GO BACK TO CSMS.
+* PETER, I ASSUMED THIS NEXT Q SHOULD BE HERE
+
+* THIS SEPARATES LOAD TIME FROM REST OF INTERVIEW
+Q509U                     CSTIM2XX.LOAD TIME STAMP
+A45  N
+*
+Q<510/513>                   CSX.
+
+*Q510-Q514 are TE in this document, but don't have to be.  The following questions could be renumbered.
+Q514                      CS1A.PROXY/SELF INTERVIEW
+/CS1A.
+/        IWER:  DESIGNATE TYPE OF INTERVIEW:
+C0                        INAP
+C2                        PROXY IS SURVIVING SPOUSE
+C3                        PROXY IS NON-SPOUSE
+G                         2/3
+J515  514                B514(N2/3)=YOU MUST ANSWER THIS
+
+*
+Q515                      CS1Bxx.CURRENT-WAVE PROXY SAME
+/CS1Bxx.
+/        PREVIOUS WAVE (EXIT/POST-EXIT) PROXY WAS (**Q221**), (**Q224**).
+/
+/        CURRENT WAVE POST-EXIT PROXY IS:
+C0                        INAP
+C1                        SAME PERSON AS IN PRIOR-WAVE
+C2                        DIFFERENT/NEW PERSON
+G                         1/2
+
+* PZS 6/6/2000 Added jump for when proxy is the spouse prob#2543
+J516  518                 515(1).514(2)
+Q516B                     CS49xx1.(CS2)-PROXY REL TO DECEASED
+/CS49xx1.
+/        DESIGNATE THIS PROXY REPORTER'S RELATIONSHIP TO THE DECEASED R.
+/
+/        RELATIONSHIP:  ^C1^B
+/
+/        WHAT IS THE PROXY'S NAME?  ^B
+C1                        SPOUSE
+C2                        DAUGHTER/STEPDAUGH
+C3                        SON/STEPSON
+C4                        DAUGHTER-IN-LAW
+C5                        SON-IN-LAW
+C6                        GRANDDAUGHTER
+C7                        GRANDSON
+C8                        SISTER
+C9                        BROTHER
+C10                       OTHER RELATIVE
+C11                       FRIEND
+C12                       PAID HELPER
+C13                       PROFESSIONAL (SPECIFY);C
+G                         2/13
+*
+Q517UB          20        CS49xx2.(CS2)-PROXY NAME
+V                         M
+
+* PZS 6/9/2000 Added paran at then of first sentence prob#2566
+Q518UP                    CS0xx.POST-EXIT INTRO
+/CS0xx.
+/    (As you may know, (^27M19(Q474)=/^80M72(Q474)=) was a part of the Health
+/    and Retirement Study, an important study about issues
+/    of aging.)  About two years ago, after (^27M19(Q474)=/^80M72(Q474)=) died,
+/~IF 515(1)
+/    we spoke with you about (^27M19(Q474)=/^80M72(Q474)=)'s death
+/~ELSE
+/    we spoke with (**Q221**) about (^27M19(Q474)=/^80M72(Q474)=)'s death
+/~END
+/    and the health conditions surrounding (his/her) death.
+/    At that time, final settlement of the estate had not
+/    taken place, and we would like to ask a few questions
+/    now about the final estate settlement.
+
+* PZS 6/9/2000 Deleted CS2axx prob#2544
+Q519TE                    CSX.
+Q520TE                    CSX.
+
+
+* PZS 6/6/2000 Added jump to skip CS2axx if part of date is missing prob#2544
+* PZS 6/9/2000 Modified jump prob#2544
+J521  524                 278(G0).279(G0).280(G1992)
+Q521B                     CS2axx1.MONTH OF DEATH
+/CS2axx1.
+/        What was the date on which (^27M19(Q474)=/^80M72(Q474)=) died?
+/
+/        MONTH:  ^C2^Y1^B
+/        DAY:    ^B
+/        YEAR:   ^B
+C0                        INAP
+C1                        JAN
+C2                        FEB
+C3                        MAR
+C4                        APR
+C5                        MAY
+C6                        JUN
+C7                        JUL
+C8                        AUG
+C9                        SEP
+C10                       OCT
+C11                       NOV
+C12                       DEC
+C98                       DK
+C99                       RF
+G                         1/12
+*                         1,7,2,8,3,9,4,10,5,11,6,12
+*
+Q522UB          2         CS2axx2.DAY OF DEATH
+V                         ! U__ !(1/31)nR
+*
+Q523UB          4         CS2axx3.YEAR OF DEATH
+V                         ! U____ !(1850/2001)nR
+Q<524/570>                   CSX.
+
+Q571TE                    CSX.
+Q572TE                    CSX.
+Q<573/596>                   CSX.
+Q597                      CS15D.CURRENT COUPLENESS
+C0                        .
+C1                        PART OF A MARRIED COUPLE
+C3                        PART OF A PARTNERED COUPLE
+C6                        NOT PART OF A COUPLE
+A14                       481
+
+Q598TE                    CSX.
+Q599TE                    CSX.
+Q600TE                    CSX.
+Q601TE                    CSX.
+Q602TE                    CSX.
+Q603TE                    CSX.
+
+* PREV WAVE SP/PARTNER
+J604  605                 485(0)=:0:
+J604  605                 480(1)+M19(Q485)+45(1/7)=:1:
+J604  605                 480(2)+M72(Q485)+98(1/7)=:1:
+Q604                      CS15Y18.SP ALIVE
+C0                        INAP
+C1                        ALIVE
+C5                        DEAD
+A14                       5X
+
+Q605TE                    CSX.
+Q<606/753>                   CSX.
+J754  755                 480(1)=:/(**Q27**)M19(Q474)=:
+J754  755                 1(GE0.LE0)=:/(**Q80**)M72(Q474)=:
+Q754U           10        CS22Y31.R FIRST NAME
+Q755TE                    CSX.
+Q756TE                    CSX.
+
+J757  758                 480(1)=:/^0=35M19(Q474)=:
+J757  758                 1(GE0.LE0)=:/^0=88M72(Q474)=:
+Q757                      CS22Y34.R SEX
+C0                        INAP;s
+C1                        MALE
+C2                        FEMALE
+G                        E0/2
+G                         0/2
+
+Q758TE                    CSX.
+
+* PZS 6/6/2000 Added missing questions for family R prob#2546
+J759  760                 480(1)=:/^0=41M19(Q474)=:
+J759  760                 1(GE0.LE0)=:/^0=94M72(Q474)=:
+Q759                      CS22Y36.R FAM/NON V105
+C0                        INAP;s
+C1                        FAMILY
+C5                        NON-FAMILY
+G                        E0/5
+G                         0/5
+
+Q<760/764>                   CSX.
+* PZS 6/6/2000 Added missing questions for family R prob#2546
+* THE FAMILY R IS PRELOADED AND ASSUMED TO BE CORRECT
+* RELATIONSHIP CODES FOR THE KIDS ARE BASED UPON THIS
+
+* IF THIS IS THE FAMILY R, THEN ASSIGN A 1, ELSE ASSIGN A 0.
+* ALWAYS UPDATE THE FLAG
+*J765  766                 705(2.3)=:1:
+J765  766                 759(1)=:1:
+Q765U           1         CS22Y42.IDFM OR IDNFM FLAG
+A14                       0X
+
+
+Q766U                     CS22Y43.THIS SESSION VQ
+A48
+Q767                      CSCALC1.CS CUR DAY TEXT
+A11
+C1                        SUN
+C2                        MON
+C3                        TUE
+C4                        WED
+C5                        THU
+C6                        FRI
+C7                        SAT
+Q768                      CSCALC2.CUR MONTH TEXT
+A9
+C0                        INAP
+C1                        JAN
+C2                        FEB
+C3                        MAR
+C4                        APR
+C5                        MAY
+C6                        JUN
+C7                        JUL
+C8                        AUG
+C9                        SEP
+C10                       OCT
+C11                       NOV
+C12                       DEC
+G                         1/12
+Q769U                     CS22Y44.CUR DAY 1-31
+A10
+Q770U                     CS22Y45.CUR YEAR YYYY
+A7
+Q771U                     CS22Y46.TIME HH:MM:SS TEMP
+A17   8
+Q772U                     CS22Y47.TIME HH:MM:SS PERM
+A17  N8
+Q773U                     CS22Y48.TIME SECONDS
+A45  N
+Q774U                     CS22Y49.TIME YEAR
+A7   N
+Q775                      CS22Y50.TIME MONTH
+C   0/12   768  0
+A9   N
+Q776U                     CSTIME5.DATE/TIME OF VQ FILE
+A48  N
+Q777U                     CS22Y51.CUR DAY 1-31 PERM
+A10  N
+
+
+* PZS 6/9/2000 Uncommented C36, C77 prob#2557
+J778  779
+Q778X                     CSTEXT2.CSTXT1 CSTEXT1
+C35                       (**Q48**)
+C36                       (**Q49**)
+C38                       (**Q51**)
+C39                       (**Q52**)
+**
+C76                       (**Q101**)
+C77                       (**Q102**)
+C79                       (**Q104**)
+C80                       (**Q105**)
+G                         35,36=480(1)
+G                         38,39=480(1)+50(1)
+G                         76,77=480(2)
+G                         79,80=480(2)+103(1)
+
+Q779TE                    CSX.
+Q<780/889>                   CSX.
+* THIS COUNTS THE NUMBER OF CHILDREN IN THE HOUSEHOLD
+J890  891                 480(1)=:/^0=4AM11(1.2.6)=:
+J890  891                 480(2)=:/^0=57AM64(1.2.6)=:
+Q890U                     CS49Y13.CS CHILDREN KID
+A14
+J891  892                 480(1)=:/^0=4AM12(1.2.6)=:
+J891  892                 480(2)=:/^0=57AM65(1.2.6)=:
+Q891U                     CS49Y14.CS CHILDREN SP
+A14
+J892  893                 1(GE0.LE0)=:/^0=890A+891A:
+Q892U                     CS49Y15.CS ALL CHILDREN
+A14
+Q893U                     CS49Y16.CS # CHILDREN
+A14                       892U(1/30)=
+
+Q<893/1100>                   CSX.
+Q<1101/1532>                   DX.
+
+* NOTE:  IF NO ZEROS ARE NEEDED IN THE CHILDREN "POPUP", THEN
+* WILL HAVE TO CHECK FOR ZEROS AND DO APPROPRIATE FILLS OTHERWISE.
+*
+* NOTE:  CHILDREN INCLUDE RES, AWAY/INST, AWAY/OTHER, NONRES, NO CONTACTS
+* Lists out all those related to the IDFM
+J1533 1534                480(1)+765(1)=:/^0=4AM11(1.2.6)+7(1.2.3.5.6)=:
+J1533 1534                480(N1)+765(1)=:/^0=57AM64(1.2.6)+60(1.2.3.5.6)=:
+Q1533M          1         D049Y24.C CHILD
+C0
+C<1/30>
+A14                       0X
+
+* Lists out all those related to the IDNFM
+J1534 1535                480(1)+765(N1)=:/^0=4AM12(1.2.6)+7(1.2.3.5.6)=:
+J1534 1535                480(N1)+765(N1)=:/^0=57AM65(1.2.6)+60(1.2.3.5.6)=:
+Q1534M     1533 1         D049Y25.SP CHILD
+A14                       0X
+
+Q1535M     1533 1         D049Y26.CHILDREN
+A14                       4AM4(Q1533.Q1534)=
+
+* Lists out all dead children related to the IDFM
+J1536 1537                480(1)+765(1)=:/^0=4AM11(1.2.6)+7(4)=:
+J1536 1537                480(N1)+765(1)=:/^0=57AM64(1.2.6)+60(4)=:
+Q1536M     1533 1         D049Y27.DEAD C CHILD
+A14                       0X
+
+* Lists out all dead children related to the IDNFM
+J1537 1538                480(1)+765(N1)=:/^0=4AM12(1.2.6)+7(4)=:
+J1537 1538                480(N1)+765(N1)=:/^0=57AM65(1.2.6)+60(4)=:
+Q1537M     1533 1         D049Y28.DEAD SP CHILD
+A14                       0X
+
+Q1538M     1533 1         D049Y29.DEAD CHILDREN
+A14                       4AM4(Q1536.Q1537)=
+
+Q1539M     1533 1         D049Y30.ALL CHILD LINEP
+A14                       4AM4(Q1535.Q1538)=
+Q1540TE                   DX.
+Q1541TE                   DX.
+
+* This lists out non-children co-residents any age
+J1542 1543                480(1)+765(1)=:/^0=4AM7(1)+11(N1+N2+N6)=:
+J1542 1543                480(1)+765(N1)=:/^0=4AM7(1)+12(N1+N2+N6)=:
+J1542 1543                480(N1)+765(1)=:/^0=57AM60(1)+64(N1+N2+N6)=:
+Q1542U                    D12Y3.ALL CORESIDENTS
+A14                       57M60(1)+65(N1+N2+N6)=
+Q<1543/1551>                   DX.
+
+
+J1552 1553
+Q1552X                    DTEXT6.(CSPTXT2) NEW CHILD SP TEXT
+C0                        INAP;s
+C<1/20>                   (NTIME1.N START TIME STAMP)M1554(<1/20>
+C<21/36>                   EMPTY
+C37                       DECEASED CHILD
+C38                       ALL CHILDREN;E
+C39                       ALL GRANDCHILDREN EQUALLY;E
+C<40/96>                   EMPTY
+C97                       OTHER (SPECIFY);C
+C98                       DK
+C99                       RF
+G                         37,38,39
+G     1539
+G                         97
+
+Q1553TE                   DX.
+
+R1554 1560
+Q1554S                    D147S.(KIDS) INDEX NEW LOOP
+C<1/20>
+G     1539
+* PZS 4/12/2000 Changed get to look at all nonresidents prob#2513
+G     1542     .
+G         S
+
+J1555 1556                480(1)+M4(Q1554)+7(4)=:*:
+J1555 1556                480(N1)+M57(Q1554)+60(4)=:*:
+J1555 1556                480(1)+M4(Q1554)+7(6)=:?:
+J1555 1556                480(N1)+M57(Q1554)+60(6)=:?:
+J1555 1556
+Q1555U                    D049Y32.DEAD KID
+
+J1556 1557                480(1)+765(1)+M57(Q1554)+11(6.10)=:+:
+J1556 1557                480(1)+765(N1)+M57(Q1554)+12(6.10)=:+:
+J1556 1557                480(N1)+765(1)+M57(Q1554)+64(6.10)=:+:
+J1556 1557                480(N1)+765(N1)+M57(Q1554)+65(6.10)=:+:
+J1556 1557
+Q1556U                    D049Y33.IN-LAW
+
+J1557 1558                480(1)+M4(Q1554)+13(1.3)=:and:
+J1557 1558                480(N1)+M57(Q1554)+66(1.3)=:and:
+J1557 1558                1(GE0.LE0)
+Q1557U                    D049Y34.AND
+
+J1558 1559                480(1)+M4(Q1554)+14(4)=:*:
+J1558 1559                480(N1)+M57(Q1554)+67(4)=:*:
+J1558 1559                480(1)+M4(Q1554)+14(6)=:?:
+J1558 1559                480(N1)+M57(Q1554)+67(6)=:?:
+J1558 1559
+Q1558U                    D049Y35.DEAD SP
+
+J1559 1560                480(1)=:/(DX.)(NTIME1.N START TIME STAMP)(**Q8**)M4(Q1554)= (DX.) (NTIME1.N START TIME STAMP)(**Q15**)M4(Q1554)=:
+J1559 1560                480(N1)=:/(DX.)(NTIME1.N START TIME STAMP)(**Q61**)M57(Q1554)= (DX.) (NTIME1.N START TIME STAMP)(**Q68**)M57(Q1554)=:
+Q1559U                    D049Y36.NAMES TOGETHER
+
+J1560 1554                480(1)=:/(DX.)(NTIME1.N START TIME STAMP)(**Q8**)M4(Q1554)=:
+J1560 1554                480(N1)=:/(DX.)(NTIME1.N START TIME STAMP)(**Q61**)M57(Q1554)=:
+Q1560U                    D049Y37.KID NAMES
+*
+* END OF THE LOOP IS ABOVE
+Q<1561/1627>                   DX.
+Q1628TE                   DX.
+Q<1629/2029>                   DX.
+*
+* SECTION NX QUESTIONS
+*
+Q<2030/2311>                   NX.
+Q2312U                    NTIME1.N START TIME STAMP
+A45  N
+Q2313TE                   NX.
+Q2314TE                   NX.
+Q2315TE                   NX.
+Q2316TE                   NX.
+
+J2317 2318
+Q2317X                    NTEXT1.(NTXT1) NTEXT1
+C1                        or (his/her) husband
+C2                        or (his/her) wife
+C3                        or (his/her) partner
+C4
+C19                       and (his/her) husband
+C20                       and (his/her) wife
+C21                       and (his/her) partner
+C22
+G                         1,19=597(1)+757(2)
+G                         2,20=597(1)+757(1)
+G                         3,21=597(3)
+G                         4,22=597(N1+N3)
+
+Q2318TE                   NX.
+Q2319TE                   NX.
+Q2320TE                   NX.
+Q2321TE                   NX.
+* kt 6/6/00 added display for testing purposes
+Q2322UP                   NX00.CASE INFO
+/NX00.  CASE INFO FOR DEBUG ONLY
+/
+/    PRELOAD Q304:  (**Q304**)
+/
+/    CS COUNT OF CHILDREN: (DX.)
+/
+/    CS CURRENT COUPLENESS: (NTIME1.N START TIME STAMP)
+/
+/    PR NAME AND RTR PROXY: (**Q221**) (**Q224**)
+* PZS 5/25/2000 Corrected reference to 304 prob#2542
+* ASK THESE QUESTIONS ONLY IF OWNED A HOME IN PREVIOUS WAVE
+J2323 2396                304(N1+N3)
+* PZS 6/6/2000 Added code prob#2549
+Q2323                     N1x.OWNED HOME
+/N1x.
+/~IF 604(N1)+514(N2)
+/        Our records show that (DX.) owned a home
+/~ELSE 604(N1)+514(2)
+/        Our records show that you and (NTIME1.N START TIME STAMP) owned a home
+/~ELSE 604(1)+514(N2)
+/        Our records show that (he/she)
+/        (and ^495(17/18) husband/and ^495(17/18) wife/and ^495(17/18) partner/*C22*) owned a home
+/~ELSE
+/        Our records show that you and (he/she) owned a home
+/~END
+/~IF 218(N0)+219(N0)
+/        in ((/^51/^52/^101) ^778(36,77) in (**Q218**) (**Q219**).
+/~ELSE
+/        in ((/^51/^52/^101) ^778(36,77) in the last two years.
+/~END
+/        Please, let me confirm, did (DX.) still own that home
+/        when (he/she) died?
+C0                        INAP
+C1                        YES
+C5                        NO
+C7                        R DISPUTES RECORD
+C8                        DK
+C9                        RF
+G                         1/7
+* PZS 6/6/2000 Revised jump prob#2549
+J2324 2358                2323(7.K1.K2)
+J2324 2343                2323(1)
+Q2324                     N1ax.HAPPENED TO HOME
+/N1ax.
+/        What happened to that home -- did (NTIME1.N START TIME STAMP) sell it, give it
+/        to someone, or what?
+C0                        INAP
+C1                        GAVE TO SOMEONE
+C2                        SOLD
+C7                        OTHER;C
+C8                        DK
+C9                        RF
+G                         1/7
+J2325 2358                2324(N1+N2)
+J2325 2335                2324(2)
+Q2325MC         4         N1bx.RELATIVE GIVE HOUSE
+/N1bx.
+/        To whom did (he/she) give the house, (that is, what
+/        was their relationship to (DX.))?
+/
+/        CHOOSE ALL THAT APPLY
+C0                        INAP
+C2                        CHILD/CHILD-IN-LAW-/GRANDCHILD
+C3                        OTHER RELATIVE
+C4                        FRIEND
+C5                        CHARITY
+C7                        SOMEONE ELSE
+C8                        DK
+C9                        RF
+G                         2/7
+
+J2326 2335                2325(N2)
+* PZS 6/9/2000 Adjusted wording for spouse proxy prob#2562
+Q2326MC    1552 10        N1cx.WHICH CHILD HOUSE-1
+/N1cx.
+/        (Which child is that?)
+/
+/        CHOOSE ALL THAT APPLY
+/
+/~IF 514(2)
+/        IF GRANDCHILD:  Which child of yours is the parent
+/        of that grandchild?
+/~ELSE
+/        IF GRANDCHILD:  Which child of (NTIME1.N START TIME STAMP) (or ^495(17/18) husband/or ^495(17/18) wife/or ^495(17/18) partner/*C4*) is the parent
+/        of that grandchild?
+/~END
+/
+/^C3
+Q2327TE
+Q2328TE                   N2
+Q2329TE                   N2
+Q2330TE                   N2
+Q2331TE                   N2
+Q2332TE                   N2
+Q2333TE                   N2
+Q2334TE                   N2
+
+Q2335UB         7         N2. SELLING PRICE
+/N2.
+/~IF 2324(2)
+/        What was the selling price?
+/~ELSE
+/        What was the value of that house?  I mean, what
+/        would it have brought if it had been sold?
+/~END
+/
+/        IWER: DO NOT PROBE DK/RF
+/
+/        ^B
+V                         !.U$_,___,___.!(1/9999996)nR
+J2336 2358                2335(NK1+NK2)
+Q2336                     N2a.DK-1
+/N2a.
+/        Did it amount to less than $50,000, more than $50,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $50,000
+C3                        ABOUT $50,000
+C5                        MORE THAN $50,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+J2337 2338                2336(1)
+J2337 2339                2336(3.K1.K2)
+Q2337                     N2b.DK-2
+/N2b.
+/        (Did it amount to) less than $200,000, more than $200,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $200,000
+C3                        ABOUT $200,000
+C5                        MORE THAN $200,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+
+J2338 2339                2337(A)
+Q2338                     N2c.DK-3
+/N2c.
+/        (Did it amount to) less than $15,000, more than $15,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $15,000
+C3                        ABOUT $15,000
+C5                        MORE THAN $15,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+J2339 2358
+Q2339TE                   N3X
+Q2340TE                   N3X
+Q2341TE                   N3X
+Q2342TE                   N3X
+Q2343                     N3x.HOME DISPOSAL
+/N3x.
+/        What happened to that home after (DX.)'s death:
+/~IF 514(2)
+/        Do you own it now,
+/~ELSE 604(1)
+/        Does (his/her) (husband/wife/partner/*C12*) own it now,
+/~END
+/        was it sold, was it inherited by someone else, has it not
+/        yet been disposed of, or what?
+C0                        INAP
+C1                        SURVIVING SPOUSE STILL OWNS IT
+C2                        SOLD
+C3                        INHERITED
+C4                        NOT YET DISPOSED
+C7                        OTHER;C
+C8                        DK
+C9                        RF
+G                         1/7
+J2344 2358                2343(N2/4)
+J2344 2347                2343(2)
+J2344 2351                2343(4)
+Q2344MC    2325 4         N3ax.RELATIVE GIVE HOUSE
+/N3ax.
+/        Who inherited the house, (that is, what was their
+/        relationship to (NTIME1.N START TIME STAMP))?
+/
+/        CHOOSE ALL THAT APPLY
+
+J2345 2347                2344(N2)
+* PZS 6/9/2000 Adjusted wording for spouse proxy prob#2562
+Q2345MC    1552 10        N3bx.WHICH CHILD HOUSE-1
+/N3bx.
+/        (Which child is that?)
+/
+/        CHOOSE ALL THAT APPLY
+/
+/~IF 514(2)
+/        IF GRANDCHILD:  Which child of yours is the parent
+/        of that grandchild?
+/~ELSE
+/        IF GRANDCHILD:  Which child of (DX.) (or ^495(17/18) husband/or ^495(17/18) wife/or ^495(17/18) partner/*C4*) is the parent
+/        of that grandchild?
+/~END
+/
+/^C3
+Q2346TE
+
+
+Q2347UB                   N4x.SELLING PRICE
+/N4x.
+/~IF 2343(2)
+/        What was the selling price?
+/~ELSE
+/        What was the value of that house?  I mean, what
+/        would it have brought if it had been sold?
+/~END
+/
+/        IWER: DO NOT PROBE DK/RF
+/
+/        ^B
+V                         !.U$_,___,___.!(1/9999996)nR
+
+J2348 2351                2347(NK1+NK2)
+Q2348                     N4a.DK-1
+/N4a.
+/        Did it amount to less than $50,000, more than $50,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $50,000
+C3                        ABOUT $50,000
+C5                        MORE THAN $50,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+J2349 2350                2348(1)
+J2349 2351                2348(3.K1.K2)
+Q2349                     N4b.DK-2
+/N4b.
+/        (Did it amount to) less than $200,000, more than $200,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $200,000
+C3                        ABOUT $200,000
+C5                        MORE THAN $200,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+
+J2350 2351                2349(A)
+Q2350                     N4c.DK-3
+/N4c.
+/        (Did it amount to) less than $15,000, more than $15,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $15,000
+C3                        ABOUT $15,000
+C5                        MORE THAN $15,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+
+J2351 2358                2343(N4)
+Q2351                     N5x.OCCUPIED
+/N5x.
+/        Is that home now vacant, or is someone living there?
+C0                        INAP
+C1                        VACANT
+C2                        OCCUPIED
+C8                        DK
+C9                        RF
+G                         1/2
+J2352 2358                2351(N2)
+Q2352MC         4         N5ax.WHO OCCUPIES
+/N5ax.
+/        Who lives in the house, (that is, what was their
+/        relationship to (NTIME1.N START TIME STAMP))?
+/
+/        CHOOSE ALL THAT APPLY
+C0                        INAP
+C1                        SPOUSE
+C2                        CHILD/CHILD-IN-LAW/GRANDCHILD
+C3                        OTHER RELATIVE
+C4                        FRIEND
+C5                        CHARITY
+C7                        SOMEONE ELSE
+C8                        DK
+C9                        RF
+G                         1/7
+J2353 2358                2352(N2)
+Q2353TE
+* PZS 6/9/2000 Adjusted wording for spouse proxy prob#2562
+Q2354MC    1552 10        N5bx.WHICH CHILD HOUSE-1
+/N5bx.
+/        (Which child is that?)
+/
+/        CHOOSE ALL THAT APPLY
+/
+/~IF 514(2)
+/        IF GRANDCHILD:  Which child of yours is the parent
+/        of that grandchild?
+/~ELSE
+/        IF GRANDCHILD:  Which child of (DX.) (or ^495(17/18) husband/or ^495(17/18) wife/or ^495(17/18) partner/*C4*) is the parent
+/        of that grandchild?
+/~END
+/
+/^C3
+Q2355TE                   NX.
+Q2356TE                   NX.
+Q2357TE                   NX.
+
+* PZS 6/9/2000 Removed questions 2358 to 2393 entirely prob#2567
+* PZS 5/22/2000 Added jump prob#2537
+* Add unconditional jump over second homes for the post-exit proxy
+* JUMP DESTINATION CHANGED TO CATCH THE NTX1 (Q2401) QUESTION
+*J2358 2395
+
+
+Q2358TE                   NX.
+Q2359TE                   NX.
+Q2360TE                   NX.
+Q2361TE                   NX.
+Q2362TE                   NX.
+Q2363TE                   NX.
+Q2364TE                   NX.
+Q2365TE                   NX.
+Q2366TE                   NX.
+Q2367TE                   NX.
+Q2368TE                   NX.
+Q2369TE                   NX.
+Q2370TE                   NX.
+Q2371TE                   NX.
+Q2372TE                   NX.
+Q2373TE                   NX.
+Q2374TE                   NX.
+Q2375TE                   NX.
+Q2376TE                   NX.
+Q2377TE                   NX.
+Q2378TE                   NX.
+Q2379TE                   NX.
+Q2380TE                   NX.
+Q2381TE                   NX.
+Q2382TE                   NX.
+Q2383TE                   NX.
+Q2384TE                   NX.
+Q2385TE                   NX.
+Q2386TE                   NX.
+Q2387TE                   NX.
+Q2388TE                   NX.
+Q2389TE                   NX.
+Q2390TE                   NX.
+Q2391TE                   NX.
+Q2392TE                   NX.
+Q2393TE                   NX.
+Q2394TE                   NX.
+Q2395TE                   NX.
+Q2396TE                   NX.
+Q2397TE                   NX.
+Q2398TE                   NX.
+Q2399TE                   NX.
+
+Q2400TE                   NX. NTIME4 N50 TIME STAMP
+*
+J2401 2402
+Q2401X                    NTX1.NTEXT1
+C21                       (**Q8**)M4(Q2454)=
+C22                       (**Q61**)M57(Q2454)=
+G                         21=480(1)
+G                         22=480(2)
+
+Q2402TE                   NX.
+Q2403TE                   NX.
+Q2404TE                   NX.
+Q2405TE                   NX.
+Q2406TE                   NX.
+Q2407TE                   NX.
+Q2408TE                   NX.
+
+
+* PZS 6/6/2000 Added jump per prob#2554
+J2409 2421                305(N1)
+* PZS 6/6/2000 Wording updated prob#2547
+* PZS 6/6/2000 "enter 9996 if not settled yet" added prob#2552
+* PZS 6/6/2000 widened range to 6 prob#2541
+* PZS 6/9/2000 Shortened range back to 5 wide & corrected probe prob#2552
+Q2409UB         5         N62x.R EXPENSES
+/N62x.
+/        We are interested in knowing about expenses associated
+/        with (his/her) death, for funeral expenses, legal fees,
+/        and so on.
+/
+/        What were the total expenses associated with the death
+/        for things of that type?
+/
+/        DO NOT PROBE DK/RF
+/
+/        ENTER 99996 IF NOT SETTLED YET
+/
+/        AMOUNT:  ^B
+V                         !.U$__,___.!(0/99996)nR
+J2410 2414                2409(NK1+NK2)
+* !! SPANISH IC 7/10/97 WORDING CHANGE
+Q2410                     N62a.DK-1
+/N62a.
+/        Did it amount to less than $5,000, more than $5,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $5,000
+C3                        ABOUT $5,000
+C5                        MORE THAN $5,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+J2411 2413                2410(1)
+J2411 2414                2410(3.K1.K2)
+* !! SPANISH IC 7/10/97 WORDING CHANGE
+Q2411                     N62b.DK-2
+/N62b.
+/        (Did it amount to) less than $25,000, more than $25,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $25,000
+C3                        ABOUT $25,000
+C5                        MORE THAN $25,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+J2412 2414                2411(1.3.K1.K2)
+* !! SPANISH IC 7/10/97 WORDING CHANGE
+Q2412                     N62c.DK-3
+/N62c.
+/        (Did it amount to) less than $100,000, more than $100,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $100,000
+C3                        ABOUT $100,000
+C5                        MORE THAN $100,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+J2413 2414                2412(A)
+* !! SPANISH IC 7/10/97 WORDING CHANGE
+Q2413                     N62d.DK-4
+/N62d.
+/        (Did it amount to) less than $1,000, more than $1,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $1,000
+C3                        ABOUT $1,000
+C5                        MORE THAN $1,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+Q2414TE                   NX.
+Q2415TE                   NX.
+Q2416TE                   NX.
+Q2417                     N62ex.COVERED BY INS
+/N62ex.
+/        Excluding life insurance, were any of these costs covered by
+/        insurance?
+C0                        INAP;s
+C1                        YES
+C5                        NO
+C8                        DK;s
+C9                        RF;s
+G                         1/5
+
+J2418 2421                2417(5.K1.K2)
+Q2418UB         7         N62fx.INSURANCE PAY
+/N62fx.
+/        How much did insurance pay?
+/
+/        AMOUNT:   ^B
+/          OR
+/        PERCENT:  ^B
+/
+/        ^B
+V                         !.U$_,___,___.!(" ",0/9999996)nR
+J2419 2420                2418(K1.K2.1/9999996)
+Q2419UB         3         N62gx.INSURANCE PERCENTAGE
+V                         !%U___%!(1/100)nR
+Q2420B                    N62zx.CONTINUE
+C0                        CONTINUE
+G                         0
+
+* PZS 6/9/2000 Added jump to skip wills & trust questions prob#2561
+* Jump the whole set of questions about will and/or trust unless the
+* estate had not been settled at the time of the exit interview.
+J2421 2524                304(N2+N3)
+
+*
+* HERE ARE THE QUESTIONS ABOUT THE ESTATE THAT MICHAEL PROPOSED:
+Q2421                     N71x.ASSETS INTO TRUST
+/N71x.
+/        Sometimes people make provision to leave things to
+/        specific family members if something happens to them,
+/        others do not.  Because we are trying to get a complete
+/        picture of family situations, I have a few questions about
+/        inheritance.
+/
+/        Before (his/her) death, had (NTIME1.N START TIME STAMP) put any of (his/her)
+/        assets into a trust?
+C0                        INAP
+C1                        YES
+C5                        NO
+C8                        DK
+C9                        RF
+G                         1/5
+
+* DO WE WANT TO ASK QUESTIONS ABOUT WHAT HAPPENED TO THE TRUST
+* AFTER R'S DEATH?  THAT IS, DID ALL OR PART OF THE ESTATE REMAIN
+* IN TRUST, WAS THE ESTATE SPLIT BETWEEN THE SURVING SPOUSE
+* AND OTHERS (TO RETAIN THE $600,000 DEDUCTION FOR BOTH SPOUSES,
+* FOR EXAMPLE); IF ALL OR PART OF IT REMAINED IN TRUST, IS THE
+* SURVIVING SPOUSE THE TRUSTEE, OR A CHILD, OR THE TRUST
+* DEPARTMENT OF A BANK, OR WHAT.
+Q2422TE                   N72X
+Q2423TE                   N72X
+Q2424TE                   N72X
+
+Q2425U                    NTIME2.N72X TIME STAMP
+A45  N
+
+Q2426      2421           N72x.WILL
+/N72x.
+/~IF 2421(1)
+/        In addition to the trust,
+/~END
+/        Did (DX.) have a will that was written and witnessed?
+J2427 2430                2426(N1)
+Q2427      2421           N72ax.WILL PROBATED
+/N72ax.
+/        Has (his/her) will been probated?
+
+J2428 2430                2427(N1)
+Q2428B          18        N72bx.STATE PROBATED
+/N72bx.       IWER:  ASK FOR COUNTY AS WELL AS STATE.
+/        In what state was it probated?
+/        ^C3^B
+/        COUNTY:  ^B
+C0                        INAP;s
+C1                        ALASKA (AK)
+C2                        ALABAMA (AL)
+C3                        ARIZONA (AZ)
+C4                        ARKANSAS (AR)
+C5                        CALIFORNIA (CA)
+C6                        COLORADO (CO)
+C7                        CONNECTICUT (CT)
+C8                        DELAWARE (DE)
+C9                        FLORIDA (FL)
+C10                       GEORGIA (GA)
+C11                       HAWAII (HI)
+C12                       IDAHO (ID)
+C13                       ILLINOIS (IL)
+C14                       INDIANA (IN)
+C15                       IOWA (IA)
+C16                       KANSAS (KS)
+C17                       KENTUCKY (KY)
+C18                       LOUISIANA (LA)
+C19                       MAINE (ME)
+C20                       MARYLAND (MD)
+C21                       MASSACHUSETTS (MA)
+C22                       MICHIGAN (MI)
+C23                       MINNESOTA (MN)
+C24                       MISSISSIPPI (MS)
+C25                       MISSOURI (MO)
+C26                       MONTANA (MT)
+C27                       NEBRASKA (NE)
+C28                       NEVADA (NV)
+C29                       NEW HAMPSHIRE (NH)
+C30                       NEW JERSEY (NJ)
+C31                       NEW MEXICO (NM)
+C32                       NEW YORK (NY)
+C33                       NORTH CAROLINA (NC)
+C34                       NORTH DAKOTA (ND)
+C35                       OHIO (OH)
+C36                       OKLAHOMA (OK)
+C37                       OREGON (OR)
+C38                       PENNSYLVANIA (PA)
+C39                       RHODE ISLAND (RI)
+C40                       SOUTH CAROLINA (SC)
+C41                       SOUTH DAKOTA (SD)
+C42                       TENNESSEE (TN)
+C43                       TEXAS (TX)
+C44                       UTAH (UT)
+C45                       VERMONT (VT)
+C46                       VIRGINIA (VA)
+C47                       WASHINGTON (WA)
+C48                       WEST VIRGINIA (WV)
+C49                       WISCONSIN (WI)
+C50                       WYOMING (WY)
+C51                       WASHINGTON, D.C.
+C52                       PUERTO RICO
+C96                       SAME STATE
+C97                       OTHER +/ FOREIGN;C
+C98                       DK;s
+C99                       RF;s
+G                         1,19,37
+G                         2,20,38
+G                         3,21,39
+G                         4,22,40
+G                         5,23,41
+G                         6,24,42
+G                         7,25,43
+G                         8,26,44
+G                         9,27,45
+G                         10,28,46
+G                         11,29,47
+G                         12,30,48
+G                         13,31,49
+G                         14,32,50
+G                         15,33,51
+G                         16,34,52
+G                         17,35,96
+G                         18,36,97
+
+Q2429UB         20        N72cx.COUNTY PROBATED
+
+* IF R HAD A TRUST AND OR A WILL, JUMP TO J74
+J2430 2432                2421(1).2427(1)
+
+Q2430                     N73x.HAPPENED TO ESTATE
+/N73x.
+/        The next questions are about (NTIME1.N START TIME STAMP)'s assets
+/        and possessions, excluding
+/~IF 304(1.3)
+/        (his/her) home and
+/~END
+/        any life insurance.
+/        Have they been divided up among the heirs, have they not
+/        yet been distributed, was there nothing of much value to
+/        distribute, or what?
+C0                        INAP
+C1                        DIVIDED AMONG THE HEIRS
+C2                        NOT YET DISTRIBUTED
+C3                        NOTHING MUCH OF VALUE
+C7                        OTHER (SPECIFY);C
+C8                        DK
+C9                        RF
+G                         1/7
+Q2431TE                   N74X
+
+* PZS 5/22/2000 Added new jumps prob#2540
+* PZS 6/9/2000 Corrected reference from 2431 to 2430 prob#2568
+* Jump to N82xx if "nothing much of value" of DK/RF
+J2432 2523                2430(3.K1.K2)
+
+* IF R WAS NOT MARRIED OR LIVING WITH A PARTNER, JUMP TO N74
+J2432 2441                597(N1+N3)
+
+* IF NEITHER A WILL NOR A TRUST AND ESTATE NOT YET DISTRIBUTED, JUMP
+* TO N83 (OR IF THE WILL HAS NOT YET BEEN PROBATED)
+J2432 2524                2421(N1)+2427(N1)+2430(N1+N7)
+
+* PZS 6/9/200 Removed duplicated jump of 597(N1+N3) prob#2568
+
+Q2432      2421           N74x.WILL SPOUSE
+/N74x.
+/~IF 2421(1)+2426(1)
+/        Did (he/she) make provisions in either the trust or the
+/        will for
+/~ELSE 2421(1)
+/        Did (he/she) make provisions in the trust for
+/~ELSE 2426(1)
+/        Did (he/she) make provisions in the will for
+/~ELSE
+/        Were any of (his/her) possessions or assets left to
+/~END
+/~IF 514(2)
+/        you?
+/~ELSE
+/        (his/her) (husband/wife/partner/*C12*)?
+/~END
+/
+J2433 2441                2432(N1)
+Q2433UB         7         N74ax.AMOUNT TO SPOUSE
+/N74ax.
+/        Excluding
+/~IF 304(1.3)
+/        (his/her) home and
+/~END
+/        any life insurance,
+/~IF 514(2)
+/        how much did you receive
+/~ELSE
+/        how much did ((his/her) (husband/wife/partner/*C12*)) receive
+/~END
+/        from (his/her) estate?
+/
+/        ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+/
+/        IWER: DO NOT PROBE DK/RF
+/
+/        AMOUNT:   ^B
+/        PERCENT:  ^B
+/
+/        ^B
+V                         !.U$_,___,___.!(" ",0/9999996)nR
+J2434 2435                2433("0".1/9999996.K1.K2)
+Q2434UB         3         N74aax.PERCENT TO CHILD
+V                         !%U___%!(1/100)nR
+Q2435B                    N74zx.CONTINUE
+C0                        CONTINUE
+G                         0
+* UNFOLD IF MISSING DOLLAR AMOUNT
+J2436 2441                2433("0".1/9999996)
+
+* UNFOLD IF MISSING PERCENTAGE
+J2436 2441                2433(NK1+NK2)+2434(NK1+NK2)
+Q2436      2421           N74bx.MORE THAN HALF
+/N74bx.
+/        Was it more than half of (his/her) estate?
+J2437 2441                2436(K1.K2)
+J2437 2439                2436(5)
+Q2437      2421           N74cx.MORE THAN 75 PERCENT
+/N74cx.
+/        Was it more than 75 percent of (his/her) estate?
+J2438 2441                2437(N1)
+Q2438      2421           N74dx.MORE THAN 90PERCENT
+/N74dx.
+/        Was it more than 90 percent of (his/her) estate?
+J2439 2441                2438(A)
+Q2439      2421           N74ex.MORE THAN 25PERCENT
+/N74ex.
+/        Was it more than 25 percent of (his/her) estate?
+J2440 2441                2439(N5)
+Q2440      2421           N74fx.MORE THAN 10PERCENT
+/N74fx.
+/        Was it more than 10 percent of (his/her) estate?
+
+* IF R HAD NO CHILDREN, GRANDCHILDREN, OR GREAT-GRANDCHILDREN,
+* JUMP TO N77
+*J2441 2464                893(0)+1623(0.K1.K2)
+J2441 2464                893(0)+249(0)
+Q2441      2421           N75x.WILL FAMILY
+/N75x.
+/        (Again,) excluding
+/~IF 304(1.3)
+/        (his/her) home and
+/~END
+/        any life insurance,
+/~IF 2421(1)+2426(1)
+/        did (he/she) make provisions in either the trust or the
+/        will for any of (his/her)
+/~ELSE 2421(1)
+/        did (he/she) make provisions in the trust for any
+/        of (his/her)
+/~ELSE 2426(1)
+/        did (he/she) make provisions in the will for any
+/        of (his/her)
+/~ELSE
+/        were any of (his/her) (possessions) left to any
+/        of (his/her)
+/~END
+/~IF 893(N0)+249(G0)
+/        children or grandchildren (or great-grandchildren)?
+/~ELSE 893(N0)
+/        children?
+/~ELSE
+/        grandchildren (or great-grandchildren)?
+/~END
+/
+/        IWER:  PLEASE RECORD ANY INFORMATION ABOUT ULTIMATE
+/               BENEFICIARIES IN F2 COMMENTS.
+
+J2442 2464                2441(N1)
+* JUMP TO N76 IF ONLY ONE CHILD
+J2442 2444                893(1)
+
+Q2442      2421           N75ax.LEAVE SAME AMOUNT
+/N75ax.
+/        Did (DX.)'s will provide equally for all of
+/        (his/her) children and their families?
+
+*
+* IF R LEFT SAME AMOUNT TO CHILDREN, SKIP GRANDCHILDREN QUESTION
+* AND DO NOT ASK LOOPED FOLLOW-UP
+J2443 2444                2442(1)
+*
+* IF R DIDN'T LEAVE THE AMOUNT, CHECK TO SEE IF ANY GRANDCHILDREN.
+* IF THERE AREN'T ANY, THEN NEED TO ASK LOOPED FOLLOW-UP
+*J2443 2453                1619(N1)
+J2443 2453                249(0)
+
+Q2443      2421           N75aax.LEAVE SAME GRANDCHILD
+/N75aax.
+/        Did (he/she) leave the same amount to each of
+/        (his/her) grandchildren?
+
+*
+* IF HAVE GRANDCHILDREN AND R DIDN'T LEAVE THE SAME AMOUNT TO EACH,
+* THEN NEED TO ASK LOOPED FOLLOW-UP
+J2444 2453                2443(5.K1.K2)
+Q2444UB         7         N75bx.AMOUNT TO CHILDREN
+/N75bx.
+/        Altogether, how much did (he/she) leave for (his/her)
+/~IF 893(1)
+/        child (grandchild)?
+/~ELSE
+/        children (grandchildren)?
+/~END
+/
+/        IWER:  ENTER EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+/
+/        IWER: DO NOT PROBE DK/RF
+/
+/               ENTER 0 IN THE AMOUNT FIELD IF THE CHILDREN
+/               WILL RECEIVE THE ASSETS LATER.
+/
+/        AMOUNT:   ^B
+/        PERCENT:  ^B
+/
+/        ^B
+V                         !.U$_,___,___.!(" ",0/9999996)nR
+
+J2445 2446                2444("0".G0.K1.K2)
+Q2445UB         3         N75abx.PERCENT TO CHILD
+V                         !%U___%!(1/100)nR
+Q2446B                    N75zx.CONTINUE
+C0                        CONTINUE
+G                         0
+
+* UNFOLD IF MISSING DOLLAR AMOUNT
+J2447 2464                2444("0".1/9999996)
+
+* UNFOLD IF MISSING PERCENTAGE
+J2447 2464                2444(NK1+NK2)+2445(NK1+NK2)
+Q2447      2421           N75cx.MORE THAN HALF
+/N75cx.
+/        Was it more than half of (his/her) estate?
+
+J2448 2464                2447(K1.K2)
+J2448 2450                2447(5)
+Q2448      2421           N75dx.MORE THAN 75 PERCENT
+/N75dx.
+/        Was it more than 75 percent of (his/her) estate?
+
+J2449 2464                2448(N1)
+Q2449      2421           N75ex.MORE THAN 90 PERCENT
+/N75ex.
+/        Was it more than 90 percent of (his/her) estate?
+
+J2450 2464                2449(A)
+Q2450      2421           N75fx.MORE THAN 25 PERCENT
+/N75fx.
+/        Was it more than 25 percent of (his/her) estate?
+
+J2451 2464                2450(N5)
+Q2451      2421           N75gx.MORE THAN 10 PERCENT
+/N75gx.
+/        Was it more than 10 percent of (his/her) estate?
+
+J2452 2464                480(2)
+Q2452TE                   N76X
+
+Q2453U                    NTIME3.N76X CHILD LOOP START TIME
+A45  N
+
+* LOOP THROUGH QUESTIONS N76ax - N76fx FOR EACH CHILD
+R2454 2463
+Q2454S                    N76x.LOOP AMNT TO FAM
+C<1/20>
+G     892
+G         S
+
+Q2455UB         7         N76ax.AMOUNT TO FAMILY
+/N76ax.
+/        (Excluding
+/~IF 304(1.3)
+/        (his/her) home and
+/~END
+/        any life insurance,)
+/        how much did (he/she) leave for (^8M4(Q2454)=/^61M57(Q2454)=) and
+/        (his/her) family?
+/
+/        ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+/
+/        IWER: DO NOT PROBE DK/RF
+/
+/        AMOUNT:   ^B
+/        PERCENT:  ^B
+/
+/        ^B
+V                         !.U$_,___,___.!(" ",0/9999996)nR
+J2456 2457                2455("0".1/9999996.K1.K2)
+Q2456UB         3         N76aax.PERCENT TO CHILD
+V                         !%U___%!(0/100)nR
+Q2457B                    N76zx.CONTINUE
+C0                        CONTINUE
+G                         0
+
+* UNFOLD IF MISSING DOLLAR AMOUNT
+J2458 2454                2455("0".1/9999996)
+
+* UNFOLD IF MISSING PERCENTAGE
+J2458 2454                2455(NK1+NK2)+2456(NK1+NK2)
+Q2458      2421           N76bx.MORE THAN HALF
+/N76bx.
+/        Was it more than half of (his/her) estate?
+J2459 2454                2458(K1.K2)
+J2459 2461                2458(5)
+Q2459      2421           N76cx.MORE THAN 75 PERCENT
+/N76cx.
+/        Was it more than 75 percent of (his/her) estate?
+J2460 2454                2459(N1)
+Q2460      2421           N76dx.MORE THAN 90 PERCENT
+/N76dx.
+/        Was it more than 90 percent of (his/her) estate?
+J2461 2454                2460(A)
+Q2461      2421           N76ex.MORE THAN 25 PERCENT
+/N76ex.
+/        Was it more than 25 percent of (his/her) estate?
+J2462 2454                2461(N5)
+Q2462      2421           N76fx.MORE THAN 10 PERCENT
+/N76fx.
+/        Was it more than 10 percent of (his/her) estate?
+Q2463TE                   N77X
+* ABOVE IS THE END OF THE LOOP
+
+Q2464U                    NTIME4.N77X CHILD LOOP END TIME STAMP
+A45  N
+
+Q2465      2421           N77x.WILL CHARITIES
+/N77x.
+/        (Excluding
+/~IF 304(1.3)
+/        (his/her) home and
+/~END
+/        any life insurance,)
+/~IF 2421(1)+2426(1)
+/        did (he/she) make provisions in either the trust or the
+/        will for
+/~ELSE 2421(1)
+/        did (he/she) make provisions in the trust for
+/~ELSE 2426(1)
+/        did (he/she) make provisions in the will for
+/~ELSE
+/        were any of (his/her) (possessions) left to
+/~END
+/        charities?
+
+J2466 2474                2465(N1)
+Q2466UB                   N77ax.AMOUNT TO CHARITIES
+/N77ax.
+/        How much did charities receive from (his/her) estate?
+/
+/        ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+/
+/        IWER: DO NOT PROBE DK/RF
+/
+/        AMOUNT:   ^B
+/        PERCENT:  ^B
+/
+/        ^B
+V                         !.U$_,___,___.!(" ",0/9999996)nR
+J2467 2468                2466("0".1/9999996.K1.K2)
+Q2467UB         3         N77aax.PERCENT TO CHARITY
+V                         !%U___%!(1/100)nR
+Q2468B                    N77zx.CONTINUE
+C0                        CONTINUE
+G                         0
+
+* UNFOLD IF MISSING DOLLAR AMOUNT
+J2469 2474                2466("0".1/9999996)
+
+* UNFOLD IF MISSING PERCENTAGE
+J2469 2474                2466(NK1+NK2)+2467(NK1+NK2)
+Q2469      2421           N77bx.MORE THAN HALF
+/N77bx.
+/        Was it more than half of (his/her) estate?
+J2470 2474                2469(K1.K2)
+J2470 2472                2469(5)
+Q2470      2421           N77cx.MORE THAN 75 PERCENT
+/N77cx.
+/        Was it more than 75 percent of (his/her) estate?
+J2471 2474                2470(N1)
+Q2471      2421           N77dx.MORE THAN 90 PERCENT
+/N77dx.
+/        Was it more than 90 percent of (his/her) estate?
+J2472 2474                2471(A)
+Q2472      2421           N77ex.MORE THAN 25 PERCENT
+/N77ex.
+/        Was it more than 25 percent of (his/her) estate?
+J2473 2474                2472(N5)
+Q2473      2421           N77fx.MORE THAN 10 PERCENT
+/N77fx.
+/        Was it more than 10 percent of (his/her) estate?
+Q2474TE                   N78X
+
+* JUMP TO J79 IF R HAD NO SIBLINGS
+* - PZS - THIS CANNOT BE DONE SINCE THE QUESTIONS ABOUT IF R HAD
+* AN BROTHERS OR SISTERS IS NOT ASKED (WAS IN SECTION D)
+Q2475      2421           N78x.WILL SIBLINGS
+/N78x.
+/        (Excluding
+/~IF 304(1.3)
+/        (his/her) home and
+/~END
+/        any life insurance,)
+/~IF 2421(1)+2426(1)
+/        did (he/she) make provisions in either the trust or the
+/        will for
+/~ELSE 2421(1)
+/        did (he/she) make provisions in the trust for
+/~ELSE 2426(1)
+/        did (he/she) make provisions in the will for
+/~ELSE
+/        were any of (his/her) (possessions) left to
+/~END
+/        any of (his/her) brothers or sisters?
+
+J2476 2484                2475(N1)
+Q2476UB         7         N78ax.AMOUNT TO SIBLINGS
+/N78ax.
+/        Altogether, how much did (his/her) brothers and sisters
+/        receive from (his/her) estate?
+/
+/        ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+/
+/        IWER: DO NOT PROBE DK/RF
+/
+/        AMOUNT:   ^B
+/        PERCENT:  ^B
+/
+/        ^B
+V                         !.U$_,___,___.!(" ",0/9999996)nR
+J2477 2478                2476("0".1/9999996.K1.K2)
+Q2477UB         3         N78aax.PERCENT TO CHILD
+V                         !%U___%!(1/100)nR
+Q2478B                    N78zx.CONTINUE
+C0                        CONTINUE
+G                         0
+
+* UNFOLD IF MISSING DOLLAR AMOUNT
+J2479 2484                2476("0".1/9999996)
+
+* UNFOLD IF MISSING PERCENTAGE
+J2479 2484                2476(NK1+NK2)+2477(NK1+NK2)
+Q2479      2421           N78bx.MORE THAN HALF
+/N78bx.
+/        Was it more than half of (his/her) estate?
+J2480 2484                2479(K1.K2)
+J2480 2482                2479(5)
+Q2480      2421           N78cx.MORE THAN 75 PERCENT
+/N78cx.
+/        Was it more than 75 percent of (his/her) estate?
+J2481 2484                2480(N1)
+Q2481      2421           N78dx.MORE THAN 90 PERCENT
+/N78dx.
+/        Was it more than 90 percent of (his/her) estate?
+J2482 2484                2481(A)
+Q2482      2421           N78ex.MORE THAN 25 PERCENT
+/N78ex.
+/        Was it more than 25 percent of (his/her) estate?
+J2483 2484                2482(N5)
+Q2483      2421           N78fx.MORE THAN 10 PERCENT
+/N78fx.
+/        Was it more than 10 percent of (his/her) estate?
+
+Q2484U                    NTIME5.N79X TIME STAMP
+A45  N
+
+Q2485      2421           N79x.WILL RELATIVES
+/N79x.
+/        (Excluding
+/~IF 304(1.3)
+/        (his/her) home and
+/~END
+/        any life insurance,)
+/~IF 2421(1)+2426(1)
+/        did (he/she) make provisions in either the trust or the
+/        will for
+/~ELSE 2421(1)
+/        did (he/she) make provisions in the trust for
+/~ELSE 2426(1)
+/        did (he/she) make provisions in the will for
+/~ELSE
+/        were any of (his/her) (possessions) left to
+/~END
+/        any other of (his/her) relatives?
+
+J2486 2494                2485(N1)
+Q2486UB         7         N79ax.AMOUNT TO RELATIVES
+/N79ax.
+/        Altogether, how much did these other relatives
+/        receive from (his/her) estate?
+/
+/        ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+/
+/        IWER: DO NOT PROBE DK/RF
+/
+/        AMOUNT:   ^B
+/        PERCENT:  ^B
+/
+/        ^B
+V                         !.U$_,___,___.!(" ",0/9999996)nR
+J2487 2488                2486("0".1/9999996.K1.K2)
+Q2487UB         3         N79aax.PERCENT TO CHILD
+V                         !%U___%!(1/100)nR
+Q2488B                    N79zx.CONTINUE
+C0                        CONTINUE
+G                         0
+
+* UNFOLD IF MISSING DOLLAR AMOUNT
+J2489 2494                2486("0".1/9999996)
+
+* UNFOLD IF MISSING PERCENTAGE
+J2489 2494                2486(NK1+NK2)+2487(NK1+NK2)
+Q2489      2421           N79bx.MORE THAN HALF
+/N79bx.
+/        Was it more than half of (his/her) estate?
+J2490 2494                2489(K1.K2)
+J2490 2492                2489(5)
+Q2490      2421           N79cx.MORE THAN 75 PERCENT
+/N79cx.
+/        Was it more than 75 percent of (his/her) estate?
+J2491 2494                2490(N1)
+Q2491      2421           N79dx.MORE THAN 90 PERCENT
+/N79dx.
+/        Was it more than 90 percent of (his/her) estate?
+J2492 2494                2491(A)
+Q2492      2421           N79ex.MORE THAN 25 PERCENT
+/N79ex.
+/        Was it more than 25 percent of (his/her) estate?
+J2493 2494                2492(N5)
+Q2493      2421           N79fx.MORE THAN 10 PERCENT
+/N79fx.
+/        Was it more than 10 percent of (his/her) estate?
+Q2494TE                   N80X
+
+Q2495      2421           N80x.WILL FRIENDS
+/N80x.
+/        (Excluding
+/~IF 304(1.3)
+/        (his/her) home and
+/~END
+/        any life insurance,)
+/~IF 2421(1)+2426(1)
+/        did (he/she) make provisions in either the trust or the
+/        will for
+/~ELSE 2421(1)
+/        did (he/she) make provisions in the trust for
+/~ELSE 2426(1)
+/        did (he/she) make provisions in the will for
+/~ELSE
+/        were any of (his/her) (possessions) left to
+/~END
+/        any of (his/her) friends?
+
+J2496 2504                2495(N1)
+Q2496UB         7         N80ax.AMOUNT TO FRIENDS
+/N80ax.
+/        Altogether, how much did (his/her) friends
+/        receive from (his/her) estate?
+/
+/        ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+/
+/        IWER: DO NOT PROBE DK/RF
+/
+/        AMOUNT:   ^B
+/        PERCENT:  ^B
+/
+/        ^B
+V                         !.U$_,___,___.!(" ",0/9999996)nR
+J2497 2498                2496("0".1/9999996.K1.K2)
+Q2497UB         3         N80aax.PERCENT TO CHILD
+V                         !%U___%!(1/100)nR
+Q2498B                    N80zx.CONTINUE
+C0                        CONTINUE
+G                         0
+
+* UNFOLD IF MISSING DOLLAR AMOUNT
+J2499 2504                2496("0".1/9999996)
+
+* UNFOLD IF MISSING PERCENTAGE
+J2499 2504                2496(NK1+NK2)+2497(NK1+NK2)
+Q2499      2421           N80bx.MORE THAN HALF
+/N80bx.
+/        Was it more than half of (his/her) estate?
+J2500 2504                2499(K1.K2)
+J2500 2502                2499(5)
+Q2500      2421           N80cx.MORE THAN 75 PERCENT
+/N80cx.
+/        Was it more than 75 percent of (his/her) estate?
+J2501 2504                2500(N1)
+Q2501      2421           N80dx.MORE THAN 90 PERCENT
+/N80dx.
+/        Was it more than 90 percent of (his/her) estate?
+J2502 2504                2501(A)
+Q2502      2421           N80ex.MORE THAN 25 PERCENT
+/N80ex.
+/        Was it more than 25 percent of (his/her) estate?
+J2503 2504                2502(N5)
+Q2503      2421           N80fx.MORE THAN 10 PERCENT
+/N80fx.
+/        Was it more than 10 percent of (his/her) estate?
+Q2504TE                   N81X
+
+Q2505      2421           N81x.WILL OTHERS
+/N81x.
+/        (Excluding
+/~IF 304(1.3)
+/        (his/her) home and
+/~END
+/        any life insurance,)
+/~IF 2421(1)+2426(1)
+/        did (he/she) make provisions in either the trust or the
+/        will for
+/~ELSE 2421(1)
+/        did (he/she) make provisions in the trust for
+/~ELSE 2426(1)
+/        did (he/she) make provisions in the will for
+/~ELSE
+/        were any of (his/her) (possessions) left to
+/~END
+/        anyone else or anything else that we have not yet listed?
+
+J2506 2514                2505(N1)
+Q2506UB         7         N81ax.AMOUNT TO OTHERS
+/N81ax.
+/        Altogether, how much did those others
+/        receive from (his/her) estate?
+/
+/        ACCEPT EITHER A DOLLAR AMOUNT OR A PERCENTAGE
+/
+/        IWER: DO NOT PROBE DK/RF
+/
+/        AMOUNT:   ^B
+/        PERCENT:  ^B
+/
+/        ^B
+V                         !.U$_,___,___.!(" ",0/9999996)nR
+J2507 2508                2506("0".1/9999996.K1.K2)
+Q2507UB         3         N81aax.PERCENT TO CHILD
+V                         !%U___%!(1/100)nR
+Q2508B                    N81zx.CONTINUE
+C0                        CONTINUE
+G                         0
+
+* UNFOLD IF MISSING DOLLAR AMOUNT
+J2509 2514                2506("0".1/9999996)
+
+* UNFOLD IF MISSING PERCENTAGE
+J2509 2514                2506(NK1+NK2)+2507(NK1+NK2)
+Q2509      2421           N81bx.MORE THAN HALF
+/N81bx.
+/        Was it more than half of (his/her) estate?
+J2510 2514                2509(K1.K2)
+J2510 2512                2509(5)
+Q2510      2421           N81cx.MORE THAN 75 PERCENT
+/N81cx.
+/        Was it more than 75 percent of (his/her) estate?
+J2511 2514                2510(N1)
+Q2511      2421           N81dx.MORE THAN 90 PERCENT
+/N81dx.
+/        Was it more than 90 percent of (his/her) estate?
+J2512 2514                2511(A)
+Q2512      2421           N81ex.MORE THAN 25 PERCENT
+/N81ex.
+/        Was it more than 25 percent of (his/her) estate?
+J2513 2514                2512(N5)
+Q2513      2421           N81fx.MORE THAN 10 PERCENT
+/N81fx.
+/        Was it more than 10 percent of (his/her) estate?
+
+Q2514U          11        N82x.$ VALUE ESTATE
+/N82x.
+/        Excluding
+/~IF 304(1.3)
+/        (his/her) home and
+/~END
+/        any life insurance,
+/        altogether, what was the value of (his/her) estate?
+/
+/        IWER: DO NOT PROBE DK/RF
+V                         !.U$__,___,___,___.!(1/99999999996)nR
+J2515 2520                2514(NK1+NK2)
+
+Q2515                     N82bx.DK-1
+/N82bx.
+/        Did it amount to less than $100,000, more than $100,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $100,000
+C3                        ABOUT $100,000
+C5                        MORE THAN $100,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+J2516 2518                2515(1)
+J2516 2520                2515(3.K1.K2)
+Q2516                     N82cx.DK-2
+/N82cx.
+/        Did it amount to less than $500,000, more than $500,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $500,000
+C3                        ABOUT $500,000
+C5                        MORE THAN $500,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+
+J2517 2520                2516(1.3.K1.K2)
+Q2517                     N82dx.DK-3
+/N82dx.
+/        Did it amount to less than $2,000,000, more than $2,000,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $2,000,000
+C3                        ABOUT $2,000,000
+C5                        MORE THAN $2,000,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+J2518 2520                2517(A.K1.K2)
+Q2518                     N82ex.DK-4
+/N82ex.
+/        Did it amount to less than $25,000, more than $25,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $25,000
+C3                        ABOUT $25,000
+C5                        MORE THAN $25,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+J2519 2520                2518(3.5.K1.K2)
+Q2519                     N82fx.DK-5
+/N82fx.
+/        Did it amount to less than $10,000, more than $10,000,
+/        or what?
+C0                        INAP;s
+C1                        LESS THAN $10,000
+C3                        ABOUT $10,000
+C5                        MORE THAN $10,000
+C8                        DK;s
+C9                        RF;s
+G                         1,3,5
+
+Q2520      2421           N82gx.ESTATE TRUST
+/N82gx.
+/~IF 2421(1)
+/        Is any part of (his/her) estate still held in any
+/        type of a trust?
+/~ELSE
+/        Was any part of (his/her) estate put into a trust after
+/        (he/she) died?
+/~END
+/
+
+J2521 2523                2520(N1)
+Q2521MC                   N82hx.ESTATE TRUSTEE
+/N82hx.
+/        Who is currently the trustee of this trust?
+/
+/        CHOOSE ALL THAT APPLY
+C0                        INAP
+C1                        SPOUSE
+C2                        CHILD
+C3                        OTHER RELATIVE
+C4                        ATTORNEY
+C5                        BANK OFFICER/TRUST DEPARTMENT AT A BANK
+C7                        OTHER (SPECIFY);C
+C8                        DK
+C9                        RF
+G                         1/7
+
+J2522 2523                2521(N2)
+Q2522MC    1552 10        N82jx.WHICH CHILD-1
+/N82jx.
+/        (Which child is that?)
+/
+/        CHOOSE ALL THAT APPLY
+/
+/^C3
+
+* PZS 5/22/2000 Added question prob#2540
+*   ADD OPEN ENDED QUESTION ABOUT R'S POSSESSIONS;
+*   JUMP  THOSE WHO WENT THROUGH THE FULL SEQUENCE
+J2523 2524                2430(N3+NK1+NK3)
+* PZS 6/6/2000 "about" added to question text prob#2540
+Q2523U                    N82xx. POSSESSIONS-OPEN END
+/N82xx.
+/          Please give me any information you can about what happened
+/          to (NTIME1.N START TIME STAMP)'s possessions.
+V                         M!a_!
+
+* PZS 5/22/2000 Added question prob#2540
+Q2524UP                   N83xx. WRAP-UP
+/
+/     Thank you very much for your time and help in providing this
+/      additional information about (DX.).
+
+Q2525U                    NTIME6.N83 TIME STAMP
+A45  N
+
+Q2820                     TN0.TIMESTAMP CLARIFIER
+/TN0.
+/        IWER:  PLEASE CHOOSE THE CIRCUMSTANCE THAT BEST DESCRIBES
+/        THIS CASE IN TERMS OF SUSPENDS OR OTHER PROBLEMS.
+C0                        INAP;s
+C1                        NO PROBLEMS, INTERVIEW COMPLETED IN ONE SESSION (INCLUDING TN)
+C2                        ONE OR MORE SUSPENDS, NO OTHER PROBLEMS
+C3                        OTHER PROBLEMS SUCH AS FREEZES, BUT SUCCESSFUL RECOVERY
+G                         1/3
+J2821 2820               B2820(N1/3.K1.K2)=YOU MUST ENTER DATA HERE
+
+Q2821U                    TN1.HELP UNDERSTAND CONFUSION
+/TN1.
+/        Please provide a few words about this Respondent which might
+/        help the study staff understand any potentially confusing
+/        family situation or relationship.
+V                         M!a_!
+*
+
+* PZS 6/6/2000 Removed TN2 since there are no grids prob#2551
+Q2822TE
+
+Q2823U                    TN3.AMBIGUOUS SITUATIONS
+/TN3.
+/        Elaborate on any ambiguous or conflicting information in
+/        this interview that you want the project staff to know about.
+V                         M!a_!
+Q2824U                    TN4.INTERVIEW SITUATION
+
+/TN4.
+/        How would you describe the interview situation?  Please add
+/        any clarifying remarks that will be helpful to project staff
+/        when they process this interview.  If the respondent should
+/        be recontacted for missing data, is there something project
+/        staff should be aware of?
+V                         M!a_!
+
+*Add TEs or renumber.
+*
+Q2831U                    TSTIME1.FINAL TIME STAMP
+A45  N
+
+J2833 2834                2830(1)
+Q2833                     TN9Y1.IWER END
+/
+/        IWER:  YOU ARE ABOUT TO EXIT THIS CASE AND COMPLETE IT.
+C0                        INAP
+C1                        COMPLETE THE CASE
+G                         1
+
+Q2834TE
+
+
+L90                       208=DK
+L91                       209=RF

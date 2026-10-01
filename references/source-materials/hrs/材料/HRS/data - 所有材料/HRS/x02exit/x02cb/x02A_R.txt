@@ -1,0 +1,2532 @@
+==========================================================================================
+2002 HRS Exit (Final Release)
+ODBC Reference: [HRS2002x]
+Perl script: CodebkD11.pl v6.132 Mon Dec 11 11:20:21 2006
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION A: Coverscreen (Respondent)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFICATION NUMBER
+          Section: A      Level: Respondent  Type: Character   Width: 6    Decimals: 0
+
+        ..................................................................................
+         1501           000002-213399. Household Identifier
+
+==========================================================================================
+
+PN        RESPONDENT PERSON IDENTIFICATION NUMBER
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+
+        ..................................................................................
+         1047         010. Person Identifier
+           14         011. Person Identifier
+          341         020. Person Identifier
+            2         021. Person Identifier
+           50         030. Person Identifier
+           47         040. Person Identifier
+
+==========================================================================================
+
+SSUBHH    2002 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+          Section: A      Level: Respondent  Type: Character   Width: 1    Decimals: 0
+
+        ..................................................................................
+         1429           3. 1st deceased respondent from a household
+           72           4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+GSUBHH    2000 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+          Section: A      Level: Respondent  Type: Character   Width: 1    Decimals: 0
+
+        ..................................................................................
+         1450           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+           16           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           15           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           17           3. 1st deceased respondent from a household
+            1           4. 2nd deceased respondent from a household
+            2           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+SPN_SP    2002 SPOUSE PERSON IDENTIFICATION NUMBER
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+
+        ..................................................................................
+          254         010. Person Identifier
+           27         011. Person Identifier
+            1         012. Person Identifier
+          312         020. Person Identifier
+            2         021. Person Identifier
+           22         030. Person Identifier
+            2         031. Person Identifier
+           38         040. Person Identifier
+            1         041. Person Identifier
+            2         810. Person Identifier
+            1         811. Person Identifier
+          839       Blank. R not coupled
+
+==========================================================================================
+
+SCSR      2002 EXIT WHETHER COVERSCREEN RESPONDENT
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+
+        ..................................................................................
+         1484           1. YES
+           17           5. NO
+
+==========================================================================================
+        puA120_UPDATER > 0;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA500     DATE OF INTERVIEW - MONTH
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Init.A500_CurDate
+        ..................................................................................
+           63           1. JAN
+           30           2. FEB
+                        3. MAR
+                        4. APR
+                        5. MAY
+                        6. JUN
+                        7. JUL
+          558           8. AUG
+          442           9. SEP
+          248          10. OCT
+          121          11. NOV
+           39          12. DEC
+
+==========================================================================================
+        puA120_UPDATER > 0;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA501     DATE OF INTERVIEW - YEAR
+          Section: A      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: B_Init.A501_CurDateYear
+        ..................................................................................
+         1408        2002. Year of Interview
+           93        2003. Year of Interview
+
+==========================================================================================
+
+SA009     PROXY/SELF INTERVIEW
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_STARTINTERVIEW.A009_SelfPrxy
+
+        INTERVIEWER: DESIGNATE TYPE OF INTERVIEW
+        ..................................................................................
+          498           2. PROXY IS SURVIVING SPOUSE
+         1003           3. PROXY IS NON-SPOUSE
+
+==========================================================================================
+        A009_SelfPrxy <> SLF; (piRVarsZ095_SelfPrxyIw_V <> SLF) AND (RVARS.Z076_ReIwR_V
+        = REIWR);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA010     CURRENT - WAVE PROXY
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_STARTINTERVIEW.A010_CurrWavePrxy
+
+        INTERVIEWER: PREVIOUS WAVE (EXIT/POST-EXIT) PROXY WAS [PROXY
+        NAME], [PROXY RELATIONSHIP TO R].
+
+        IS CURRENT WAVE PROXY THE SAME PERSON OR SOMEONE ELSE?
+
+        INTERVIEWER:  THE NAME OR RELATIONSHIP OF THE PROXY AT THE PREVIOUS INTERVIEW
+        IS NOT RECORDED.  UNLESS YOU LEARN FROM THE CURRENT WAVE PROXY THAT S/HE ALSO
+        DID THE PREVIOUS INTERVIEW, ENTER CODE 3 BELOW.
+        ..................................................................................
+          328           1. SAME PERSON AS IN PRIOR-WAVE
+           72           2. DIFFERENT/NEW PERSON
+           40           3. NOT KNOWN IF SAME OR DIFFERENT AS IN PRIOR WAVE
+         1061       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        A009_SelfPrxy <> SLF; NOT ((A009_SelfPrxy <> PXYSPISREPORTER) AND
+        ((A010_CurrWavePrxy <> SAMEPERSONASINPRIORWAVE) OR (FLA010 <> '')));
+        A009_SelfPrxy = PXYSPISREPORTER;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA103     PROXY RELATIONSHIP TO R
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA_StartInterview.A103_PrxyRTR
+
+        INTERVIEWER: DESIGNATE THE PROXY REPORTER'S RELATIONSHIP TO [RESPONDENT FIRST
+        NAME]
+        ..................................................................................
+          501           2. SPOUSE/PARTNER
+          196           3. SON
+            5           4. STEPSON OR SON OF PARTNER
+            8           5. SPOUSE/PARTNER OF DAUGHTER
+          416           6. DAUGHTER
+           11           7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+           38           8. SPOUSE/PARTNER OF SON
+           39           9. GRANDCHILD OF R OR SP/P
+           23          15. BROTHER
+           56          17. SISTER
+          105          19. OTHER RELATIVE
+           87          20. OTHER INDIVIDUAL
+            3          23. PAID HELPER
+           12          24. PROFESSIONAL
+            1          33. SP/P OF GRANDCHILD
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+
+==========================================================================================
+
+SA012     CHANGE LANGUAGE
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_StartInterview.A012_LangSwitch
+
+        INTERVIEWER: SELECT ENGLISH OR SPANISH
+        ..................................................................................
+         1456           1. ENGLISH
+           45           2. SPANISH
+
+==========================================================================================
+
+SMODE     MODE OF INTERVIEW
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+
+        ..................................................................................
+          217           1. Face to Face
+         1271           2. Telephone
+           13       Blank. Data Not Available
+
+==========================================================================================
+
+SA013     INTRO CONFIDENTIALITY
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_ContinuInterview.A013_Continue
+
+        (As I mentioned,) the study appreciates the contribution that  R’s FIRST NAME
+        has made.  It is important to understand what happened in the time period
+        between the last interview and when [he/she] died.
+
+        A major focus is on  R’s FIRST NAME's  health and health-related costs, and in
+        the disposition of [his/her] assets.  We will also update general information
+        about  R’s FIRST NAME.
+
+        This interview is completely voluntary.  If we should come to any question
+        that you don't want to answer, just let me know and we will go on to the next
+        question. The answers you give will be kept confidential.
+
+        We are required to report to State officials credible evidence of serious harm
+        or abuse to any person, but we will not ask you any questions about such
+        topics.
+        ..................................................................................
+         1501           1. CONTINUE
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        RVARS.Z131_YrDeath_V <> EMPTY) OR (RVARS.Z131_YrDeath_V = EMPTY AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA121     DATE OF DEATH- MONTH
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA_ContinuInterview.A121_MoDeath
+
+        What was the date on which [RESPONDENT FIRST NAME] died?
+
+        MONTH:
+        ..................................................................................
+          117           1. JAN
+          112           2. FEB
+          138           3. MAR
+          112           4. APR
+          123           5. MAY
+          116           6. JUN
+          112           7. JUL
+          137           8. AUG
+          112           9. SEP
+          141          10. OCT
+          121          11. NOV
+          135          12. DEC
+           25          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        RVARS.Z131_YrDeath_V <> EMPTY) OR (RVARS.Z131_YrDeath_V = EMPTY AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA123     DATE OF DEATH- YEAR
+          Section: A      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BA_ContinuInterview.A123_YrDeath
+
+        What was the date on which [RESPONDENT FIRST NAME] died?
+
+        YEAR:
+        ..................................................................................
+         1498               1994-2003. Actual Value
+            3                    9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+                                Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        RVARS.Z131_YrDeath_V <> EMPTY) OR (RVARS.Z131_YrDeath_V = EMPTY AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN))); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA124     LOCATION OF DEATH
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_ContinuInterview.A124_PlaceDied
+
+        At the time of death, was (she/he) in a hospital, in a nursing home, at home,
+        in a hospice, or what?
+        ..................................................................................
+          633           1. IN HOSPITAL
+          339           2. IN NURSING HOME
+          425           3. AT HOME
+           63           4. IN HOSPICE
+           12           5. Assisted living facility/rest home/retirement home/senior care
+                           home
+           27           7. OTHER (SPECIFY); Including at work, outside, accident,
+                           relative's home
+            2           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        RVARS.Z131_YrDeath_V <> EMPTY) OR (RVARS.Z131_YrDeath_V = EMPTY AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN))); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN));
+        puA126_StateDied.puState = 98; ((RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT,
+        FIRSTREPEATPOST, SECREPEATPOST]) AND RVARS.Z131_YrDeath_V <> EMPTY) OR
+        (RVARS.Z131_YrDeath_V = EMPTY AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN))); NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST,
+        SECREPEATPOST]) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN));
+        NOT (puA126_StateDied.puState = 98); puA126_StateDied.puState = 99;
+        ((RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        RVARS.Z131_YrDeath_V <> EMPTY) OR (RVARS.Z131_YrDeath_V = EMPTY AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN))); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); NOT
+        (puA126_StateDied.puState = 98); NOT (puA126_StateDied.puState = 99);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA126M    R DIED- STATE - MASKED
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA_ContinuInterview.A126_StateDied
+
+        In what state and county did ((she/he)) die?
+
+        STATE:
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+           61           1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+          212           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+          234           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+          105           4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+          377           5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+           58           6. South Region: East South Central Division (KY, TN, AL, MS)
+          198           7. South Region: West South Central Division (AR, LA, OK, TX)
+           66           8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+          184           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+            6          11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        RVARS.Z131_YrDeath_V <> EMPTY) OR (RVARS.Z131_YrDeath_V = EMPTY AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN))); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN));
+        puA129_StateDeathCert.puState = 98; ((RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT,
+        FIRSTREPEATPOST, SECREPEATPOST]) AND RVARS.Z131_YrDeath_V <> EMPTY) OR
+        (RVARS.Z131_YrDeath_V = EMPTY AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE
+        = EXTSPN))); NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST,
+        SECREPEATPOST]) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN));
+        NOT (puA129_StateDeathCert.puState = 98); puA126_StateDied.puState = 99;
+        ((RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        RVARS.Z131_YrDeath_V <> EMPTY) OR (RVARS.Z131_YrDeath_V = EMPTY AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN))); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); NOT
+        (puA129_StateDeathCert.puState = 98); NOT (puA126_StateDied.puState = 99);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA129M    R DEATH CERTIFICATE- STATE - MASKED
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA_ContinuInterview.A129_StateDeathCert
+
+        In what state and county was (his/her) death certificate filed?
+
+        STATE:
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+           61           1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+          209           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+          232           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+          108           4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+          372           5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+           55           6. South Region: East South Central Division (KY, TN, AL, MS)
+          199           7. South Region: West South Central Division (AR, LA, OK, TX)
+           66           8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+          193           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+            6          11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        RVARS.Z131_YrDeath_V <> EMPTY) OR (RVARS.Z131_YrDeath_V = EMPTY AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN))); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA131     DEATH EXPECTED/UNEXPECTED
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA_ContinuInterview.A131_DeathExpected
+
+        (Was the death expected at about the time it occurred, or was it unexpected?)
+        ..................................................................................
+          855           1. EXPECTED
+          628           2. UNEXPECTED
+           12          97. OTHER (SPECIFY)
+            6          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        RVARS.Z131_YrDeath_V <> EMPTY) OR (RVARS.Z131_YrDeath_V = EMPTY AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN))); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA133M1M  CAUSE OF DEATH-MASKED- 1
+          Section: A      Level: Respondent  Type: Numeric     Width: 3    Decimals: 0
+         CAI Reference: BA_ContinuInterview.A133_CauseDeath
+
+        (What was the major illness that led to (her/his) death?)
+
+        User note:  Code categories have been collapsed to protect respondent
+        confidentiality. Values 181, 182, and 183 were recoded to 189; Values 19
+        and 195 were recoded to 196; Values 601 through 607 were recoded to 607.
+        ..................................................................................
+          337                 101-103. Cancers and tumors; skin conditions
+           11                 111-119. Musculoskeletal system and connective tissue
+          541                 121-129. Heart, circulatory and blood conditions
+          184                 131-139. Allergies; hayfever; sinusitis; tonsillitis
+           65                 141-149. Endocrine, metabolic and nutritional conditions
+          104                 151-159. Digestive system (stomach, liver, gallbladder,
+                                       kidney, bladder)
+           27                 161-169. Neurological and sensory conditions
+            1                 171-179. Reproductive system and prostate conditions
+            2                 181-189. Emotional and psychological conditions
+          109                 191-196. Miscellaneous
+           48                 595-597. Other symptoms
+           14                 601-607. Not A Health Condition
+                                  990. No text displayed
+           11                     996. None
+           13                     997. Other health condition
+           19                     998. DK (Don’t Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+           15                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        RVARS.Z131_YrDeath_V <> EMPTY) OR (RVARS.Z131_YrDeath_V = EMPTY AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN))); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA133M2M  CAUSE OF DEATH-MASKED- 2
+          Section: A      Level: Respondent  Type: Numeric     Width: 3    Decimals: 0
+         CAI Reference: BA_ContinuInterview.A133_CauseDeath
+
+        (What was the major illness that led to (her/his) death?)
+
+        User note:  Code categories have been collapsed to protect respondent
+        confidentiality. Values 181, 182, and 183 were recoded to 189; Values 19
+        and 195 were recoded to 196; Values 601 through 607 were recoded to 607.
+        ..................................................................................
+           22                 101-103. Cancers and tumors; skin conditions
+           14                 111-119. Musculoskeletal system and connective tissue
+          106                 121-129. Heart, circulatory and blood conditions
+           51                 131-139. Allergies; hayfever; sinusitis; tonsillitis
+           20                 141-149. Endocrine, metabolic and nutritional conditions
+           38                 151-159. Digestive system (stomach, liver, gallbladder,
+                                       kidney, bladder)
+           18                 161-169. Neurological and sensory conditions
+            1                 171-179. Reproductive system and prostate conditions
+            1                 181-189. Emotional and psychological conditions
+           49                 191-196. Miscellaneous
+           12                 595-597. Other symptoms
+            5                 601-607. Not A Health Condition
+                                  990. No text displayed
+                                  996. None
+           12                     997. Other health condition
+                                  998. DK (Don’t Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1152                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        ((RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        RVARS.Z131_YrDeath_V <> EMPTY) OR (RVARS.Z131_YrDeath_V = EMPTY AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN))); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA134     DURATION FINAL ILLNESS/DEATH
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_ContinuInterview.A134_
+
+        (About how long was it between the start of the final illness and the death:
+        was it one or two hours, less than a day, less than a week, less than a month,
+        less than a year, or was it more than a year?)
+        ..................................................................................
+          145           1. ONE OR TWO HOURS (OR NO WARNING)
+           95           2. LESS THAN A DAY
+          245           3. LESS THAN A WEEK
+          295           4. LESS THAN A MONTH
+          377           5. LESS THAN A YEAR
+          314           6. MORE THAN A YEAR
+           29           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SR_AGE    RAGE
+          Section: A      Level: Respondent  Type: Numeric     Width: 3    Decimals: 0
+
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           1501         40        107         79.46         10.70       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA019     R CURRENT AGE CALCULATION
+          Section: A      Level: Respondent  Type: Numeric     Width: 3    Decimals: 0
+         CAI Reference: BA_ContinuInterview.A019_RAge
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           1501         40        107         79.46         10.70       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; (piHHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = MARRIED) OR
+        (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL)); A020TSameSpP_A = EMPTY;
+        puA020TSameSpP_A <> EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA020     1ST R SAME SP/P
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Relations.A020TSameSpP_A
+
+        (We need to update our records. They show that, [he/she], [RESPONDENT FIRST
+        NAME], (was married/was living with a partner as if married)/
+        (First we need to update our records. As of [LAST IW MONTH, YEAR FOR LAST-
+        WAVE’S 1ST R] they show that (he/she), [RESPONDENT FIRST NAME], (was
+        married/was living with a partner as if married).)
+
+        (Were you/Was Respondent's [SPOUSE FIRST NAME/PARTNER FIRST NAME]) still
+        (his/her) (husband/wife/partner) at the time (he/she) died?
+
+        INTERVIEWER: ONCE YOU ANSWER THIS QUESTION YOU CANNOT BACK UP AND CHANGE THE
+        ANSWER FOR THIS QUESTION
+        ..................................................................................
+          652           1. YES AND SP/PARTNER WAS LIVING WHEN R DIED
+                        3. THAT PARTNER BECAME R`S SPOUSE AND WAS LIVING WHEN R DIED
+            1           4. THAT SPOUSE BECAME PARTNER AND WAS LIVING WHEN R DIED
+           47           5. NO
+          801       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); NOT (ptSCVXR1_R2 <> SECOND);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA023     PREVIOUS WAVE SP/P ALIVE
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Relations.A023_PWSpPAlive
+
+        Was  R's [SPOUSE's/PARTNER's] FIRST NAME  still alive at that time?
+        ..................................................................................
+            7           1. YES
+          652           3. Yes - assigned from SA020
+           41           5. NO
+          801       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; (piHHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = MARRIED) OR
+        (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL)); A020TSameSpP_A = NO;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA024     MO COUPLE STOP LIVING TOGETHER/DIE
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA_Relations.A024_MoStopCoHabit
+
+        In what month and year did ( [RESPONDENT FIRST NAME] and [Respondent 2 Name]
+        stop living together? / [Respondent 2 Name] die?)
+
+        MONTH:
+        ..................................................................................
+            4           1. JAN
+            3           2. FEB
+            3           3. MAR
+            5           4. APR
+            4           5. MAY
+            1           6. JUN
+            3           7. JUL
+            1           8. AUG
+            3           9. SEP
+            1          10. OCT
+            8          11. NOV
+            7          12. DEC
+            4          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1454       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; (piHHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = MARRIED) OR
+        (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL)); A020TSameSpP_A = NO;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA025     YEAR COUPLE STOPPED LIVE TOGETHER/DIE
+          Section: A      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BA_Relations.A025_YrStopCoHabit
+
+        (In what month and year did ( [RESPONDENT FIRST NAME] and [Respondent 2 Name]
+        stop living together? / [Respondent 2 Name] die?))
+
+        YEAR:
+        ..................................................................................
+           44               1991-2002. Actual Value
+            3                    9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1454                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; NOT (ptSCVXR1_R2 <> SECOND); (BA_Respondents[1].X066ACouplenss_V
+        = MARRIED) OR (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL);
+        BA_Respondents[1].X066ACouplenss_V = MARRIED; NOT (RVARS.Z145_TypeExit_V IN
+        [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]); A047_ = EMPTY; NOT (ptSCVXR1_R2
+        <> SECOND); (BA_Respondents[1].X066ACouplenss_V = MARRIED) OR
+        (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL); NOT
+        (BA_Respondents[1].X066ACouplenss_V = MARRIED);
+        BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA026     R MARRIED
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Relations.A026_Rmarried
+
+        (First we need to update our records. They show that (she/he)/First we need to
+        update our records. As of [PREV WAVE FIRST R IW MONTH], [PREV WAVE FIRST R IW
+        YEAR] they show that)([RESPONDENT FIRST NAME], was not married or living with
+        a partner.  At the time (she/he) died, was (she/he) married?/At the time
+        (she/he) died, was (she/he) married to someone else?/At the time (she/he)
+        died, was (she/he) married?)
+        ..................................................................................
+           29           1. YES
+          835           5. NO
+          637       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; NOT (ptSCVXR1_R2 <> SECOND); (BA_Respondents[1].X066ACouplenss_V
+        = MARRIED) OR (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL); NOT
+        (BA_Respondents[1].X066ACouplenss_V = MARRIED);
+        BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA027     LIVING W/P
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Relations.A027_Rpartnerd
+
+        At the time (she/he) died, did (she/he) have a partner (she/he) lived with as
+        if married?
+        ..................................................................................
+            8           1. YES
+          827           5. NO
+          666       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; puA028_RInNHome <> EMPTY; puA028_RInNHome.ORD = 2; NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]); A047_
+        = EMPTY; puA028_RInNHome <> EMPTY; NOT (puA028_RInNHome.ORD = 2);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA028     R IN NURSING HOME
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Relations.A028_RInNHome
+
+        (Was [RESPONDENT FIRST NAME] living in a nursing home or other health care
+        facility at the time (he/she) died?)
+
+        INTERVIEWER: THIS QUESTION ASKS WHERE R WAS LIVING AT THE TIME OF DEATH.
+
+        DEFINITION: A nursing home or other health facility provides all of the
+        following services for its residents: dispensing of medication, 24-hour
+        nursing assistance and supervision, personal assistance, and room & meals.
+        ..................................................................................
+          511           1. YES - NURSING HOME OR OTHER LTC FACILITY
+                        2. YES - HOSPICE
+          990           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        puA120_UPDATER > 0;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA061     LAST CALENDAR YR CALCULATED
+          Section: A      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: B_Init.A061TLCY_A
+        ..................................................................................
+         1408        2001. Actual Year
+           93        2002. Actual Year
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        puA120_UPDATER > 0;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA062     TWO YEARS AGO
+          Section: A      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: B_Init.A062T2YrsAgo_A
+        ..................................................................................
+         1408        2000. Actual Year
+           93        2001. Actual Year
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        puA120_UPDATER > 0;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA063     ELAPSED MONTHS FROM NOW TO TWO YRS AGO
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Init.A063_ElapseMo
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           1501         25         36         32.56          2.14       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+        puA120_UPDATER > 0;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA064     NUM MO FROM PREV WAVE IW TO TWO YRS AGO
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Init.A064_ElapseMo2
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           1248          2         11          5.07          2.05     253
+         -----------------------------------------------------------------
+
+==========================================================================================
+        puA120_UPDATER > 0;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA114     PREV WAVE IW YEAR
+          Section: A      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: B_Init.A114_PrevWaveYear
+        ..................................................................................
+         1501        2000. Last IW Year
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; NOT (ptSCVXR1_R2 <> SECOND); (BA_Respondents[1].X066ACouplenss_V
+        = MARRIED) OR (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA030     COUPLE LIVE TOGETHER
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Relations.A030_LivTogethr
+
+        (Up until (she/he) went into the hospice were you living/ At the time of
+        (her/his) death were you living/Up until (she/he) went into the hospice were
+        (she/he) and (her/his) ((new)) (you/husband/wife/partner) living /At the time
+        of (her/his) death were (she/he) and (her/his) ((new))
+        (you/husband/wife/partner) living) (in the same (nursing home/health care
+        facility)?/together in a house or apartment?)
+
+        INTERVIEWER: THIS QUESTION IS TO TELL WHETHER R'S SPOUSE/PARTNER WAS ALSO
+        LIVING IN THE DWELLING OR INSTITUTION WHERE R LIVED.
+        ..................................................................................
+          561           1. YES
+          104           5. NO
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          835       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA031     MO R AND SP/P STOP LIVING IN SAME HH
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA_Relations.A031_MoStopLivTogthr
+
+        In what month and year did (you/they) stop living together?
+
+        MONTH:
+        ..................................................................................
+            6           1. JAN
+           12           2. FEB
+            6           3. MAR
+            6           4. APR
+            6           5. MAY
+            8           6. JUN
+            5           7. JUL
+            9           8. AUG
+            6           9. SEP
+            3          10. OCT
+            8          11. NOV
+            6          12. DEC
+           23          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1397       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA032     YR R AND SP/P STOP LIVING IN SAME HH
+          Section: A      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BA_Relations.A032_YrStopLivTogthr
+
+        (In what month and year did (you/they) stop living together?)
+
+        YEAR:
+        ..................................................................................
+           96               1979-2002. Actual Value
+            8                    9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1397                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA033     SP/P IN NURSHOME
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Relations.A033_SpInNHome
+
+        At the time of [RESPONDENT FIRST NAME]'s death, was [RESPONDENT FIRST NAME]'s
+        ((new)) (husband/wife/partner) living in a nursing home or other health care
+        facility?
+
+        DEFINITION: A nursing home provides all of the following services for its
+        residents: dispensing of medication, 24-hour nursing assistance and
+        supervision, personal assistance, and room & meals.
+        ..................................................................................
+            9           1. YES
+           95           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1397       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        (((BA_Respondents[1].X066ACouplenss_V = MARRIED) AND (A020TSameSpP_A =
+        YESANDSPPTRISLIVING)) OR (A020TSameSpP_A = THATPTRISNOWRSSP)) OR (A026_Rmarried
+        = YES);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA034     MARRIED OR SEPARATED
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Relations.A034_RMarSep
+
+        Would (she/he) have said (she/he) was married, or separated?
+        ..................................................................................
+           87           1. MARRIED
+           10           2. SEPARATED
+            3           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1401       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        (((BA_Respondents[1].X066ACouplenss_V = MARRIED) AND (A020TSameSpP_A =
+        YESANDSPPTRISLIVING)) OR (A020TSameSpP_A = THATPTRISNOWRSSP)) OR (A026_Rmarried
+        = YES); A034_RMarSep = SEPARATED;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA035     SEPARATED/PARTNERED
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Relations.A035_SepWPartnr
+
+        At the time of (her/his) death, was (she/he) living with a partner as if
+        married?
+        ..................................................................................
+                        1. YES
+           10           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1491       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); ptSCVXR1_R2 <> SECOND; NOT (((piHHX024_ReIwHH_V = NO) OR
+        (BA_Respondents[1].X066ACouplenss_V = OTHER)) OR (A020TSameSpP_A = NO));
+        A020TSameSpP_A = THATPTRISNOWRSSP;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA038     CURRENT COUPLENESS
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Relations.A038TCouplenss_A
+        ..................................................................................
+          630           1. MARRIED
+            2           2. REMARRIED
+           35           3. PARTNERED (VOLUNTEERED)
+                        4. REPARTNERED (VOLUNTEERED)
+          833           6. OTHER
+            1       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; ((A026_Rmarried = YES) OR (A027_Rpartnerd
+        = YES)) OR (A035_SepWPartnr = YES);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA036     MO STARTED LIVING WITH NEW SP/P
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA_Relations.A036_
+
+        In what month and year (did [RESPONDENT FIRST NAME] and you/did [RESPONDENT
+        FIRST NAME] and (her/his) ((new)) (you/husband/wife/partner)) start living
+        together?
+
+        MONTH:
+        ..................................................................................
+            3           1. JAN
+            2           2. FEB
+            1           3. MAR
+            1           4. APR
+                        5. MAY
+            2           6. JUN
+            1           7. JUL
+                        8. AUG
+            1           9. SEP
+                       10. OCT
+                       11. NOV
+                       12. DEC
+            9          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+         1481       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; ((A026_Rmarried = YES) OR (A027_Rpartnerd
+        = YES)) OR (A035_SepWPartnr = YES);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA037     YEAR STARTED LIVING WITH NEW SP/P
+          Section: A      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BA_Relations.A037_AYrStartCouple
+
+        In what month and year (did [RESPONDENT FIRST NAME] and you/did [RESPONDENT
+        FIRST NAME] and (her/his) ((new)) (you/husband/wife/partner)) start living
+        together?
+
+        YEAR:
+        ..................................................................................
+           14               1940-2002. Actual Value
+            6                    9998. DK (Don't Know); NA (Not Ascertained)
+                                 9999. RF (Refused)
+         1481                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SSP_AGE   SP AGE
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            645         39         97         72.97         10.77     856
+         -----------------------------------------------------------------
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; NOT (((A038TCouplenss_A <> OTHER) AND (A035_SepWPartnr <> NO))
+        AND (SCV.XR1_R2 <> SECOND)); SCV.XR1_R2 = SECOND;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA042     SP AGE 65 OR OLDER
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Relations.A042_SpAge65
+
+        INTERVIEWER: READ INTRO IF NECESSARY: (An important part of this study is
+        understanding how people make decisions during different stages of life. In
+        order to do this,) we (also) need a general age range for your
+        (husband/wife/partner).
+
+        Is (he/she) 65 years of age or older?
+
+        IF NO RESPONSE, ENTER YOUR BEST ESTIMATE OF WHETHER R'S SPOUSE/PARTNER IS 65
+        YEARS OF AGE OR OLDER. USE CODES 4 OR 5 TO RECORD YOUR ESTIMATE IF R REFUSES
+        ..................................................................................
+                        1. R GIVES SPOUSE/PARTNER'S AGE OR BIRTHYRR
+            3           2. R REPORTS SPOUSE/PARTNER'S AGE 65 OR OVER
+                        3. R REPORTS SPOUSE/PARTNER'S AGE UNDER 65
+            2           4. IWER REPORTS: SPOUSE/PARTNER'S AGE 65 OR OVER
+            1           5. IWER REPORTS: SPOUSE/PARTNER'S AGE UNDER 65
+         1495       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); NOT (((A038TCouplenss_A <> OTHER) AND (A035_SepWPartnr <>
+        NO)) AND (SCV.XR1_R2 <> SECOND)); SCV.XR1_R2 = SECOND;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA044     SP/P CURRENT AGE CALCULATION
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA_Relations.A044TSpAge_A
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            662         39         97         72.95         10.71     839
+         -----------------------------------------------------------------
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; (((A026_Rmarried = YES) AND (A034_RMarSep
+        <> SEPARATED)) OR ((A027_Rpartnerd = YES) AND (A030_LivTogethr <> NO))) OR
+        (A035_SepWPartnr = YES); NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT,
+        FIRSTREPEATPOST, SECREPEATPOST]); A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; NOT
+        ((((A026_Rmarried = YES) AND (A034_RMarSep <> SEPARATED)) OR ((A027_Rpartnerd =
+        YES) AND (A030_LivTogethr <> NO))) OR (A035_SepWPartnr = YES));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA045     R HAS NEW SPOUSE OR PARTNER
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Relations.A045_NewSpP
+        ..................................................................................
+           14           1. YES
+         1470           5. NO
+           17       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        piHHX024_ReIwHH_V <> YES; NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT,
+        FIRSTREPEATPOST, SECREPEATPOST]); NOT (piHHX024_ReIwHH_V <> YES);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA050     NEW COHORT-CHOOSE FIN R
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Financial.A050_NwCohortFinR
+        ..................................................................................
+         1500           1. RESPONDENT
+            1           2. SPOUSE/PARTNER
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ptSCVXR1_R2 = SECOND; A051TRFinFam_A = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA051     R FAMILY/FINANCIAL TYPE - TEMPORARY
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Financial.A051TRFinFam_A
+        ..................................................................................
+            5           1. FINANCIAL R
+            1           2. FAMILY R
+         1486           3. FINANCIAL & FAMILY R
+            9           4. NON-FINANCIAL & NON-FAMILY R
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ptSCVXR1_R2 = SECOND; A051TRFinFam_A = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA052     SP/P FAMILY/FINANCIAL TYPE - TEMPORARY
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Financial.A052TSpFinFam_A
+        ..................................................................................
+            1           1. FINANCIAL R
+            5           2. FAMILY R
+            9           3. FINANCIAL & FAMILY R
+          647           4. NON-FINANCIAL & NON-FAMILY R
+          839       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT ((((ptRespondents1X065ACouplenss <> OTHER) AND (ptSCVXR1_R2 <> SECOND)) AND
+        (ptSCVXDisagree <> Disagree)) AND ((ACTIVELANGUAGE <> EXTENG) AND
+        (ACTIVELANGUAGE <> EXTSPN))); NOT (((ptRespondents1X065ACouplenss <> OTHER) AND
+        (ptSCVXR1_R2 = SECOND)) AND ((ACTIVELANGUAGE <> EXTENG) OR (ACTIVELANGUAGE <>
+        EXTSPN))); (ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA053     PREV WAVE R TYPE
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Financial.A053_
+
+        NOTE: THE SCREEN DISPLAYS THE CURRENT R-TYPE ASSIGNMENT FOR FINANCIAL R/FAMILY
+        R FOR THE FIRST R AND FOR CURRENT SPOUSE/PARTNER (IF ANY).
+
+        NOTE: THE ASSIGNMENTS ARE DISPLAYED IN THE FOLLOWING FORM, WITH ONLY THE
+        RELEVANT PORTIONS SHOWN:
+
+        R's FIRST NAME IS THE [FINANCIAL R/FAMILY R/FINANCIAL & FAMILY R/NON-FINANCIAL
+        & NON-FAMILY R]
+
+        CURRENT [SPOUSE's/PARTNER's] FIRST NAME IS THE [FINANCIAL R/FAMILY R/FINANCIAL
+        & FAMILY R/NON-FINANCIAL & NON-FAMILY R]
+
+        [IWER: DO YOU NEED TO CHANGE THIS ASSIGNMENT?]
+        ..................................................................................
+                        1. YES, CHANGE ASSIGNMENTS
+         1484           5. NO, LEAVE ASSIGNMENT AS STATED
+           17       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT ((((ptRespondents1X065ACouplenss <> OTHER) AND (ptSCVXR1_R2 <> SECOND)) AND
+        (ptSCVXDisagree <> Disagree)) AND ((ACTIVELANGUAGE <> EXTENG) AND
+        (ACTIVELANGUAGE <> EXTSPN))); NOT (((ptRespondents1X065ACouplenss <> OTHER) AND
+        (ptSCVXR1_R2 = SECOND)) AND ((ACTIVELANGUAGE <> EXTENG) OR (ACTIVELANGUAGE <>
+        EXTSPN))); (ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA055     FAM/FIN THIS WAVE
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Financial.A055TRFinFam2_A
+
+        R's FIRST NAME WAS TO BE [FINANCIAL R/FAMILY R/FINANCIAL & FAMILY R/NON-
+        FINANCIAL & NON-FAMILY R]
+
+        IWER: CHANGE  TO:
+
+        IWER: CHANGE  R's FIRST NAME  TO:
+        ..................................................................................
+            5           1. FINANCIAL R
+            1           2. FAMILY R
+         1486           3. FINANCIAL & FAMILY R
+            9           4. NON-FINANCIAL & NON-FAMILY R
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (piSCVXsplit = YES) AND (A053_ <> YESCHANGEASSIGNMENTS); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((ptRespondents1X065ACouplenss <> OTHER) AND (ptSCVXR1_R2 <> SECOND)) AND
+        (ptSCVXDisagree <> Disagree)) AND ((ACTIVELANGUAGE <> EXTENG) AND
+        (ACTIVELANGUAGE <> EXTSPN)); A053_ = YESCHANGEASSIGNMENTS; A055TRFinFam2_A =
+        FINANCIALR; NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST,
+        SECREPEATPOST]); (((ptRespondents1X065ACouplenss <> OTHER) AND (ptSCVXR1_R2 <>
+        SECOND)) AND (ptSCVXDisagree <> Disagree)) AND ((ACTIVELANGUAGE <> EXTENG) AND
+        (ACTIVELANGUAGE <> EXTSPN)); A053_ = YESCHANGEASSIGNMENTS; NOT (A055TRFinFam2_A
+        = FINANCIALR); A055TRFinFam2_A = FAMILYR; NOT (RVARS.Z145_TypeExit_V IN
+        [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]); (((ptRespondents1X065ACouplenss
+        <> OTHER) AND (ptSCVXR1_R2 <> SECOND)) AND (ptSCVXDisagree <> Disagree)) AND
+        ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)); A053_ =
+        YESCHANGEASSIGNMENTS; NOT (A055TRFinFam2_A = FINANCIALR); NOT (A055TRFinFam2_A
+        = FAMILYR); A055TRFinFam2_A = FINANCIAL_FAMILYR; NOT (RVARS.Z145_TypeExit_V IN
+        [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]); (((ptRespondents1X065ACouplenss
+        <> OTHER) AND (ptSCVXR1_R2 <> SECOND)) AND (ptSCVXDisagree <> Disagree)) AND
+        ((ACTIVELANGUAGE <> EXTENG) AND (ACTIVELANGUAGE <> EXTSPN)); A053_ =
+        YESCHANGEASSIGNMENTS; NOT (A055TRFinFam2_A = FINANCIALR); NOT (A055TRFinFam2_A
+        = FAMILYR); NOT (A055TRFinFam2_A = FINANCIAL_FAMILYR); A055TRFinFam2_A =
+        NON_FINANCIAL_NON_FAMILYR;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA056     SP/P FAMILY/FINANCIAL TYPE - CHANGED
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_Financial.A056TSpFinFam2_A
+        ..................................................................................
+            1           1. FINANCIAL R
+            5           2. FAMILY R
+            9           3. FINANCIAL & FAMILY R
+         1486           4. NON-FINANCIAL & NON-FAMILY R
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        piRelations_A28_RInHome = YES; ((piFinancialA055TRFinFam2_A = FINANCIALR) OR
+        (piFinancialA055TRFinFam2_A = FINANCIAL_FAMILYR)) OR (piSCVXR1_R2 = FIRST);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA065     MONTH MOVED TO NH
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA_NursingHome.A065_
+
+        In what month and year did [RESPONDENT FIRST NAME] move to the (nursing home/
+        health care facility) where (she/he) was a resident just before (her/his)
+        death?
+
+        MONTH:
+        ..................................................................................
+           37           1. JAN
+           51           2. FEB
+           30           3. MAR
+           30           4. APR
+           36           5. MAY
+           41           6. JUN
+           40           7. JUL
+           46           8. AUG
+           47           9. SEP
+           28          10. OCT
+           34          11. NOV
+           28          12. DEC
+           60          98. DK (Don't Know); NA (Not Ascertained)
+            2          99. RF (Refused)
+          991       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        piRelations_A28_RInHome = YES; NOT (((piFinancialA055TRFinFam2_A = FINANCIALR)
+        OR (piFinancialA055TRFinFam2_A = FINANCIAL_FAMILYR)) OR (piSCVXR1_R2 = FIRST));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA066     YEAR MOVED TO NURS HOME
+          Section: A      Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: BA_NursingHome.A066_
+
+        In what month and year did [RESPONDENT FIRST NAME] move to the (nursing home/
+        health care facility) where (she/he) was a resident just before (her/his)
+        death?
+
+        YEAR:
+        ..................................................................................
+          486               1989-2002. Actual Value
+           21                    9998. DK (Don't Know); NA (Not Ascertained)
+            3                    9999. RF (Refused)
+          991                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        piRelations_A28_RInHome = YES; ((piFinancialA055TRFinFam2_A = FINANCIALR) OR
+        (piFinancialA055TRFinFam2_A = FINANCIAL_FAMILYR)) OR (piSCVXR1_R2 = FIRST);
+        puA068_STNHome.puState = 98; NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT,
+        FIRSTREPEATPOST, SECREPEATPOST]); piRelations_A28_RInHome = YES;
+        ((piFinancialA055TRFinFam2_A = FINANCIALR) OR (piFinancialA055TRFinFam2_A =
+        FINANCIAL_FAMILYR)) OR (piSCVXR1_R2 = FIRST); NOT (puA068_STNHome.puState =
+        98); puA068_STNHome.puState = 99; NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT,
+        FIRSTREPEATPOST, SECREPEATPOST]); piRelations_A28_RInHome = YES;
+        ((piFinancialA055TRFinFam2_A = FINANCIALR) OR (piFinancialA055TRFinFam2_A =
+        FINANCIAL_FAMILYR)) OR (piSCVXR1_R2 = FIRST); NOT (puA068_STNHome.puState =
+        98); NOT (puA068_STNHome.puState = 99);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA068M    REGION FACILITY LOCATED - MASKED
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA_NursingHome.A068_STNHome
+
+        In what city and state was the (nursing home/health care facility) where
+        [RESPONDENT FIRST NAME] was living?
+
+        STATE:
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+           26           1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+           68           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+           83           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+           51           4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+          127           5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+           24           6. South Region: East South Central Division (KY, TN, AL, MS)
+           59           7. South Region: West South Central Division (AR, LA, OK, TX)
+           22           8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+           48           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+                       11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+            2          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (refused)
+          991       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        piRelations_A28_RInHome = YES; ((piFinancialA055TRFinFam2_A = FINANCIALR) OR
+        (piFinancialA055TRFinFam2_A = FINANCIAL_FAMILYR)) OR (piSCVXR1_R2 = FIRST);
+        piCheck = 1;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA070     NH: STILL OWN/RENT HOME
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_NursingHome.A070_NHOwnRent
+
+        ((Did you or/Did)(he/she)(or (his/her) husband/wife/partner)) own or rent a
+        (house or apartment/house/apartment) outside the facility where (he/she) was
+        living?
+        ..................................................................................
+          245           1. YES
+          260           5. NO
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          995       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT ((piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES))); (piSCVXR1_R2 = SECOND) AND
+        A071_SameMainRes = EMPTY; SecA.BA_HH.X033_HHMoved = CHANGEDRES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA071     SAME RESID AS PREV WAVE #1
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_HousingLocation.A071_SameMainRes
+
+        Next are some questions about changes in [RESPONDENT FIRST NAME]'s housing
+        location since we last talked with [him/her].
+
+        Our records show that [in MONTH, YEAR OF PREVIOUS FIRST R INTERVIEW/two
+        years ago], [one of/] (his/her) (house[s] or apartment[s]/house[s]/
+        apartment[s]) was in [HOUSEHOLD LAST IW 1ST RESIDENCE CITY], [HOUSEHOLD LAST
+        IW 1ST RESIDENCE STATE].
+
+        IF R LIVED IN A HOSPICE (A028=2):
+        Before [he/she] entered the hospice,
+        ELSE
+        At the time [he/she] died,
+        END
+
+        IF R LIVED IN A NURSING HOME (A028=1):
+        did [he/she] still have the same (house or apartment/house/
+        apartment) in [HOUSEHOLD LAST IW 1ST RESIDENCE CITY]?
+        ELSE
+        was [he/she] still living, all year or part of the year, in that
+        same (house or apartment/house/apartment) in [HOUSEHOLD LAST IW 1ST RESIDENCE
+        CITY]?
+        END
+        ..................................................................................
+         1062           1. YES
+          173           5. NO
+            2           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          264       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)); piHHX024_ReIwHH_V = YES; A071_SameMainRes
+        <> YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA072     SAME CITY/ST RESID # 1
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_HousingLocation.A072_SameAreaMain
+
+        (Was (his/her) (house or apartment/house/apartment) still in or around
+        [HOUSEHOLD LAST IW 1ST RESIDENCE CITY]?/Did [he/she] still live, all year or
+        part of the year in a (house or
+        apartment/house/apartment), in or around [HOUSEHOLD LAST IW 1ST RESIDENCE
+        CITY]?)
+        ..................................................................................
+           75           1. YES
+           98           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1328       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)); piHHX024_ReIwHH_V = YES;
+        piHHX028_Has2ndRes_V = HASOTHRES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA073     SAME RESID AS PREV WAVE #2
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_HousingLocation.A073_Same2ndRes
+
+        Our records also show that (in [LAST IW MONTH, YEAR FOR LAST-WAVE’S 1ST
+        R]/in [LAST IW YEAR FOR LAST-WAVE’S 1ST R]/two years ago) (she/he) had
+        another (house or apartment/house/apartment), one in [HH's LAST IW 2ND
+        RESIDENCE CITY, STATE].
+
+        At the time (she/he) died, (did (she/he) still have the same [house or
+        apartment/house/apartment] in [HOUSEHOLD LAST IW 2ND RESIDENCE CITY]?)/
+        (was (she/he) still living, all year or part of the year, in that same
+        (house or apartment/house/apartment) in [HOUSEHOLD LAST IW 2ND RESIDENCE
+        CITY])?
+        ..................................................................................
+           28           1. YES
+           28           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1445       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)); piHHX024_ReIwHH_V = YES;
+        piHHX028_Has2ndRes_V = HASOTHRES; A073_Same2ndRes <> YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA074     SAME CITY/ST RESID #2
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_HousingLocation.A074_SameArea2nd
+
+        (Did [RESPONDENT FIRST NAME] have a home/Did [RESPONDENT FIRST NAME] live, all
+        year or part of the year in a (house or apartment/house/apartment),) in or
+        around [HOUSEHOLD LAST IW 2ND RESIDENCE CITY?])?
+        ..................................................................................
+            7           1. YES
+           21           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1473       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)); piHHX024_ReIwHH_V = YES;
+        (((A071_SameMainRes <> YES) AND (A072_SameAreaMain <> YES)) AND
+        (A073_Same2ndRes <> YES)) AND (A074_SameArea2nd <> YES);
+        puA076TCurResST_A.puState = 98; NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT,
+        FIRSTREPEATPOST, SECREPEATPOST]); (piSCVXR1_R2 = FIRST) AND
+        ((piRelations_A28_RInHome <> YES) OR (NursingHome.A070_NHOwnRent = YES));
+        piHHX024_ReIwHH_V = YES; (((A071_SameMainRes <> YES) AND (A072_SameAreaMain <>
+        YES)) AND (A073_Same2ndRes <> YES)) AND (A074_SameArea2nd <> YES); NOT
+        (puA076TCurResST_A.puState = 98); puA076TCurResST_A.puState = 99; NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)); piHHX024_ReIwHH_V = YES;
+        (((A071_SameMainRes <> YES) AND (A072_SameAreaMain <> YES)) AND
+        (A073_Same2ndRes <> YES)) AND (A074_SameArea2nd <> YES); NOT
+        (puA076TCurResST_A.puState = 98); NOT (puA076TCurResST_A.puState = 99);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA076M    CURRENT RESIDENCE STATE - MASKED
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA_HousingLocation.A076TCurResST_A
+
+        INTERVIEWER: ASK IF NECESSARY: At the time ((she/he)) died, in what city and
+        state was (his/her) (house or apartment/house/apartment) located?
+
+        STATE:
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+            3           1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+           12           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+            7           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+            1           4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+           31           5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+            6           6. South Region: East South Central Division (KY, TN, AL, MS)
+            8           7. South Region: West South Central Division (AR, LA, OK, TX)
+            7           8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+           15           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+                       11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (refused)
+         1411       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)); piHHX024_ReIwHH_V = YES;
+        ((piHHX028_Has2ndRes_V <> HASOTHRES) OR (A072_SameAreaMain = NO)) OR
+        (A074_SameArea2nd = NO);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA079     OTHER HOMES/APTS
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_HousingLocation.A079_
+
+        Did (she/he) have any other house or apartment where (she/he) usually lived
+        for 2 or more months of the year?
+
+        INTERVIEWER: IF R REPORTS MORE THAN ONE ADDITIONAL RESIDENCE, ASK ABOUT THE
+        ONE THEY USED MOST
+        ..................................................................................
+           15           1. YES
+         1177           5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+          309       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)); piHHX024_ReIwHH_V = YES;
+        ((piHHX028_Has2ndRes_V <> HASOTHRES) OR (A072_SameAreaMain = NO)) OR
+        (A074_SameArea2nd = NO); A079_ = YES; puA081TOthResST_A.puState = 98; NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (piSCVXR1_R2 = FIRST) AND ((piRelations_A28_RInHome <> YES) OR
+        (NursingHome.A070_NHOwnRent = YES)); piHHX024_ReIwHH_V = YES;
+        ((piHHX028_Has2ndRes_V <> HASOTHRES) OR (A072_SameAreaMain = NO)) OR
+        (A074_SameArea2nd = NO); A079_ = YES; NOT (puA081TOthResST_A.puState = 98);
+        puA081TOthResST_A.puState = 99; NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT,
+        FIRSTREPEATPOST, SECREPEATPOST]); (piSCVXR1_R2 = FIRST) AND
+        ((piRelations_A28_RInHome <> YES) OR (NursingHome.A070_NHOwnRent = YES));
+        piHHX024_ReIwHH_V = YES; ((piHHX028_Has2ndRes_V <> HASOTHRES) OR
+        (A072_SameAreaMain = NO)) OR (A074_SameArea2nd = NO); A079_ = YES; NOT
+        (puA081TOthResST_A.puState = 98); NOT (puA081TOthResST_A.puState = 99);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA081M    OTHER RESIDENCE STATE - MASKED
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA_HousingLocation.A081TOthResST_A
+
+        In what city and state was [RESPONDENT FIRST NAME]'s other residence located?
+
+        STATE:
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+                        1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+            2           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+            1           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+                        4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+            5           5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+            1           6. South Region: East South Central Division (KY, TN, AL, MS)
+            1           7. South Region: West South Central Division (AR, LA, OK, TX)
+            1           8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+            2           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+            2          11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (refused)
+         1486       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (((A071_SameMainRes = YES) OR (A072_SameAreaMain = YES)) AND ((A073_Same2ndRes
+        = YES) OR (A074_SameArea2nd = YES))) OR (A079_ = YES); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]); NOT
+        ((((A071_SameMainRes = YES) OR (A072_SameAreaMain = YES)) AND ((A073_Same2ndRes
+        = YES) OR (A074_SameArea2nd = YES))) OR (A079_ = YES)); piSCVXR1_R2 = FIRST;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA084     ASSIGN 1 OR 2 RESIDENCES
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_HousingLocation.A084_NumRes
+        ..................................................................................
+         1442           1. ONE RESIDENCE
+           42           2. TWO RESIDENCE
+           17       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        (piSCVXR1_R2 = FIRST) AND (A084_NumRes = TWORES);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA085     MAIN RESIDENCE
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_HousingLocation.A085_WhichMainRes
+
+        Which was [RESPONDENT FIRST NAME]'s main residence, [RESPONDENT FIRST NAME]'s
+        home in ([MAIN RES ADDRESS CITY], [MAIN RES ADDRESS STATE]/[Other Residence
+        City],[Other Residence State])
+        or the one in ([2ND ADDRESS CITY], [2ND ADDRESS STATE]/[Other Residence
+        City],[Other Residence State])?
+
+        DEFINITION: (Main residence, one where R spends the most time (MTY).)
+        ..................................................................................
+           37           1. HOME IN LAST IW 1ST RESIDENCE CITY (SX025)
+                        2. HOME IN NEW CURRENT RESIDENCE CITY, STATE (CS33/A075)
+            1           3. HOME IN LAST IW 2ND RESIDENCE CITY (SX030)
+            2           4. HOME IN NEW OTHER RESIDENCE CITY, STATE (CS35/A080)
+            2           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1459       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA136     MOVE IN- MOVE OUT BEFORE DEATH
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A136_AnyoneMoveIn
+
+        (Since [PREV WAVE IW MONTH], [PREV WAVE IW YEAR], /Between the time of our
+        interview in [PREV WAVE IW MONTH], [PREV WAVE IW YEAR], and when [RESPONDENT
+        FIRST NAME] went into the (nursing home/health care facility),/In the two
+        years preceding (her/his) death,) did anyone move into the house or apartment
+        where [RESPONDENT FIRST NAME] was living to help (her/him) but then move out
+        before ((she/he) died?/(she/he) went into the (nursing home/health care
+        facility)?/[RESPONDENT FIRST NAME] died?)
+        ..................................................................................
+           54           1. YES
+         1433           5. NO
+            9           8. DK (Don't Know); NA (Not Ascertained)
+            5           9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A136_AnyoneMoveIn = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA137M1   MOVED IN- WHO- 1
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A137_
+
+        Who moved in: was it (a child of [RESPONDENT FIRST NAME]'s,) a grandchild,
+        another relative, or someone else?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            2           1. PARENT
+           28           2. CHILD
+            2           4. GRANDCHILD
+           10           5. RELATIVE-OTHER
+           12           6. OTHER INDIVIDUAL
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1447       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A136_AnyoneMoveIn = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA137M2   MOVED IN- WHO- 2
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A137_
+
+        Who moved in: was it (a child of [RESPONDENT FIRST NAME]'s,) a grandchild,
+        another relative, or someone else?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. PARENT
+                        2. CHILD
+                        4. GRANDCHILD
+            1           5. RELATIVE-OTHER
+                        6. OTHER INDIVIDUAL
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1500       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A136_AnyoneMoveIn = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA137M3   MOVED IN- WHO- 3
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A137_
+
+        Who moved in: was it (a child of [RESPONDENT FIRST NAME]'s,) a grandchild,
+        another relative, or someone else?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. PARENT
+                        2. CHILD
+                        4. GRANDCHILD
+                        5. RELATIVE-OTHER
+                        6. OTHER INDIVIDUAL
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1501       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A136_AnyoneMoveIn = YES; CHILD IN A137_;
+        piInitA100_NumNRKids > 0; NOT (piInitA100_NumNRKids > 1); piInitA100_NumNRKids
+        = 1;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA138M1   MOVED IN- WHO- CHILD- 1
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A138_
+
+        Which children?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+           25                 041-990. Other Person Number
+            3                     993. ALL CHILDREN
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1473                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A136_AnyoneMoveIn = YES; CHILD IN A137_;
+        piInitA100_NumNRKids > 0; NOT (piInitA100_NumNRKids > 1); piInitA100_NumNRKids
+        = 1;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA138M2   MOVED IN- WHO- CHILD- 2
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A138_
+
+        Which children?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            2                 041-990. Other Person Number
+                                  993. ALL CHILDREN
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1499                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A136_AnyoneMoveIn = YES; CHILD IN A137_;
+        piInitA100_NumNRKids > 0; NOT (piInitA100_NumNRKids > 1); piInitA100_NumNRKids
+        = 1;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA138M3   MOVED IN- WHO- CHILD- 3
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A138_
+
+        Which children?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            1                 041-990. Other Person Number
+                                  993. ALL CHILDREN
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1500                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A136_AnyoneMoveIn = YES; CHILD IN A137_;
+        piInitA100_NumNRKids > 0; NOT (piInitA100_NumNRKids > 1); piInitA100_NumNRKids
+        = 1;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA138M4   MOVED IN- WHO- CHILD- 3
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A138_
+
+        Which children?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                              041-990. Other Person Number
+                                  993. ALL CHILDREN
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1501                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A136_AnyoneMoveIn = YES; CHILD IN A137_;
+        piInitA100_NumNRKids > 0; NOT (piInitA100_NumNRKids > 1); piInitA100_NumNRKids
+        = 1;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA139     MOVED IN- CHILD- STAYED LONGEST
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A139_
+
+        Which child stayed the longest?
+        ..................................................................................
+            6                 041-990. Other Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1495                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A136_AnyoneMoveIn = YES; CHILD IN A137_;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA140     DURATION CHILD STAYED
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A140_
+
+        About how many weeks or months did that (child stay?/person stay?)
+
+        Please tell me the longest stay if there was more than one person who stayed
+        with [RESPONDENT FIRST NAME].
+
+        INTERVIEWER: ENTER NUMBER OF WEEKS OR MONTHS
+        ..................................................................................
+           25                    1-52. Actual Value
+            3                      98. DK (Don't Know); NA (Not Ascertained)
+                                   99. RF (Refused)
+         1473                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A136_AnyoneMoveIn = YES; CHILD IN A137_;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA141     DURATION CHILD STAYED- PERIOD
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A141_
+
+        About how many weeks or months did that (child stay?/person stay?)
+
+        Please tell me the longest stay if there was more than one person who stayed
+        with [RESPONDENT FIRST NAME].
+
+        WEEKS OR MONTHS:
+        ..................................................................................
+            5           2. WEEKS
+           22           4. MONTHS
+            1           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1473       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA142     R MOVE IN/OUT BEFORE DEATH
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A142_RMovedInOut
+
+        (Between the time of our interview in [PREV WAVE IW MONTH], [PREV WAVE IW
+        YEAR], and [RESPONDENT FIRST NAME]'s death /Between the time of our interview
+        in [PREV WAVE IW MONTH], [PREV WAVE IW YEAR], and when [RESPONDENT FIRST NAME]
+        went into the (nursing home/health care facility)/In the two years preceding
+        (her/his) death,) did [RESPONDENT FIRST NAME] move into and then out of
+        someone else's house or apartment?
+        ..................................................................................
+           69           1. YES
+         1419           5. NO
+            8           8. DK (Don't Know); NA (Not Ascertained)
+            5           9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A142_RMovedInOut = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA143M1   R MOVED IN- WHO- 1
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A143_
+
+        With whom did (she/he) move in: was it (a child of [RESPONDENT FIRST NAME]'s,)
+        a grandchild, another relative, or someone else?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            2           1. PARENT
+           40           2. CHILD
+            5           4. GRANDCHILD
+           16           5. RELATIVE-OTHER
+            6           6. OTHER INDIVIDUAL
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1432       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A142_RMovedInOut = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA143M2   R MOVED IN- WHO- 2
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A143_
+
+        With whom did (she/he) move in: was it (a child of [RESPONDENT FIRST NAME]'s,)
+        a grandchild, another relative, or someone else?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. PARENT
+            1           2. CHILD
+            1           4. GRANDCHILD
+            2           5. RELATIVE-OTHER
+                        6. OTHER INDIVIDUAL
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1497       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A142_RMovedInOut = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA143M3   R MOVED IN- WHO- 3
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A143_
+
+        With whom did (she/he) move in: was it (a child of [RESPONDENT FIRST NAME]'s,)
+        a grandchild, another relative, or someone else?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. PARENT
+                        2. CHILD
+                        4. GRANDCHILD
+            1           5. RELATIVE-OTHER
+                        6. OTHER INDIVIDUAL
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1500       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A142_RMovedInOut = YES;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA143M4   R MOVED IN- WHO- 4
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A143_
+
+        With whom did (she/he) move in: was it (a child of [RESPONDENT FIRST NAME]'s,)
+        a grandchild, another relative, or someone else?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                        1. PARENT
+                        2. CHILD
+                        4. GRANDCHILD
+                        5. RELATIVE-OTHER
+                        6. OTHER INDIVIDUAL
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1501       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A142_RMovedInOut = YES; CHILD IN A143_;
+        piInitA100_NumNRKids > 0; NOT (piInitA100_NumNRKids > 1); piInitA100_NumNRKids
+        = 1;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA144M1   R MOVED IN- WHO- CHILD- 1
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A144_
+
+        Which children?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+           38                 041-990. Other Person Number
+                                  993. ALL CHILDREN
+            2                     998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1461                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A142_RMovedInOut = YES; CHILD IN A143_;
+        piInitA100_NumNRKids > 0; piInitA100_NumNRKids > 1; A142_RMovedInOut = YES;
+        puA144_ <> NONRESPONSE; cnt <= puA144_.CARDINAL; (((RVARS.Z145_TypeExit_V <>
+        NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST)) AND
+        (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND ((ACTIVELANGUAGE = EXTENG) OR
+        (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE =
+        EXTSPN); A142_RMovedInOut = YES; CHILD IN A143_; piInitA100_NumNRKids > 0;
+        piInitA100_NumNRKids > 1; A142_RMovedInOut = YES; NOT (puA144_ <> NONRESPONSE);
+        puA144_ = DONTKNOW; (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND
+        (RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <>
+        SECREPEATPOST)) AND ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN));
+        (ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A142_RMovedInOut = YES;
+        CHILD IN A143_; piInitA100_NumNRKids > 0; piInitA100_NumNRKids > 1;
+        A142_RMovedInOut = YES; NOT (puA144_ <> NONRESPONSE); NOT (puA144_ = DONTKNOW);
+        puA144_ = REFUSAL;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA144M2   R MOVED IN- WHO- CHILD- 2
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A144_
+
+        Which children?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            2                 041-990. Other Person Number
+                                  993. ALL CHILDREN
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1499                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A142_RMovedInOut = YES; CHILD IN A143_;
+        piInitA100_NumNRKids > 0; NOT (piInitA100_NumNRKids > 1); piInitA100_NumNRKids
+        = 1;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA144M3   R MOVED IN- WHO- CHILD- 3
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A144_
+
+        Which children?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            1                 041-990. Other Person Number
+                                  993. ALL CHILDREN
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1500                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A142_RMovedInOut = YES; CHILD IN A143_;
+        piInitA100_NumNRKids > 0; NOT (piInitA100_NumNRKids > 1); piInitA100_NumNRKids
+        = 1;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA144M4   R MOVED IN- WHO- CHILD- 4
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A144_
+
+        Which children?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                              041-990. Other Person Number
+                                  993. ALL CHILDREN
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1501                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A142_RMovedInOut = YES; CHILD IN A143_;
+        piInitA100_NumNRKids > 0; NOT (piInitA100_NumNRKids > 1); piInitA100_NumNRKids
+        = 1;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA145     R MOVED IN- CHILD- STAYED LONGEST
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A145_
+
+        With which child did ((she/he)) stay the longest?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+           12                 041-990. Other Person Number
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1489                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A142_RMovedInOut = YES; CHILD IN A143_;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA146     DURATION R STAYED W/ CHILD
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A146_
+
+        About how many weeks or months did [RESPONDENT FIRST NAME] stay with that stay
+        with that (child/person)?
+
+        Please tell me the longest stay if there was more than one person [RESPONDENT
+        FIRST NAME] stayed with.
+
+        INTERVIEWER: ENTER NUMBER OF WEEKS OR MONTHS
+        ..................................................................................
+           38                    1-52. Actual Value
+            3                      98. DK (Don't Know); NA (Not Ascertained)
+                                   99. RF (Refused)
+         1460                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A142_RMovedInOut = YES; CHILD IN A143_;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA147     DURATION R STAYED W/ CHILD- PERIOD
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A147_
+
+        About how many weeks or months did [RESPONDENT FIRST NAME] stay with that stay
+        with that (child/person)?
+
+        Please tell me the longest stay if there was more than one person [RESPONDENT
+        FIRST NAME] stayed with.
+
+        WEEKS OR MONTHS:
+        ..................................................................................
+           20           2. WEEKS
+           19           4. MONTHS
+            2           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1460       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); Init.A101_TotalKids > 0;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA148     R/CHILD MOVE CLOSER TO EACH OTHER
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A148_ChldMoveCloser
+
+        Between the time of our interview in ([LAST INTERVIEW MONTH], [LAST INTERVIEW
+        YEAR]) and when [RESPONDENT FIRST NAME] (died /went into the (nursing
+        home/health care facility)/In the two years preceding (her/his) death,) did
+        (she/he) or any of (her/his) children move in order to be closer to each other
+        but not living in the same house or apartment?
+        ..................................................................................
+           36           1. YES
+         1293           5. NO
+            5           8. DK (Don't Know); NA (Not Ascertained)
+            2           9. RF (Refused)
+          165       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A148_ChldMoveCloser = YES; cnt3 <=
+        puA149_.CARDINAL;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA149M1   MOVE CLOSER- WHICH CHILD- 1
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A149_
+
+        Which child was that?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+           33                 041-990. Other Person Number
+            3                     993. ALL CHILDREN
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1465                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A148_ChldMoveCloser = YES; cnt3 <=
+        puA149_.CARDINAL;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA149M2   MOVE CLOSER- WHICH CHILD- 2
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A149_
+
+        Which child was that?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            3                 041-990. Other Person Number
+                                  993. ALL CHILDREN
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1498                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A148_ChldMoveCloser = YES; cnt3 <=
+        puA149_.CARDINAL;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA149M3   MOVE CLOSER- WHICH CHILD- 3
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A149_
+
+        Which child was that?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            1                 041-990. Other Person Number
+                                  993. ALL CHILDREN
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1500                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A148_ChldMoveCloser = YES; cnt3 <=
+        puA149_.CARDINAL;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA149M4   MOVE CLOSER- WHICH CHILD- 4
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A149_
+
+        Which child was that?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+            1                 041-990. Other Person Number
+                                  993. ALL CHILDREN
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1500                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A148_ChldMoveCloser = YES; cnt3 <=
+        puA149_.CARDINAL;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA149M5   MOVE CLOSER- WHICH CHILD- 5
+          Section: A      Level: Respondent  Type: Character   Width: 3    Decimals: 0
+         CAI Reference: BA2_EXMOVETOGETHER.A149_
+
+        Which child was that?
+
+        INTERVIEWER: CHOOSE ALL THAT APPLY
+        ..................................................................................
+                              041-990. Other Person Number
+                                  993. ALL CHILDREN
+                                  998. DK (Don't Know); NA (Not Ascertained)
+                                  999. RF (Refused)
+         1501                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A148_ChldMoveCloser = YES;
+        puChildMoveCloserCnt > 0; A149_[cnt4] <> EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA150_1   WHO MOVED- R OR CHILD - 1
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_childorRMoved.A150_
+
+        (Did [Child Name] move or did [RESPONDENT FIRST NAME] move?)
+        ..................................................................................
+           28           1. CHILD MOVED
+            7           2. R MOVED
+            1           4. BOTH
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1465       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A148_ChldMoveCloser = YES;
+        puChildMoveCloserCnt > 0; A149_[cnt4] <> EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA151_1   TEMP OR PERMANENT MOVE - 1
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_childorRMoved.A151_
+
+        Was the move intended to be temporary or was it thought of as permanent?
+        ..................................................................................
+           18           1. PERMANENT MOVE
+           18           5. TEMPORARY MOVE
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1465       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A148_ChldMoveCloser = YES;
+        puChildMoveCloserCnt > 0; A149_[cnt4] <> EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA150_2   WHO MOVED- R OR CHILD - 2
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_childorRMoved.A150_
+
+        (Did [Child Name] move or did [RESPONDENT FIRST NAME] move?)
+        ..................................................................................
+            1           1. CHILD MOVED
+            2           2. R MOVED
+                        4. BOTH
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1498       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A148_ChldMoveCloser = YES;
+        puChildMoveCloserCnt > 0; A149_[cnt4] <> EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA151_2   TEMP OR PERMANENT MOVE - 2
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_childorRMoved.A151_
+
+        Was the move intended to be temporary or was it thought of as permanent?
+        ..................................................................................
+            3           1. PERMANENT MOVE
+                        5. TEMPORARY MOVE
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1498       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A148_ChldMoveCloser = YES;
+        puChildMoveCloserCnt > 0; A149_[cnt4] <> EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA150_3   WHO MOVED- R OR CHILD - 3
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_childorRMoved.A150_
+
+        (Did [Child Name] move or did [RESPONDENT FIRST NAME] move?)
+        ..................................................................................
+                        1. CHILD MOVED
+            1           2. R MOVED
+                        4. BOTH
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1500       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A148_ChldMoveCloser = YES;
+        puChildMoveCloserCnt > 0; A149_[cnt4] <> EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA151_3   TEMP OR PERMANENT MOVE - 3
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_childorRMoved.A151_
+
+        Was the move intended to be temporary or was it thought of as permanent?
+        ..................................................................................
+            1           1. PERMANENT MOVE
+                        5. TEMPORARY MOVE
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1500       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A148_ChldMoveCloser = YES;
+        puChildMoveCloserCnt > 0; A149_[cnt4] <> EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA150_4   WHO MOVED- R OR CHILD - 4
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_childorRMoved.A150_
+
+        (Did [Child Name] move or did [RESPONDENT FIRST NAME] move?)
+        ..................................................................................
+                        1. CHILD MOVED
+            1           2. R MOVED
+                        4. BOTH
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1500       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        (((RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND (RVARS.Z145_TypeExit_V <>
+        FIRSTREPEATPOST)) AND (RVARS.Z145_TypeExit_V <> SECREPEATPOST)) AND
+        ((ACTIVELANGUAGE = EXTENG) OR (ACTIVELANGUAGE = EXTSPN)); (ACTIVELANGUAGE =
+        EXTENG) OR (ACTIVELANGUAGE = EXTSPN); A148_ChldMoveCloser = YES;
+        puChildMoveCloserCnt > 0; A149_[cnt4] <> EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA151_4   TEMP OR PERMANENT MOVE - 4
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: BA_childorRMoved.A151_
+
+        Was the move intended to be temporary or was it thought of as permanent?
+        ..................................................................................
+            1           1. PERMANENT MOVE
+                        5. TEMPORARY MOVE
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         1500       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        puA120_UPDATER > 0; ((Children[cnt].X056AresStat IN [RESIDENT, AWAY_INST,
+        AWAY_OTHER]) AND Children[cnt].X054APNdx <> EMPTY) AND
+        ((Children[cnt].X074AChanged <> DELETED) AND (Children[cnt].X074AChanged <>
+        DUPED)); puA120_UPDATER > 0; ((HHMembers[cnt].X056AresStat IN [RESIDENT,
+        AWAY_INST, AWAY_OTHER]) AND HHMembers[cnt].X054APNdx <> EMPTY) AND
+        ((HHMembers[cnt].X074AChanged <> DELETED) AND (HHMembers[cnt].X074AChanged <>
+        DUPED)); puA120_UPDATER > 0; ((Siblings[cnt].X056AresStat IN [RESIDENT,
+        AWAY_INST, AWAY_OTHER]) AND Siblings[cnt].X054APNdx <> EMPTY) AND
+        ((Siblings[cnt].X074AChanged <> DELETED) AND (Siblings[cnt].X074AChanged <>
+        DUPED)); puA120_UPDATER > 0; ((Parents[cnt].X056AresStat IN [RESIDENT,
+        AWAY_INST, AWAY_OTHER]) AND Parents[cnt].X054APNdx <> EMPTY) AND
+        ((Parents[cnt].X074AChanged <> DELETED) AND (Parents[cnt].X074AChanged <>
+        DUPED));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA098     COUNT OF HHM
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Init.A098_NumHHM
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           1501          0         15          0.47          1.08       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+        puA120_UPDATER > 0;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA099     NUMBER OF RESIDENT CHILDREN
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Init.A099_NumResKid
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           1501          0          6          0.24          0.55       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+        puA120_UPDATER > 0; ((Children[cnt].X061ARelateR IN [SON, STEPSON, DAUGHTER,
+        STEPDAUGHTER]) AND Children[cnt].X054APNdx <> EMPTY) AND
+        ((Children[cnt].X074AChanged <> DELETED) AND (Children[cnt].X074AChanged <>
+        DUPED)); NOT (Children[cnt].X056AresStat IN [RESIDENT, AWAY_INST, AWAY_OTHER]);
+        Children[cnt].X056AresStat IN [NONRESIDENT];
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA100     COUNT OF NONRESIDENT KIDS
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Init.A100_NumNRKids
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           1501          0         15          2.63          2.24       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+        puA120_UPDATER > 0; ((Children[cnt].X061ARelateR IN [SON, STEPSON, DAUGHTER,
+        STEPDAUGHTER]) AND Children[cnt].X054APNdx <> EMPTY) AND
+        ((Children[cnt].X074AChanged <> DELETED) AND (Children[cnt].X074AChanged <>
+        DUPED));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA101     COUNT OF KIDS - NOT THEIR SPOUSES
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Init.A101_TotalKids
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           1501          0         15          3.00          2.36       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+        puA120_UPDATER > 0; Children[cnt].X054APNdx <> EMPTY;
+        Children[cnt].X057AResStat_V <> Children[cnt].X056AresStat AND
+        Children[cnt].X054APNdx <> EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA102     COUNT OF MOVE IN/OUT
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Init.A102_CntMoveInOut
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           1501          0         14          0.67          1.54       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+        puA120_UPDATER > 0; ((((((Children[cnt].X061ARelateR IN [SON, STEPSON,
+        DAUGHTER, STEPDAUGHTER]) AND (Children[cnt].X074AChanged <> DELETED)) AND
+        (Children[cnt].X074AChanged <> DUPED)) AND (Children[cnt].X056AresStat <>
+        DIED)) AND (Children[cnt].X056AresStat <> HAVENOCONTACT)) AND
+        (Children[cnt].X056AresStat <> NOTACHILD)) AND Children[cnt].X054APNdx <>
+        EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA106     COUNT OF CONTACT KIDS
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Init.A106_NumContactKids
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           1314          1         15          3.28          2.18     187
+         -----------------------------------------------------------------
+
+==========================================================================================
+        puA120_UPDATER > 0;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SA113     COUNT OF CHILD CHILDLAW AND GRANDCHILD
+          Section: A      Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Init.A113_Child_ChildIL_Grand
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+           1501          0         25          5.00          3.95       0
+         -----------------------------------------------------------------
+
+==========================================================================================
+
+SVDATE    2002 DATA MODEL VERSION
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+
+
+        User Note:  This variable identifies which data model was used to interview
+        the proxy respondent.  Please reference the data description for a summary of
+        changes in each data model.
+        ..................................................................................
+          608           1. Version 1
+          337           2. Version 2
+          449           3. Version 3
+          107           4. Version 4
+
+==========================================================================================
+
+SVERSION  2002 EXIT FINAL RELEASE VERSION NUMBER
+          Section: A      Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+
+        ..................................................................................
+         1501           1. HRS 2002 Exit Final Release #1
+
+==========================================================================================
+
+SQNR      BLAISE IDENTIFICATION NUMBER
+          Section: A      Level: Respondent  Type: Character   Width: 11   Decimals: 0
+
+        ..................................................................................
+         1501 00000200010-21339900010. Blaise Identifier
+

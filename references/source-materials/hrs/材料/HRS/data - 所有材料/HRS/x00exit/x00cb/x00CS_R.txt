@@ -1,0 +1,2939 @@
+==========================================================================================
+2000 HRS Exit (Final Release)
+ODBC Reference: [HRS2000x]
+Perl script: CodebkD9.pl v5.043 Tue Mar  1  9:50:10 2005
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Surveycraft metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION CS: Cover Screen (Respondent)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFIER
+          Section: CS           Level: Respondent         CAI Reference: Q9001
+          Type: Character       Width: 6                  Decimals: 0
+          ................................................................................
+           1348       010003-213471. Household ID
+
+==========================================================================================
+
+PN        PERSON NUMBER
+          Section: CS           Level: Respondent         CAI Reference: Q9002
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+            929       010. Person Number
+             12       011. Person Number
+            320       020. Person Number
+              2       021. Person Number
+             36       030. Person Number
+              1       031. Person Number
+             47       040. Person Number
+              1       041. Person Number
+
+==========================================================================================
+
+RSUBHH    2000 SUB-HOUSEHOLD IDENTIFIER
+          Section: CS           Level: Respondent         CAI Reference: Q9004
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+           1296         3. 1st deceased respondent from a household
+             52         4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+FSUBHH    1998 SUB-HOUSEHOLD IDENTIFIER
+          Section: CS           Level: Respondent         CAI Reference: Q9003
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+           1306         0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+             14         1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+             13         2. Split household - other half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+             15         3. 1st deceased respondent from a household
+                        5. Split household - one half of couple from SUBHH 1 or 2
+                        6. Split household - one half of couple from SUBHH 1 or 2
+                        7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+RPN_SP    2000 SPOUSE/PARTNER PERSON NUMBER
+          Section: CS           Level: Respondent         CAI Reference: Q9005
+          Type: Character       Width: 3                  Decimals: 0
+
+          User Note:  There are 42 R's with a valid RPN_SP who are not coupled in the
+          2000 Exit.  Two reasons explain this occurrence: both members of a
+          previously intact household are part of the 2000 Exit, or there was a
+          legitimate split between the exit interview and their last core interview.
+          We have included them in the data to allow linkage back to the spouse's
+          interview.
+          ................................................................................
+            276       010. Spouse Person Number
+             14       011. Spouse Person Number
+            292       020. Spouse Person Number
+              4       021. Spouse Person Number
+             25       030. Spouse Person Number
+             34       040. Spouse Person Number
+            703     Blank. No Spouse at Death
+
+==========================================================================================
+
+RQNR      SURVEYCRAFT CASE NUMBER
+          Section: CS           Level: Respondent         CAI Reference: Q9006
+          Type: Numeric         Width: 5                  Decimals: 0
+          ................................................................................
+            999         80001-80999. AHEAD/CODA Surveycraft Case Number
+            349         90001-90349. HRS/WAR BABY Surveycraft Case Number
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R480 when [Q474:CS0Y3] IS (3) AND {When Q72 is (Q474), [Q73:PR73]
+             IS (Q473)}
+          *  Jump from R480 when [Q474:CS0Y3] IS (1 OR 2) AND {When Q19 is (Q474),
+             [Q43:PR43] IS (2)}
+
+          *   If [Q0] IS (0 OR 5) AND [Q480:CS0Y7] IS (1) AND {When Q19 is (Q474),
+             [Q44:PR44] IS (NE 2)=39{When Q19 is (Q474)=} then [R481.CS0Y8.PRELOAD
+             COUPLENESS] = 6
+          *   If [Q0] IS (0 OR 5) AND [Q480:CS0Y7] IS (2) AND {When Q72 is (Q474),
+             [Q97:PR97] IS (NE 2)=92{When Q72 is (Q474)=} then [R481.CS0Y8.PRELOAD
+             COUPLENESS] = 6
+          *   If {When Q19 is (Q474), [Q44:PR44] IS (1) AND [Q480:CS0Y7] IS (1-2)} then
+             [R481.CS0Y8.PRELOAD COUPLENESS] = system calculation using matched filter:
+             178M160(Q474)=
+          *   If [Q480:CS0Y7] IS (1) then [R481.CS0Y8.PRELOAD COUPLENESS] = system
+             calculation using matched filter: 37M19(Q474)=
+          *   If [Q480:CS0Y7] IS (2) then [R481.CS0Y8.PRELOAD COUPLENESS] = system
+             calculation using matched filter: 90M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R481      CS0Y8.PRELOAD COUPLENESS
+          Section: CS           Level: Respondent         CAI Reference: Q481
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            617         1. PART OF A MARRIED COUPLE
+             25         3. PART OF A PARTNERED COUPLE
+            706         6. NOT PART OF A COUPLE
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R481 [CS0Y8.PRELOAD COUPLENESS] when {When Q19 is (Q474),
+             [Q44:PR44] IS (1) AND [Q480:CS0Y7] IS (1-2)}
+          *  Jump from R481 [CS0Y8.PRELOAD COUPLENESS] when [Q480:CS0Y7] IS (1)
+          *  Jump from R481 [CS0Y8.PRELOAD COUPLENESS] when [Q0] IS (0 OR 5) AND
+             [Q480:CS0Y7] IS (1) AND {When Q19 is (Q474), [Q44:PR44] IS (NE 2)=39{When
+             Q19 is (Q474)=}
+          *  Jump from R481 [CS0Y8.PRELOAD COUPLENESS] when [Q480:CS0Y7] IS (2)
+          *  Jump from R481 [CS0Y8.PRELOAD COUPLENESS] when [Q0] IS (0 OR 5) AND
+             [Q480:CS0Y7] IS (2) AND {When Q72 is (Q474), [Q97:PR97] IS (NE 2)=92{When
+             Q72 is (Q474)=}
+
+          *   If {When Q19 is (Q474), [Q44:PR44] IS (1) AND [Q480:CS0Y7] IS (1-2)} then
+             [R482.CS0Y9.PRELOAD COHORT] = system calculation using matched filter:
+             166M160(Q474)=
+          *   If [Q480:CS0Y7] IS (1) then [R482.CS0Y9.PRELOAD COHORT] = system
+             calculation using matched filter: 25M19(Q474)=
+          *   If [Q480:CS0Y7] IS (2) then [R482.CS0Y9.PRELOAD COHORT] = system
+             calculation using matched filter: 78M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R482      CS0Y9.PRELOAD COHORT
+          Section: CS           Level: Respondent         CAI Reference: Q482
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            909         1. AHEAD (born before 1924)
+             90         2. CODA (1924-1930)
+            327         3. HRS (1931-1941)
+             22         4. WAR BABIES (1942-1947)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R482 [CS0Y9.PRELOAD COHORT] when [Q480:CS0Y7] IS (2)
+          *  Jump from R482 [CS0Y9.PRELOAD COHORT] when [Q480:CS0Y7] IS (1)
+          *  Jump from R482 [CS0Y9.PRELOAD COHORT] when {When Q19 is (Q474), [Q44:PR44]
+             IS (1) AND [Q480:CS0Y7] IS (1-2)}
+
+          *   If {When Q19 is (Q474), [Q44:PR44] IS (1) AND [Q480:CS0Y7] IS (1-2)} then
+             [R483.CS0Y9a.PRELOAD MARITAL STATUS] = system calculation using matched
+             filter: 177M160(Q474)=
+          *   If [Q480:CS0Y7] IS (1) then [R483.CS0Y9a.PRELOAD MARITAL STATUS] = system
+             calculation using matched filter: 36M19(Q474)=
+          *   If [Q480:CS0Y7] IS (2) then [R483.CS0Y9a.PRELOAD MARITAL STATUS] = system
+             calculation using matched filter: 89M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R483      CS0Y9a.PRELOAD MARITAL STATUS
+          Section: CS           Level: Respondent         CAI Reference: Q483
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            136         0. Information Not Available
+            595         1. MARRIED
+              8         2. MARRIED SP ABSENT, INSTITUTION
+             15         3. MARRIED SP ABSENT, NOT IN INSTITUTION
+             89         4. SEPARATED/DIVORCED
+            464         5. WIDOWED
+             41         6. NEVER MARRIED
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R487 when [Q1:PR1] IS (GE 0 OR LE 0)
+
+          *   If [Q480:CS0Y7] IS (1) then [R488.CS0Y14.SP OF R GENDER] = system
+             calculation using matched filter: 35M19(Q485)=
+          *   If [Q480:CS0Y7] IS (2) then [R488.CS0Y14.SP OF R GENDER] = system
+             calculation using matched filter: 88M72(Q485)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R488      CS0Y14.SP OF R GENDER
+          Section: CS           Level: Respondent         CAI Reference: Q488
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            684         1. MALE
+            664         2. FEMALE
+                    Blank. INAP (Inapplicable): [Q480:CS0Y7] IS (1) AND {When Q19 is
+                           (Q485), [Q35:PR35] IS (NE 1-2)}; [Q480:CS0Y7] IS (2) AND {When
+                           Q72 is (Q485), [Q88:PR88] IS (NE 1-2)}
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R488 [CS0Y14.SP OF R GENDER] when [Q480:CS0Y7] IS (1)
+          *  Jump from R488 [CS0Y14.SP OF R GENDER] when [Q480:CS0Y7] IS (2)
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R489      CS0Y15.PROXY IW FLAG
+          Section: CS           Level: Respondent         CAI Reference: Q489
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+           1348         2. PROXY INTERVIEW
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If {When Q19 is (Q474), [Q44:PR44] IS (1) AND [Q480:CS0Y7] IS (1-2)} then
+             [R490.CS0Y16.R GENDER] = system calculation using matched filter:
+             176M160(Q474)=
+          *   If [Q480:CS0Y7] IS (1) then [R490.CS0Y16.R GENDER] = system calculation
+             using matched filter: 35M19(Q474)=
+          *   If [Q480:CS0Y7] IS (2) then [R490.CS0Y16.R GENDER] = system calculation
+             using matched filter: 88M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R490      CS0Y16.R GENDER
+          Section: CS           Level: Respondent         CAI Reference: Q490
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            664         1. MALE
+            684         2. FEMALE
+
+==========================================================================================
+
+R506      CS0Y20.WHICH IW 1ST R/2ND R
+          Section: CS           Level: Respondent         CAI Reference: Q506
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+           1348         1. FIRST R
+
+==========================================================================================
+
+R514      CS1A.PROXY/SELF INTERVIEW
+          Section: CS           Level: Respondent         CAI Reference: Q514
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS1A.
+                  IWER:  DESIGNATE TYPE OF INTERVIEW:
+          ................................................................................
+            462         2. PROXY IS SURVIVING SPOUSE
+            886         3. PROXY IS NON-SPOUSE
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R515      CS1B.CURRENT-WAVE PROXY
+          Section: CS           Level: Respondent         CAI Reference: Q515
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS1B.
+                  PREVIOUS WAVE PROXY WAS
+                  [Q221-PR221.PREV WAVE PROXY NAME] ,
+                  [Q224.] .
+
+                  CURRENT WAVE PROXY IS:
+          ................................................................................
+            325         1. SAME PERSON AS IN PRIOR-WAVE
+             68         2. DIFFERENT/NEW PERSON
+            955     Blank. INAP (Inapplicable): [Q474:CS0Y3] IS (3); [Q222:PR222] IS (1)
+
+==========================================================================================
+
+R518      CS1D.CHANGE LANGUAGE
+          Section: CS           Level: Respondent         CAI Reference: Q518
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS1D.
+                  IWER:
+                      SELECT ENGLISH OR SPANISH
+          ................................................................................
+           1320         0. PROXY -- ENGLISH
+             28         1. PROXY -- SPANISH
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+
+==========================================================================================
+
+R520      CS2ax.MONTH OF DEATH
+          Section: CS           Level: Respondent         CAI Reference: Q520
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS2ax.
+                  What was the date on which (Q27-PR27.HH1 R 1ST NAME/Q80-PR80.HH2 R
+          FIRST NAME) died?
+
+                  MONTH:
+                  DAY:
+                  YEAR:
+
+          User Note: While day of death is is collected, it is not released for
+          confidentiality reasons.
+          ................................................................................
+            138         1. JAN
+            122         2. FEB
+            129         3. MAR
+             98         4. APR
+            108         5. MAY
+             94         6. JUN
+            100         7. JUL
+            104         8. AUG
+            115         9. SEP
+            103        10. OCT
+            105        11. NOV
+            124        12. DEC
+              8        98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+                    Blank. INAP (Inapplicable): [Q664:CSTIME3] IS (GT 0); [Q506:CS0Y20]
+                           IS (NE 1)
+
+==========================================================================================
+
+R522      CS2ax3.YEAR OF DEATH
+          Section: CS           Level: Respondent         CAI Reference: Q522
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+           1343           1850-2001. Actual Value
+              5                9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+                              Blank. INAP (Inapplicable): [Q664:CSTIME3] IS (GT 0);
+                                     [Q506:CS0Y20] IS (NE 1)
+
+==========================================================================================
+
+R525      CS2cx.PLACE OF DEATH
+          Section: CS           Level: Respondent         CAI Reference: Q525
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS2cx.
+                  At the time of death, was (he/she) in a hospital,
+                  in a nursing home, at home, in a hospice, or what?
+          ................................................................................
+            531         1. IN HOSPITAL
+            297         2. IN NURSING HOME
+            399         3. AT HOME
+             56         4. IN HOSPICE
+             65         7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable): [Q664:CSTIME3] IS (GT 0); [Q506:CS0Y20]
+                           IS (NE 1)
+
+==========================================================================================
+
+R526M     CS2fx.LOCATION - DIE- MASKED
+          Section: CS           Level: Respondent         CAI Reference: Q526
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS2dx.
+                  In what state and county did (he/she) die?
+
+                  COUNTY:
+
+          User note:  Code categories have been collapsed to protect respondent
+          confidentiality.
+          ................................................................................
+            210         1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+            254         2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+            293         3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+            249         4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+            130         5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+             21         6. South Region: East South Central Division (KY, TN, AL, MS)
+             15         7. South Region: West South Central Division (AR, LA, OK, TX)
+                        8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+            176         9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+                       11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+                    Blank. INAP (Inapplicable): [Q664:CSTIME3] IS (GT 0); [Q506:CS0Y20]
+                           IS (NE 1)
+
+==========================================================================================
+
+R528M     CS2fx.LOCATION - CERTIFICATE-MASKED
+          Section: CS           Level: Respondent         CAI Reference: Q528
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS2fx.
+                  In what state and county was (his/her) death certificate filed?
+
+                  COUNTY:
+
+          User note:  Code categories have been collapsed to protect respondent
+          confidentiality.
+          ................................................................................
+             52         1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+            171         2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+            234         3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+             92         4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+            372         5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+             65         6. South Region: East South Central Division (KY, TN, AL, MS)
+            137         7. South Region: West South Central Division (AR, LA, OK, TX)
+             60         8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+            161         9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+                       11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+              4        97. Other Country
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+                    Blank. INAP (Inapplicable): [Q664:CSTIME3] IS (GT 0); [Q506:CS0Y20]
+                           IS (NE 1)
+
+==========================================================================================
+
+R530      CS2jx.EXPECTED DEATH?
+          Section: CS           Level: Respondent         CAI Reference: Q530
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS2jx.
+                  (Was the death expected at about the time it occurred, or
+                  was it unexpected?)
+          ................................................................................
+            769         1. EXPECTED
+            525         2. UNEXPECTED
+             54         7. OTHER (SPECIFY)
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable): [Q664:CSTIME3] IS (GT 0); [Q506:CS0Y20]
+                           IS (NE 1)
+
+==========================================================================================
+
+R531M1M   CS2kx. CAUSE OF DEATH- 1- MASKED
+          Section: CS           Level: Respondent         CAI Reference: Q531
+          Type: Numeric         Width: 3                  Decimals: 0
+
+          CS2kx.
+                  (What was the major illness that led to (his/her) death?)
+
+          User note:  Code categories have been collapsed to protect respondent
+          confidentiality. Values 181, 182, and 183 were recoded to 189; Values 194,
+          and 195 were recoded to 196; Values 601 through 607 were recoded to 607.
+          ................................................................................
+            325             101-103. Cancers and tumors; skin conditions
+              2             111-119. Musculoskeletal system and connective tissue
+            540             121-129. Heart, circulatory and blood conditions
+            138             131-139. Allergies; hayfever; sinusitis; tonsillitis
+             66             141-149. Endocrine, metabolic and nutritional conditions
+             80             151-159. Digestive system (stomach, liver, gallbladder,
+                                     kidney, bladder)
+             26             161-169. Neurological and sensory conditions
+                            171-179. Reproductive system and prostate conditions
+              3             181-189. Emotional and psychological conditions
+             99             191-196. Miscellaneous
+             42             595-597. Other symptoms
+              2             601-607. Not A Health Condition
+                                990. No text displayed
+                                996. None
+                                997. Other health condition
+             25                 998. DK (Don’t Know); NA (Not Ascertained)
+                                999. RF (Refused)
+                              Blank. INAP (Inapplicable): [Q664:CSTIME3] IS (GT 0);
+                                     [Q506:CS0Y20] IS (NE 1)
+
+==========================================================================================
+
+R531M2M   CS2kx. CAUSE OF DEATH- 2- MASKED
+          Section: CS           Level: Respondent         CAI Reference: Q531
+          Type: Numeric         Width: 3                  Decimals: 0
+
+          CS2kx.
+                  (What was the major illness that led to (his/her) death?)
+
+          User note:  Code categories have been collapsed to protect respondent
+          confidentiality. Values 181, 182, and 183 were recoded to 189; Values 194,
+          and 195 were recoded to 196; Values 601 through 607 were recoded to 607.
+          ................................................................................
+             14             101-103. Cancers and tumors; skin conditions
+              4             111-119. Musculoskeletal system and connective tissue
+             76             121-129. Heart, circulatory and blood conditions
+             43             131-139. Allergies; hayfever; sinusitis; tonsillitis
+             25             141-149. Endocrine, metabolic and nutritional conditions
+             35             151-159. Digestive system (stomach, liver, gallbladder,
+                                     kidney, bladder)
+              5             161-169. Neurological and sensory conditions
+                            171-179. Reproductive system and prostate conditions
+              1             181-189. Emotional and psychological conditions
+             40             191-196. Miscellaneous
+              2             595-597. Other symptoms
+                            601-607. Not A Health Condition
+                                990. No text displayed
+                                996. None
+                                997. Other health condition
+                                998. DK (Don’t Know); NA (Not Ascertained)
+                                999. RF (Refused)
+           1103               Blank. INAP (Inapplicable): [Q664:CSTIME3] IS (GT 0);
+                                     [Q506:CS0Y20] IS (NE 1)
+
+==========================================================================================
+
+R532      CS2mx.TIME TO DEATH
+          Section: CS           Level: Respondent         CAI Reference: Q532
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS2mx.
+                  (About how long was it between the start of the
+                  final illness and the death:  was it one or two hours,
+                  less than a day, less than a week, less than a month,
+                  less than a year, or was it more than a year?)
+          ................................................................................
+            168         1. ONE OR TWO HOURS (OR NO WARNING)
+             88         2. LESS THAN A DAY
+            208         3. LESS THAN A WEEK
+            249         4. LESS THAN A MONTH
+            319         5. LESS THAN A YEAR
+            291         6. MORE THAN A YEAR
+             25         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable): [Q664:CSTIME3] IS (GT 0); [Q506:CS0Y20]
+                           IS (NE 1)
+
+==========================================================================================
+
+R541      CS3.INTRO
+          Section: CS           Level: Respondent         CAI Reference: Q541
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS3.
+          IF Q277 IS (0)
+                  We need to update our records.  They show that (he/she),
+          ELSE
+                  First we need to update our records.  As of
+                  [Q276-PR276.PREV WAVE IW MONTH FIRST R] ,
+                  [Q277-PR277.PREV WAVE IW YEAR FIRST R] ,
+                  they show that (he/she),
+          END
+          IF Q481 IS (1)
+                  (Q27-PR27.HH1 R 1ST NAME), was married.
+          ELSE Q481 IS (3)
+                  (Q27-PR27.HH1 R 1ST NAME), was living with a partner as if married.
+          ELSE
+                  (Q27-PR27.HH1 R 1ST NAME), was not married or living with a partner.
+          END
+          ................................................................................
+           1348     Blank. No Data Collected
+
+==========================================================================================
+
+R543      CS4x.1ST R SAME SPOUSE/P
+          Section: CS           Level: Respondent         CAI Reference: Q543
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS4x.
+          IF Q514 IS (2)
+                  Were you
+          ELSE Q514 IS (NE2) AND Q480 IS (1)
+                  Was
+                  [Q27-PR27.HH1 R 1ST NAME]
+          END
+                  still (his/her) (husband/wife/partner/...)
+                  at the time (he/she) died?
+          ................................................................................
+            604         1. YES, AND SP/P WAS LIVING WHEN R DIED
+              1         3. YES, THAT PARTNER BECAME SPOUSE AND WAS LIVING WHEN R DIED
+                        4. YES, THAT SPOUSE BECAME PARTNER AND WAS LIVING WHEN R DIED
+             37         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            706     Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1); [Q484:CS0Y10] IS
+                           (5); [Q481:CS0Y8] IS (NE 1 AND NE 3)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q543:CS4x] IS (1 OR 3 OR 4) then [R545.CS5x.PRELOAD SPOUSE/P ALIVE] = 1
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R545      CS5x.PRELOAD SPOUSE/P ALIVE
+          Section: CS           Level: Respondent         CAI Reference: Q545
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS5x.
+                  IWER:  IF PROXY IS
+                  [Q27-PR27.HH1 R 1ST NAME]  DO NOT READ;
+                         JUST MARK "YES."
+
+          IF Q480 IS (1)
+                  (Was
+                  [Q27-PR27.HH1 R 1ST NAME]  still alive at that time?)
+          ELSE
+                  (Was
+                  [Q80-PR80.HH2 R FIRST NAME]  still alive at that time?)
+          END
+          ................................................................................
+            611         1. YES
+             31         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            706     Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1); [Q484:CS0Y10] IS
+                           (5); [Q481:CS0Y8] IS (NE 1 AND NE 3)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R545 [CS5x.PRELOAD SPOUSE/P ALIVE] when [Q543:CS4x] IS (1 OR 3 OR
+             4)
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R546      CS6x.MO/YR PRELOAD SPOUSE/P SEPARATE/DIE
+          Section: CS           Level: Respondent         CAI Reference: Q546
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS6x.
+          IF Q545 IS (1)
+                  In what month and year did (they/you) stop living together?
+          ELSE
+                  In what month and year did (he/she) die?
+          END
+
+                  MONTH:
+                  YEAR:
+          ................................................................................
+              6         1. JAN
+              2         2. FEB
+              3         3. MAR
+              2         4. APR
+              2         5. MAY
+              2         6. JUN
+              6         7. JUL
+              3         8. AUG
+              2         9. SEP
+              4        10. OCT
+              3        11. NOV
+              2        12. DEC
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1311     Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1); [Q484:CS0Y10] IS
+                           (5); [Q481:CS0Y8] IS (NE 1 AND NE 3); [Q543:CS4x] IS (1 OR 3
+                           OR 4)
+
+==========================================================================================
+
+R547      CS6ax.YEAR SEPARATE/DIE
+          Section: CS           Level: Respondent         CAI Reference: Q547
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+             37           1900-2001. Actual Value
+                               9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+           1311               Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1);
+                                     [Q484:CS0Y10] IS (5); [Q481:CS0Y8] IS (NE 1 AND NE
+                                     3); [Q543:CS4x] IS (1 OR 3 OR 4)
+
+==========================================================================================
+
+R548      CS7x.1ST R MARRIED
+          Section: CS           Level: Respondent         CAI Reference: Q548
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS7x.
+                  At the time (he/she) died,
+          IF Q481 IS (1) AND Q484 IS (1)
+                  was (he/she) married to someone else?
+          ELSE Q484 IS (1)
+                  was (he/she) married?
+          END
+          ................................................................................
+             16         1. YES
+            727         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            605     Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1); [Q543:CS4x] IS
+                           (1 OR 3 OR 4)
+
+==========================================================================================
+
+R549      CS8x.COUPLE PARTNER
+          Section: CS           Level: Respondent         CAI Reference: Q549
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS8x.
+                  At the time (he/she) died, did (he/she) have a partner
+                  (he/she) lived with as if married?
+          ................................................................................
+              3         1. YES
+            724         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            621     Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1); [Q543:CS4x] IS
+                           (1 OR 3 OR 4); [Q548:CS7x] IS (1)
+
+==========================================================================================
+
+R558      CS11.R IN NURSING HOME
+          Section: CS           Level: Respondent         CAI Reference: Q558
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS11.
+                  Was (Q27-PR27.HH1 R 1ST NAME/Q80-PR80.HH2 R FIRST NAME) living in a
+          nursing home
+                  or other health care facility at the time (he/she) died?
+
+                  IWER: THIS QUESTION ASKS WHERE R WAS LIVING AT THE TIME
+                        OF DEATH.
+                        THIS MAY BE THE SAME OR DIFFERENT THAN THE PLACE
+                        R WAS AT THE TIME OF DEATH.
+
+                  DEF:  A NURSING HOME OR OTHER HEALTH FACILITY PROVIDES ALL
+                  OF THE FOLLOWING SERVICES FOR ITS RESIDENTS:  DISPENSING OF
+                  MEDICATION, 24-HOUR NURSING ASSISTANCE AND SUPERVISION,
+                  PERSONAL ASSISTANCE, AND ROOM & MEALS.
+          ................................................................................
+            413         1. YES -- NURSING HOME OR OTHER LTC FACILITY
+             33         2. YES -- HOSPICE
+            902         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R562      CS12.COUPLE LIVE TOGETHER
+          Section: CS           Level: Respondent         CAI Reference: Q562
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS12.
+          IF Q514 IS (2)
+          IF Q558 IS (2)
+                  Up until (he/she) went into the hospice were you living
+          ELSE
+                  At the time of (his/her) death were you living
+          END
+
+          ELSE
+          IF Q558 IS (2)
+                  Up until (he/she) went into the hospice were
+                  (he/she) and (his/her) (new/...) (husband/wife/partner/...) living
+          ELSE
+                  At the time of (his/her) death were (he/she)
+                  and (his/her) (new/...) (husband/wife/partner/...) living
+          END
+
+          END
+          IF Q558 IS (1)
+                  in the same (nursing home/health care facility)?
+          ELSE
+                  together in a house or apartment?
+          END
+
+                  IWER:  THIS QUESTION IS TO TELL WHETHER R'S SPOUSE/PARTNER
+                  WAS ALSO LIVING IN THE DWELLING OR INSTITUTION WHERE R LIVED.
+          ................................................................................
+            510         1. YES
+            114         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            724     Blank. INAP (Inapplicable): [Q543:CS4x] IS (NE 1 AND NE 3 AND NE 4)
+                           AND [Q548:CS7x] IS (NE 1) AND [Q549:CS8x] IS (NE 1) AND
+                           [Q550:CS9x] IS (NE 1) AND [Q551:CS10x] IS (NE 1)
+
+==========================================================================================
+
+R563      CS13.MO/YR STOP LIVE TOGETHER
+          Section: CS           Level: Respondent         CAI Reference: Q563
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS13.
+                  In what month and year did (you/they) stop living together?
+
+                  MONTH:
+                  YEAR:
+          ................................................................................
+             17         1. JAN
+              3         2. FEB
+              8         3. MAR
+             10         4. APR
+             13         5. MAY
+             11         6. JUN
+             10         7. JUL
+             10         8. AUG
+             10         9. SEP
+             10        10. OCT
+              3        11. NOV
+              5        12. DEC
+              4        98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1234     Blank. INAP (Inapplicable): [Q543:CS4x] IS (NE 1 AND NE 3 AND NE 4)
+                           AND [Q548:CS7x] IS (NE 1) AND [Q549:CS8x] IS (NE 1) AND
+                           [Q550:CS9x] IS (NE 1) AND [Q551:CS10x] IS (NE 1); [Q562:CS12]
+                           IS (NE 5) AND ([Q548:CS7x] IS (1) OR [Q549:CS8x] IS (1));
+                           [Q543:CS4x] IS (1 OR 3 OR 4) AND [Q562:CS12] IS (NE 5)
+
+==========================================================================================
+
+R564      CS13a.YEAR STOP LIVE TOGETHER
+          Section: CS           Level: Respondent         CAI Reference: Q564
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+            113           1900-2001. Actual Value
+              1                9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+           1234               Blank. INAP (Inapplicable): [Q543:CS4x] IS (NE 1 AND NE 3
+                                     AND NE 4) AND [Q548:CS7x] IS (NE 1) AND [Q549:CS8x]
+                                     IS (NE 1) AND [Q550:CS9x] IS (NE 1) AND
+                                     [Q551:CS10x] IS (NE 1); [Q562:CS12] IS (NE 5) AND
+                                     ([Q548:CS7x] IS (1) OR [Q549:CS8x] IS (1));
+                                     [Q543:CS4x] IS (1 OR 3 OR 4) AND [Q562:CS12] IS (NE
+                                     5)
+
+==========================================================================================
+
+R565      CS14.SP/P WHERE LIVE
+          Section: CS           Level: Respondent         CAI Reference: Q565
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS14.
+                  At the time of (Q27-PR27.HH1 R 1ST NAME/Q80-PR80.HH2 R FIRST NAME)'s
+          death,
+          IF Q514 IS (NE2)
+                  was (his/her) (new/...) (husband/wife/partner/...) living in a
+          nursing home or
+          ELSE
+                  were you living in a nursing home or
+          END
+                  other health care facility?
+
+                  DEF:  A NURSING HOME PROVIDES ALL OF THE FOLLOWING SERVICES
+                  FOR ITS RESIDENTS:  DISPENSING OF MEDICATION, 24-HOUR
+                  NURSING ASSISTANCE AND SUPERVISION, PERSONAL
+                  ASSISTANCE, AND ROOM & MEALS.
+          ................................................................................
+              5         1. YES
+            109         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1234     Blank. INAP (Inapplicable): [Q543:CS4x] IS (NE 1 AND NE 3 AND NE 4)
+                           AND [Q548:CS7x] IS (NE 1) AND [Q549:CS8x] IS (NE 1) AND
+                           [Q550:CS9x] IS (NE 1) AND [Q551:CS10x] IS (NE 1); [Q562:CS12]
+                           IS (NE 5) AND ([Q548:CS7x] IS (1) OR [Q549:CS8x] IS (1));
+                           [Q543:CS4x] IS (1 OR 3 OR 4) AND [Q562:CS12] IS (NE 5)
+
+==========================================================================================
+
+R567      CS15.MO/YR S/P START LIVE TOGETHER
+          Section: CS           Level: Respondent         CAI Reference: Q567
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS15.
+          IF Q514 IS (NE2)
+                  In what month and year did (he/she) and (his/her)
+                  (new/...) (husband/wife/partner/...) start living together?
+          ELSE
+                  In what month and year did (he/she) and you
+                  start living together?
+          END
+
+                  MONTH:
+                  YEAR:
+          ................................................................................
+              4         1. JAN
+                        2. FEB
+                        3. MAR
+                        4. APR
+              3         5. MAY
+              1         6. JUN
+              1         7. JUL
+              1         8. AUG
+                        9. SEP
+              2        10. OCT
+                       11. NOV
+              1        12. DEC
+              6        98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1329     Blank. INAP (Inapplicable): [Q543:CS4x] IS (NE 1 AND NE 3 AND NE 4)
+                           AND [Q548:CS7x] IS (NE 1) AND [Q549:CS8x] IS (NE 1) AND
+                           [Q550:CS9x] IS (NE 1) AND [Q551:CS10x] IS (NE 1); [Q543:CS4x]
+                           IS (1 OR 3 OR 4) AND [Q562:CS12] IS (NE 5); [Q543:CS4x] IS (1
+                           OR 3 OR 4); [Q484:CS0Y10] IS (5) AND [Q549:CS8x] IS (NE 1)
+
+==========================================================================================
+
+R568      CS15YR.YEAR ST LIVE W/NEW SP/P
+          Section: CS           Level: Respondent         CAI Reference: Q568
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+             14           1900-2001. Actual Value
+              5                9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+           1329               Blank. INAP (Inapplicable): [Q543:CS4x] IS (NE 1 AND NE 3
+                                     AND NE 4) AND [Q548:CS7x] IS (NE 1) AND [Q549:CS8x]
+                                     IS (NE 1) AND [Q550:CS9x] IS (NE 1) AND
+                                     [Q551:CS10x] IS (NE 1); [Q543:CS4x] IS (1 OR 3 OR
+                                     4) AND [Q562:CS12] IS (NE 5); [Q543:CS4x] IS (1 OR
+                                     3 OR 4); [Q484:CS0Y10] IS (5) AND [Q549:CS8x] IS
+                                     (NE 1)
+
+==========================================================================================
+
+R569      CS15A.MARRIED OR SEPARATED
+          Section: CS           Level: Respondent         CAI Reference: Q569
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS15A.
+                  Would (he/she) have said (he/she) was married, or
+                  separated?
+          ................................................................................
+            100         1. MARRIED
+              8         2. SEPARATED
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1240     Blank. INAP (Inapplicable): [Q543:CS4x] IS (NE 1 AND NE 3 AND NE 4)
+                           AND [Q548:CS7x] IS (NE 1) AND [Q549:CS8x] IS (NE 1) AND
+                           [Q550:CS9x] IS (NE 1) AND [Q551:CS10x] IS (NE 1); [Q543:CS4x]
+                           IS (1 OR 3 OR 4) AND [Q562:CS12] IS (NE 5); [Q562:CS12] IS
+                           (1); [Q543:CS4x] IS (1) AND [Q481:CS0Y8] IS (3) OR [Q549:CS8x]
+                           IS (1)
+
+==========================================================================================
+
+R570      CS15B.SEPARATED:PARTNERED?
+          Section: CS           Level: Respondent         CAI Reference: Q570
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS15B.
+                  At the time of (his/her) death, was (he/she) living with a partner
+                  as if married?
+          ................................................................................
+                        1. YES
+              8         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1340     Blank. INAP (Inapplicable): [Q543:CS4x] IS (NE 1 AND NE 3 AND NE 4)
+                           AND [Q548:CS7x] IS (NE 1) AND [Q549:CS8x] IS (NE 1) AND
+                           [Q550:CS9x] IS (NE 1) AND [Q551:CS10x] IS (NE 1); [Q543:CS4x]
+                           IS (1 OR 3 OR 4) AND [Q562:CS12] IS (NE 5); [Q562:CS12] IS
+                           (1); [Q543:CS4x] IS (1) AND [Q481:CS0Y8] IS (3) OR [Q549:CS8x]
+                           IS (1); [Q569:CS15A] IS (1) OR ([Q481:CS0Y8] IS (3) AND
+                           [Q543:CS4x] IS (1)) OR [Q549:CS8x] IS (1)
+
+==========================================================================================
+
+R574      CS15C1.MO SPOUSE/P BORN
+          Section: CS           Level: Respondent         CAI Reference: Q574
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS15C1.
+          IF Q514 IS (NE2)
+                  In what month, day and year was (his/her) (new/...)
+          (husband/wife/partner/...)
+          ELSE
+                  In what month, day and year were you
+          END
+                  born?
+
+                  MONTH:
+                  DAY:
+                  YEAR:
+          ................................................................................
+              2         1. JAN
+              2         2. FEB
+                        3. MAR
+                        4. APR
+                        5. MAY
+                        6. JUN
+                        7. JUL
+              1         8. AUG
+                        9. SEP
+              4        10. OCT
+              1        11. NOV
+              1        12. DEC
+              1        98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1336     Blank. INAP (Inapplicable): [Q570:CS15B] IS (5); [Q548:CS7x] IS (5)
+                           AND [Q549:CS8x] IS (5) AND [Q570:CS15B] IS (NE 1);
+                           [Q484:CS0Y10] IS (1) AND [Q570:CS15B] IS (5); [Q480:CS0Y7] IS
+                           (1) AND [Q543:CS4x] IS (1-4) AND [Q569:CS15A] IS (NE 2) AND
+                           {When Q19 is (Q485), [Q29:PR29] IS (GT 0000)}; [Q480:CS0Y7] IS
+                           (2) AND [Q543:CS4x] IS (1-4) AND [Q569:CS15A] IS (NE 2) AND
+                           {When Q72 is (Q485), [Q82:PR82] IS (GT 0000)}
+
+==========================================================================================
+
+R576      CS15C3.YEAR SPOUSE/P BORN
+          Section: CS           Level: Respondent         CAI Reference: Q576
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+             11           1850-1977. Actual Value
+              1                9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+           1336               Blank. INAP (Inapplicable): [Q570:CS15B] IS (5);
+                                     [Q548:CS7x] IS (5) AND [Q549:CS8x] IS (5) AND
+                                     [Q570:CS15B] IS (NE 1); [Q484:CS0Y10] IS (1) AND
+                                     [Q570:CS15B] IS (5); [Q480:CS0Y7] IS (1) AND
+                                     [Q543:CS4x] IS (1-4) AND [Q569:CS15A] IS (NE 2) AND
+                                     {When Q19 is (Q485), [Q29:PR29] IS (GT 0000)};
+                                     [Q480:CS0Y7] IS (2) AND [Q543:CS4x] IS (1-4) AND
+                                     [Q569:CS15A] IS (NE 2) AND {When Q72 is (Q485),
+                                     [Q82:PR82] IS (GT 0000)}
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R596 when {When Q160 is (Q485), [Q183:PR183] IS (1) AND
+             [Q182:PR182] IS (5)}
+          *  Jump from R596 when {When Q160 is (Q485), [Q183:PR183] IS (5) AND
+             [Q182:PR182] IS (1)}
+          *  Jump from R596 when [Q485:CS0Y11] IS (0)
+          *  Jump from R596 when {When Q160 is (Q485), [Q183:PR183] IS (1) AND
+             [Q182:PR182] IS (1)}
+          *  Jump from R596 when {When Q160 is (Q485), [Q183:PR183] IS (5) AND
+             [Q182:PR182] IS (5)}
+
+          *   If [Q506:CS0Y20] IS (2) then [R597.CS15D.CURRENT COUPLENESS] = value of
+             [Q481:CS0Y8.PRELOAD COUPLENESS]
+          *   If ([Q481:CS0Y8] IS (3) AND [Q543:CS4x] IS (1)) OR ([Q481:CS0Y8] IS (1) AND
+             [Q543:CS4x] IS (4)) OR [Q549:CS8x] IS (1) OR [Q570:CS15B] IS (1) then
+             [R597.CS15D.CURRENT COUPLENESS] = 3
+          *   If ([Q543:CS4x] IS (1 OR 3) AND ([Q562:CS12] IS (1) OR [Q569:CS15A] IS
+             (1))) OR ([Q548:CS7x] IS (1) AND ([Q562:CS12] IS (1) OR [Q569:CS15A] IS
+             (1))) then [R597.CS15D.CURRENT COUPLENESS] = 1
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R597.CS15D.CURRENT COUPLENESS] = 6
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R597      CS15D.CURRENT COUPLENESS
+          Section: CS           Level: Respondent         CAI Reference: Q597
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            592         1. PART OF A MARRIED COUPLE
+             24         3. PART OF A PARTNERED COUPLE
+            732         6. NOT PART OF A COUPLE
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R597 [CS15D.CURRENT COUPLENESS] when [Q506:CS0Y20] IS (2)
+          *  Jump from R597 [CS15D.CURRENT COUPLENESS] when ([Q543:CS4x] IS (1 OR 3) AND
+             ([Q562:CS12] IS (1) OR [Q569:CS15A] IS (1))) OR ([Q548:CS7x] IS (1) AND
+             ([Q562:CS12] IS (1) OR [Q569:CS15A] IS (1)))
+          *  Jump from R597 [CS15D.CURRENT COUPLENESS] when ([Q481:CS0Y8] IS (3) AND
+             [Q543:CS4x] IS (1)) OR ([Q481:CS0Y8] IS (1) AND [Q543:CS4x] IS (4)) OR
+             [Q549:CS8x] IS (1) OR [Q570:CS15B] IS (1)
+          *  Jump from R597 [CS15D.CURRENT COUPLENESS] when [Q1:PR1] IS (GE 0 OR LE 0)
+
+          *   If [Q506:CS0Y20] IS (2) then [R598.CS15Y13.MARRIAGE STATUS] = value of
+             [Q483:CS0Y9a.PRELOAD MARITAL STATUS]
+          *   If (([Q483:CS0Y9a] IS (1 OR 2) AND [Q543:CS4x] IS (1)) OR ([Q483:CS0Y9a] IS
+             (3) AND [Q543:CS4x] IS (3)) OR ([Q543:CS4x] IS (1) AND [Q562:CS12] IS (1)))
+             then [R598.CS15Y13.MARRIAGE STATUS] = 1
+          *   If (([Q483:CS0Y9a] IS (1 OR 2) AND [Q543:CS4x] IS (1)) OR ([Q483:CS0Y9a] IS
+             (3) AND [Q543:CS4x] IS (3)) OR ([Q543:CS4x] IS (1) AND [Q562:CS12] IS (NE 1)
+             AND [Q565:CS14] IS (1) AND [Q569:CS15A] IS (NE 2))) then
+             [R598.CS15Y13.MARRIAGE STATUS] = 2
+          *   If (([Q483:CS0Y9a] IS (1 OR 2) AND [Q543:CS4x] IS (1)) OR ([Q483:CS0Y9a] IS
+             (3) AND [Q543:CS4x] IS (3)) OR ([Q543:CS4x] IS (1) AND [Q562:CS12] IS (NE 1)
+             AND [Q565:CS14] IS (5 OR DK OR RF) AND [Q569:CS15A] IS (NE 2))) then
+             [R598.CS15Y13.MARRIAGE STATUS] = 3
+          *   If (([Q483:CS0Y9a] IS (1 OR 2) AND [Q543:CS4x] IS (1)) OR ([Q483:CS0Y9a] IS
+             (3) AND [Q543:CS4x] IS (3)) OR ([Q543:CS4x] IS (1) AND [Q562:CS12] IS (NE 1)
+             AND [Q569:CS15A] IS (2))) then [R598.CS15Y13.MARRIAGE STATUS] = 4
+          *   If ([Q483:CS0Y9a] IS (3) AND [Q543:CS4x] IS (1)) OR [Q545:CS5x] IS (1) OR
+             [Q549:CS8x] IS (1) then [R598.CS15Y13.MARRIAGE STATUS] = 0
+          *   If [Q483:CS0Y9a] IS (3) AND [Q543:CS4x] IS (5) AND [Q543:CS4x] IS (5) AND
+             [Q545:CS5x] IS (5) then [R598.CS15Y13.MARRIAGE STATUS] = 0
+          *   If [Q483:CS0Y9a] IS (1 OR 2) AND [Q543:CS4x] IS (5) AND [Q545:CS5x] IS (1)
+             then [R598.CS15Y13.MARRIAGE STATUS] = 4
+          *   If [Q483:CS0Y9a] IS (1 OR 2) AND [Q543:CS4x] IS (5) AND [Q545:CS5x] IS (5)
+             then [R598.CS15Y13.MARRIAGE STATUS] = 5
+          *   If [Q483:CS0Y9a] IS (4) AND [Q543:CS4x] IS (5 OR DK OR RF) AND [Q545:CS5x]
+             IS (5 OR DK OR RF) then [R598.CS15Y13.MARRIAGE STATUS] = 4
+          *   If [Q483:CS0Y9a] IS (5) AND [Q543:CS4x] IS (5 OR DK OR RF) AND [Q545:CS5x]
+             IS (5 OR DK OR RF) then [R598.CS15Y13.MARRIAGE STATUS] = 5
+          *   If [Q483:CS0Y9a] IS (6) AND [Q543:CS4x] IS (5 OR DK OR RF) AND [Q545:CS5x]
+             IS (5 OR DK OR RF) then [R598.CS15Y13.MARRIAGE STATUS] = 6
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R598      CS15Y13.MARRIAGE STATUS
+          Section: CS           Level: Respondent         CAI Reference: Q598
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            716         0. UNKNOWN
+            586         1. MARRIED
+              2         2. MARRIED SP ABSENT (IN INSTITUTION)
+             15         3. MARRIED SP ABSENT (NOT IN INSTITUTION)
+              2         4. DIVORCED/SEPARATED
+             27         5. WIDOWED
+                        6. NEVER MARRIED
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R598 [CS15Y13.MARRIAGE STATUS] when (([Q483:CS0Y9a] IS (1 OR 2)
+             AND [Q543:CS4x] IS (1)) OR ([Q483:CS0Y9a] IS (3) AND [Q543:CS4x] IS (3)) OR
+             ([Q543:CS4x] IS (1) AND [Q562:CS12] IS (NE 1) AND [Q569:CS15A] IS (2)))
+          *  Jump from R598 [CS15Y13.MARRIAGE STATUS] when [Q483:CS0Y9a] IS (1 OR 2) AND
+             [Q543:CS4x] IS (5) AND [Q545:CS5x] IS (5)
+          *  Jump from R598 [CS15Y13.MARRIAGE STATUS] when ([Q483:CS0Y9a] IS (3) AND
+             [Q543:CS4x] IS (1)) OR [Q545:CS5x] IS (1) OR [Q549:CS8x] IS (1)
+          *  Jump from R598 [CS15Y13.MARRIAGE STATUS] when [Q506:CS0Y20] IS (2)
+          *  Jump from R598 [CS15Y13.MARRIAGE STATUS] when [Q483:CS0Y9a] IS (6) AND
+             [Q543:CS4x] IS (5 OR DK OR RF) AND [Q545:CS5x] IS (5 OR DK OR RF)
+          *  Jump from R598 [CS15Y13.MARRIAGE STATUS] when (([Q483:CS0Y9a] IS (1 OR 2)
+             AND [Q543:CS4x] IS (1)) OR ([Q483:CS0Y9a] IS (3) AND [Q543:CS4x] IS (3)) OR
+             ([Q543:CS4x] IS (1) AND [Q562:CS12] IS (NE 1) AND [Q565:CS14] IS (1) AND
+             [Q569:CS15A] IS (NE 2)))
+          *  Jump from R598 [CS15Y13.MARRIAGE STATUS] when (([Q483:CS0Y9a] IS (1 OR 2)
+             AND [Q543:CS4x] IS (1)) OR ([Q483:CS0Y9a] IS (3) AND [Q543:CS4x] IS (3)) OR
+             ([Q543:CS4x] IS (1) AND [Q562:CS12] IS (NE 1) AND [Q565:CS14] IS (5 OR DK OR
+             RF) AND [Q569:CS15A] IS (NE 2)))
+          *  Jump from R598 [CS15Y13.MARRIAGE STATUS] when [Q483:CS0Y9a] IS (1 OR 2) AND
+             [Q543:CS4x] IS (5) AND [Q545:CS5x] IS (1)
+          *  Jump from R598 [CS15Y13.MARRIAGE STATUS] when [Q483:CS0Y9a] IS (4) AND
+             [Q543:CS4x] IS (5 OR DK OR RF) AND [Q545:CS5x] IS (5 OR DK OR RF)
+          *  Jump from R598 [CS15Y13.MARRIAGE STATUS] when (([Q483:CS0Y9a] IS (1 OR 2)
+             AND [Q543:CS4x] IS (1)) OR ([Q483:CS0Y9a] IS (3) AND [Q543:CS4x] IS (3)) OR
+             ([Q543:CS4x] IS (1) AND [Q562:CS12] IS (1)))
+          *  Jump from R598 [CS15Y13.MARRIAGE STATUS] when [Q483:CS0Y9a] IS (5) AND
+             [Q543:CS4x] IS (5 OR DK OR RF) AND [Q545:CS5x] IS (5 OR DK OR RF)
+          *  Jump from R598 [CS15Y13.MARRIAGE STATUS] when [Q483:CS0Y9a] IS (3) AND
+             [Q543:CS4x] IS (5) AND [Q543:CS4x] IS (5) AND [Q545:CS5x] IS (5)
+
+          *   If [Q597:CS15D] IS (1) then [R599.CS15Y14.NEW SP COUPLENESS] = 1
+          *   If [Q597:CS15D] IS (3) then [R599.CS15Y14.NEW SP COUPLENESS] = 3
+          *   If [Q597:CS15D] IS (NE 1 AND NE 3) then [R599.CS15Y14.NEW SP COUPLENESS] =
+             6
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R599      CS15Y14.NEW SP COUPLENESS
+          Section: CS           Level: Respondent         CAI Reference: Q599
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            592         1. MARRIED
+             24         3. PARTNERED
+            732         6. OTHER
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q508:CS1] IS (1) then [R603.CS15Y17.R ALIVE] = 1
+          *   If [Q508:CS1] IS (NE 1) then [R603.CS15Y17.R ALIVE] = 5
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R603      CS15Y17.R ALIVE
+          Section: CS           Level: Respondent         CAI Reference: Q603
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+                        1. LIVING
+           1348         5. NOT LIVING
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R603 [CS15Y17.R ALIVE] when [Q508:CS1] IS (NE 1)
+          *  Jump from R603 [CS15Y17.R ALIVE] when [Q508:CS1] IS (1)
+
+          *   If [Q543:CS4x] IS (1 OR 3 OR 4) OR [Q545:CS5x] IS (1) then [R604.CS15Y18.SP
+             ALIVE] = 1
+          *   If [Q545:CS5x] IS (NE 1) then [R604.CS15Y18.SP ALIVE] = 5
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R604      CS15Y18.SP ALIVE
+          Section: CS           Level: Respondent         CAI Reference: Q604
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            611         1. LIVING
+            737         5. NOT LIVING
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R604 [CS15Y18.SP ALIVE] when [Q545:CS5x] IS (NE 1)
+          *  Jump from R604 [CS15Y18.SP ALIVE] when [Q543:CS4x] IS (1 OR 3 OR 4) OR
+             [Q545:CS5x] IS (1)
+
+          *   If ([Q548:CS7x] IS (1) AND [Q569:CS15A] IS (NE 2)) OR ([Q549:CS8x] IS (1)
+             AND [Q562:CS12] IS (NE 5)) OR [Q570:CS15B] IS (1) then [R605.CS15Y19.NEW SP]
+             = 1
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R605      CS15Y19.NEW SP
+          Section: CS           Level: Respondent         CAI Reference: Q605
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+           1338         0. No New Spouse/Partner Since Previous Wave
+             10         1. New Spouse Since Previous Wave
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q543:CS4x] IS (A) AND [Q570:CS15B] IS (NE 1) then [R658.CS15Y63.SAME
+             SPOUSE AS LAST WAVE] = system calculation: 543
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R658      CS15Y63.SAME SPOUSE AS LAST WAVE
+          Section: CS           Level: Respondent         CAI Reference: Q658
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            604         1. YES, AND SP/P WAS LIVING WHEN R DIED
+              1         3. YES, THAT PARTNER BECAME SPOUSE AND WAS LIVING WHEN R DIED
+                        4. YES, THAT SPOUSE BECAME PARTNER AND WAS LIVING WHEN R DIED
+            743         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1); [Q484:CS0Y10] IS
+                           (5)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q0] IS (NE 2) then [R672.CS17Y5.NEW SP PREVIOUS WAVE INTERV] =
+             43M19(Q485)=
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R672.CS17Y5.NEW SP PREVIOUS WAVE
+             INTERV] = system calculation using matched filter: 26M19(Q485)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R672      CS17Y5.NEW SP PREVIOUS WAVE INTERV
+          Section: CS           Level: Respondent         CAI Reference: Q672
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+              1         0. NEW SP
+             34         1. REINTERVIEW
+              1         5. REFUSED SP
+           1312     Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1); [Q480:CS0Y7] IS
+                           (2); [Q485:CS0Y11] IS (0)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R674 when [Q1:PR1] IS (GE 0 OR LE 0)
+
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R675.CS17Y8.OLD SP BIRTH YEAR] = value
+             of [Q29:PR29.HH1 R YR BIRTH] M19(Q485)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R675      CS17Y8.OLD SP BIRTH YEAR
+          Section: CS           Level: Respondent         CAI Reference: Q675
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+             36           1902-1959. Actual Value
+           1312               Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1);
+                                     [Q480:CS0Y7] IS (2); [Q485:CS0Y11] IS (0)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R675 [CS17Y8.OLD SP BIRTH YEAR] when [Q1:PR1] IS (GE 0 OR LE 0)
+
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R676.CS17Y9.OLD SP SEX] = system
+             calculation using matched filter: 35M19(Q485)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R676      CS17Y9.OLD SP SEX
+          Section: CS           Level: Respondent         CAI Reference: Q676
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             18         1. MALE
+             18         2. FEMALE
+           1312     Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1); [Q480:CS0Y7] IS
+                           (2); [Q485:CS0Y11] IS (0)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R676 [CS17Y9.OLD SP SEX] when [Q1:PR1] IS (GE 0 OR LE 0)
+
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R677.CS17Y10.OLD SP MARITAL STAT] =
+             system calculation using matched filter: 36M19(Q485)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R677      CS17Y10.OLD SP MARITAL STAT
+          Section: CS           Level: Respondent         CAI Reference: Q677
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+              3         0. Information Not Available
+             28         1. MARRIED
+              1         2. MARRIED SP ABSENT
+                        3. LIVING WITH PARTNER
+              1         4. DIVORCED/SEPARATED
+              3         5. WIDOWED
+                        6. NEVER MARRIED
+                        7. DIED
+           1312     Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1); [Q480:CS0Y7] IS
+                           (2); [Q485:CS0Y11] IS (0)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q480:CS0Y7] IS (1) then [R753.CS22Y30.PREVIOUS WAVE INTERV] = system
+             calculation using matched filter: 26M19(Q474)=
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R753.CS22Y30.PREVIOUS WAVE INTERV] =
+             system calculation using matched filter: 79M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R753      CS22Y30.PREVIOUS WAVE INTERV
+          Section: CS           Level: Respondent         CAI Reference: Q753
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+              2         0. NEW SP
+           1342         1. REINTERVIEW
+              4         5. NEVER INTERVIEWED R
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R755 when [Q1:PR1] IS (GE 0 OR LE 0)
+          *  Jump from R755 when [Q480:CS0Y7] IS (1)
+
+          *   If [Q480:CS0Y7] IS (1) then [R756.CS22Y33.R BIRTH YEAR] = value of
+             [Q29:PR29.HH1 R YR BIRTH] M19(Q474)=
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R756.CS22Y33.R BIRTH YEAR] = value of
+             [Q82:PR82.HH2 BIRTH YR] M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R756      CS22Y33.R BIRTH YEAR
+          Section: CS           Level: Respondent         CAI Reference: Q756
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+              1         0. Information Not Available
+           1347 1894-1957. Actual Value
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R756 [CS22Y33.R BIRTH YEAR TE] when [Q1:PR1] IS (GE 0 OR LE 0)
+          *  Jump from R756 [CS22Y33.R BIRTH YEAR TE] when [Q480:CS0Y7] IS (1)
+
+          *   If [Q480:CS0Y7] IS (1) then [R757.CS22Y34.R SEX] = system calculation using
+             matched filter: 35M19(Q474)=
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R757.CS22Y34.R SEX] = system
+             calculation using matched filter: 88M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R757      CS22Y34.R SEX
+          Section: CS           Level: Respondent         CAI Reference: Q757
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            664         1. MALE
+            684         2. FEMALE
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R757 [CS22Y34.R SEX] when [Q480:CS0Y7] IS (1)
+          *  Jump from R757 [CS22Y34.R SEX] when [Q1:PR1] IS (GE 0 OR LE 0)
+
+          *   If [Q480:CS0Y7] IS (1) then [R758.CS22Y35.R MARITAL STAT] = system
+             calculation using matched filter: 36M19(Q474)=
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R758.CS22Y35.R MARITAL STAT] = system
+             calculation using matched filter: 89M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R758      CS22Y35.R MARITAL STAT
+          Section: CS           Level: Respondent         CAI Reference: Q758
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            136         0. Information Not Available
+            595         1. MARRIED
+              8         2. MARRIED SP ABSENT, INSTITUTION
+             15         3. MARRIED SP ABSENT, NOT IN INSTITUTION
+             89         4. SEPARATED/DIVORCED
+            464         5. WIDOWED
+             41         6. NEVER MARRIED
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R760 when [Q480:CS0Y7] IS (1)
+          *  Jump from R760 when [Q1:PR1] IS (GE 0 OR LE 0)
+
+          *   If [Q543:CS4x] IS (1 OR 3 OR 4) then [R761.CS22Y38.Rs ORIGINAL SP/PARTNER
+             LIVING] = 1
+          *   If [Q543:CS4x] IS (5 OR DK OR RF) AND [Q545:CS5x] IS (5 OR DK OR RF) then
+             [R761.CS22Y38.Rs ORIGINAL SP/PARTNER LIVING] = 5
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R761.CS22Y38.Rs ORIGINAL SP/PARTNER
+             LIVING] = 0
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R761      CS22Y38.Rs ORIGINAL SP/PARTNER LIVING
+          Section: CS           Level: Respondent         CAI Reference: Q761
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            712         0. NO SPOUSE
+            605         1. SPOUSE LIVING
+             31         5. SPOUSE DEAD
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q480:CS0Y7] IS (1) then [R764.CS22Y41.SP GENDER] = system calculation
+             using matched filter: 35M19(Q600)=
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R764.CS22Y41.SP GENDER] = system
+             calculation using matched filter: 88M72(Q600)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R764      CS22Y41.SP GENDER
+          Section: CS           Level: Respondent         CAI Reference: Q764
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            733         0. No Spouse at Previous Wave or Data Not Available
+            189         1. MALE
+            426         2. FEMALE
+
+==========================================================================================
+
+R768      CSCALC2.CUR MONTH TEXT
+          Section: CS           Level: Respondent         CAI Reference: Q768
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+                        1. JAN
+                        2. FEB
+            103         3. MAR
+            283         4. APR
+            260         5. MAY
+            210         6. JUN
+            156         7. JUL
+            170         8. AUG
+             87         9. SEP
+             64        10. OCT
+             15        11. NOV
+                       12. DEC
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R770      CS22Y45.CUR YEAR YYYY
+          Section: CS           Level: Respondent         CAI Reference: Q770
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+           1348      2000. CURRENT YEAR
+
+==========================================================================================
+
+R776      CSTIME5.DATE/TIME OF VQ FILE
+          Section: CS           Level: Respondent         CAI Reference: Q776
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            245         1. 03/16/00
+            100         2. 04/13/00
+            362         3. 04/24/00
+            641         4. 06/05/00
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q219:PR219] IS (GE 1900) then [R780.CS24Y2.4 DIGIT PREV IW YEAR] =
+             value of [Q219:PR219.PREV WAVE IW YEAR]
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R780      CS24Y2.4 DIGIT PREV IW YEAR
+          Section: CS           Level: Respondent         CAI Reference: Q780
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+              6         0. Last Interview Year Missing or Data Not Available
+           1342 1992-1998. PREV IVW YEAR
+
+==========================================================================================
+
+R789      CS25.MONTH MOVED TO NURS HOME
+          Section: CS           Level: Respondent         CAI Reference: Q789
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS25.
+                  In what month and year did (he/she) move to the (nursing home/
+                  health care facility) where (he/she) was a resident just
+                  before (his/her) death?
+
+                  MONTH:
+                  YEAR:
+          ................................................................................
+             66         1. JAN
+             33         2. FEB
+             28         3. MAR
+             33         4. APR
+             26         5. MAY
+             44         6. JUN
+             30         7. JUL
+             21         8. AUG
+             30         9. SEP
+             39        10. OCT
+             23        11. NOV
+             22        12. DEC
+             24        98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+            929     Blank. INAP (Inapplicable): [Q558:CS11] IS (NE 1)
+
+==========================================================================================
+
+R790      CS25a.(CS25) YEAR MOVED TO NURS HOME
+          Section: CS           Level: Respondent         CAI Reference: Q790
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+            410           1900-2001. Actual Value
+              9                9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+            929               Blank. INAP (Inapplicable): [Q558:CS11] IS (NE 1)
+
+==========================================================================================
+
+R792M     CS25c.STATE WHERE LIVE - MASKED
+          Section: CS           Level: Respondent         CAI Reference: Q792
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          User note:  Code categories have been collapsed to protect respondent
+          confidentiality.
+          ................................................................................
+             20         1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+             53         2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+             79         3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+             37         4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+            108         5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+             16         6. South Region: East South Central Division (KY, TN, AL, MS)
+             43         7. South Region: West South Central Division (AR, LA, OK, TX)
+             18         8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+             42         9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+              1        11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+            931     Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R794      CS26.NURHM: STILL OWN/RENT HOME
+          Section: CS           Level: Respondent         CAI Reference: Q794
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS26.
+                  Did (he/she) still own or rent a (house or apartment/house/
+                  apartment) outside the facility where (he/she) was living?
+          ................................................................................
+            183         1. YES
+            236         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            929     Blank. INAP (Inapplicable): [Q558:CS11] IS (NE 1); [Q760:CS22Y37] IS
+                           (NE 2) AND [Q506:CS0Y20] IS (2)
+
+==========================================================================================
+
+R796      CS27. SAME RESIDENCE #1
+          Section: CS           Level: Respondent         CAI Reference: Q796
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS27.
+                  Next are some questions about changes in (his/her)
+                  housing location since we last talked with (him/her).
+
+                  Our records show that
+                  (in Q276-PR276.PREV WAVE IW MONTH FIRST R / Q277-PR277.PREV WAVE IW
+          YEAR FIRST R/in Q277-PR277.PREV WAVE IW YEAR FIRST R/two years ago),
+          ((his/her) (house or apartment/house/apartment)/one of (his/her) (houses or
+          apartments/houses/apartments))
+                  was in (Q48-PR48.HH1 PREV WAVE 1ST ADDRESS CITY/Q101-PR101.HH2 PREV
+          WAVE 1ST ADDRESS CITY), (Q49-PR49.HH1 PREV WAVE 1ST ADDRESS STATE/Q102-
+          PR102.HH2 PREV WAVE 1ST ADDRESS STATE).
+
+          IF Q558 IS (2)
+                  Before (he/she) entered the hospice,
+          ELSE
+                  At the time (he/she) died,
+          END
+          IF Q558 IS (1)
+                  did (he/she) still have the same (house or
+          apartment/house/apartment)
+                  in (Q48-PR48.HH1 PREV WAVE 1ST ADDRESS CITY/Q101-PR101.HH2 PREV WAVE
+          1ST ADDRESS CITY)?
+          ELSE
+                  was (he/she) still living, all year or part of the year, in
+                  that same (house or apartment/house/apartment)
+                  in (Q48-PR48.HH1 PREV WAVE 1ST ADDRESS CITY/Q101-PR101.HH2 PREV WAVE
+          1ST ADDRESS CITY)?
+          END
+          ................................................................................
+           1001         1. YES
+            111         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            236     Blank. INAP (Inapplicable): [Q794:CS26] IS (5 OR DK OR RF);
+                           [Q506:CS0Y20] IS (NE 1); [Q484:CS0Y10] IS (5)
+
+==========================================================================================
+
+R797      CS28. SAME AREA - 1
+          Section: CS           Level: Respondent         CAI Reference: Q797
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS28.
+          IF Q558 IS (1)
+                  Was (his/her) (house or apartment/house/apartment) still in or
+          around
+                  (Q48-PR48.HH1 PREV WAVE 1ST ADDRESS CITY/Q101-PR101.HH2 PREV WAVE
+          1ST ADDRESS CITY)?
+          ELSE
+                  Did (he/she) still live, all year or part of the year in a
+                  (house or apartment/house/apartment), in or around
+                  (Q48-PR48.HH1 PREV WAVE 1ST ADDRESS CITY/Q101-PR101.HH2 PREV WAVE
+          1ST ADDRESS CITY)?
+          END
+          ................................................................................
+             49         1. YES
+             62         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1237     Blank. INAP (Inapplicable): [Q794:CS26] IS (5 OR DK OR RF);
+                           [Q506:CS0Y20] IS (NE 1); [Q484:CS0Y10] IS (5); [Q796:CS27] IS
+                           (1)
+
+==========================================================================================
+
+R800      CS30.SAME RESIDENCE #2
+          Section: CS           Level: Respondent         CAI Reference: Q800
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS30.
+                  Our records also show that (in Q276-PR276.PREV WAVE IW MONTH FIRST R
+          / Q277-PR277.PREV WAVE IW YEAR FIRST R/in Q277-PR277.PREV WAVE IW YEAR FIRST
+          R/two years ago) (he/she) had another
+                  (house or apartment/house/apartment), one in
+                  (Q51-PR51.HH1 PREV WAVE 2ND ADDRESS CITY/Q104-PR104.HH2 PREV WAVE
+          2ND ADDRESS CITY) (Q52-PR52.HH1 PREV WAVE 2ND ADDRESS STATE/Q105-PR105.HH2
+          PREV WAVE 2ND ADDRESS STATE).
+
+                  At the time (he/she) died,
+          IF Q558 IS (1)
+                 did (he/she) still have the same (house or apartment/house/apartment)
+                 in (Q51-PR51.HH1 PREV WAVE 2ND ADDRESS CITY/Q104-PR104.HH2 PREV WAVE
+          2ND ADDRESS CITY)?
+          ELSE
+                  was (he/she) still living, all year or part of the year,
+                  in that same (house or apartment/house/apartment)
+                  in (Q51-PR51.HH1 PREV WAVE 2ND ADDRESS CITY/Q104-PR104.HH2 PREV WAVE
+          2ND ADDRESS CITY)?
+          END
+          ................................................................................
+             29         1. YES
+             29         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1290     Blank. INAP (Inapplicable): [Q794:CS26] IS (5 OR DK OR RF);
+                           [Q506:CS0Y20] IS (NE 1); [Q484:CS0Y10] IS (5); [Q480:CS0Y7] IS
+                           (1) AND [Q50:PR50] IS (NE 1); [Q480:CS0Y7] IS (2) AND
+                           [Q103:PR103] IS (NE 1)
+
+==========================================================================================
+
+R801      CS31. SAME AREA - 2
+          Section: CS           Level: Respondent         CAI Reference: Q801
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS31.
+          IF Q558 IS (1)
+                  Did (he/she) still have a home in or
+                  around (Q51-PR51.HH1 PREV WAVE 2ND ADDRESS CITY/Q104-PR104.HH2 PREV
+          WAVE 2ND ADDRESS CITY)?
+          ELSE
+                  Did (he/she) still live, all year or part of the year in a
+                  (house or apartment/house/apartment), in or around
+                  (Q51-PR51.HH1 PREV WAVE 2ND ADDRESS CITY/Q104-PR104.HH2 PREV WAVE
+          2ND ADDRESS CITY)?
+          END
+          ................................................................................
+              4         1. YES
+             25         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1319     Blank. INAP (Inapplicable): [Q794:CS26] IS (5 OR DK OR RF);
+                           [Q506:CS0Y20] IS (NE 1); [Q484:CS0Y10] IS (5); [Q480:CS0Y7] IS
+                           (1) AND [Q50:PR50] IS (NE 1); [Q480:CS0Y7] IS (2) AND
+                           [Q103:PR103] IS (NE 1); [Q800:CS30] IS (1)
+
+==========================================================================================
+
+R805M     CS33b.CURRENT RESIDENCE STATE - MASKED
+          Section: CS           Level: Respondent         CAI Reference: Q805
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          User note:  Code categories have been collapsed to protect respondent
+          confidentiality.
+          ................................................................................
+              1         1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+              5         2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+             11         3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+              2         4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+             16         5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+              1         6. South Region: East South Central Division (KY, TN, AL, MS)
+              4         7. South Region: West South Central Division (AR, LA, OK, TX)
+              3         8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+             10         9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+                       11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+              1        97. OTHER COUNTRY
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1294     Blank. INAP (Inapplicable): [Q794:CS26] IS (5 OR DK OR RF);
+                           [Q506:CS0Y20] IS (NE 1); [Q796:CS27] IS (1) AND [Q800:CS30] IS
+                           (1); [Q796:CS27] IS (1) AND [Q801:CS31] IS (1); [Q797:CS28] IS
+                           (1) AND [Q800:CS30] IS (1); [Q797:CS28] IS (1) AND [Q801:CS31]
+                           IS (1); [Q796:CS27] IS (1) OR [Q797:CS28] IS (1) OR
+                           [Q800:CS30] IS (1) OR [Q801:CS31] IS (1)
+
+==========================================================================================
+
+R808      CS34.ANOTHER RESIDENCE
+          Section: CS           Level: Respondent         CAI Reference: Q808
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS34.
+                  Did (he/she) have any other house or apartment where (he/she)
+                  usually lived for 2 or more months of the year?
+
+                  IF R REPORTS MORE THAN ONE ADDITIONAL RESIDENCE, ASK
+                  ABOUT THE ONE THEY USED MOST.
+          ................................................................................
+              9         1. YES
+           1075         5. NO
+              1         8. DK (Don't Know); NA (Not Ascertained)
+              1         9. RF (Refused)
+            262     Blank. INAP (Inapplicable): [Q794:CS26] IS (5 OR DK OR RF);
+                           [Q506:CS0Y20] IS (NE 1); [Q796:CS27] IS (1) AND [Q800:CS30] IS
+                           (1); [Q796:CS27] IS (1) AND [Q801:CS31] IS (1); [Q797:CS28] IS
+                           (1) AND [Q800:CS30] IS (1); [Q797:CS28] IS (1) AND [Q801:CS31]
+                           IS (1)
+
+==========================================================================================
+
+R812M     CS35b.OTH RESIDENCE STATE- MASKED
+          Section: CS           Level: Respondent         CAI Reference: Q812
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS35.
+                  In what city and state was (his/her) other residence located?
+
+                  CITY:
+
+                  STATE:
+
+          User note:  Code categories have been collapsed to protect respondent
+          confidentiality.
+          ................................................................................
+                        1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+                        2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+              4         3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+              1         4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+              1         5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+                        6. South Region: East South Central Division (KY, TN, AL, MS)
+                        7. South Region: West South Central Division (AR, LA, OK, TX)
+                        8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+              2         9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+                       11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+                       97. OTHER COUNTRY
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+           1340     Blank. INAP (Inapplicable): [Q794:CS26] IS (5 OR DK OR RF);
+                           [Q506:CS0Y20] IS (NE 1); [Q796:CS27] IS (1) AND [Q800:CS30] IS
+                           (1); [Q796:CS27] IS (1) AND [Q801:CS31] IS (1); [Q797:CS28] IS
+                           (1) AND [Q800:CS30] IS (1); [Q797:CS28] IS (1) AND [Q801:CS31]
+                           IS (1); [Q808:CS34] IS (NE 1)
+
+==========================================================================================
+
+R818      CS36.MAIN RESIDENCE
+          Section: CS           Level: Respondent         CAI Reference: Q818
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS36.
+                  Which was (his/her) main residence, (his/her) home in
+          IF Q796 IS (1) OR Q797 IS (1)
+                  (Q48-PR48.HH1 PREV WAVE 1ST ADDRESS CITY/Q101-PR101.HH2 PREV WAVE
+          1ST ADDRESS CITY)
+          ELSE Q800 IS (1) OR Q801 IS (1)
+                  (Q51-PR51.HH1 PREV WAVE 2ND ADDRESS CITY/Q104-PR104.HH2 PREV WAVE
+          2ND ADDRESS CITY)
+          ELSE
+
+                  [Q804-CS33.CURRENT RESIDENCE CITY] ,
+                  [Q805-CS33b.CURRENT RESIDENCE STATE]
+          END
+                  or the one in
+          IF (Q800 IS (1) OR Q801 IS (1)) AND (Q796 IS (1) OR Q797 IS (1))
+                  (Q51-PR51.HH1 PREV WAVE 2ND ADDRESS CITY/Q104-PR104.HH2 PREV WAVE
+          2ND ADDRESS CITY)
+          ELSE
+
+                  [Q811-CS35.OTH RESIDENCE CITY] ,
+                  [Q812-CS35b.OTH RESIDENCE STATE]
+          END
+
+                  DEF:  MAIN RESIDENCE, ONE WHERE R SPENT THE MOST TIME (MTY)
+          ................................................................................
+             27         1. HOME IN (Q48-PR48.HH1 PREV WAVE 1ST ADDRESS CITY / Q101-
+                           PR101.HH2 PREV WAVE 1ST ADDRESS CITY)
+                        2. HOME IN Q804-CS33.CURRENT RESIDENCE CITY, / Q805-CS33b.CURRENT
+                           RESIDENCE STATE
+              4         3. HOME IN (Q51-PR51.HH1 PREV WAVE 2ND ADDRESS CITY / Q104-
+                           PR104.HH2 PREV WAVE 2ND ADDRESS CITY)
+              4         4. HOME IN Q811-CS35.OTH RESIDENCE CITY, / Q812-CS35b.OTH
+                           RESIDENCE STATE
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1313     Blank. INAP (Inapplicable): [Q794:CS26] IS (5 OR DK OR RF);
+                           [Q506:CS0Y20] IS (NE 1); [Q815:CS35d] IS (1)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R820 when [Q818:CS36] IS (3) AND [Q480:CS0Y7] IS (1) AND
+             [Q796:CS27] IS (1) OR [Q797:CS28] IS (1)
+          *  Jump from R820 when [Q506:CS0Y20] IS (NE 1) AND [Q480:CS0Y7] IS (1)
+          *  Jump from R820 when [Q818:CS36] IS (2)
+          *  Jump from R820 when [Q794:CS26] IS (5 OR DK OR RF)
+          *  Jump from R820 when [Q506:CS0Y20] IS (NE 1) AND [Q480:CS0Y7] IS (2)
+          *  Jump from R820 when [Q818:CS36] IS (4) AND [Q480:CS0Y7] IS (1) AND
+             [Q800:CS30] IS (1) OR [Q801:CS31] IS (1)
+          *  Jump from R820 when [Q1:PR1] IS (GE 0 OR LE 0)
+          *  Jump from R820 when [Q818:CS36] IS (1) AND [Q800:CS30] IS (NE 1) AND
+             [Q801:CS31] IS (NE 1)
+          *  Jump from R820 when [Q818:CS36] IS (4) AND [Q796:CS27] IS (NE 1) AND
+             [Q797:CS28] IS (NE 1) AND [Q800:CS30] IS (NE 1) AND [Q801:CS31] IS (NE 1)
+          *  Jump from R820 when [Q818:CS36] IS (1) AND [Q480:CS0Y7] IS (2) AND
+             [Q800:CS30] IS (1) OR [Q801:CS31] IS (1)
+          *  Jump from R820 when [Q815:CS35d] IS (1)
+          *  Jump from R820 when [Q818:CS36] IS (3) AND [Q480:CS0Y7] IS (2) AND
+             [Q796:CS27] IS (1) OR [Q797:CS28] IS (1)
+          *  Jump from R820 when [Q818:CS36] IS (3) AND [Q796:CS27] IS (NE 1) AND
+             [Q797:CS28] IS (NE 1)
+          *  Jump from R820 when [Q818:CS36] IS (4) AND [Q480:CS0Y7] IS (1) AND
+             [Q796:CS27] IS (1) OR [Q797:CS28] IS (1)
+          *  Jump from R820 when [Q818:CS36] IS (4) AND [Q480:CS0Y7] IS (2) AND
+             [Q796:CS27] IS (1) OR [Q797:CS28] IS (1)
+          *  Jump from R820 when [Q818:CS36] IS (1) AND [Q480:CS0Y7] IS (1) AND
+             [Q800:CS30] IS (1) OR [Q801:CS31] IS (1)
+          *  Jump from R820 when [Q818:CS36] IS (4) AND [Q480:CS0Y7] IS (2) AND
+             [Q800:CS30] IS (1) OR [Q801:CS31] IS (1)
+
+          *   If [Q506:CS0Y20] IS (NE 1) AND [Q480:CS0Y7] IS (1) then [R821.CS36c.R
+             CHANGED MAIN RESIDENCE] = system calculation: 56
+          *   If [Q506:CS0Y20] IS (NE 1) AND [Q480:CS0Y7] IS (2) then [R821.CS36c.R
+             CHANGED MAIN RESIDENCE] = system calculation: 109
+          *   If [Q558:CS11] IS (1) AND [Q794:CS26] IS (NE 1) then [R821.CS36c.R CHANGED
+             MAIN RESIDENCE] = 5
+          *   If [Q818:CS36] IS (1) AND [Q796:CS27] IS (1) then [R821.CS36c.R CHANGED
+             MAIN RESIDENCE] = 5
+          *   If [Q818:CS36] IS (1) AND [Q796:CS27] IS (NE 1) then [R821.CS36c.R CHANGED
+             MAIN RESIDENCE] = 1
+          *   If [Q818:CS36] IS (3) AND [Q800:CS30] IS (NE 1) then [R821.CS36c.R CHANGED
+             MAIN RESIDENCE] = 1
+          *   If [Q818:CS36] IS (3) AND [Q800:CS30] IS (1) then [R821.CS36c.R CHANGED
+             MAIN RESIDENCE] = 1
+          *   If [Q818:CS36] IS (2 OR 4) then [R821.CS36c.R CHANGED MAIN RESIDENCE] = 1
+          *   If [Q815:CS35d] IS (1) AND [Q796:CS27] IS (1) AND [Q800:CS30] IS (NE 1)
+             then [R821.CS36c.R CHANGED MAIN RESIDENCE] = 5
+          *   If [Q815:CS35d] IS (1) AND [Q796:CS27] IS (NE 1) AND [Q800:CS30] IS (1)
+             then [R821.CS36c.R CHANGED MAIN RESIDENCE] = 5
+          *   If [Q815:CS35d] IS (1) AND [Q796:CS27] IS (NE 1) AND [Q800:CS30] IS (NE 1)
+             then [R821.CS36c.R CHANGED MAIN RESIDENCE] = 1
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R821.CS36c.R CHANGED MAIN RESIDENCE] =
+             5
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R821      CS36c.R CHANGED MAIN RESIDENCE
+          Section: CS           Level: Respondent         CAI Reference: Q821
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            109         1. YES, CHANGED RESIDENCES
+           1239         5. NO, DID NOT CHANGE RESIDENCES
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q815:CS35d] IS (1) then [R833.CS38Y1.CS HAVE 2ND RESIDENCE] = 5
+          *   If [Q815:CS35d] IS (2) then [R833.CS38Y1.CS HAVE 2ND RESIDENCE] = 1
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R833.CS38Y1.CS HAVE 2ND RESIDENCE] = 0
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R833      CS38Y1.CS HAVE 2ND RESIDENCE
+          Section: CS           Level: Respondent         CAI Reference: Q833
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             35         1. HAVE SECOND RESIDENCE
+           1313         5. HAVE ONLY ONE RESIDENCE
+
+==========================================================================================
+
+R846      CS39.INTRO CHILD ROSTER-1
+          Section: CS           Level: Respondent         CAI Reference: Q846
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS39.
+                  Now some questions about (.../his/her) children
+          IF Q558 IS (NE1) AND Q815 IS (2)
+                  and whether any children were living with (him/her) in (his/her)
+                  home in
+                  [Q819-CS36a.(CS36) ASSIGN MAIN RESIDENCE]  just before (he/she)
+          died.
+          ELSE Q558 IS (1)
+                  and whether any children were living with (him/her) in (his/her)
+                  home in (Q48-PR48.HH1 PREV WAVE 1ST ADDRESS CITY/Q101-PR101.HH2 PREV
+          WAVE 1ST ADDRESS CITY), (Q49-PR49.HH1 PREV WAVE 1ST ADDRESS STATE/Q102-
+          PR102.HH2 PREV WAVE 1ST ADDRESS STATE)
+                  just before (he/she) moved into a nursing home.
+          ELSE
+                  and whether any children were living with (him/her) in (his/her)
+                  home just before (he/she) died.
+          END
+          ................................................................................
+           1348     Blank. No Data Collected
+
+==========================================================================================
+
+R858      CS43.INTRO NCR ROSTER-1
+          Section: CS           Level: Respondent         CAI Reference: Q858
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS43.
+                  I also need to (update/obtain) information about any (other) people
+          IF Q558 IS (NE1) AND Q815 IS (2)
+                  and whether they were living with (him/her) in (his/her)
+                  home in
+                  [Q819-CS36a.(CS36) ASSIGN MAIN RESIDENCE]  just before (he/she)
+          died.
+          ELSE Q558 IS (1)
+                  and whether they were living with (him/her) in (his/her)
+                  home in (Q48-PR48.HH1 PREV WAVE 1ST ADDRESS CITY/Q101-PR101.HH2 PREV
+          WAVE 1ST ADDRESS CITY), (Q49-PR49.HH1 PREV WAVE 1ST ADDRESS STATE/Q102-
+          PR102.HH2 PREV WAVE 1ST ADDRESS STATE)
+                  just before (he/she) moved into a nursing home.
+          ELSE
+                  and whether they were living with (him/her) in (his/her)
+                  home just before (he/she) died.
+          END
+          ................................................................................
+           1348     Blank. No Data Collected
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R860 when [Q480:CS0Y7] IS (1) AND [Q765:CS22Y42] IS (1)
+          *  Jump from R860 when [Q480:CS0Y7] IS (2) AND [Q765:CS22Y42] IS (NE 1)
+          *  Jump from R860 when [Q480:CS0Y7] IS (2) AND [Q765:CS22Y42] IS (1)
+          *  Jump from R860 when [Q480:CS0Y7] IS (1) AND [Q765:CS22Y42] IS (NE 1)
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R861      CS44. NONCHILD RESIDENTS ROSTER-1
+          Section: CS           Level: Respondent         CAI Reference: Q861
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS44.
+              VERIFY AND UPDATE INFORMATION ON NON-CHILDREN RESIDENTS:
+
+              PROMPT QUESTIONS FOR NEW RESIDENTS ARE ON SALMON SHEET
+
+              REL                                MARI   SPOUSE     SP
+              TO R    SEX   NAME           R HH  STAT   NAME       R HH
+          IF Q480 IS (1)
+          IF Q765 IS (1)
+
+                  [Q11-PR11.HH1 REL TO IDFM]
+                  [Q10-PR10.HH1 MEM SEX]
+                  [Q8-PR8.HH1 FIRST NAME]
+                  [Q7-PR7.HH1 STATUS]
+                  [Q13-PR13.HH1 MARITAL-CHILD]
+                  [Q15-PR15.HH1 SP NAME]
+                  [Q14-PR14.HH1 SP STATUS]
+          ELSE
+
+                  [Q12-PR12.HH1 REL TO IDNFM]
+                  [Q10-PR10.HH1 MEM SEX]
+                  [Q8-PR8.HH1 FIRST NAME]
+                  [Q7-PR7.HH1 STATUS]
+                  [Q13-PR13.HH1 MARITAL-CHILD]
+                  [Q15-PR15.HH1 SP NAME]
+                  [Q14-PR14.HH1 SP STATUS]
+          END
+
+          ELSE
+          IF Q765 IS (1)
+
+                  [Q64-PR64.HH2 REL TO IDFM]
+                  [Q63-PR63.HH2 MEM SEX]
+                  [Q61-PR61.HH2 MEM FIRST NAME]
+                  [Q60-PR60.HH2 MEM STATUS]
+                  [Q66-PR66.HH2 MARITAL-CHILD]
+                  [Q68-PR68.HH2 SP NAME]
+                  [Q67-PR67.HH2 SP STATUS]
+          ELSE
+
+                  [Q65-PR65.HH2 REL TO IDNFM]
+                  [Q63-PR63.HH2 MEM SEX]
+                  [Q61-PR61.HH2 MEM FIRST NAME]
+                  [Q60-PR60.HH2 MEM STATUS]
+                  [Q66-PR66.HH2 MARITAL-CHILD]
+                  [Q68-PR68.HH2 SP NAME]
+                  [Q67-PR67.HH2 SP STATUS]
+          END
+
+          END
+
+          IF Q558 IS (NE1) AND Q815 IS (2)
+                  Was there anyone else living in (his/her) home in
+                  [Q819-CS36a.(CS36) ASSIGN MAIN RESIDENCE] ?
+          ELSE Q558 IS (NE1)
+                  Was there anyone else living in (his/her) home?
+          END
+
+              USE DOWN ARROW TO CHECK FOR MORE PERSONS ON THE GRID.
+              WHEN YOU ARE FINISHED, PRESS F10 TO CONTINUE
+          ................................................................................
+           1348         1. CONTINUE
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable): [Q506:CS0Y20] IS (NE 1)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R884 when [Q1:PR1] IS (GE 0 OR LE 0)
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R885      CS49Y8.CS # RESIDENTS
+          Section: CS           Level: Respondent         CAI Reference: Q885
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+            953         0. No Other HH Residents or Data Not Available
+            395      1-30. Actual Value
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R886 when [Q1:PR1] IS (GE 0 OR LE 0)
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R887      CS49Y10.CS # RES CHILD
+          Section: CS           Level: Respondent         CAI Reference: Q887
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+           1056         0. No Resident Children or Data Not Available
+            292      1-30. Actual Value
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R888 when [Q1:PR1] IS (GE 0 OR LE 0)
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R889      CS49Y12.CS # NR KIDS
+          Section: CS           Level: Respondent         CAI Reference: Q889
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+            243         0. No Non-Resident Children or Data Not Available
+           1105      1-30. Actual Value
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R892 when [Q1:PR1] IS (GE 0 OR LE 0)
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R893      CS49Y16.CS # CHILDREN
+          Section: CS           Level: Respondent         CAI Reference: Q893
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+            184         0. No Children or Data Not Available
+           1164      1-30. Actual Value
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R899 when [Q1:PR1] IS (GE 0 OR LE 0)
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R900      CS49Y22.# MOVE IN/OUT
+          Section: CS           Level: Respondent         CAI Reference: Q900
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+           1133         0. No One Move In/Out or Data Not Available
+            215      1-30. Actual Value
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q514:CS1A] IS (2) then [R947.CS49Y48.(CS2)-PROXY REL TO DECEASED] = 1
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R947      CS49Y48.(CS2)-PROXY REL TO DECEASED
+          Section: CS           Level: Respondent         CAI Reference: Q947
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS49Y48.
+                  DESIGNATE THE PROXY REPORTER'S RELATIONSHIP TO
+                  [Q754.] .
+
+                  RELATIONSHIP:
+
+                  WHAT IS THE PROXY'S NAME?
+          ................................................................................
+                        0. NOT PROXY INTERVIEW
+            462         1. SPOUSE
+            399         2. DAUGHTER/STEPDAUGH
+            174         3. SON/STEPSON
+             43         4. DAUGHTER-IN-LAW
+              4         5. SON-IN-LAW
+             24         6. GRANDDAUGHTER
+             12         7. GRANDSON
+             39         8. SISTER
+             14         9. BROTHER
+            107        10. OTHER RELATIVE
+             55        11. FRIEND
+              2        12. PAID HELPER
+             13        13. PROFESSIONAL (SPECIFY)
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (Refused)
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R947 [CS49Y48.(CS2)-PROXY REL TO DECEASED] when [Q514:CS1A] IS (2)
+
+          *   If [Q480:CS0Y7] IS (1) then [R949.CS49Y50.R BIRTH YEAR] = value of
+             [Q29:PR29.HH1 R YR BIRTH] M19(Q474)=
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R949.CS49Y50.R BIRTH YEAR] = value of
+             [Q82:PR82.HH2 BIRTH YR] M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R949      CS49Y50.R BIRTH YEAR
+          Section: CS           Level: Respondent         CAI Reference: Q949
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+              1         0. Information Not Available
+           1347 1894-1957. Actual Value
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R949 [CS49Y50.R BIRTH YEAR] when [Q480:CS0Y7] IS (1)
+          *  Jump from R949 [CS49Y50.R BIRTH YEAR] when [Q1:PR1] IS (GE 0 OR LE 0)
+
+          *   If [Q480:CS0Y7] IS (1) then [R950.CS49Y51.R BIRTH MONTH] = value of
+             [Q30:PR30.HH1 R MO BIRTH] M19(Q474)=
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R950.CS49Y51.R BIRTH MONTH] = value of
+             [Q83:PR83.HH2 R MO BIRTH] M72(Q474)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R950      CS49Y51.R BIRTH MONTH
+          Section: CS           Level: Respondent         CAI Reference: Q950
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+             87         0. Information Not Available
+            119         1. JAN
+            105         2. FEB
+            134         3. MAR
+             99         4. APR
+             95         5. MAY
+             99         6. JUN
+             99         7. JUL
+            111         8. AUG
+            106         9. SEP
+            109        10. OCT
+            104        11. NOV
+             81        12. DEC
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R951 when [Q1:PR1] IS (GE 0 OR LE 0)
+          *  Jump from R951 when [Q480:CS0Y7] IS (1)
+
+          *   If [Q600:CS15Y15] IS (0) then [R952.CS49Y53.SP BIRTH YEAR] = 0
+          *   If [Q480:CS0Y7] IS (1) then [R952.CS49Y53.SP BIRTH YEAR] = value of
+             [Q29:PR29.HH1 R YR BIRTH] M19(Q600)=
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R952.CS49Y53.SP BIRTH YEAR] = value of
+             [Q82:PR82.HH2 BIRTH YR] M72(Q600)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R952      CS49Y53.SP BIRTH YEAR
+          Section: CS           Level: Respondent         CAI Reference: Q952
+          Type: Numeric         Width: 4                  Decimals: 0
+          ................................................................................
+            733         0. No Spouse at Death or Data Not Available
+            614 1900-1963. Actual Value
+              1     Blank. INAP (Inapplicable)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R952 [CS49Y53.SP BIRTH YEAR] when [Q480:CS0Y7] IS (1)
+          *  Jump from R952 [CS49Y53.SP BIRTH YEAR] when [Q1:PR1] IS (GE 0 OR LE 0)
+          *  Jump from R952 [CS49Y53.SP BIRTH YEAR] when [Q600:CS15Y15] IS (0)
+
+          *   If [Q600:CS15Y15] IS (0) then [R953.CS49Y54.SP BIRTH MONTH] = 0
+          *   If [Q480:CS0Y7] IS (1) then [R953.CS49Y54.SP BIRTH MONTH] = value of
+             [Q30:PR30.HH1 R MO BIRTH] M19(Q600)=
+          *   If [Q1:PR1] IS (GE 0 OR LE 0) then [R953.CS49Y54.SP BIRTH MONTH] = value of
+             [Q83:PR83.HH2 R MO BIRTH] M72(Q600)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R953      CS49Y54.SP BIRTH MONTH
+          Section: CS           Level: Respondent         CAI Reference: Q953
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+            763         0. No Current Spouse
+             54         1. JAN
+             51         2. FEB
+             57         3. MAR
+             47         4. APR
+             38         5. MAY
+             44         6. JUN
+             50         7. JUL
+             55         8. AUG
+             37         9. SEP
+             45        10. OCT
+             45        11. NOV
+             61        12. DEC
+              1     Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R969      CS49Y63.NUM DEAD KIDS
+          Section: CS           Level: Respondent         CAI Reference: Q969
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+           1303         0. No Dead Children or Data Not Available
+             45      1-20. Actual Value
+
+==========================================================================================
+
+R983M1    CS49Y73.HELPERS-1
+          Section: CS           Level: Respondent         CAI Reference: Q983
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+           1162             041-950. Other Person Number
+                                998. RF (Refused)
+                                999. DK (Don't Know); NA (Not Ascertained)
+            186               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R983M2    CS49Y73.HELPERS-2
+          Section: CS           Level: Respondent         CAI Reference: Q983
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+            951             041-950. Other Person Number
+                                998. RF (Refused)
+                                999. DK (Don't Know); NA (Not Ascertained)
+            397               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R988      CS50x.SOMEONE MOVE IN
+          Section: CS           Level: Respondent         CAI Reference: Q988
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS50x.
+          IF Q753 IS (1) AND Q558 IS (NE1)
+                  Since
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR] ,
+          ELSE Q753 IS (1) AND Q558 IS (1)
+                  Between the time of our interview in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR]  and when
+
+                  [Q754-CS22Y31.R FIRST NAME]  went into the (nursing home/health care
+          facility),
+          ELSE
+                  In the two years preceding (his/her) death,
+          END
+                  did anyone move into the house or apartment where
+
+                  [Q754-CS22Y31.R FIRST NAME]  was living to help (him/her) but then
+                  move out before
+          IF Q753 IS (1) AND Q558 IS (1)
+
+                  [Q754-CS22Y31.R FIRST NAME]  went into the (nursing home/health care
+          facility)?
+          ELSE
+
+                  [Q754-CS22Y31.R FIRST NAME]  died?
+          END
+          ................................................................................
+             42         1. YES
+           1300         5. NO
+              6         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable): [Q188:PR188] IS (1)
+
+==========================================================================================
+
+R989M1    CS51x.SOMEONE WHO MOVED-1
+          Section: CS           Level: Respondent         CAI Reference: Q989
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS51x.
+                  Who moved in:  was it (a child of
+                  [Q754-CS22Y31.R FIRST NAME]'s,)
+                  a grandchild, another relative, or someone else?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                        1. PARENT
+             17         2. CHILD
+              4         4. GRANDCHILD
+              6         5. RELATIVE-OTHER
+             15         6. OTHER INDIVIDUAL
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1306     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q988:CS50x] IS (NE
+                           1)
+
+==========================================================================================
+
+R989M2    CS51x.SOMEONE WHO MOVED-2
+          Section: CS           Level: Respondent         CAI Reference: Q989
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS51x.
+                  Who moved in:  was it (a child of
+                  [Q754-CS22Y31.R FIRST NAME]'s,)
+                  a grandchild, another relative, or someone else?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                        1. PARENT
+                        2. CHILD
+                        4. GRANDCHILD
+              1         5. RELATIVE-OTHER
+                        6. OTHER INDIVIDUAL
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1347     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q988:CS50x] IS (NE
+                           1)
+
+==========================================================================================
+
+R989M3    CS51x.SOMEONE WHO MOVED-3
+          Section: CS           Level: Respondent         CAI Reference: Q989
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS51x.
+                  Who moved in:  was it (a child of
+                  [Q754-CS22Y31.R FIRST NAME]'s,)
+                  a grandchild, another relative, or someone else?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                        1. PARENT
+                        2. CHILD
+                        4. GRANDCHILD
+                        5. RELATIVE-OTHER
+                        6. OTHER INDIVIDUAL
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1348     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q988:CS50x] IS (NE
+                           1)
+
+==========================================================================================
+
+R990M1    CS51ax.SOMEONE WHICH CHILD?-1
+          Section: CS           Level: Respondent         CAI Reference: Q990
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS51ax.
+                  Which children?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+              1       037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+             16   041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1331     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q988:CS50x] IS (NE
+                           1); [Q989:CS51x] IS (NE 2)
+
+==========================================================================================
+
+R990M2    CS51ax.SOMEONE WHICH CHILD?-2
+          Section: CS           Level: Respondent         CAI Reference: Q990
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS51ax.
+                  Which children?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+              4   041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1344     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q988:CS50x] IS (NE
+                           1); [Q989:CS51x] IS (NE 2)
+
+==========================================================================================
+
+R990M3    CS51ax.SOMEONE WHICH CHILD?-3
+          Section: CS           Level: Respondent         CAI Reference: Q990
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS51ax.
+                  Which children?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+              2   041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1346     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q988:CS50x] IS (NE
+                           1); [Q989:CS51x] IS (NE 2)
+
+==========================================================================================
+
+R990M4    CS51ax.SOMEONE WHICH CHILD?-4
+          Section: CS           Level: Respondent         CAI Reference: Q990
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS51ax.
+                  Which children?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+                  041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1348     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q988:CS50x] IS (NE
+                           1); [Q989:CS51x] IS (NE 2)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q0] IS (LT 2) AND [Q480:CS0Y7] IS (1) then [R992.CS51bx.STAYED LONGEST-
+             1] = 990U(120)=
+          *   If [Q0] IS (LT 2) AND [Q480:CS0Y7] IS (2) then [R992.CS51bx.STAYED LONGEST-
+             1] = 991U(120)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R992M1    CS51bx.STAYED LONGEST-1
+          Section: CS           Level: Respondent         CAI Reference: Q992
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS51bx.
+                  Which child stayed the longest?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+              2   041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1346     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q988:CS50x] IS (NE
+                           1); [Q989:CS51x] IS (NE 2)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q0] IS (LT 2) AND [Q480:CS0Y7] IS (1) then [R992.CS51bx.STAYED LONGEST-
+             2] = 990U(120)=
+          *   If [Q0] IS (LT 2) AND [Q480:CS0Y7] IS (2) then [R992.CS51bx.STAYED LONGEST-
+             2] = 991U(120)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R992M2    CS51bx.STAYED LONGEST-2
+          Section: CS           Level: Respondent         CAI Reference: Q992
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS51bx.
+                  Which child stayed the longest?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+                  041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1348     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q988:CS50x] IS (NE
+                           1); [Q989:CS51x] IS (NE 2)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R992 [CS51bx.STAYED LONGEST-1] when [Q0] IS (LT 2) AND
+             [Q480:CS0Y7] IS (1)
+          *  Jump from R992 [CS51bx.STAYED LONGEST-1] when [Q0] IS (LT 2) AND
+             [Q480:CS0Y7] IS (2)
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R994      CS51cx.WEEKS/MONTHS STAY
+          Section: CS           Level: Respondent         CAI Reference: Q994
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS51cx.
+                  About how many weeks or months did that
+          IF Q989 IS (2)
+                  child stay?
+          ELSE
+                  person stay?
+          END
+
+                  Please tell me the longest stay if there was more than
+                  one person who stayed with
+                  [Q754.] .
+
+                  TIME:
+          ................................................................................
+             37                0-96. Actual Value
+              5                  98. DK (Don't Know); NA (Not Ascertained)
+                                 99. RF (Refused)
+           1306               Blank. INAP (Inapplicable): [Q188:PR188] IS (1);
+                                     [Q988:CS50x] IS (NE 1)
+
+==========================================================================================
+
+R995      CS51cax.WEEKS/MONTHS
+          Section: CS           Level: Respondent         CAI Reference: Q995
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             15         1. WEEKS
+             27         2. MONTHS
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1306     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q988:CS50x] IS (NE
+                           1)
+
+==========================================================================================
+
+R996      CS52x.R MOVED IN
+          Section: CS           Level: Respondent         CAI Reference: Q996
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS52x.
+          IF Q753 IS (1) AND Q558 IS (NE1)
+                  Between the time of our interview in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR]
+                  and
+                  [Q754-CS22Y31.R FIRST NAME]'s death
+          ELSE Q753 IS (1) AND Q558 IS (1)
+                  Between the time of our interview in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR]  and
+                  when
+                  [Q754-CS22Y31.R FIRST NAME]  went into the (nursing home/
+                  health care facility)
+          ELSE
+                  In the two years preceding (his/her) death
+          END
+                  did
+                  [Q754-CS22Y31.R FIRST NAME]  move into and then out of someone
+          else's
+                  house or apartment?
+          ................................................................................
+             47         1. YES
+           1297         5. NO
+              4         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+                    Blank. INAP (Inapplicable): [Q188:PR188] IS (1)
+
+==========================================================================================
+
+R997M1    CS53x.R MOVE IN WITH-1
+          Section: CS           Level: Respondent         CAI Reference: Q997
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS53x.
+                  With whom did (he/she) move in:  was it (a child of
+
+                  [Q754-CS22Y31.R FIRST NAME]'s,) a grandchild, another relative, or
+          someone else?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+              1         1. PARENT
+             32         2. CHILD
+                        4. GRANDCHILD
+              8         5. RELATIVE-OTHER
+              6         6. OTHER INDIVIDUAL
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1301     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q996:CS52x] IS (NE
+                           1)
+
+==========================================================================================
+
+R997M2    CS53x.R MOVE IN WITH-2
+          Section: CS           Level: Respondent         CAI Reference: Q997
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS53x.
+                  With whom did (he/she) move in:  was it (a child of
+
+                  [Q754-CS22Y31.R FIRST NAME]'s,) a grandchild, another relative, or
+          someone else?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                        1. PARENT
+                        2. CHILD
+                        4. GRANDCHILD
+                        5. RELATIVE-OTHER
+                        6. OTHER INDIVIDUAL
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1348     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q996:CS52x] IS (NE
+                           1)
+
+==========================================================================================
+
+R998M1    CS53ax.SOMEONE WHICH CHILD?-1
+          Section: CS           Level: Respondent         CAI Reference: Q998
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS53ax.
+                  Which children?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+              1       037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+             31   041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1316     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q996:CS52x] IS (NE
+                           1); [Q997:CS53x] IS (NE 2)
+
+==========================================================================================
+
+R998M2    CS53ax.SOMEONE WHICH CHILD?-2
+          Section: CS           Level: Respondent         CAI Reference: Q998
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS53ax.
+                  Which children?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+              2   041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1346     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q996:CS52x] IS (NE
+                           1); [Q997:CS53x] IS (NE 2)
+
+==========================================================================================
+
+R998M3    CS53ax.SOMEONE WHICH CHILD?-3
+          Section: CS           Level: Respondent         CAI Reference: Q998
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS53ax.
+                  Which children?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+              1   041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1347     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q996:CS52x] IS (NE
+                           1); [Q997:CS53x] IS (NE 2)
+
+==========================================================================================
+
+R998M4    CS53ax.SOMEONE WHICH CHILD?-4
+          Section: CS           Level: Respondent         CAI Reference: Q998
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS53ax.
+                  Which children?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+              1   041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1347     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q996:CS52x] IS (NE
+                           1); [Q997:CS53x] IS (NE 2)
+
+==========================================================================================
+
+R998M5    CS53ax.SOMEONE WHICH CHILD?-5
+          Section: CS           Level: Respondent         CAI Reference: Q998
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS53ax.
+                  Which children?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+                  041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1348     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q996:CS52x] IS (NE
+                           1); [Q997:CS53x] IS (NE 2)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q0] IS (LT 2) AND [Q480:CS0Y7] IS (1) then [R1000.CS53bx.STAYED
+             LONGEST-1] = 998U(120)=
+          *   If [Q0] IS (LT 2) AND [Q480:CS0Y7] IS (2) then [R1000.CS53bx.STAYED
+             LONGEST-1] = 999U(120)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R1000M1   CS53bx.STAYED LONGEST-1
+          Section: CS           Level: Respondent         CAI Reference: Q1000
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS53bx.
+                  With which child did (he/she) stay the longest?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+              2             041-950. Other Person Number
+                                998. DK (Don't Know); NA (Not Ascertained)
+                                999. RF (Refused)
+           1346               Blank. INAP (Inapplicable): [Q188:PR188] IS (1);
+                                     [Q996:CS52x] IS (NE 1); [Q997:CS53x] IS (NE 2)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q0] IS (LT 2) AND [Q480:CS0Y7] IS (1) then [R1000.CS53bx.STAYED
+             LONGEST-2] = 998U(120)=
+          *   If [Q0] IS (LT 2) AND [Q480:CS0Y7] IS (2) then [R1000.CS53bx.STAYED
+             LONGEST-2] = 999U(120)=
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R1000M2   CS53bx.STAYED LONGEST-2
+          Section: CS           Level: Respondent         CAI Reference: Q1000
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS53bx.
+                  With which child did (he/she) stay the longest?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                            041-950. Other Person Number
+                                998. DK (Don't Know); NA (Not Ascertained)
+                                999. RF (Refused)
+           1348               Blank. INAP (Inapplicable): [Q188:PR188] IS (1);
+                                     [Q996:CS52x] IS (NE 1); [Q997:CS53x] IS (NE 2)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R1000 [CS53bx.STAYED LONGEST-1] when [Q0] IS (LT 2) AND
+             [Q480:CS0Y7] IS (1)
+          *  Jump from R1000 [CS53bx.STAYED LONGEST-1] when [Q0] IS (LT 2) AND
+             [Q480:CS0Y7] IS (2)
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R1002     CS53cx.WEEKS/MONTHS STAY
+          Section: CS           Level: Respondent         CAI Reference: Q1002
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          CS53cx.
+                  About how many weeks or months did
+                  [Q754-CS22Y31.R FIRST NAME]  stay
+          IF Q997 IS (2)
+                  with that child?
+          ELSE
+                  with that person?
+          END
+
+                  Please tell me the longest stay if there was more than
+                  one person
+                  [Q754-CS22Y31.R FIRST NAME]  stayed with.
+
+                  TIME:
+          ................................................................................
+             44                0-96. Actual Value
+              3                  98. DK (Don't Know); NA (Not Ascertained)
+                                 99. RF (Refused)
+           1301               Blank. INAP (Inapplicable): [Q188:PR188] IS (1);
+                                     [Q996:CS52x] IS (NE 1)
+
+==========================================================================================
+
+R1003     CS53cax.WEEKS/MONTHS
+          Section: CS           Level: Respondent         CAI Reference: Q1003
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             16         1. WEEKS
+             30         2. MONTHS
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1301     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q996:CS52x] IS (NE
+                           1)
+
+==========================================================================================
+
+R1004     CS54x.MOVE CLOSER
+          Section: CS           Level: Respondent         CAI Reference: Q1004
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS54x.
+          IF Q753 IS (1) AND Q558 IS (NE1)
+                  Between the time of our interview in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR]
+                  and when
+                  [Q754-CS22Y31.R FIRST NAME]  died
+          ELSE Q753 IS (1) AND Q558 IS (1)
+                  Between the time of our interview in
+                  [Q218-PR218.PREV WAVE IW MONTH]
+                  [Q219-PR219.PREV WAVE IW YEAR]
+                  and when
+                  [Q754-CS22Y31.R FIRST NAME]  went into the (nursing home/
+                  health care facility)
+          ELSE
+                  In the two years preceding (his/her) death
+          END
+                  did (he/she) or any of (his/her) children move
+                  in order to be closer to each other but not living
+                  in the same house or apartment?
+          ................................................................................
+             33         1. YES
+           1128         5. NO
+              3         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            184     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q893:CS49Y16] IS
+                           (0)
+
+==========================================================================================
+
+R1005M1   CS54ax.WHICH CHILD-1
+          Section: CS           Level: Respondent         CAI Reference: Q1005
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS54ax.
+                  Which child was that?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+             31   041-950. Other Person Number
+              2       998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1315     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q893:CS49Y16] IS
+                           (0); [Q1004:CS54x] IS (NE 1)
+
+==========================================================================================
+
+R1005M2   CS54ax.WHICH CHILD-2
+          Section: CS           Level: Respondent         CAI Reference: Q1005
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS54ax.
+                  Which child was that?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+              1   041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1347     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q893:CS49Y16] IS
+                           (0); [Q1004:CS54x] IS (NE 1)
+
+==========================================================================================
+
+R1005M3   CS54ax.WHICH CHILD-3
+          Section: CS           Level: Respondent         CAI Reference: Q1005
+          Type: Character       Width: 3                  Decimals: 0
+
+          CS54ax.
+                  Which child was that?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+                  041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1348     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q893:CS49Y16] IS
+                           (0); [Q1004:CS54x] IS (NE 1)
+
+==========================================================================================
+
+R1008_1   CS54bx.WHO MOVED-1
+          Section: CS           Level: Respondent         CAI Reference: Q1008
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS54bx.
+          IF Q480 IS (1)
+                  Did
+                  [Q8-PR8.HH1 FIRST NAME]  move or did
+                  [Q754-CS22Y31.R FIRST NAME]  move?
+          ELSE
+                  Did
+                  [Q61-PR61.HH2 MEM FIRST NAME]  move or did
+                  [Q754-CS22Y31.R FIRST NAME]  move?
+          END
+          ................................................................................
+             10         1. CHILD MOVED
+              8         2. R MOVED
+              2         4. BOTH
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1328     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q893:CS49Y16] IS
+                           (0); [Q1004:CS54x] IS (NE 1)
+
+==========================================================================================
+
+R1009_1   CS54cx.PERM/TEMP MOVE-1
+          Section: CS           Level: Respondent         CAI Reference: Q1009
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS54cx.
+                  Was the move intended to be temporary or was it thought
+                  of as permanent?
+          ................................................................................
+             14         1. PERMANENT MOVE
+              6         5. TEMPORARY MOVE
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1328     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q893:CS49Y16] IS
+                           (0); [Q1004:CS54x] IS (NE 1)
+
+==========================================================================================
+
+R1008_2   CS54bx.WHO MOVED-2
+          Section: CS           Level: Respondent         CAI Reference: Q1008
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS54bx.
+          IF Q480 IS (1)
+                  Did
+                  [Q8-PR8.HH1 FIRST NAME]  move or did
+                  [Q754-CS22Y31.R FIRST NAME]  move?
+          ELSE
+                  Did
+                  [Q61-PR61.HH2 MEM FIRST NAME]  move or did
+                  [Q754-CS22Y31.R FIRST NAME]  move?
+          END
+          ................................................................................
+                        1. CHILD MOVED
+                        2. R MOVED
+                        4. BOTH
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1348     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q893:CS49Y16] IS
+                           (0); [Q1004:CS54x] IS (NE 1)
+
+==========================================================================================
+
+R1009_2   CS54cx.PERM/TEMP MOVE-2
+          Section: CS           Level: Respondent         CAI Reference: Q1009
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          CS54cx.
+                  Was the move intended to be temporary or was it thought
+                  of as permanent?
+          ................................................................................
+                        1. PERMANENT MOVE
+                        5. TEMPORARY MOVE
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1348     Blank. INAP (Inapplicable): [Q188:PR188] IS (1); [Q893:CS49Y16] IS
+                           (0); [Q1004:CS54x] IS (NE 1)
+
+==========================================================================================
+
+RVERSION  2000 EXIT FINAL RELEASE VERSION NUMBER
+          Section: CS           Level: Respondent         CAI Reference: Q9007
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+           1348         1. First Data Release
+

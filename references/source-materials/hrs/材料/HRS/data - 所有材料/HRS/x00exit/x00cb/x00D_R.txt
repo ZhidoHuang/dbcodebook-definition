@@ -1,0 +1,882 @@
+==========================================================================================
+2000 HRS Exit (Final Release)
+ODBC Reference: [HRS2000x]
+Perl script: CodebkD9.pl v5.043 Tue Mar  1  9:48:53 2005
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Surveycraft metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION D: Family Structure (Respondent)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFIER
+          Section: D            Level: Respondent         CAI Reference: Q9001
+          Type: Character       Width: 6                  Decimals: 0
+          ................................................................................
+           1348       010003-213471. Household ID
+
+==========================================================================================
+
+PN        PERSON NUMBER
+          Section: D            Level: Respondent         CAI Reference: Q9002
+          Type: Character       Width: 3                  Decimals: 0
+          ................................................................................
+            929       010. Person Number
+             12       011. Person Number
+            320       020. Person Number
+              2       021. Person Number
+             36       030. Person Number
+              1       031. Person Number
+             47       040. Person Number
+              1       041. Person Number
+
+==========================================================================================
+
+RSUBHH    2000 SUB-HOUSEHOLD IDENTIFIER
+          Section: D            Level: Respondent         CAI Reference: Q9004
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+           1296         3. 1st deceased respondent from a household
+             52         4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+FSUBHH    1998 SUB-HOUSEHOLD IDENTIFIER
+          Section: D            Level: Respondent         CAI Reference: Q9003
+          Type: Character       Width: 1                  Decimals: 0
+          ................................................................................
+           1306         0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+             14         1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+             13         2. Split household - other half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+             15         3. 1st deceased respondent from a household
+                        5. Split household - one half of couple from SUBHH 1 or 2
+                        6. Split household - one half of couple from SUBHH 1 or 2
+                        7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+RPN_SP    2000 SPOUSE/PARTNER PERSON NUMBER
+          Section: D            Level: Respondent         CAI Reference: Q9005
+          Type: Character       Width: 3                  Decimals: 0
+
+          User Note:  There are 42 R's with a valid RPN_SP who are not coupled in the
+          2000 Exit.  Two reasons explain this occurrence: both members of a
+          previously intact household are part of the 2000 Exit, or there was a
+          legitimate split between the exit interview and their last core interview.
+          We have included them in the data to allow linkage back to the spouse's
+          interview.
+          ................................................................................
+            276       010. Spouse Person Number
+             14       011. Spouse Person Number
+            292       020. Spouse Person Number
+              4       021. Spouse Person Number
+             25       030. Spouse Person Number
+             34       040. Spouse Person Number
+            703     Blank. No Spouse at Death
+
+==========================================================================================
+
+RQNR      SURVEYCRAFT CASE NUMBER
+          Section: D            Level: Respondent         CAI Reference: Q9006
+          Type: Numeric         Width: 5                  Decimals: 0
+          ................................................................................
+            999         80001-80999. AHEAD/CODA Surveycraft Case Number
+            349         90001-90349. HRS/WAR BABY Surveycraft Case Number
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R1469 when [Q600:CS15Y15] IS (1 OR 2)
+          *  Jump from R1469 when [Q597:CS15D] IS (NE 1 AND NE 3) AND ({When Q19 is
+             (Q474), [Q179:PR179] IS (1))}
+
+          *   If [Q597:CS15D] IS (NE 1 AND NE 3) AND {When Q19 is (Q474), [Q179:PR179] IS
+             (1)} then [R1470.D0Y2.RELEVANT LATE SP/P] = 1
+          *   If [Q597:CS15D] IS (NE 1 AND NE 3) AND [Q545:CS5x] IS (5) then
+             [R1470.D0Y2.RELEVANT LATE SP/P] = 1
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R1470     D0Y2.RELEVANT LATE SP/P
+          Section: D            Level: Respondent         CAI Reference: Q1470
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+             38         1. YES, HAS LATE SP/P AND NO CURRENT SP/P
+           1309         5. NO
+              1     Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1508     D049Y1.COUNT SIBLINGS
+          Section: D            Level: Respondent         CAI Reference: Q1508
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+           1347                0-30. Actual Value
+              1               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1509     D049Y2.COUNT SIBLINGS-IN-LAW
+          Section: D            Level: Respondent         CAI Reference: Q1509
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+           1347                0-30. Actual Value
+              1               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1518     D049Y9.CS # RESIDENTS
+          Section: D            Level: Respondent         CAI Reference: Q1518
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+           1347                0-20. Actual Value
+              1               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1520     D049Y11.CS # RES CHILD
+          Section: D            Level: Respondent         CAI Reference: Q1520
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+           1347                0-20. Actual Value
+              1               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1522     D049Y13.CS # NR KIDS
+          Section: D            Level: Respondent         CAI Reference: Q1522
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+           1347                0-20. Actual Value
+              1               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1526     D049Y17.CS # CHILDREN
+          Section: D            Level: Respondent         CAI Reference: Q1526
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+           1347                0-20. Actual Value
+              1               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1532     D049Y23.# LIVING KIDS IN CONTACT
+          Section: D            Level: Respondent         CAI Reference: Q1532
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+           1347                0-20. Actual Value
+              1               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1551     D049Y31.NUM DEAD KIDS
+          Section: D            Level: Respondent         CAI Reference: Q1551
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+           1347                0-20. Actual Value
+              1               Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+R1619     D4x. ANY GRANDCHILDREN
+          Section: D            Level: Respondent         CAI Reference: Q1619
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D4x.
+                  Families and friends often help one another in different
+                  ways.  Part of our research is finding out how they do
+                  that, so we have some questions about family.
+
+
+          D4x.
+          IF Q514 IS (2)
+                  Did
+                  [Q754-CS22Y31.R FIRST NAME]  and you have any grandchildren?
+          ELSE
+                  Did
+                  [Q754-CS22Y31.R FIRST NAME]  (and (his/her) husband/and (his/her)
+          wife/and (his/her) partner/.../and (his/her) late husband/and (his/her) late
+          wife/and (his/her) late partner)
+                  have any grandchildren?
+          END
+          ................................................................................
+           1072         1. YES
+            267         5. NO
+              8         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+              1     Blank. INAP (Inapplicable)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R1621 when [Q480:CS0Y7] IS (NE 1) AND [Q765:CS22Y42] IS (1)
+          *  Jump from R1621 when [Q480:CS0Y7] IS (1) AND [Q765:CS22Y42] IS (NE 1)
+          *  Jump from R1621 when [Q480:CS0Y7] IS (1) AND [Q765:CS22Y42] IS (1)
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R1622     D40Y2.COUNT CORESIDENTS
+          Section: D            Level: Respondent         CAI Reference: Q1622
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+           1347                0-20. Actual Value
+              1               Blank. INAP (Inapplicable)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *   If [Q484:CS0Y10] IS (NE 1) AND [Q1526:D049Y17] IS (0) AND [Q1078:A9] IS (0)
+             then [R1623.D40. # GRANDCHILDREN IDFM] = 95
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R1623     D40. # GRANDCHILDREN IDFM
+          Section: D            Level: Respondent         CAI Reference: Q1623
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          D40.
+                  (Please remind me ...) Altogether, how many grandchildren
+          IF Q514 IS (NE2)
+                  did
+                  [Q754-CS22Y31.R FIRST NAME]  (and (his/her) husband/and (his/her)
+          wife/and (his/her) partner/.../and (his/her) late husband/and (his/her) late
+          wife/and (his/her) late partner) have?
+          ELSE
+                  did
+                  [Q754-CS22Y31.R FIRST NAME]  and you have?
+          END
+
+                  IWER:  ENTER 80 IF R HAS 80 OR MORE GRANDCHILDREN
+          ................................................................................
+           1051                0-80. Actual Value
+             19                  98. DK (Don't Know); NA (Not Ascertained)
+              1                  99. RF (Refused)
+            277               Blank. INAP (Inapplicable): [Q1619:D4x] IS (5 OR DK OR RF)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R1623 [D40.# GRANDCHILDREN IDFM] when [Q484:CS0Y10] IS (NE 1) AND
+             [Q1526:D049Y17] IS (0) AND [Q1078:A9] IS (0)
+
+          *   If [Q484:CS0Y10] IS (NE 1) AND [Q1526:D049Y17] IS (0) AND [Q1078:A9] IS (0)
+             then [R1624.D42. GREAT-GRANDCHILDREN] = 9
+          *   If [Q484:CS0Y10] IS (1) AND [Q249:PR249] IS (0 OR 96) AND [Q1577:D04] IS
+             (5) then [R1624.D42. GREAT-GRANDCHILDREN] = 9
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R1624     D42. GREAT-GRANDCHILDREN
+          Section: D            Level: Respondent         CAI Reference: Q1624
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D42.
+          IF Q514 IS (NE2)
+                  Did (he/she) (or (his/her) husband/or (his/her) wife/or (his/her)
+          partner/.../or (his/her) late husband/or (his/her) late wife/or (his/her)
+          late partner) have any great-grandchildren?
+          ELSE
+                  Did (he/she) or you have any great-grandchildren?
+          END
+          ................................................................................
+            638         1. YES
+            407         5. NO
+              4         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            299     Blank. INAP (Inapplicable): [Q1619:D4x] IS (5 OR DK OR RF);
+                           [Q1623:D40] IS (0 OR DK OR RF)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R1624 [D42.GREAT-GRANDCHILDREN] when [Q484:CS0Y10] IS (1) AND
+             [Q249:PR249] IS (0 OR 96) AND [Q1577:D04] IS (5)
+          *  Jump from R1624 [D42.GREAT-GRANDCHILDREN] when [Q484:CS0Y10] IS (NE 1) AND
+             [Q1526:D049Y17] IS (0) AND [Q1078:A9] IS (0)
+
+          *   If [Q484:CS0Y10] IS (NE 1) AND [Q1526:D049Y17] IS (0) AND [Q1078:A9] IS (0)
+             then [R1625.D42a. #GREAT-GRANDCHILDREN] = 95
+          *   If [Q484:CS0Y10] IS (1) AND [Q249:PR249] IS (0 OR 96) AND [Q1577:D04] IS
+             (5) then [R1625.D42a. #GREAT-GRANDCHILDREN] = 95
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R1625     D42a. #GREAT-GRANDCHILDREN
+          Section: D            Level: Respondent         CAI Reference: Q1625
+          Type: Numeric         Width: 2                  Decimals: 0
+
+          D42a.
+                  Altogether, how many great-grandchildren
+          IF Q514 IS (NE2)
+                  did (he/she) (or (his/her) husband/or (his/her) wife/or (his/her)
+          partner/.../or (his/her) late husband/or (his/her) late wife/or (his/her)
+          late partner) have?
+          ELSE
+                  did (he/she) or you have?
+          END
+
+                  IWER:  ENTER 80 IF R HAS 80 OR MORE GREAT-GRANDCHILDREN
+          ................................................................................
+            627                1-80. Actual Value
+             11                  98. DK (Don't Know); NA (Not Ascertained)
+                                 99. RF (Refused)
+            710               Blank. INAP (Inapplicable): [Q1619:D4x] IS (5 OR DK OR
+                                     RF); [Q1623:D40] IS (0 OR DK OR RF); [Q1624:D42] IS
+                                     (5 OR DK OR RF)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R1625 [D42a.#GREAT-GRANDCHILDREN] when [Q484:CS0Y10] IS (1) AND
+             [Q249:PR249] IS (0 OR 96) AND [Q1577:D04] IS (5)
+          *  Jump from R1625 [D42a.#GREAT-GRANDCHILDREN] when [Q484:CS0Y10] IS (NE 1) AND
+             [Q1526:D049Y17] IS (0) AND [Q1078:A9] IS (0)
+
+          *   If [Q1623:D40] IS (1-80) OR [Q1624:D42] IS (1) then [R1626.D45Y1.(D45)
+             CKPOINT-ANY OFFSPRING R/SP] = 1
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R1626     D45Y1.(D45) CKPOINT-ANY OFFSPRING R/SP
+          Section: D            Level: Respondent         CAI Reference: Q1626
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+            297         0. NO-R HAS NO OFFSPRING
+           1049         1. YES-R HAS OFFSPRING
+              2     Blank. INAP (Inapplicable)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R1626 [D45Y1.(D45) CKPOINT-ANY OFFSPRING R/SP] when [Q1623:D40] IS
+             (1-80) OR [Q1624:D42] IS (1)
+
+          *   If [Q484:CS0Y10] IS (NE 1) AND [Q1526:D049Y17] IS (0) AND [Q1078:A9] IS (0)
+             then [R1627.D45Y2.NUM GRANDKIDS] = 96
+          *   If [Q484:CS0Y10] IS (1) AND [Q249:PR249] IS (0) then [R1627.D45Y2.NUM
+             GRANDKIDS] = 96
+          *   If [Q484:CS0Y10] IS (1) AND [Q249:PR249] IS (96) then [R1627.D45Y2.NUM
+             GRANDKIDS] = 95
+          *   If [Q1623:D40] IS (DK) then [R1627.D45Y2.NUM GRANDKIDS] = 98
+          *   If [Q1623:D40] IS (RF) then [R1627.D45Y2.NUM GRANDKIDS] = 99
+          *   If [Q1623:D40] IS (GE 0) then [R1627.D45Y2.NUM GRANDKIDS] = value of
+             [Q1623:D40. # GRANDCHILDREN IDFM]
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R1627     D45Y2.NUM GRANDKIDS
+          Section: D            Level: Respondent         CAI Reference: Q1627
+          Type: Numeric         Width: 2                  Decimals: 0
+          ................................................................................
+           1014                0-79. Actual Value
+              2                  80. 80 OR MORE
+                                 95. NOT ASCERTAINED
+            267                  96. NOT ASKED BECAUSE ASSUMED TO BE ZERO
+             18                  98. DON'T KNOW
+              1                  99. NA
+             46               Blank. INAP (Inapplicable)
+
+==========================================================================================
+          ASSIGNMENT STATEMENTS
+          *  Jump from R1627 [D45Y2.NUM GRANDKIDS] when [Q484:CS0Y10] IS (1) AND
+             [Q249:PR249] IS (96)
+          *  Jump from R1627 [D45Y2.NUM GRANDKIDS] when [Q1623:D40] IS (GE 0)
+          *  Jump from R1627 [D45Y2.NUM GRANDKIDS] when [Q1623:D40] IS (DK)
+          *  Jump from R1627 [D45Y2.NUM GRANDKIDS] when [Q1623:D40] IS (RF)
+          *  Jump from R1627 [D45Y2.NUM GRANDKIDS] when [Q484:CS0Y10] IS (1) AND
+             [Q249:PR249] IS (0)
+          *  Jump from R1627 [D45Y2.NUM GRANDKIDS] when [Q484:CS0Y10] IS (NE 1) AND
+             [Q1526:D049Y17] IS (0) AND [Q1078:A9] IS (0)
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+R1628     D45Y3.INTRO TO CHILD TRANSFERS
+          Section: D            Level: Respondent         CAI Reference: Q1628
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D45Y3.
+                  Families sometimes help one another in a variety of ways, and
+                  each type of help can be important.
+
+                  The next questions are about help given or received
+                  (since Q133-PR133.PREV WAVE IW MONTH OF FAMILY R / Q134-PR134.PREV
+          WAVE IW YEAR OF FAMILY R/in the last two years), but before (he/she) died.
+
+                  The financial help we ask about excludes shared housing
+                  and shared food, so don't count that type of help.
+
+                  It also excludes anything (he/she) left to others after
+                  (he/she) died.
+          ................................................................................
+           1348     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF)
+
+==========================================================================================
+
+R1636     D76. CARE OF GRANDKIDS
+          Section: D            Level: Respondent         CAI Reference: Q1636
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D76.
+          IF Q514 IS (NE2)
+                  Did (he/she) (or (his/her) husband/or (his/her) wife/or (his/her)
+          partner/.../or (his/her) late husband/or (his/her) late wife/or (his/her)
+          late partner) spend 100 or more hours in total
+          ELSE
+                  Did (he/she) or you spend 100 or more hours in total
+          END
+                  (since Q133-PR133.PREV WAVE IW MONTH OF FAMILY R / Q134-PR134.PREV
+          WAVE IW YEAR OF FAMILY R/in the last two years) taking care of (grand or
+          great-grandchildren/grandchildren)?
+          ................................................................................
+            127         1. YES
+            922         5. NO
+                        8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+            299     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q1623:D40] IS (0 OR 95 OR DK OR RF)
+
+==========================================================================================
+
+R1637M1   D76a.WHICH CHILD PARENT-1
+          Section: D            Level: Respondent         CAI Reference: Q1637
+          Type: Character       Width: 3                  Decimals: 0
+
+          D76a.
+                  Which of (his/her) children is the parent of those
+                  grandchildren (or great-grandchildren)?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+             11       038. ALL MY CHILDREN
+              5       039. ALL GRANDCHILDREN
+            106   041-950. Other Person Number
+              5       997. OTHER
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1221     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q1623:D40] IS (0 OR 95 OR DK OR
+                           RF); [Q1636:D76] IS (NE 1)
+
+==========================================================================================
+
+R1637M2   D76a.WHICH CHILD PARENT-2
+          Section: D            Level: Respondent         CAI Reference: Q1637
+          Type: Character       Width: 3                  Decimals: 0
+
+          D76a.
+                  Which of (his/her) children is the parent of those
+                  grandchildren (or great-grandchildren)?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+                      039. ALL GRANDCHILDREN
+             16   041-950. Other Person Number
+                      997. OTHER
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1332     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q1623:D40] IS (0 OR 95 OR DK OR
+                           RF); [Q1636:D76] IS (NE 1)
+
+==========================================================================================
+
+R1637M3   D76a.WHICH CHILD PARENT-3
+          Section: D            Level: Respondent         CAI Reference: Q1637
+          Type: Character       Width: 3                  Decimals: 0
+
+          D76a.
+                  Which of (his/her) children is the parent of those
+                  grandchildren (or great-grandchildren)?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+                      039. ALL GRANDCHILDREN
+              1   041-950. Other Person Number
+                      997. OTHER
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1347     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q1623:D40] IS (0 OR 95 OR DK OR
+                           RF); [Q1636:D76] IS (NE 1)
+
+==========================================================================================
+
+R1637M4   D76a.WHICH CHILD PARENT-4
+          Section: D            Level: Respondent         CAI Reference: Q1637
+          Type: Character       Width: 3                  Decimals: 0
+
+          D76a.
+                  Which of (his/her) children is the parent of those
+                  grandchildren (or great-grandchildren)?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+                      039. ALL GRANDCHILDREN
+              1   041-950. Other Person Number
+                      997. OTHER
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1347     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q1623:D40] IS (0 OR 95 OR DK OR
+                           RF); [Q1636:D76] IS (NE 1)
+
+==========================================================================================
+
+R1637M5   D76a.WHICH CHILD PARENT-5
+          Section: D            Level: Respondent         CAI Reference: Q1637
+          Type: Character       Width: 3                  Decimals: 0
+
+          D76a.
+                  Which of (his/her) children is the parent of those
+                  grandchildren (or great-grandchildren)?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+                      039. ALL GRANDCHILDREN
+              1   041-950. Other Person Number
+                      997. OTHER
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1347     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q1623:D40] IS (0 OR 95 OR DK OR
+                           RF); [Q1636:D76] IS (NE 1)
+
+==========================================================================================
+
+R1637M6   D76a.WHICH CHILD PARENT-6
+          Section: D            Level: Respondent         CAI Reference: Q1637
+          Type: Character       Width: 3                  Decimals: 0
+
+          D76a.
+                  Which of (his/her) children is the parent of those
+                  grandchildren (or great-grandchildren)?
+
+                  CHOOSE ALL THAT APPLY
+          ................................................................................
+                      037. DECEASED CHILD
+                      038. ALL MY CHILDREN
+                      039. ALL GRANDCHILDREN
+                  041-950. Other Person Number
+                      997. OTHER
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1348     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q1623:D40] IS (0 OR 95 OR DK OR
+                           RF); [Q1636:D76] IS (NE 1)
+
+==========================================================================================
+
+R1638     D77a.R CARE HRS
+          Section: D            Level: Respondent         CAI Reference: Q1638
+          Type: Numeric         Width: 4                  Decimals: 0
+
+          D77a.
+                  Roughly how many hours altogether did (he/she) spend?
+
+                  IWER: DO NOT PROBE DK/RF
+          ................................................................................
+             68              0-9996. Actual Value
+             59                9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+           1221               Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND
+                                     [Q1623:D40] IS (0 OR 95 OR DK OR RF);
+                                     [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS (0 OR 95
+                                     OR DK OR RF); [Q1623:D40] IS (0 OR 95 OR DK OR RF);
+                                     [Q1636:D76] IS (NE 1)
+
+==========================================================================================
+
+R1639     D77b.R DK-200HRS
+          Section: D            Level: Respondent         CAI Reference: Q1639
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D77b.
+                  Did it amount to a total of less than 200 hours, more than 200
+          hours,
+                  or what?
+          ................................................................................
+             27         1. LESS THAN 200 HOURS
+              5         3. ABOUT 200 HOURS
+             29         5. MORE THAN 200 HOURS
+              2         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1285     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q1623:D40] IS (0 OR 95 OR DK OR
+                           RF); [Q1636:D76] IS (NE 1); [Q1638:D77a] IS (NE DK AND NE RF)
+
+==========================================================================================
+
+R1640     D77c.R DK-500HRS
+          Section: D            Level: Respondent         CAI Reference: Q1640
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D77c.
+                  (Did it amount to a total of) less than 500 hours, more than 500
+                  hours, or what?
+          ................................................................................
+              2         1. LESS THAN 500 HOURS
+              6         3. ABOUT 500 HOURS
+             20         5. MORE THAN 500 HOURS
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1319     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q1623:D40] IS (0 OR 95 OR DK OR
+                           RF); [Q1636:D76] IS (NE 1); [Q1638:D77a] IS (NE DK AND NE RF);
+                           [Q1639:D77b] IS (1 OR 3 OR DK OR RF)
+
+==========================================================================================
+
+R1649     D77d.SPOUSE HRS
+          Section: D            Level: Respondent         CAI Reference: Q1649
+          Type: Numeric         Width: 4                  Decimals: 0
+
+          D77d.
+          IF Q514 IS (NE2)
+                  Roughly how many hours altogether did
+                  (his/her) (husband/wife/partner/.../late husband/late wife/late
+          partner) spend?
+          ELSE
+                  Roughly how many hours altogether did you spend?
+          END
+
+                  IWER: DO NOT PROBE DK/RF
+          ................................................................................
+             56              0-9996. Actual Value
+             47                9998. DK (Don't Know); NA (Not Ascertained)
+                               9999. RF (Refused)
+           1245               Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND
+                                     [Q1623:D40] IS (0 OR 95 OR DK OR RF);
+                                     [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS (0 OR 95
+                                     OR DK OR RF); [Q1623:D40] IS (0 OR 95 OR DK OR RF);
+                                     [Q1636:D76] IS (NE 1); [Q597:CS15D] IS (NE 1 AND NE
+                                     3) AND [Q545:CS5x] IS (NE 5)
+
+==========================================================================================
+
+R1650     D77e.SP DK-200HRS
+          Section: D            Level: Respondent         CAI Reference: Q1650
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D77e.
+                  Did it amount to a total of less than 200 hours, more than 200
+          hours,
+                  or what?
+          ................................................................................
+             15         1. LESS THAN 200 HOURS
+              4         3. ABOUT 200 HOURS
+             27         5. MORE THAN 200 HOURS
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1301     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q1623:D40] IS (0 OR 95 OR DK OR
+                           RF); [Q1636:D76] IS (NE 1); [Q597:CS15D] IS (NE 1 AND NE 3)
+                           AND [Q545:CS5x] IS (NE 5); [Q1649:D77d] IS (NE DK AND NE RF)
+
+==========================================================================================
+
+R1651     D77f.SP DK-500HRS
+          Section: D            Level: Respondent         CAI Reference: Q1651
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D77f.
+                  (Did it amount to a total of) less than 500 hours, more than 500
+                  hours, or what?
+          ................................................................................
+              6         1. LESS THAN 500 HOURS
+              5         3. ABOUT 500 HOURS
+             15         5. MORE THAN 500 HOURS
+              1         8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+           1321     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q1623:D40] IS (0 OR 95 OR DK OR
+                           RF); [Q1636:D76] IS (NE 1); [Q597:CS15D] IS (NE 1 AND NE 3)
+                           AND [Q545:CS5x] IS (NE 5); [Q1649:D77d] IS (NE DK AND NE RF);
+                           [Q1650:D77e] IS (1 OR 3 OR DK OR RF)
+
+==========================================================================================
+
+R1660     D46.DEED
+          Section: D            Level: Respondent         CAI Reference: Q1660
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D46.
+          IF Q514 IS (NE2)
+                  (Since Q133-PR133.PREV WAVE IW MONTH OF FAMILY R / Q134-PR134.PREV
+          WAVE IW YEAR OF FAMILY R/In the last two years), did (he/she) (or (his/her)
+          husband/or (his/her) wife/or (his/her) partner/.../or (his/her) late
+          husband/or (his/her) late wife/or (his/her) late partner) give any of
+              (his/her)
+          ELSE
+                  (Since Q133-PR133.PREV WAVE IW MONTH OF FAMILY R / Q134-PR134.PREV
+          WAVE IW YEAR OF FAMILY R/In the last two years), did (he/she) or you give
+          any of your
+          END
+                  children (or grandchildren) a deed to a house?
+          ................................................................................
+             65         1. YES
+           1112         5. NO
+              5         8. DK (Don't Know); NA (Not Ascertained)
+              4         9. RF (Refused)
+            162     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q484:CS0Y10] IS (NE 1)
+
+==========================================================================================
+
+R1661M1   D46a.WHICH CHILD- 1
+          Section: D            Level: Respondent         CAI Reference: Q1661
+          Type: Character       Width: 3                  Decimals: 0
+
+          D46a.
+                  Which child was that?
+
+                  CHOOSE ALL THAT APPLY
+
+                  IF GRANDCHILD:
+                  (Which of (his/her) children is the parent of that grandchild?)
+          ................................................................................
+              9       038. ALL CHILDREN
+             55   041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1284     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q484:CS0Y10] IS (NE 1); [Q1660:D46]
+                           IS (NE 1)
+
+==========================================================================================
+
+R1661M2   D46a.WHICH CHILD- 2
+          Section: D            Level: Respondent         CAI Reference: Q1661
+          Type: Character       Width: 3                  Decimals: 0
+
+          D46a.
+                  Which child was that?
+
+                  CHOOSE ALL THAT APPLY
+
+                  IF GRANDCHILD:
+                  (Which of (his/her) children is the parent of that grandchild?)
+          ................................................................................
+                      038. ALL CHILDREN
+              2   041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1346     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q484:CS0Y10] IS (NE 1); [Q1660:D46]
+                           IS (NE 1)
+
+==========================================================================================
+
+R1661M3   D46a.WHICH CHILD- 3
+          Section: D            Level: Respondent         CAI Reference: Q1661
+          Type: Character       Width: 3                  Decimals: 0
+
+          D46a.
+                  Which child was that?
+
+                  CHOOSE ALL THAT APPLY
+
+                  IF GRANDCHILD:
+                  (Which of (his/her) children is the parent of that grandchild?)
+          ................................................................................
+                      038. ALL CHILDREN
+                  041-950. Other Person Number
+                      998. DK (Don't Know); NA (Not Ascertained)
+                      999. RF (Refused)
+           1348     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0) AND [Q1623:D40]
+                           IS (0 OR 95 OR DK OR RF); [Q484:CS0Y10] IS (NE 1); [Q1660:D46]
+                           IS (NE 1)
+
+==========================================================================================
+
+R1667     D50.TRANSFER TO KIDS 2YR
+          Section: D            Level: Respondent         CAI Reference: Q1667
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D50.
+                  Including help with education but not shared housing
+          IF Q1660 IS (1)
+                  or shared food or any deed to a house,  (since Q133-PR133.PREV WAVE
+          IW MONTH OF FAMILY R / Q134-PR134.PREV WAVE IW YEAR OF FAMILY R/in the last
+          two years)
+          ELSE
+                  or shared food, (since Q133-PR133.PREV WAVE IW MONTH OF FAMILY R /
+          Q134-PR134.PREV WAVE IW YEAR OF FAMILY R/in the last two years)
+          END
+          IF Q514 IS (NE2)
+                  did (he/she) (or (his/her) husband/or (his/her) wife/or (his/her)
+          partner/.../or (his/her) late husband/or (his/her) late wife/or (his/her)
+          late partner) give financial help totaling
+                  $500 or more to any of (his/her) children (or grandchildren)?
+          ELSE
+                  did (he/she) or you give financial help totaling
+                  $500 or more to any of your children (or grandchildren)?
+          END
+
+                  INCLUDE ONLY HELP GIVEN BEFORE R'S DEATH.
+
+                  BY FINANCIAL HELP WE MEAN GIVING MONEY, HELPING PAY
+                  BILLS, OR COVERING SPECIFIC TYPES OF COSTS SUCH AS
+                  THOSE FOR MEDICAL CARE OR INSURANCE, SCHOOLING,
+                  DOWN PAYMENT FOR A HOME, RENT, ETC.  THE FINANCIAL
+                  HELP CAN BE CONSIDERED SUPPORT, A GIFT OR A LOAN.
+          ................................................................................
+            238         1. YES
+            899         5. NO
+             17         8. DK (Don't Know); NA (Not Ascertained)
+              7         9. RF (Refused)
+            187     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0)
+
+==========================================================================================
+
+R1695     D61.TRANSFER FROM KIDS 2YR
+          Section: D            Level: Respondent         CAI Reference: Q1695
+          Type: Numeric         Width: 1                  Decimals: 0
+
+          D61.
+          IF Q514 IS (NE2)
+                  (Since Q133-PR133.PREV WAVE IW MONTH OF FAMILY R / Q134-PR134.PREV
+          WAVE IW YEAR OF FAMILY R/In the last two years) did (he/she) (or (his/her)
+          husband/or (his/her) wife/or (his/her) partner/.../or (his/her) late
+          husband/or (his/her) late wife/or (his/her) late partner)
+          ELSE
+                  (Since Q133-PR133.PREV WAVE IW MONTH OF FAMILY R / Q134-PR134.PREV
+          WAVE IW YEAR OF FAMILY R/In the last two years) did (he/she) or you
+          END
+                  receive financial help totaling $500
+                  or more from any of (his/her) children (or grandchildren)?
+
+                  BY FINANCIAL HELP WE MEAN GIVING MONEY, HELPING PAY
+                  BILLS, OR COVERING SPECIFIC TYPES OF COSTS SUCH AS
+                  THOSE FOR MEDICAL CARE OR INSURANCE, SCHOOLING,
+                  DOWN PAYMENT FOR A HOME, RENT, ETC.  THE FINANCIAL
+                  HELP CAN BE CONSIDERED SUPPORT, A GIFT OR A LOAN.
+          ................................................................................
+            106         1. YES
+           1036         5. NO
+             13         8. DK (Don't Know); NA (Not Ascertained)
+              6         9. RF (Refused)
+            187     Blank. INAP (Inapplicable): [Q1526:D049Y17] IS (0) AND [Q1623:D40] IS
+                           (0 OR 95 OR DK OR RF); [Q1526:D049Y17] IS (0)
+
+==========================================================================================
+
+RVERSION  2000 EXIT FINAL RELEASE VERSION NUMBER
+          Section: D            Level: Respondent         CAI Reference: Q9007
+          Type: Numeric         Width: 1                  Decimals: 0
+          ................................................................................
+           1348         1. First Data Release
+

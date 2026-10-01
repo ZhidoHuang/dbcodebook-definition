@@ -1,0 +1,1622 @@
+==========================================================================================
+
+HRS 2010 Final Exit Release
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquest@isr.umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section PR: PRELOAD  (Respondent)
+
+==========================================================================================
+
+HHID                HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+          1446           010210-502753.  Household Identification Number
+
+
+==========================================================================================
+
+PN                  RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           880         010.  Person Identifier
+            31         011.  Person Identifier
+             2         012.  Person Identifier
+           410         020.  Person Identifier
+             7         021.  Person Identifier
+            60         030.  Person Identifier
+             3         031.  Person Identifier
+            48         040.  Person Identifier
+             5         041.  Person Identifier
+
+
+==========================================================================================
+
+WSUBHH              2010 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+          1392           3.  1st deceased respondent from a household
+            54           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+LSUBHH              2008 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+          1376           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+            29           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            27           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+             4           3.  1st deceased respondent from a household
+             5           5.  Split household - one half of couple from SUBHH 1 or 2
+             1           6.  Split household - one half of couple from SUBHH 1 or 2
+             4           7.  Reunited household - respondents from split household
+                             reunite
+
+
+==========================================================================================
+
+WPN_SP              2010 SPOUSE/PARTNER PERSON NUMBER
+         Section: PR    Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           211         010.  Person Identifier
+            32         011.  Person Identifier
+             4         012.  Person Identifier
+           256         020.  Person Identifier
+            15         021.  Person Identifier
+             1         022.  Person Identifier
+            31         030.  Person Identifier
+            40         040.  Person Identifier
+             2         041.  Person Identifier
+             2         811.  New Spouse of Non-Original Respondent
+             1         812.  New Spouse of Non-Original Respondent
+           851       Blank.  R not coupled
+
+
+==========================================================================================
+
+         Assign: X004AmoBorn.ASK 
+         IF puSectionTracker = EMPTY OR (puSectionTracker = Start) THEN 
+         IF (Preload_HH.X024_ReIwHH_V = YES) OR ((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (SecA.StartInterview.A007TRAlive_A = YES)) THEN 
+         IF NOT (PIPreload_RVarsZ145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, 
+         SECREPEATPOST]) THEN 
+         IF SecA.ContinuInterview.Ask_Birthdate.X004TmoBorn = RESPONSE THEN 
+         Rtab[1].X004AmoBorn := Ask_Birthdate.X004TmoBorn 
+         IF ((Preload_RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND 
+         (Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST)) AND 
+         (Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST) THEN 
+         IF (Preload_HH.X024_ReIwHH_V = YES) OR ((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (SecA.StartInterview.A007TRAlive_A = YES)) THEN 
+         IF SCV.XR1_R2 <> SECOND THEN 
+         IF ((Preload_Respondents[1].X065ACouplenss = MARRIED) OR 
+         (Preload_Respondents[1].X065ACouplenss = PARTNERED_VOL)) AND 
+         BA_Respondents[3].X061ARelateR = EMPTY THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO THEN 
+         IF BA_Respondents[3].X054APNdx = EMPTY AND (SecA.Relations.A025_YrStopCoHabit = 
+         RESPONSE) THEN 
+         Rtab[2].X004AmoBorn :=  EMPTY 
+         IF (SecA.Relations.A038TCouplenss_A <> OTHER) AND (SCV.XR1_R2 <> SECOND) THEN 
+         IF SecA.Relations.Ask_BirthdateSP.X004TmoBorn = RESPONSE THEN 
+         Rtab[2].X004AmoBorn := Ask_BirthdateSP.X004TmoBorn 
+         ELSE 
+         IF SCV.XR1_R2 <> SECOND THEN 
+         IF ((Preload_Respondents[1].X065ACouplenss = MARRIED) OR 
+         (Preload_Respondents[1].X065ACouplenss = PARTNERED_VOL)) AND 
+         BA_Respondents[3].X061ARelateR = EMPTY THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO THEN 
+         IF BA_Respondents[3].X054APNdx = EMPTY AND (SecA.Relations.A025_YrStopCoHabit = 
+         RESPONSE) THEN 
+         Rtab[2].X004AmoBorn :=  EMPTY 
+         IF (SecA.Relations.A038TCouplenss_A <> OTHER) AND (SCV.XR1_R2 <> SECOND) THEN 
+         IF SecA.Relations.Ask_BirthdateSP.X004TmoBorn = RESPONSE THEN 
+         Rtab[2].X004AmoBorn := Ask_BirthdateSP.X004TmoBorn 
+         ELSE 
+         IF (Preload_HH.X024_ReIwHH_V = YES) OR ((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (SecA.StartInterview.A007TRAlive_A = YES)) THEN 
+         IF NOT (PIPreload_RVarsZ145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, 
+         SECREPEATPOST]) THEN 
+         IF SecA.ContinuInterview.Ask_Birthdate.X004TmoBorn = RESPONSE THEN 
+         Rtab[1].X004AmoBorn := Ask_Birthdate.X004TmoBorn 
+         IF ((Preload_RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND 
+         (Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST)) AND 
+         (Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST) THEN 
+         IF (Preload_HH.X024_ReIwHH_V = YES) OR ((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (SecA.StartInterview.A007TRAlive_A = YES)) THEN 
+         IF SCV.XR1_R2 <> SECOND THEN 
+         IF ((Preload_Respondents[1].X065ACouplenss = MARRIED) OR 
+         (Preload_Respondents[1].X065ACouplenss = PARTNERED_VOL)) AND 
+         BA_Respondents[3].X061ARelateR = EMPTY THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO THEN 
+         IF BA_Respondents[3].X054APNdx = EMPTY AND (SecA.Relations.A025_YrStopCoHabit = 
+         RESPONSE) THEN 
+         Rtab[2].X004AmoBorn :=  EMPTY 
+         IF (SecA.Relations.A038TCouplenss_A <> OTHER) AND (SCV.XR1_R2 <> SECOND) THEN 
+         IF SecA.Relations.Ask_BirthdateSP.X004TmoBorn = RESPONSE THEN 
+         Rtab[2].X004AmoBorn := Ask_BirthdateSP.X004TmoBorn 
+         ELSE 
+         IF SCV.XR1_R2 <> SECOND THEN 
+         IF ((Preload_Respondents[1].X065ACouplenss = MARRIED) OR 
+         (Preload_Respondents[1].X065ACouplenss = PARTNERED_VOL)) AND 
+         BA_Respondents[3].X061ARelateR = EMPTY THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO THEN 
+         IF BA_Respondents[3].X054APNdx = EMPTY AND (SecA.Relations.A025_YrStopCoHabit = 
+         RESPONSE) THEN 
+         Rtab[2].X004AmoBorn :=  EMPTY 
+         IF (SecA.Relations.A038TCouplenss_A <> OTHER) AND (SCV.XR1_R2 <> SECOND) THEN 
+         IF SecA.Relations.Ask_BirthdateSP.X004TmoBorn = RESPONSE THEN 
+         Rtab[2].X004AmoBorn := Ask_BirthdateSP.X004TmoBorn 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WX004               R MONTH BORN-UPDATED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: RTab[1].X004AmoBorn
+
+         R MONTH BORN
+
+         .................................................................................
+           121           1.  JAN
+           114           2.  FEB
+           137           3.  MAR
+           114           4.  APR
+           115           5.  MAY
+           129           6.  JUN
+           104           7.  JUL
+           137           8.  AUG
+           122           9.  SEP
+           121          10.  OCT
+           116          11.  NOV
+           115          12.  DEC
+             1       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+WZ068_R             RESPONDENT YEAR BORN
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: Respondents[1].X068AYrBorn_V
+
+         PREV WAVE MEM YR BORN
+
+         .................................................................................
+          1446       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+WX007               RESP FAM/FIN TYPE - UPDATED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X007AfinFam
+
+         RESPONDENT FAMILY/FINANCIAL TYPE
+
+         .................................................................................
+                         1.  FINANCIAL R
+                         2.  FAMILY R
+          1446           3.  FINANCIAL & FAMILY R
+                         4.  NON-FINANCIAL & NON-FAMILY R
+
+
+==========================================================================================
+
+WZ007               PREV WAVE R FIN/FAM TYPE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X077AfinFam_V
+
+         PREV WAVE PW RESPONDENT FAMILY/FINANCIAL TYPE
+
+         .................................................................................
+           182           1.  FINANCIAL R
+           120           2.  FAMILY R
+           945           3.  FINANCIAL & FAMILY R
+           199           4.  NON-FINANCIAL & NON-FAMILY R
+
+
+==========================================================================================
+
+         ASSIGN: X008AInNHome_V.ASK 
+
+         IF puSectionTracker = EMPTY OR (puSectionTracker = Start) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WZ008               R IN NH AT PREVIOUS WAVE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X008AInNHome_V
+
+         PREV WAVE R IN NURSING HOME AT PREVIOUS WAVE
+
+         .................................................................................
+           228           1.  IN NURSING HOME
+          1067           5.  R NOT IN NURSING HOME
+           151       Blank.  Data Not Available
+
+
+==========================================================================================
+
+WZ023               WHICH COHORT
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: HH.X023_Cohort_V
+
+         PREV WAVE WHICH COHORT
+
+         .................................................................................
+           585           1.  AHEAD (BORN BEFORE 1924)
+           180           2.  CODA (1924-1930)
+           576           3.  HRS (1931-1941)
+            47           4.  WAR BABY (1942-1947)
+            58           5.  EARLY BABY BOOMER (1948-1953)
+                         6.  LATE BABY BOOMER (1954-1959)
+
+
+==========================================================================================
+
+WX026M              1ST ADDRESS STATE - MASKED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: HH.X026_MainST
+
+         1ST ADDRESS STATE
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+           141           1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+           185           2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+           218           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+           103           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+           522           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+            77           6.  South Region: East South Central Division (KY, TN, AL, MS)
+           138           7.  South Region: West South Central Division (AR, LA, OK, TX)
+            16           8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+            41           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+                        10.  U.S., NA state
+                        11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+                        96.  Same State (see questionnaire)
+             3          97.  OTHER COUNTRY (SPECIFY)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+             2       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WX027               HAS 2ND RESIDENCE-UPDATED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: HH.X027_Has2ndRes
+
+         HAS 2ND RESIDENCE
+
+         .................................................................................
+           215           1.  HAS OTHER RESIDENCE
+          1231           5.  NO OTHER RESIDENCE
+                     Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+WZ028               PREV WAVE HH HAS 2ND RESIDENCE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: HH.X028_Has2ndRes_V
+
+         PREV WAVE HH HAS 2ND RESIDENCE
+
+         .................................................................................
+                         1.  HAS OTHER RESIDENCE
+                         5.  NO OTHER RESIDENCE
+          1446       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WX030M              2ND ADDRESS STATE - MASKED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: HH.X030_2ndResST
+
+         2ND ADDRESS STATE
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+            25           1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+            16           2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+            20           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+             9           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+            50           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+             5           6.  South Region: East South Central Division (KY, TN, AL, MS)
+            17           7.  South Region: West South Central Division (AR, LA, OK, TX)
+             8           8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+             7           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+                        10.  U.S., NA state
+                        11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+                        96.  Same State (see questionnaire)
+             2          97.  OTHER COUNTRY (SPECIFY)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+          1287       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WX032               OWN 2ND RESIDENCE-UPDATED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: HH.X032_Own2ndRes
+
+         OWN 2ND RESIDENCE
+
+         .................................................................................
+           103           1.  YES
+          1264           5.  NO
+            79       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+WX033               HH MOVED SINCE PREVIOUS WAVE-UPDATED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: HH.X033_HHMoved
+
+         HH MOVED SINCE PREVIOUS WAVE
+
+         .................................................................................
+           323           1.  R MOVED OUT OF THE AREA
+            64           3.  R CHANGED RESIDENCE, BUT NOT AREA
+          1044           5.  R DIDN'T MOVE
+            15       Blank.  INAP (Inapplicable); Partial Interview; Data Missing
+
+
+==========================================================================================
+
+WZ034               PREV WAVE FIRST R IW MONTH
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: HH.X034_1stRIwMo_V
+
+         PREV WAVE FIRST R IW MONTH
+
+         .................................................................................
+            24           1.  JAN
+             6           2.  FEB
+           219           3.  MAR
+           227           4.  APR
+           246           5.  MAY
+           185           6.  JUN
+           200           7.  JUL
+           124           8.  AUG
+            91           9.  SEP
+            58          10.  OCT
+            46          11.  NOV
+            20          12.  DEC
+                     Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ035               PREV WAVE FIRST R IW YEAR
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: HH.X035_1stRIwYr_V
+
+         PREV WAVE FIRST R IW YEAR
+
+         .................................................................................
+          1446               1992-2009.  Actual Value
+
+
+==========================================================================================
+
+WZ036               PREV WAVE IW MONTH OF FAMILY R
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: HH.X036_FamRIwMo_V
+
+         PREV WAVE IW MONTH OF FAMILY R
+
+         .................................................................................
+            25           1.  JAN
+             6           2.  FEB
+           216           3.  MAR
+           221           4.  APR
+           243           5.  MAY
+           178           6.  JUN
+           205           7.  JUL
+           126           8.  AUG
+            91           9.  SEP
+            56          10.  OCT
+            47          11.  NOV
+            22          12.  DEC
+            10       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ037               PREV WAVE IW YEAR OF FAMILY R
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: HH.X037_FamRIwYr_V
+
+         PREV WAVE IW YEAR OF FAMILY R
+
+         .................................................................................
+          1436               1992-2009.  Actual Value
+            10                   Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ038               PREV WAVE IW MONTH OF FINANCIAL R
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: HH.X038_FinRIwMo_V
+
+         PREV WAVE IW MONTH OF FINANCIAL R
+
+         .................................................................................
+            29           1.  JAN
+             7           2.  FEB
+           215           3.  MAR
+           222           4.  APR
+           245           5.  MAY
+           184           6.  JUN
+           203           7.  JUL
+           123           8.  AUG
+            90           9.  SEP
+            63          10.  OCT
+            46          11.  NOV
+            18          12.  DEC
+             1       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ039               PREV WAVE IW YEAR OF FINANCIAL R
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: HH.X039_FinRIwYr_V
+
+         PREV WAVE IW YEAR OF FINANCIAL R
+
+         .................................................................................
+          1445               1992-2009.  Actual Value
+             1                   Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ079               PREV WAVE R OWNS OR RENTS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: HH.X079_OwnRent_V
+
+         PREV WAVE R OWNS OR RENTS
+
+         .................................................................................
+           858           1.  OWN
+           281           2.  RENT
+           151           3.  IN NURSING HOME
+           151           7.  NEITHER OWN/RENT
+             5       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WX083               PREASSIGNED RANDOM VALUE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: HH.X083_RandomEntry
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           1446        0          99         49.95         29.40       0
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+WX084               PREASSIGNED RANDOM VALUE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: HH.X084_RandomEntry
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           1446        0          99         49.02         28.81       0
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+         Assign: X060ASex.ASK 
+         IF puSectionTracker = EMPTY OR (puSectionTracker = Start) THEN 
+         IF (Preload_HH.X024_ReIwHH_V = YES) OR ((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (SecA.StartInterview.A007TRAlive_A = YES)) THEN 
+         IF Preload_Respondents[1].X060ASex = EMPTY THEN 
+         IF Respondents[1].X060ASex = EMPTY THEN 
+         Respondents[1].X060ASex := A008ASex_A 
+         ELSE 
+         Respondents[1].X060ASex := Preload_Respondents[1].X060ASex 
+         IF Preload_Respondents[1].X060ASex = EMPTY THEN 
+         IF Respondents[1].X060ASex = EMPTY THEN 
+         Respondents[1].X060ASex := A008ASex_A 
+         ELSE 
+         Respondents[1].X060ASex := Preload_Respondents[1].X060ASex 
+         ELSE 
+         IF Preload_Respondents[1].X060ASex = EMPTY THEN 
+         IF Respondents[1].X060ASex = EMPTY THEN 
+         Respondents[1].X060ASex := A008ASex_A 
+         ELSE 
+         Respondents[1].X060ASex := Preload_Respondents[1].X060ASex 
+         IF Preload_Respondents[1].X060ASex = EMPTY THEN 
+         IF Respondents[1].X060ASex = EMPTY THEN 
+         Respondents[1].X060ASex := A008ASex_A 
+         ELSE 
+         Respondents[1].X060ASex := Preload_Respondents[1].X060ASex 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WX060_R             SEX OF INDIVIDUAL - RESPONDENT-UPDATED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: Respondents[1].X060ASex
+
+         (What is FNAME Sex?)
+         
+         INTERVIEWER: VERIFY SPELLING OF FIRST AND LAST NAME AND SEX. IF NECESSARY, USE
+         "YEAR BORN" TO CLARIFY IDENTITY OF R AND SPOUSE/PARTNER. PLEASE CHECK THAT
+         RELATION TO R AND WHETHER LIVING ARE CORRECT.
+
+         .................................................................................
+           637           1.  MALE
+           809           2.  FEMALE
+
+
+==========================================================================================
+
+WX065_R             COUPLENESS STATUS R - UPDATED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: Respondents[1].X065ACouplenss
+
+         Is NAME married or living with a partner?
+         
+         COUPLENESS STATUS OF INDIVIDUAL
+
+         .................................................................................
+           563           1.  MARRIED
+                         2.  REMARRIED
+            37           3.  PARTNERED (VOLUNTEERED)
+             1           4.  REPARTNERED (VOLUNTEERED)
+           844           6.  OTHER
+             1       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+WZ066_R             COUPLENESS STATUS R
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: Respondents[1].X066ACouplenss_V
+
+         PREV WAVE COUPLENESS-INDIVIDUAL
+
+         .................................................................................
+           602           1.  MARRIED
+                         2.  REMARRIED
+            36           3.  PARTNERED (VOLUNTEERED)
+                         4.  REPARTNERED (VOLUNTEERED)
+           807           6.  OTHER
+             1       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+WX067_R             RESPONDENT YEAR BORN - UPDATED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: Respondents[1].X067AYrBorn
+
+         (What year FNAME born)?
+
+         .................................................................................
+          1446               1900-1964.  Actual Value
+
+
+==========================================================================================
+
+         Assign: Z076_ReIwR_V.ASK 
+         IF puSectionTracker = EMPTY OR (puSectionTracker = Start) THEN 
+         IF ((Preload_RVARS.Z145_TypeExit_V <> NEWPOSTEXIT) AND 
+         (Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST)) AND 
+         (Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST) THEN 
+         IF (Preload_HH.X024_ReIwHH_V = YES) OR ((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (SecA.StartInterview.A007TRAlive_A = YES)) THEN 
+         ELSE 
+         IF SCV.XNewSp = NEWSPP THEN 
+         RVARS.Z076_ReIwR_V := NWS_POFPW_S_HHR 
+         ELSE 
+         RVARS.Z076_ReIwR_V := NWS_POFPW_S_HHR 
+         ELSE 
+         IF (Preload_HH.X024_ReIwHH_V = YES) OR ((Preload_HH.X024_ReIwHH_V <> YES) AND 
+         (SecA.StartInterview.A007TRAlive_A = YES)) THEN 
+         RVARS.Z076_ReIwR_V := NWS_POFPW_S_HHR 
+         ELSE 
+         RVARS.Z076_ReIwR_V := NWS_POFPW_S_HHR 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WZ076               R EVER INTERVIEWED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z076_ReIwR_V
+
+         PREV WAVE R EVER INTERVIEWED
+
+         .................................................................................
+                         0.  NEW S/P OF PREV WAVE(S) HH R
+          1443           1.  REINTERVIEW R
+             3           5.  NEVER INTERVIEWED R
+
+
+==========================================================================================
+
+WZ077               R ORIG SAMP MEMBER
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z077_OrigSamp_V
+
+         PREV WAVE R ORIG SAMP MEMBER
+
+         .................................................................................
+          1398           1.  ORIGINAL SAMPLE MEMBER
+            48           5.  NOT AN ORIGINAL SAMPLE MEMBER
+
+
+==========================================================================================
+
+WZ078               R AGE ELIGIBLE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z078_AgeElig_V
+
+         PREV WAVE R AGE ELIGIBLE
+
+         .................................................................................
+          1444           1.  YES
+             2           5.  NO
+                     Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ080               PREV WAVE R MARITAL STATUS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z080_MarStat_V
+
+         PREV WAVE R MARITAL STATUS
+
+         .................................................................................
+            61           0.  UNKNOWN
+           658           1.  MARRIED
+             7           2.  MARRIED SP ABSENT (IN INSTITUTION)
+             4           3.  MARRIED SP ABSENT (NOT IN INSTITUTION)
+           123           4.  DIVORCED/SEPARATED
+           551           5.  WIDOWED
+            42           6.  NEVER MARRIED
+                     Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ081               PREV WAVE S/P DIE DURING STUDY
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z081_SpPDie_V
+
+         PREV WAVE S/P DIE DURING STUDY
+
+         .................................................................................
+           305           1.  YES
+           639           5.  NO
+           502       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ089               PREV WAVE R HAS GLAUCOMA
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z089_Glaucoma_V
+
+         PREV WAVE R HAS GLAUCOMA
+
+         .................................................................................
+           237           1.  YES
+          1138           5.  NO
+            71       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ090               PREV WAVE R USES HEARING AID
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z090_HearAid_V
+
+         PREV WAVE R USES HEARING AID
+
+         .................................................................................
+           264           1.  YES
+          1177           5.  NO
+             5       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+         Assign: Z092_IwMo_V.ASK 
+         IF (Init.A120_UPDATER > 0) OR Init.A503_REFRESH <> EMPTY THEN 
+         IF Preload_RVARS.Z092_IwMo_V = EMPTY AND Preload_RVARS.Z093_IwYr_V = EMPTY THEN 
+         IF Preload_HH.X034_1stRIwMo_V <> EMPTY AND Preload_HH.X035_1stRIwYr_V <> EMPTY 
+         THEN 
+         RVARS.Z092_IwMo_V := Preload_HH.X034_1stRIwMo_V 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WZ092               PREV WAVE IW MONTH
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: RVARS.Z092_IwMo_V
+
+         PREV WAVE IW MONTH
+
+         .................................................................................
+            29           1.  JAN
+             6           2.  FEB
+           210           3.  MAR
+           222           4.  APR
+           244           5.  MAY
+           184           6.  JUN
+           200           7.  JUL
+           125           8.  AUG
+            95           9.  SEP
+            61          10.  OCT
+            48          11.  NOV
+            22          12.  DEC
+
+
+==========================================================================================
+
+         Assign: Z093_IwYr_V.ASK 
+         IF (Init.A120_UPDATER > 0) OR Init.A503_REFRESH <> EMPTY THEN 
+         IF Preload_RVARS.Z092_IwMo_V = EMPTY AND Preload_RVARS.Z093_IwYr_V = EMPTY THEN 
+         IF Preload_HH.X034_1stRIwMo_V <> EMPTY AND Preload_HH.X035_1stRIwYr_V <> EMPTY 
+         THEN 
+         RVARS.Z093_IwYr_V := Preload_HH.X035_1stRIwYr_V 
+         ELSE 
+         RVARS.Z093_IwYr_V := A062T2YrsAgo_A 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WZ093               PREV WAVE IW YEAR
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: RVARS.Z093_IwYr_V
+
+         PREV WAVE IW YEAR
+
+         .................................................................................
+          1446               1992-2009.  Actual Value
+
+
+==========================================================================================
+
+WZ095               PREV WAVE IW SELF/PROXY
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z095_SelfPrxyIw_V
+
+         PREV WAVE IW SELF/PROXY
+
+         .................................................................................
+          1101           1.  SELF
+           331           2.  PROXY
+            11           3.  PROXY NAME NOT PRELOADED
+             3       Blank.  New Spouse; Data Not Available
+
+
+==========================================================================================
+
+WZ096               PREV WAVE PROXY RTR
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: RVARS.Z096_PrxyRTR_V
+
+         PREV WAVE PROXY RTR
+
+         .................................................................................
+                         1.  SELF
+           132           2.  SPOUSE/PARTNER
+            41           3.  SON
+             2           4.  STEPSON
+                         5.  SON-IN-LAW
+           100           6.  DAUGHTER
+                         7.  STEPDAUGHTER
+             6           8.  DAUGHTER-IN-LAW
+            13           9.  GRANDCHILD
+                        10.  FATHER
+                        11.  FATHER-IN-LAW
+                        12.  MOTHER
+                        13.  MOTHER-IN-LAW
+                        14.  R'S PARENTS
+             1          15.  BROTHER
+                        16.  BROTHER-IN-LAW
+             8          17.  SISTER
+                        18.  SISTER-IN-LAW
+            24          19.  OTHER RELATIVE
+             8          20.  OTHER INDIVIDUAL
+                        21.  ORGANIZATION
+                        22.  EMPLOYEE OF 'INSTITUTION'
+             1          23.  PAID HELPER
+             5          24.  PROFESSIONAL
+                        25.  PROFESSIONAL (SPECIFY)
+                        26.  LATE SPOUSE/PARTNER
+                        27.  EX-SPOUSE/PARTNER
+                        28.  UNLISTED CHILD OR CHILD-IN-LAW
+                        29.  NOT PROXY INTERVIEW
+                        30.  FORMER STEP-CHILD
+                        31.  FORMER CHILD-IN-LAW
+             1          32.  RELATIONSHIP UNKNOWN
+                        33.  SPOUSE/ PARTNER/P OF GRANDCHILD
+                        90.  AMBIGUOUS CHILD RELATIONSHIP
+                        91.  AMBIGUOUS CHILD-IN-LAW RELATIONSHIP
+          1104       Blank.  Self interview previous wave
+
+
+==========================================================================================
+
+WZ098               PREV WAVE OWN OTHER REAL ESTATE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z098_OthRealEstate_V
+
+         PREV WAVE OWN OTHER REAL ESTATE
+
+         .................................................................................
+           134           1.  YES
+          1295           5.  NO
+            17       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ101               PREV WAVE R HAS HIGH BLOOD PRESSURE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z101_HighBP_V
+
+         PREV WAVE R HAS HIGH BLOODPRESSURE
+
+         .................................................................................
+          1004           1.  YES
+           430           5.  NO
+            12       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ102               PREV WAVE R HAS DIABETES
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z102_Diabetes_V
+
+         PREV WAVE R HAS DIABETES
+
+         .................................................................................
+           451           1.  YES
+           986           5.  NO
+             9       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ103               PREV WAVE R HAS CANCER
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z103_Cancer_V
+
+         PREV WAVE R HAS CANCER
+
+         .................................................................................
+           376           1.  YES
+          1064           5.  NO
+             6       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ104               PREV WAVE R HAS LUNG PROBLEMS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z104_Lung_V
+
+         PREV WAVE R HAS LUNG PROBLEMS
+
+         .................................................................................
+           308           1.  YES
+          1132           5.  NO
+             6       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ105               PREV WAVE R HAS HEART PROBLEMS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z105_Heart_V
+
+         PREV WAVE R HAS HEART PROBLEMS
+
+         .................................................................................
+           672           1.  YES
+           762           5.  NO
+            12       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ106               PREV WAVE R HAS HAD STROKE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z106_Stroke_V
+
+         PREV WAVE R HAS HAD STROKE
+
+         .................................................................................
+           267           1.  YES
+          1170           5.  NO
+             9       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ107               PREV WAVE R HAS PSYCHIATRIC PROBLEMS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z107_Psychiatric_V
+
+         PREV WAVE R HAS PSYCHIATRIC PROBLEMS
+
+         .................................................................................
+           325           1.  YES
+          1114           5.  NO
+             7       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ108               PREV WAVE R HAS ARTHRITIS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z108_Arthritis_V
+
+         PREV WAVE R HAS ARTHRITIS
+
+         .................................................................................
+           950           1.  YES
+           485           5.  NO
+            11       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ110               PREV WAVE R HAS HAD BROKEN HIP
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z110_BrokeHip_V
+
+         PREV WAVE R HAS HAD BROKEN HIP
+
+         .................................................................................
+            58           1.  YES
+          1251           5.  NO
+           137       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ112               PREV WAVE R HAD CATARACT SURGERY
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z112_Cataract_V
+
+         PREV WAVE R HAS HAD CATARACTS
+
+         .................................................................................
+            62           1.  YES, ONE EYE DONE
+           359           2.  YES, BOTH EYES DONE
+           884           5.  NO
+           141       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ113               PREV WAVE GAVE MEDICARE NUMBER
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z113_GaveMedcareNo_V
+
+         PREV WAVE GAVE MEDICARE NUMBER
+
+         .................................................................................
+          1209           1.  YES
+            94           5.  NO
+           143       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ114               PREV WAVE NUMBER OF GRANDCHILDREN
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: RVARS.Z114_NumGKids_V
+
+         PREV WAVE NUMBER OF GRANDCHILDREN
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           1400        0          58          6.70          6.84       0
+         -----------------------------------------------------------------
+            46          95.  ASSUMED TO BE ZERO
+
+
+==========================================================================================
+
+WZ117               PREV WAVE R HAS MEMORY DISEASE
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z117_MemryDisease_V
+
+         PREV WAVE R HAS MEMORY DISEASE
+
+         .................................................................................
+           288           1.  YES
+          1144           5.  NO
+            14       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ118               PREV WAVE EVER APPLY FOR SSDI
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z118_ApplySSDI_V
+
+         PREV WAVE EVER APPLY FOR SSDI
+
+         .................................................................................
+             1           1.  YES
+                         3.  APPLICATION STILL BEING CONSIDERED
+          1410           5.  NO
+            35       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ123               PREV WAVE R CURRENTLY WORKING
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z123_CurWorkng_V
+
+         PREV WAVE R CURRENTLY WORKING
+
+         .................................................................................
+           106           1.  YES
+          1333           5.  NO
+             7       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ124               PREV WAVE R RETIRED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z124_Retired_V
+
+         PREV WAVE R RETIRED
+
+         .................................................................................
+          1174           1.  YES
+           269           5.  NO
+             3       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ125               PREV WAVE R RECEIVES SS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z125_RGetSS_V
+
+         PREV WAVE R RECEIVES SS
+
+         .................................................................................
+          1316           1.  YES
+           115           5.  NO
+            15       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ126               PREV WAVE S/P RECEIVES SS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z126_SpPGetSS_V
+
+         PREV WAVE S/P RECEIVES SS
+
+         .................................................................................
+           560           1.  YES
+            71           5.  NO
+           815       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ127               PREV WAVE R RECEIVES SSI
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z127_RGetSSI_V
+
+         PREV WAVE R RECEIVES SSI
+
+         .................................................................................
+           115           1.  YES
+          1291           5.  NO
+            40       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ133               PREV WAVE R HAD PENSION ON JOB
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z133_JobPension_V
+
+         PREV WAVE R HAD PENSION ON JOB
+
+         .................................................................................
+            38           1.  YES
+          1403           5.  NO
+             5       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ134               PREV WAVE RETIREMENT STATUS
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z134_RetireStat_V
+
+         PREV WAVE RETIREMENT STATUS
+
+         .................................................................................
+           984           1.  FULLY
+            51           3.  PARTLY
+            73           5.  NOT
+           338       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ135               PREV WAVE LIVE ON FARM
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z135_LivFarm_V
+
+         PREV WAVE LIVE ON FARM
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+          1446       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ136               PREV WAVE SELF/ELSE EMPLOYED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z136_SelfElseEmp_V
+
+         PREV WAVE SELF/ELSE EMPLOYED
+
+         .................................................................................
+            66           1.  ELSE
+            40           2.  SELF
+          1340       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ137               PREV WAVE HRS WORKED PER WEEK
+         Section: PR    Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: RVARS.Z137_WorkHrWk_V
+
+         PREV WAVE HRS WORKED PER WEEK
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            115        0         100         30.14         20.86    1331
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+WZ138               PREV WAVE WEEKS WORKED/YEAR
+         Section: PR    Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: RVARS.Z138_WorkWkYr_V
+
+         PREV WAVE WEEKS WORKED/YEAR
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            115        0          52         40.73         19.18    1331
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+WZ144               PREV WAVE LIVE IN COMPLEX W/SERVICES
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z144_LivComplex_V
+
+         PREV WAVE LIVE IN COMPLEX W/SERVICES
+
+         .................................................................................
+                         1.  YES
+                         5.  NO
+          1446       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ204               FIRST YEAR R WAS DIAGNOSED WITH DIABETES
+         Section: PR    Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: RVARS.Z204_DiabetesFirstYr_V
+
+         FIRST YEAR R WAS DIAGNOSED WITH DIABETES
+
+         .................................................................................
+           470               1950-2008.  Actual Value
+           976                   Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+WZ205               R REPORTED THAT S/HE EVER SMOKED
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RVARS.Z205_EverSmoked_V
+
+         R REPORTED THAT S/HE EVER SMOKED
+
+         .................................................................................
+           919           1.  YES
+           524           5.  NO
+             3       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+WX501               PREASSIGNED RANDOM VALUE -1
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X501_1Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           706           1.  RANDOM ASSIGNMENT 1
+           740           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+WX502               PREASSIGNED RANDOM VALUE -2
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X502_2Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           734           1.  RANDOM ASSIGNMENT 1
+           712           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+WX503               PREASSIGNED RANDOM VALUE -3
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X503_3Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           722           1.  RANDOM ASSIGNMENT 1
+           724           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+WX504               PREASSIGNED RANDOM VALUE -4
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X504_4Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           718           1.  RANDOM ASSIGNMENT 1
+           728           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+WX505               PREASSIGNED RANDOM VALUE -5
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X505_5Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           730           1.  RANDOM ASSIGNMENT 1
+           716           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+WX506               PREASSIGNED RANDOM VALUE -6
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X506_6Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           713           1.  RANDOM ASSIGNMENT 1
+           733           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+WX507               PREASSIGNED RANDOM VALUE -7
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X507_7Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           696           1.  RANDOM ASSIGNMENT 1
+           750           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+WX508               PREASSIGNED RANDOM VALUE -8
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X508_8Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           724           1.  RANDOM ASSIGNMENT 1
+           722           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+WX509               PREASSIGNED RANDOM VALUE -9
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X509_9Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           712           1.  RANDOM ASSIGNMENT 1
+           734           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+WX510               PREASSIGNED RANDOM VALUE -10
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X510_10Random1_2
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           748           1.  RANDOM ASSIGNMENT 1
+           698           2.  RANDOM ASSIGNMENT 2
+
+
+==========================================================================================
+
+WX511               PREASSIGNED RANDOM VALUE -11
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X511_1Random1_3
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           480           1.  RANDOM ASSIGNMENT 1
+           490           2.  RANDOM ASSIGNMENT 2
+           476           3.  RANDOM ASSIGNMENT 3
+
+
+==========================================================================================
+
+WX512               PREASSIGNED RANDOM VALUE -12
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X512_2Random1_3
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           476           1.  RANDOM ASSIGNMENT 1
+           468           2.  RANDOM ASSIGNMENT 2
+           502           3.  RANDOM ASSIGNMENT 3
+
+
+==========================================================================================
+
+WX513               PREASSIGNED RANDOM VALUE -13
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X513_3Random1_3
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           467           1.  RANDOM ASSIGNMENT 1
+           527           2.  RANDOM ASSIGNMENT 2
+           452           3.  RANDOM ASSIGNMENT 3
+
+
+==========================================================================================
+
+WX514               PREASSIGNED RANDOM VALUE -14
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X514_4Random1_3
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           476           1.  RANDOM ASSIGNMENT 1
+           482           2.  RANDOM ASSIGNMENT 2
+           488           3.  RANDOM ASSIGNMENT 3
+
+
+==========================================================================================
+
+WX515               PREASSIGNED RANDOM VALUE -15
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X515_5Random1_3
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           477           1.  RANDOM ASSIGNMENT 1
+           493           2.  RANDOM ASSIGNMENT 2
+           476           3.  RANDOM ASSIGNMENT 3
+
+
+==========================================================================================
+
+WX516               PREASSIGNED RANDOM VALUE -16
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X516_6Random1_3
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           470           1.  RANDOM ASSIGNMENT 1
+           482           2.  RANDOM ASSIGNMENT 2
+           494           3.  RANDOM ASSIGNMENT 3
+
+
+==========================================================================================
+
+WX517               PREASSIGNED RANDOM VALUE -17
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X517_7Random1_3
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           501           1.  RANDOM ASSIGNMENT 1
+           478           2.  RANDOM ASSIGNMENT 2
+           467           3.  RANDOM ASSIGNMENT 3
+
+
+==========================================================================================
+
+WX518               PREASSIGNED RANDOM VALUE -18
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X518_8Random1_3
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           499           1.  RANDOM ASSIGNMENT 1
+           464           2.  RANDOM ASSIGNMENT 2
+           483           3.  RANDOM ASSIGNMENT 3
+
+
+==========================================================================================
+
+WX519               PREASSIGNED RANDOM VALUE -19
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X519_9Random1_3
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           472           1.  RANDOM ASSIGNMENT 1
+           482           2.  RANDOM ASSIGNMENT 2
+           492           3.  RANDOM ASSIGNMENT 3
+
+
+==========================================================================================
+
+WX520               PREASSIGNED RANDOM VALUE -20
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: RTab[1].X520_10Random1_3
+
+         PREASSIGNED RANDOM VALUE
+
+         .................................................................................
+           471           1.  RANDOM ASSIGNMENT 1
+           487           2.  RANDOM ASSIGNMENT 2
+           488           3.  RANDOM ASSIGNMENT 3
+
+
+==========================================================================================
+
+WX521               PREASSIGNED RANDOM INTEGER VALUE -1
+         Section: PR    Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: RTab[1].X521_1RandomInt
+
+         PREASSIGNED RANDOM INTEGER VALUE
+
+         .................................................................................
+          1446                   1-100.  Actual Value
+
+
+==========================================================================================
+
+WX522               PREASSIGNED RANDOM INTEGER VALUE -2
+         Section: PR    Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: RTab[1].X522_2RandomInt
+
+         PREASSIGNED RANDOM INTEGER VALUE
+
+         .................................................................................
+          1446                   1-100.  Actual Value
+
+
+==========================================================================================
+
+WVDATE              2010 DATA MODEL VERSION
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         User Note:  This variable identifies which data model was used to interview the
+         household.  Please reference the data description for a summary of changes in
+         each data model.
+
+         .................................................................................
+             8           1.  Version 1
+            74           2.  Version 2
+            12           3.  Version 3
+            20           4.  Version 4
+            37           5.  Version 5
+            60           6.  Version 6
+          1161           7.  Version 7
+            74           8.  Version 8
+
+
+==========================================================================================
+
+WVERSION            2010 DATA RELEASE VERSION
+         Section: PR    Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+          1446           2.  HRS 2010 Exit Final Release
+
+
+==========================================================================================

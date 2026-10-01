@@ -1,0 +1,3646 @@
+==========================================================================================
+
+HRS 2018 Final Exit
+
+Note to Users: This codebook is designed to match the distribution dataset. 
+Codebook metadata are derived from the data collection instrument.
+If you have questions concerning codebook layout or content please bring
+them to the attention of the HRS staff at hrsquestions@umich.edu.
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5 inch; print
+in portrait orientation using a mono-space 10-point font.
+
+==========================================================================================
+
+Section A: COVERSCREEN  (Respondent)
+
+==========================================================================================
+
+HHID                          HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 6   Decimals: 0
+
+         .................................................................................
+           980           010475-919959.  Household Identification Number
+
+
+==========================================================================================
+
+PN                            RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           557         010.  Person Identifier
+            39         011.  Person Identifier
+             1         012.  Person Identifier
+           293         020.  Person Identifier
+             9         021.  Person Identifier
+            32         030.  Person Identifier
+             2         031.  Person Identifier
+            44         040.  Person Identifier
+             2         041.  Person Identifier
+             1         042.  Person Identifier
+
+
+==========================================================================================
+
+XQSUBHH                       2018 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           948           3.  1st deceased respondent from a household
+            32           4.  2nd deceased respondent from a household
+
+
+==========================================================================================
+
+PSUBHH                        2016 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 1   Decimals: 0
+
+         .................................................................................
+           895           0.  Original sample household - no split from divorce or
+                             separation of spouses or partners
+            33           1.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+            34           2.  Split household - one half of couple from SUBHH 0 and new
+                             spouse or partner, if any
+             5           3.  1st deceased respondent from a household
+             1           4.  2nd deceased respondent from a household
+             2           5.  Split household - one half of couple from SUBHH 1 or 2
+                         6.  Split household - one half of couple from SUBHH 1 or 2
+            10           7.  Reunited household - respondents from split household
+                             reunite
+
+
+==========================================================================================
+
+XQPN_SP                       2018 SPOUSE/PARTNER PERSON NUMBER
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+
+         .................................................................................
+           150         010.  Person Identifier
+            38         011.  Person Identifier
+             3         012.  Person Identifier
+           145         020.  Person Identifier
+            11         021.  Person Identifier
+            12         030.  Person Identifier
+             3         031.  Person Identifier
+            32         040.  Person Identifier
+             4         041.  Person Identifier
+             1         811.  Spouse of Non-Original Respondent
+           581       Blank.  R not coupled
+
+
+==========================================================================================
+
+         ASSIGN: Init.A500_CurDate := SysDate 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA500                        DATE OF INTERVIEW - MONTH
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: Init.A500_CurDate
+
+         *
+
+         .................................................................................
+            56           1.  JAN
+            58           2.  FEB
+            36           3.  MAR
+            34           4.  APR
+           126           5.  MAY
+           139           6.  JUN
+           116           7.  JUL
+           111           8.  AUG
+            91           9.  SEP
+            79          10.  OCT
+            75          11.  NOV
+            59          12.  DEC
+
+
+==========================================================================================
+
+         ASSIGN: Init.A501_CurDateYear := Year(Init.A500_CurDate ) 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA501                        DATE OF INTERVIEW - YEAR
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: Init.A501_CurDateYear
+
+         *
+
+         .................................................................................
+           980               2018-2019.  Actual Value
+
+
+==========================================================================================
+
+         ASSIGN: Init.A061TLCY_A := MinusInt(Year(SysDate) + '1') 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA061                        LAST CALENDAR YR CALCULATED
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: Init.A061TLCY_A
+
+         *
+
+         .................................................................................
+           980               2017-2018.  Actual Value
+
+
+==========================================================================================
+
+         ASSIGN: Init.A062T2YrsAgo_A := MinusInt(Year(SysDate) + '2') 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA062                        TWO YEARS AGO
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: Init.A062T2YrsAgo_A
+
+         *
+
+         .................................................................................
+           980               2016-2017.  Actual Value
+
+
+==========================================================================================
+
+         ASSIGN: Init.A063_ElapseMo := PlusInt(MultInt(MinusInt(Year(SysDate) + 
+         Init.A062T2YrsAgo_A ) + '12') + Month(SysDate)) 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA063                        ELAPSED MONTHS FROM NOW TO TWO YRS AGO
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: Init.A063_ElapseMo
+
+         *
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            980       25          36         30.86          3.00       0
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+         ASSIGN: Init.A064_ElapseMo2 := 
+         PlusInt(MultInt(MinusInt(Preload_RVARS.Z093_IwYr_V + MinusInt(Year(SysDate) + 
+         '2')) + '12') + OrdEnum(Preload_RVARS.Z092_IwMo_V )) 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA064                        NUM MO FROM PREV WAVE IW TO TWO YRS AGO
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: Init.A064_ElapseMo2
+
+         *
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            734        1          23          8.22          3.64     246
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND  = YES 
+         THEN 
+         IF SecA.StartInterview.A155_SelfPrxy = PXYSPISREPORTERNOTSAME THEN 
+         ASSIGN: SecA.StartInterview.A009_SelfPrxy := 'PXYSPISREPORTER' 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND  = YES 
+         THEN 
+         IF SecA.StartInterview.A155_SelfPrxy <> Empty THEN 
+         ASSIGN: SecA.StartInterview.A009_SelfPrxy := 
+         OrdEnum(SecA.StartInterview.A155_SelfPrxy ) 
+         ASSIGN: SecA.StartInterview.A009_SelfPrxy := 'PXYSPISREPORTER' 
+         ASSIGN: SecA.StartInterview.A009_SelfPrxy := 
+         OrdEnum(SecA.StartInterview.A155_SelfPrxy ) 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA009                        PROXY/SELF INTERVIEW
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.StartInterview.A009_SelfPrxy
+
+         INSTR: Designate type of interview
+
+         .................................................................................
+           296           2.  PROXY, SPOUSE OR PARTNER IS REPORTER
+           684           3.  PROXY, NON-SPOUSE IS REPORTER
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND  = YES 
+         THEN 
+
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+
+         IF ActiveMode = 'IWERADMIN' THEN 
+
+         IF Preload_RVARS.Z095_SelfPrxyIw_V <> SLF AND Preload_RVARS.Z076_ReIwR_V = 
+         REIWR THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA010                        CURRENT - WAVE PROXY
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.StartInterview.A010_CurrWavePrxy
+
+         [PW PROXY NAME: [PREV WAVE PROXY NAME]/PW PROXY RELATIONSHIP:]
+         
+         [INSTR:  The name or relationship of the proxy at the previous interview is not
+         recorded.  Unless you learn from the current wave proxy that s/he also did the
+         previous interview, enter code 3 below./Previous wave proxy was [Prev Wave Proxy
+         Name][Prev Wave Proxy Relationship]]
+         
+         INSTR: Is current wave proxy the same person or someone else?
+
+         .................................................................................
+           160           1.  SAME PERSON AS IN PRIOR WAVE
+            40           2.  DIFFERENT/NEW PERSON
+             5           3.  NOT KNOWN
+           775       Blank.  INAP (Inapplicable); Partial Interview; Self Interview prior
+                             wave; Data Missing
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND  = YES 
+         THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+         IF ActiveMode = 'IWERADMIN' THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> PXYSPISREPORTER THEN 
+         IF Preload_RVARS.Z096_PrxyRTR_V = Empty OR Preload_RVARS.Z096_PrxyRTR_V = 
+         UNKNOWN OR SecA.StartInterview.A010_CurrWavePrxy <> SAMEPERSONASINPRIORWAVE 
+         THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND  = YES 
+         THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+         IF ActiveMode = 'IWERADMIN' THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> PXYSPISREPORTER THEN 
+         IF Preload_RVARS.Z096_PrxyRTR_V <> Empty AND 
+         SecA.StartInterview.A010_CurrWavePrxy = SAMEPERSONASINPRIORWAVE THEN 
+         ASSIGN: SecA.StartInterview.A103_PrxyRTR := 
+         OrdEnum(Preload_RVARS.Z096_PrxyRTR_V ) 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND  = YES 
+         THEN 
+         IF SecA.StartInterview.A009_SelfPrxy <> SLF THEN 
+         IF ActiveMode = 'IWERADMIN' THEN 
+         IF SecA.StartInterview.A009_SelfPrxy = PXYSPISREPORTER THEN 
+         ASSIGN: SecA.StartInterview.A103_PrxyRTR := 'SPOUSEPARTNER' 
+         ASSIGN: SecA.StartInterview.A103_PrxyRTR := 
+         OrdEnum(Preload_RVARS.Z096_PrxyRTR_V ) 
+         ASSIGN: SecA.StartInterview.A103_PrxyRTR := 'SPOUSEPARTNER' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA103                        PROXY RELATIONSHIP TO R
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.StartInterview.A103_PrxyRTR
+
+         INSTR: Designate the proxy reporter's relationship to [R's First Name]
+
+         .................................................................................
+           307           2.  SPOUSE/PARTNER
+           160           3.  SON
+             1           4.  STEPSON OR SON OF PARTNER
+                         5.  SPOUSE/PARTNER OF DAUGHTER
+           337           6.  DAUGHTER
+             6           7.  STEPDAUGHTER OR DAUGHTER OF PARTNER
+             6           8.  SPOUSE/PARTNER OF SON
+            20           9.  GRANDCHILD OF R OR SP/P
+            25          15.  BROTHER
+            29          17.  SISTER
+            56          19.  OTHER RELATIVE
+            30          20.  OTHER INDIVIDUAL
+                        23.  PAID HELPER
+             2          24.  PROFESSIONAL
+             1          33.  SPOUSE/PARTNER OF GRANDCHILD
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+                     Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND  = YES 
+         THEN 
+         IF ActiveMode = 'IWERADMIN' THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND  = YES 
+         THEN 
+         IF NOT(ActiveMode = 'IWERADMIN') THEN 
+         ASSIGN: SecA.StartInterview.A012_LangSwitch := 'ENGLISH' 
+         ASSIGN: SecA.StartInterview.A012_LangSwitch := 'ENGLISH' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA012                        CHANGE LANGUAGE
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.StartInterview.A012_LangSwitch
+
+         INSTR: Select English or Spanish
+
+         .................................................................................
+           951           1.  ENGLISH
+            29           2.  SPANISH
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.ContinuInterview.A165_A013_ 
+         IF ActiveMode = 'IWERADMIN' THEN 
+         {PREVIOUS ASK} SecA.ContinuInterview.A165_A013_ 
+         IF NOT(ActiveMode = 'IWERADMIN') THEN 
+         ASSIGN: SecA.ContinuInterview.A013_Continue := 'CONTNoRecord' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA013                        INTRO CONFIDENTIALITY
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.ContinuInterview.A013_Continue
+
+         This study is interested in learning about important aspects of peoples' lives
+         such as their health, financial and family situations.
+         
+         This interview is completely voluntary. If we should come to any question that
+         you don't want to answer, just let me know and I will go on to the next
+         question.  [Respondent's First Name] identity as a participant and any
+         personally identifying information you provide will be kept confidential.
+         
+         A Department of Health and Human Services Certificate of Confidentiality covers
+         this research in order to help ensure [First Name]'s privacy. This certificate
+         can help protect the researchers from being forced to release any research
+         information that identifies  [First Name].
+         
+         This interview may be recorded so that my supervisor can evaluate my
+         performance.
+
+         .................................................................................
+           971           1.  CONTINUE
+             9           5.  CONTINUE WITHOUT RECORDING
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA121                        DATE OF DEATH- MONTH
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.ContinuInterview.A121_MoDeath
+
+         What was the date on which [R's First Name] died?
+         
+         Month:
+         
+         Day:
+         
+         Year:
+
+         .................................................................................
+            83           1.  JAN
+            96           2.  FEB
+            82           3.  MAR
+            81           4.  APR
+            85           5.  MAY
+            94           6.  JUN
+            68           7.  JUL
+            68           8.  AUG
+            63           9.  SEP
+            88          10.  OCT
+            75          11.  NOV
+            84          12.  DEC
+             7          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+             6       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.ContinuInterview.A121_MoDeath 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA123                        DATE OF DEATH- YEAR
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecA.ContinuInterview.A123_YrDeath
+
+         What was the date on which [R's First Name] died?
+         
+         Month: [MONTH OF DEATH]
+         
+         Day: [DAY OF DEATH]
+         
+         Year:
+
+         .................................................................................
+           969               2011-2019.  Actual Value
+             5                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+             6                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+         IF NOT(Preload_RVARS.Z145_TypeExit_V IN [2,3,4]) AND (ActiveLanguage = ENG AND 
+         IWType = EXT OR ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+         IF NOT(Preload_RVARS.Z145_TypeExit_V IN [2,3,4]) AND (ActiveLanguage = ENG AND 
+         IWType = EXT OR ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA124                        LOCATION OF DEATH
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.ContinuInterview.A124_PlaceDied
+
+         At the time of death, was [he/she] in a hospital, in a nursing home, at home, in
+         a hospice facility, or what?
+         
+         INSTR: If R was receiving hospice care at home at the time of death select '3.
+         At home'
+
+         .................................................................................
+           266           1.  IN HOSPITAL
+           211           2.  IN NURSING HOME
+           340           3.  AT HOME
+           105           4.  IN HOSPICE
+            30           5.   Assisted living facility/retirement home/senior care home
+            21           7.  OTHER (SPECIFY); Including at work, outside, accident,
+                             relative's home
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+             6       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+         IF NOT(Preload_RVARS.Z145_TypeExit_V IN [2,3,4]) AND (ActiveLanguage = ENG AND 
+         IWType = EXT OR ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+         IF NOT(Preload_RVARS.Z145_TypeExit_V IN [2,3,4]) AND (ActiveLanguage = ENG AND 
+         IWType = EXT OR ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA126M                       R DIED- STATE - MASKED
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.ContinuInterview.A126_StateDied
+
+         In what state and county did [he/she] die?
+         
+         INSTR: Enter 'ot' for other country
+         
+         State:
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+            37           1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+           120           2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+           152           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+            91           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+           219           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+            69           6.  South Region: East South Central Division (KY, TN, AL, MS)
+           105           7.  South Region: West South Central Division (AR, LA, OK, TX)
+            64           8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+            99           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+             4          11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+            20       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+         IF NOT(Preload_RVARS.Z145_TypeExit_V IN [2,3,4]) AND (ActiveLanguage = ENG AND 
+         IWType = EXT OR ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+         IF NOT(Preload_RVARS.Z145_TypeExit_V IN [2,3,4]) AND (ActiveLanguage = ENG AND 
+         IWType = EXT OR ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA129M                       R DEATH CERTIFICATE- STATE - MASKED
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.ContinuInterview.A129_StateDeathCert
+
+         In what state and county was [his/her] death certificate filed?
+         
+         INSTR: ENTER 'OT' FOR OTHER COUNTRY.
+         
+         State:
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+            35           1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+           121           2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+           152           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+            90           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+           214           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+            69           6.  South Region: East South Central Division (KY, TN, AL, MS)
+           106           7.  South Region: West South Central Division (AR, LA, OK, TX)
+            63           8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+           101           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+             5          11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+             5          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+            19       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+         IF NOT(Preload_RVARS.Z145_TypeExit_V IN [2,3,4]) AND (ActiveLanguage = ENG AND 
+         IWType = EXT OR ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+         IF NOT(Preload_RVARS.Z145_TypeExit_V IN [2,3,4]) AND (ActiveLanguage = ENG AND 
+         IWType = EXT OR ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA131                        DEATH EXPECTED/UNEXPECTED
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.ContinuInterview.A131_DeathExpected
+
+         (Was the death expected at about the time it occurred, or was it unexpected?)
+
+         .................................................................................
+           552           1.  EXPECTED
+           384           2.  UNEXPECTED
+            34           7.  OTHER (SPECIFY)
+             4           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+             6       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+         IF NOT(Preload_RVARS.Z145_TypeExit_V IN [2,3,4]) AND (ActiveLanguage = ENG AND 
+         IWType = EXT OR ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+         IF NOT(Preload_RVARS.Z145_TypeExit_V IN [2,3,4]) AND (ActiveLanguage = ENG AND 
+         IWType = EXT OR ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA133M1M                     CAUSE OF DEATH-MASKED- 1
+         Section: A     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecA.ContinuInterview.A133_CauseDeath
+
+         (What was the major illness that led to [his/her] death?)
+
+         User Note:  See Health Conditions Master Code for detailed codes.  Some
+         categories have been collapsed to protect respondent confidentiality: 
+         113-118=119, 181-183=189, 190-196=997, 602-607=601.
+
+         .................................................................................
+           196                 101-103.  Cancers and tumors; skin conditions
+            29                 111-119.  Musculoskeletal system and connective tissue
+           290                 121-129.  Heart, circulatory and blood conditions
+           113                 131-139.  Allergies; hay fever; sinusitis; tonsillitis
+            19                 141-149.  Endocrine, metabolic and nutritional conditions
+            60                 151-159.  Digestive system (stomach, liver, gallbladder,
+                                         kidney, bladder)
+            38                 161-169.  Neurological and sensory conditions
+                               171-179.  Reproductive system and prostate conditions
+             7                 181-189.  Emotional and psychological conditions
+                               191-196.  Miscellaneous
+            63                 595-597.  Other symptoms
+            18                 601-607.  Not A Health Condition
+             3                     996.  None
+           124                     997.  Other health condition
+            14                     998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+             6                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+         IF NOT(Preload_RVARS.Z145_TypeExit_V IN [2,3,4]) AND (ActiveLanguage = ENG AND 
+         IWType = EXT OR ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+         IF Preload_RVARS.Z145_TypeExit_V IN [2,3,4] AND Preload_RVARS.Z131_YrDeath_V = 
+         Empty OR Preload_RVARS.Z131_YrDeath_V = Empty AND Preload_RVARS.Z145_TypeExit_V 
+         = Empty AND (ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND 
+         IWType = EXT) THEN 
+
+         IF NOT(Preload_RVARS.Z145_TypeExit_V IN [2,3,4]) AND (ActiveLanguage = ENG AND 
+         IWType = EXT OR ActiveLanguage = SPN AND IWType = EXT) THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA133M2M                     CAUSE OF DEATH-MASKED- 2
+         Section: A     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecA.ContinuInterview.A133_CauseDeath
+
+         (What was the major illness that led to [his/her] death?)
+
+         User Note:  See Health Conditions Master Code for detailed codes.  Some
+         categories have been collapsed to protect respondent confidentiality: 
+         113-118=119, 181-183=189, 190-196=997, 602-607=601.
+
+         .................................................................................
+            15                 101-103.  Cancers and tumors; skin conditions
+            11                 111-119.  Musculoskeletal system and connective tissue
+            66                 121-129.  Heart, circulatory and blood conditions
+            49                 131-139.  Allergies; hay fever; sinusitis; tonsillitis
+            17                 141-149.  Endocrine, metabolic and nutritional conditions
+            25                 151-159.  Digestive system (stomach, liver, gallbladder,
+                                         kidney, bladder)
+            12                 161-169.  Neurological and sensory conditions
+                               171-179.  Reproductive system and prostate conditions
+             2                 181-189.  Emotional and psychological conditions
+                               191-196.  Miscellaneous
+            18                 595-597.  Other symptoms
+             3                 601-607.  Not A Health Condition
+                                   996.  None
+            63                     997.  Other health condition
+             3                     998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           696                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.ContinuInterview.A133_CauseDeath 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA134                        DURATION FINAL ILLNESS/DEATH
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.ContinuInterview.A134_
+
+         (About how long was it between the start of the final illness and the death: was
+         it one or two hours, less than a day, less than a week, less than a month, less
+         than a year, or was it more than a year?)
+
+         .................................................................................
+            75           1.  ONE OR TWO HOURS (OR NO WARNING)
+            62           2.  LESS THAN A DAY
+           163           3.  LESS THAN A WEEK
+           178           4.  LESS THAN A MONTH
+           236           5.  LESS THAN A YEAR
+           224           6.  MORE THAN A YEAR
+            36           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+             6       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.ContinuInterview.Ask_Birthdate 
+         IF ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT THEN 
+         ASSIGN: SecA.ContinuInterview.A019_RAge := 
+         Trunc(DivisionReal(SecA.ContinuInterview.A207DaysLived + '365.25')) 
+         {PREVIOUS ASK} SecA.ContinuInterview.Ask_Birthdate 
+         IF NOT(ActiveLanguage = ENG AND gp5 = EXT OR ActiveLanguage = SPN AND gp5 = 
+         EXT) THEN 
+         ASSIGN: SecA.ContinuInterview.A019_RAge := Ask_Birthdate.RAge 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA019                        R CURRENT AGE CALCULATION
+         Section: A     Level: Respondent      Type: Numeric    Width: 3   Decimals: 0
+         Ref: SecA.ContinuInterview.A019_RAge
+
+         *
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            980       46         108         80.06         11.88       0
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+         IF SCV.XR1_R2 <> SECOND THEN 
+
+          IF Preload_Respondents[iDM].X065ACouplenss = MARRIED OR 
+         Preload_Respondents[iDM].X065ACouplenss = REMARRIED OR 
+         Preload_Respondents[iDM].X065ACouplenss = PARTNERED_VOL OR 
+         Preload_Respondents[iDM].X065ACouplenss = REPARTNERED_VOL THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA020                        1ST R SAME SP/P
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A020TSameSpP_A
+
+         IF THIS IS A REINTERVIEW HH (X024=1) and WE DON'T KNOW YEAR OF LAST IW FOR
+         LAST-WAVE FIRST R (HHX035_1stRIwYr_V = EMPTY):
+         (We need to update our records.  They show that  [R's First Name]  [was
+         married/was living with a partner as if married].)
+         
+         OTHERWISE, IF THIS IS A REINTERVIEW HH (X024=1):
+         (First we need to update our records.  As of  [Prev Wave IW Month - First R]
+         [Prev Wave IW Year - First R]  they show that  [R's First Name]  [was
+         married/was living with a partner as if married].)
+         
+         ASK ALL Rs:
+         (Was  [R's Last IW Spouse's/Partner's First Name]  still [his/her]
+         [husband/wife/partner] at the time [he/she] (died/passed away)?)
+         
+         INSTR: IF R'S LAST IW SPOUSE/PARTNER IS DECEASED, ENTER '5'.
+         
+         INSTR: PLEASE DOUBLE CHECK YOUR ANSWER TO THIS QUESTION BECAUSE ONCE YOU ANSWER
+         IT, YOU CANNOT BACK UP TO CHANGE IT.
+
+         .................................................................................
+           372           1.  YES, AND SP/PARTNER WAS LIVING WHEN R (DIED/PASSED AWAY)
+             4           3.  THAT PARTNER BECAME R'S SPOUSE AND WAS LIVING WHEN R
+                             (DIED/PASSED AWAY)
+            27           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           577       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (A166_A020TSameSpP_A IN [YesAndSpPtrIsLiving, ThatPtrIsNowRsSp] AND 
+         piStartInterviewA009_SelfPrxy = PXYSPISREPORTER) OR A166_A020TSameSpP_A IN 
+         [YesAndSpPtrIsLiving, ThatPtrIsNowRsSp] THEN 
+          ASSIGN: A023_PWSpPAlive := YES 
+          ELSEIF A166_A020TSameSpP_A = NO THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA023                        PREVIOUS WAVE SP/P ALIVE
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A023_PWSpPAlive
+
+         (Was Respondent's [Spouse/Partner First Name] still alive at that time?)
+
+         .................................................................................
+           362           1.  YES
+            23           5.  NO
+           595       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+
+         IF SCV.XR1_R2 <> SECOND THEN 
+
+         IF Preload_Respondents[iDM].X065ACouplenss = MARRIED OR 
+         Preload_Respondents[iDM].X065ACouplenss = REMARRIED OR 
+         Preload_Respondents[iDM].X065ACouplenss = PARTNERED_VOL OR 
+         Preload_Respondents[iDM].X065ACouplenss = REPARTNERED_VOL THEN 
+
+         IF SecA.Relations.A020TSameSpP_A = NO THEN 
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+
+         IF SCV.XR1_R2 <> SECOND THEN 
+
+         IF Preload_Respondents[iDM].X065ACouplenss = MARRIED OR 
+         Preload_Respondents[iDM].X065ACouplenss = REMARRIED OR 
+         Preload_Respondents[iDM].X065ACouplenss = PARTNERED_VOL OR 
+         Preload_Respondents[iDM].X065ACouplenss = REPARTNERED_VOL THEN 
+
+         IF SecA.Relations.A020TSameSpP_A = NO THEN 
+
+         IF SCV.XR1_R2 <> SECOND THEN 
+
+         IF Preload_Respondents[iDM].X065ACouplenss = MARRIED OR 
+         Preload_Respondents[iDM].X065ACouplenss = REMARRIED OR 
+         Preload_Respondents[iDM].X065ACouplenss = PARTNERED_VOL OR 
+         Preload_Respondents[iDM].X065ACouplenss = REPARTNERED_VOL THEN 
+
+         IF SecA.Relations.A020TSameSpP_A = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA024                        MO COUPLE STOP LIVING TOGETHER/DIE
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.Relations.A024_MoStopCoHabit
+
+         IF SPOUSE/PARTNER STILL ALIVE (A023=1)
+         In what month and year did [R's First Name] and [R's [Spouse/Partner] First
+         Name]  stop living together?
+         
+         [INSTR: IF R AND [SP/P FIRST NAME] HAVE NEVER LIVED TOGETHER SELECT 'NEVER LIVED
+         TOGETHER' FROM THE BOTTOM OF THE MONTH LIST.]
+         
+         OTHERWISE:
+         In what month and year did  [R [Spouse/Partner]'s First Name] die?
+         
+         Month: 
+         
+         Year:
+
+         .................................................................................
+             2           1.  JAN
+             2           2.  FEB
+             1           3.  MAR
+             2           4.  APR
+             2           5.  MAY
+             2           6.  JUN
+             1           7.  JUL
+             4           8.  AUG
+             2           9.  SEP
+             1          10.  OCT
+             2          11.  NOV
+             3          12.  DEC
+             2          97.  NEVER LIVED TOGETHER
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           953       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.Relations.A024_MoStopCoHabit 
+
+         IF SecA.Relations.A024_MoStopCoHabit <> neverLived THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA025                        YEAR COUPLE STOPPED LIVE TOGETHER/DIE
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecA.Relations.A025_YrStopCoHabit
+
+         IF SPOUSE/PARTNER STILL ALIVE (A023=1)
+         In what month and year did [R's First Name] and [R's [Spouse/Partner] First
+         Name]  stop living together?
+         
+         INSTR: IF R AND [SP/P FIRST NAME] HAVE NEVER LIVED TOGETHER SELECT 'NEVER LIVED
+         TOGETHER' FROM THE BOTTOM OF THE MONTH LIST.
+         
+         OTHERWISE:
+         In what month and year did  [R [Spouse/Partner]'s First Name] die?
+         
+         Month: [MO R AND SP/P STOP LIVING IN SAME HH]
+         
+         Year:
+
+         .................................................................................
+            24               2015-2018.  Actual Value
+             1                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           955                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.Relations.A167_A028_RInNHome 
+         IF SecA.Relations.A167_A028_RInNHome <> Empty THEN 
+         IF OrdEnum(SecA.Relations.A167_A028_RInNHome ) = 2 THEN 
+         ASSIGN: SecA.Relations.A028_RInNHome := 'YES' 
+         {PREVIOUS ASK} SecA.Relations.A167_A028_RInNHome 
+         IF SecA.Relations.A167_A028_RInNHome <> Empty THEN 
+         IF NOT(OrdEnum(A167_A028_RInNHome) = 2) THEN 
+         ASSIGN: SecA.Relations.A028_RInNHome := 
+         OrdEnum(A167_SecA.Relations.A028_RInNHome ) 
+         {PREVIOUS ASK} SecA.Relations.A167_A028_RInNHome 
+         IF NOT(A167_A028_RInNHome <> Empty) THEN 
+         ASSIGN: SecA.Relations.A028_RInNHome := 'NO' 
+         ASSIGN: SecA.Relations.A028_RInNHome := 'YES' 
+         ASSIGN: SecA.Relations.A028_RInNHome := 
+         OrdEnum(A167_SecA.Relations.A028_RInNHome ) 
+         ASSIGN: SecA.Relations.A028_RInNHome := 'NO' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA028                        R IN NURSING HOME
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A028_RInNHome
+
+         INSTR: This question asks where R was living at the time of death. This may be
+         the same or different than the place R was at the time of death.
+         
+         [(Was [First Name] living in a nursing home or other health care facility at the
+         time [he/she] (died/passed away)?)]
+         
+         DEF:  By ""nursing home or other long-term health care facility"" we mean a
+         facility that provides all of the following services for its residents: 24-hour
+         nursing assistance and supervision, dispensing of medication, personal
+         assistance, and room & meals.
+         
+         INSTR: If R was receiving hospice care at home at the time of death, select '5.
+         No'
+
+         .................................................................................
+           340           1.  YES
+           640           5.  NO
+                         8.  DK (Don't Know)
+                         9.  RF (Refused)
+                     Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.Relations.A167_A028_RInNHome 
+
+         IF SecA.Relations.A167_A028_RInNHome = YESNURSINGHOME THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA237                        TYPE OF HEALTH CARE FACILITY
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.Relations.A237_TypeFacility
+
+         What kind of facility was that?
+
+         .................................................................................
+           183           1.  NURSING HOME OR SKILLED-NURSING FACILITY
+            15           2.  MEMORY CARE CENTER
+            45           3.  ASSISTED LIVING FACILITY
+            22           4.  REHABILITATION CENTER
+             6           5.  RETIREMENT COMMUNITY
+             1           6.  SENIOR LIVING FACILITY
+             3           7.  REST HOME
+             1           8.  HOSPITAL
+             3           9.  HOSPICE
+             2          10.  OTHER (SPECIFY)
+             1          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           698       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.Relations.A167_A028_RInNHome 
+
+         IF SecA.Relations.A167_A028_RInNHome = YESNURSINGHOME THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA247                        ROOM TYPE IN FACILITY
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A247_RoomType
+
+         Did [he/she] have a private apartment, private room, or a shared room in this
+         facility?
+                 
+         DEF:  A private apartment would include a kitchen facility for personal use
+         while a private room would not. A private apartment or private room may be
+         shared with a spouse, partner, or family member. A shared room would be shared
+         with someone outside of a spouse , partner, or family member.
+
+         .................................................................................
+            21           1.  PRIVATE APARTMENT
+           118           2.  PRIVATE ROOM
+           138           3.  SHARED ROOM
+             4           7.  OTHER
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           698       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A020TSameSpP_A IN [1,3,4] THEN 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 = SECOND THEN 
+         IF SCV.XNewSp = NEWSPP THEN 
+         ASSIGN: SecA.Relations.A030_LivTogethr := 'YES' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A020TSameSpP_A IN [1,3,4] THEN 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+         IF SCV.XR1_R2 = SECOND THEN 
+         IF SCV.XNewSp = NEWSPP THEN 
+         ASSIGN: SecA.Relations.A030_LivTogethr := 'YES' 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A020TSameSpP_A IN [1,3,4] THEN 
+         IF SCV.XR1_R2 = SECOND THEN 
+         IF SCV.XNewSp = NEWSPP THEN 
+         ASSIGN: SecA.Relations.A030_LivTogethr := 'YES' 
+         ASSIGN: SecA.Relations.A030_LivTogethr := 'YES' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA030                        COUPLE LIVE TOGETHER
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A030_LivTogethr
+
+         IF THE EXIT R LIVED IN A HOSPICE AT TIME OF DEATH (A167/A167_A028=2):
+         Up until [he/she] went into the hospice were [you/[he/she] and [his/her] 
+         [husband/wife/partner]] living together in a house or apartment?
+         
+         IF THE EXIT R LIVED IN A NURSING HOME AT TIME OF DEATH (A167/A167_A028=1):
+         At the time of [his/her] death were [you/[he/she] and [his/her]
+         [husband/wife/partner]] living in the same (nursing home/health care facility)?
+         
+         OTHERWISE:
+         At the time of [his/her] death were [you/[he/she] and [his/her] 
+         [husband/wife/partner]] living together in a house or apartment?
+
+         .................................................................................
+           301           1.  YES
+            56           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           622       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A030_LivTogethr = NO THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES THEN 
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A030_LivTogethr = NO THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A030_LivTogethr = NO THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA031                        MO R AND SP/P STOP LIVING IN SAME HH
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.Relations.A031_MoStopLivTogthr
+
+         In what month and year did [you/they] stop living together?
+         
+         Month:
+         
+         Year:
+
+         .................................................................................
+             5           1.  JAN
+             3           2.  FEB
+             7           3.  MAR
+             2           4.  APR
+             5           5.  MAY
+             4           6.  JUN
+             4           7.  JUL
+             3           8.  AUG
+             4           9.  SEP
+             6          10.  OCT
+             3          11.  NOV
+             5          12.  DEC
+                        97.  R AND SPOUSE HAVE NEVER LIVED TOGETHER
+             5          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           924       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.Relations.A031_MoStopLivTogthr 
+
+         IF SecA.Relations.A031_MoStopLivTogthr <> neverLived THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA032                        YR R AND SP/P STOP LIVING IN SAME HH
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecA.Relations.A032_YrStopLivTogthr
+
+         (In what month and year did [you/they] stop living together?)
+         
+         Month: [A031 Month]
+         
+         Year:
+
+         .................................................................................
+            55               1983-2019.  Actual Value
+             1                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           924                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A030_LivTogethr = NO THEN 
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A030_LivTogethr = NO THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A030_LivTogethr = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA033                        SP/P IN NURSHOME
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A033_SpInNHome
+
+         At the time of [Respondent's First Name] death, was [Respondent's First Name]
+         [husband/wife/partner]] living in a nursing home or other health care facility?
+         
+         DEF: By "nursing home or other health facility" we mean a facility that provides
+         all of the following services for its residents: dispensing of medication,
+         24-hour nursing assistance and supervision, personal assistance, and room &
+         meals.
+
+         .................................................................................
+             9           1.  YES
+            47           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           924       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.Relations.A033_SpInNHome 
+
+         IF (Preload_Respondents[iDM].X065ACouplenss = MARRIED OR 
+         Preload_Respondents[iDM].X065ACouplenss = REMARRIED OR 
+         Preload_Respondents[iDM].X065ACouplenss = PARTNERED_VOL OR 
+         Preload_Respondents[iDM].X065ACouplenss = REPARTNERED_VOL) AND 
+         SecA.Relations.A020TSameSpP_A IN [1,3,4] THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA034                        MARRIED OR SEPARATED
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A034_RMarSep
+
+         Would [he/she] have said [he/she] was [married/partnered] or separated?
+
+         .................................................................................
+            53           1.  [MARRIED/PARTNERED]
+             1           2.  SEPARATED
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+           924       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+XQA042                        SP AGE 65 OR OLDER
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A042_SpAge65
+
+         *
+
+         .................................................................................
+                         1.  R GIVES SPOUSE/PARTNER'S AGE OR BIRTHYEAR
+             6           2.  R REPORTS SPOUSE/PARTNER'S AGE 65 OR OVER
+             3           3.  R REPORTS SPOUSE/PARTNER'S AGE UNDER 65
+                         4.  IWER REPORTS: SPOUSE/PARTNER'S AGE 65 OR OVER
+                         5.  IWER REPORTS: SPOUSE/PARTNER'S AGE UNDER 65
+           971       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF piA007TRAlive_A <> NO AND (A020TSameSpP_A IN [YESANDSPPTRISLIVING, 
+         THATPTRISNOWRSSP, THATSPISNOWRSPTR] AND A034_RMarSep <> SEPARATED) THEN 
+          ASSIGN:A044TSpAge_A := Ask_BirthdateSP.RAge 
+         SCV.XR1_R2 <> Second THEN 
+          ASSIGN: A044TSpAge_A := Ask_BirthdatenewSP.RAge 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA044                        SP/P CURRENT AGE CALCULATION
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.Relations.A044TSpAge_A
+
+         *
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+             36       54          96         69.83          9.74     944
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+         IF Preload_Respondents[iDM].X065ACouplenss = 5 AND 
+         SecA.Relations.A166_A020TSameSpP_A = 5 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA026                        R MARRIED
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A026_Rmarried
+
+         First we need to update our records. As of [[Prev Wave Month][Prev Wave
+         Year]/two years ago], they show that [R's First Name] was not married or living
+         with a partner. At the time [he/she] (died/passed away), was [he/she/[R's First
+         Name]] married (to someone else)?
+         
+         INSTR: PLEASE DOUBLE CHECK YOUR ANSWER TO THIS QUESTION BECAUSE ONCE YOU ANSWER
+         IT, YOU CANNOT BACK UP TO CHANGE IT.
+
+         .................................................................................
+            22           1.  YES
+           582           5.  NO
+           376       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.SecA.Relations.A027_Rpartnerd = Empty AND 
+         SecA.Relations.A026_Rmarried <> YES AND SecA.Relations.A038TCouplenss_A = OTHER 
+         THEN 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 = SECOND THEN 
+         IF SCV.XNewSp = NEWSPP THEN 
+         IF Preload_Respondents[iDM].X065ACouplenss = PARTNERED_VOL THEN 
+         ASSIGN: SecA.Relations.A027_Rpartnerd := 'YES' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.SecA.Relations.A027_Rpartnerd = Empty AND 
+         SecA.Relations.A026_Rmarried <> YES AND SecA.Relations.A038TCouplenss_A = OTHER 
+         THEN 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+         IF SCV.XR1_R2 = SECOND THEN 
+         IF SCV.XNewSp = NEWSPP THEN 
+         IF Preload_Respondents[iDM].X065ACouplenss = PARTNERED_VOL THEN 
+         ASSIGN: SecA.Relations.A027_Rpartnerd := 'YES' 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.SecA.Relations.A027_Rpartnerd = Empty AND 
+         SecA.Relations.A026_Rmarried <> YES AND SecA.Relations.A038TCouplenss_A = OTHER 
+         THEN 
+         IF SCV.XR1_R2 = SECOND THEN 
+         IF SCV.XNewSp = NEWSPP THEN 
+         IF Preload_Respondents[iDM].X065ACouplenss = PARTNERED_VOL THEN 
+         ASSIGN: SecA.Relations.A027_Rpartnerd := 'YES' 
+         ASSIGN: SecA.Relations.A027_Rpartnerd := 'YES' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA027                        LIVING W/P
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A027_Rpartnerd
+
+         At the time [he/she] (died/passed away), did [he/she] have a partner [he/she]
+         lived with as if married?
+         
+         INSTR: Once you answer this question you cannot back up and change the answer
+         for this question.
+
+         .................................................................................
+             6           1.  YES
+           575           5.  NO
+           399       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A026_Rmarried = YES OR SecA.Relations.A027_Rpartnerd = YES 
+         AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE THEN 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 = SECOND THEN 
+         IF Preload_Respondents[iDM].X065ACouplenss = MARRIED OR 
+         Preload_Respondents[iDM].X065ACouplenss = PARTNERED_VOL THEN 
+         ASSIGN: SecA.Relations.A209_LivTogethr := 'YES' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A026_Rmarried = YES OR SecA.Relations.A027_Rpartnerd = YES 
+         AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE THEN 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+         IF SCV.XR1_R2 = SECOND THEN 
+         IF Preload_Respondents[iDM].X065ACouplenss = MARRIED OR 
+         Preload_Respondents[iDM].X065ACouplenss = PARTNERED_VOL THEN 
+         ASSIGN: SecA.Relations.A209_LivTogethr := 'YES' 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A026_Rmarried = YES OR SecA.Relations.A027_Rpartnerd = YES 
+         AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 = SECOND THEN 
+         IF Preload_Respondents[iDM].X065ACouplenss = MARRIED OR 
+         Preload_Respondents[iDM].X065ACouplenss = PARTNERED_VOL THEN 
+         ASSIGN: SecA.Relations.A209_LivTogethr := 'YES' 
+         ASSIGN: SecA.Relations.A209_LivTogethr := 'YES' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA209                        COUPLE LIVE TOGETHER (A030_)
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A209_LivTogethr
+
+         At the time of (his/her) death were you living together in a house or apartment?
+
+         .................................................................................
+            28           1.  YES
+            17           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+             1           9.  RF (Refused)
+           934       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A209_LivTogethr = YES THEN 
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A209_LivTogethr = YES THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A209_LivTogethr = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA036                        MO STARTED LIVING WITH NEW SP/P
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.Relations.A036_
+
+         In what month and year [did [Respondent First Name] and [[his/her] ([new)]
+         [husband/wife/partner]] start living together?
+         
+         Month:
+         
+         Year:
+
+         .................................................................................
+                         1.  JAN
+             1           2.  FEB
+             1           3.  MAR
+                         4.  APR
+                         5.  MAY
+             2           6.  JUN
+             1           7.  JUL
+             1           8.  AUG
+                         9.  SEP
+             1          10.  OCT
+             1          11.  NOV
+                        12.  DEC
+                        97.  R AND SPOUSE HAVE NEVER LIVED TOGETHER
+             2          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           970       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.Relations.A036_ 
+
+         IF SecA.Relations.A036_ <> neverLived THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA037                        YEAR STARTED LIVING WITH NEW SP/P
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecA.Relations.A037_AYrStartCouple
+
+         (In what month and year did [Respondent's First Name] and [[his/her] ([new)
+         [husband/wife/partner]] start living together?)
+         
+         Month: [A036 Month]
+         
+         Year:
+
+         .................................................................................
+            10               1960-2018.  Actual Value
+                                  9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           970                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF (SecA.Relations.A020TSameSpP_A = NO OR SecA.Relations.A020TSameSpP_A IN 
+         [1,3,4] AND SecA.Relations.A034_RMarSep = SEPARATED) AND 
+         (SecA.Relations.A026_Rmarried <> YES AND SecA.Relations.A027_Rpartnerd <> YES) 
+         THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'NO' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A026_Rmarried = YES THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO OR SecA.Relations.A020TSameSpP_A <> NO 
+         AND SecA.Relations.A034_RMarSep = SEPARATED THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'YES' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A027_Rpartnerd = YES THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO OR SecA.Relations.A020TSameSpP_A <> NO 
+         AND SecA.Relations.A034_RMarSep = SEPARATED THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'YES' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A209_LivTogethr = YES THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'YES' 
+         {PREVIOUS ASK} SecA.Relations.A035_SepWPartnr 
+         IF SecA.Relations.A035_SepWPartnr = YES THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'YES' 
+         {PREVIOUS ASK} SecA.Relations.A035_SepWPartnr 
+         IF SecA.Relations.A035_SepWPartnr <> Empty THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'NO' 
+         {PREVIOUS ASK} SecA.Relations.A230_SpInNHome 
+         IF NOT(A231_RMarSep = SEPARATED) THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'YES' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF (SecA.Relations.A020TSameSpP_A = NO OR SecA.Relations.A020TSameSpP_A IN 
+         [1,3,4] AND SecA.Relations.A034_RMarSep = SEPARATED) AND 
+         (SecA.Relations.A026_Rmarried <> YES AND SecA.Relations.A027_Rpartnerd <> YES) 
+         THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'NO' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A026_Rmarried = YES THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO OR SecA.Relations.A020TSameSpP_A <> NO 
+         AND SecA.Relations.A034_RMarSep = SEPARATED THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'YES' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A027_Rpartnerd = YES THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO OR SecA.Relations.A020TSameSpP_A <> NO 
+         AND SecA.Relations.A034_RMarSep = SEPARATED THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'YES' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A209_LivTogethr = YES THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'YES' 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF (SecA.Relations.A020TSameSpP_A = NO OR SecA.Relations.A020TSameSpP_A IN 
+         [1,3,4] AND SecA.Relations.A034_RMarSep = SEPARATED) AND 
+         (SecA.Relations.A026_Rmarried <> YES AND SecA.Relations.A027_Rpartnerd <> YES) 
+         THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'NO' 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A026_Rmarried = YES THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO OR SecA.Relations.A020TSameSpP_A <> NO 
+         AND SecA.Relations.A034_RMarSep = SEPARATED THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'YES' 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A027_Rpartnerd = YES THEN 
+         IF SecA.Relations.A020TSameSpP_A = NO OR SecA.Relations.A020TSameSpP_A <> NO 
+         AND SecA.Relations.A034_RMarSep = SEPARATED THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'YES' 
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+         IF SecA.Relations.A209_LivTogethr = YES THEN 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'YES' 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'NO' 
+         ASSIGN: SecA.Relations.A045_NewSpP := 'YES' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA045                        R HAS NEW SPOUSE OR PARTNER
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A045_NewSpP
+
+         *
+
+         .................................................................................
+            18           1.  YES
+            34           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           928       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A209_LivTogethr = NO THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES THEN 
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A209_LivTogethr = NO THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A209_LivTogethr = NO THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA210                        MO R AND SP/P STOP LIVING IN SAME HH (A031_)
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.Relations.A210_MoStopLivTogthr
+
+         In what month and year did [you/they] stop living together?
+         
+         
+         INSTR: IF R AND [HUSBAND/WIFE/PARTNER/SPOUSE] HAVE NEVER LIVED TOGETHER SELECT
+         'NEVER LIVED TOGETHER' FROM THE BOTTOM OF THE MONTH LIST.
+         
+         Month:
+         
+         Year:
+
+         .................................................................................
+                         1.  JAN
+                         2.  FEB
+                         3.  MAR
+             2           4.  APR
+             2           5.  MAY
+                         6.  JUN
+                         7.  JUL
+                         8.  AUG
+             1           9.  SEP
+             1          10.  OCT
+                        11.  NOV
+                        12.  DEC
+             3          97.  R AND SPOUSE HAVE NEVER LIVED TOGETHER
+             8          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           963       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.Relations.A210_MoStopLivTogthr 
+
+         IF SecA.Relations.A210_MoStopLivTogthr <> neverLived THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA211                        YR R AND SP/P STOP LIVING IN SAME HH (A032_)
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecA.Relations.A211_YrStopLivTogthr
+
+         (In what month and year did [you/they] stop living together?)
+         
+         Month: [A031_MoStopLivTogthr]
+         
+         Year:
+
+         .................................................................................
+             8               1994-2016.  Actual Value
+             6                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           966                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A209_LivTogethr = NO THEN 
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF NOT(piPreload_HHX024_ReIwHH_V = YES OR piPreload_HHX024_ReIwHH_V <> YES AND 
+         StartInterview.A007TRAlive_A = YES AND A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE) THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A209_LivTogethr = NO THEN 
+
+         IF SCV.XR1_R2 <> SECOND AND SecA.A158_NewCohortNotEligable <> CASEINELIGIBLE 
+         THEN 
+
+         IF SecA.Relations.A209_LivTogethr = NO THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA230                        SP/P IN NURSHOME (A033_)
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A230_SpInNHome
+
+         At the time of [Respondent First Name]'s death, were you living in a nursing
+         home or other health care facility?
+         
+         DEF: By "nursing home or other health facility" we mean a facility that provides
+         all of the following services for its residents: dispensing of medication,
+         24-hour nursing assistance and supervision, personal assistance, and room &
+         meals.
+
+         .................................................................................
+                         1.  YES
+            15           5.  NO
+             2           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           963       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.Relations.A230_SpInNHome 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA231                        MARRIED OR SEPARATED (A034_)
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A231_RMarSep
+
+         Would [he/she] have said [he/she] was [married/partnered], or separated?
+
+         .................................................................................
+             5           1.  [MARRIED/PARTNERED]
+             9           2.  SEPARATED
+             3           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           963       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.Relations.A230_SpInNHome 
+
+         IF SecA.Relations.A231_RMarSep = SEPARATED THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA035                        SEPARATED/PARTNERED
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.Relations.A035_SepWPartnr
+
+         At the time of [his/her] death, was [he/she] living with a partner as if
+         married?
+
+         .................................................................................
+                         1.  YES
+             9           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           971       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+
+         IF SecA.relations.A028_RInNHome = YES THEN 
+
+         IF SecA.relations.A028_RInNHome = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA065                        MONTH MOVED TO NH
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.HousingLocation.NursingHome.A065_
+
+         In what month and year did [R's First Name] move to the (nursing home/healthcare
+         facility/hospice) where [he/she] was a resident just before [his/her] death?
+         
+         Month:
+         
+         Year:
+
+         .................................................................................
+            30           1.  JAN
+            14           2.  FEB
+            32           3.  MAR
+            22           4.  APR
+            31           5.  MAY
+            28           6.  JUN
+            21           7.  JUL
+            30           8.  AUG
+            24           9.  SEP
+            29          10.  OCT
+            31          11.  NOV
+            28          12.  DEC
+            20          98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           640       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.HousingLocation.NursingHome.A065_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA066                        YEAR MOVED TO NURS HOME
+         Section: A     Level: Respondent      Type: Numeric    Width: 4   Decimals: 0
+         Ref: SecA.HousingLocation.NursingHome.A066_
+
+         (In what month and year did [R's First Name] move to the (nursing
+         home/healthcare facility/hospice) where [he/she] was a resident just before
+         [his/her] death?)
+         
+         Month: [A065 Month]
+         
+         Year:
+
+         .................................................................................
+           333               1986-2019.  Actual Value
+             7                    9998.  DK (Don't Know); NA (Not Ascertained)
+                                  9999.  RF (Refused)
+           640                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.HousingLocation.NursingHome.A067_CtyNHome 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA068M                       REGION FACILITY LOCATED - MASKED
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.HousingLocation.NursingHome.A068_STNHome
+
+         In what city and state was the (nursing home/health care facility/hospice) where
+         [he/she] was living?
+         
+         City: [Facility Location City]
+         
+         State:
+         
+         INSTR: Enter 'ot' for other country
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+            12           1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+            39           2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+            62           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+            41           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+            81           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+            18           6.  South Region: East South Central Division (KY, TN, AL, MS)
+            28           7.  South Region: West South Central Division (AR, LA, OK, TX)
+            25           8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+            29           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+                        11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           645       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+
+         IF SecA.relations.A028_RInNHome = YES THEN 
+
+         IF SecA.Financial.A055TRFinFam2_A = FINANCIALR OR 
+         SecA.Financial.A055TRFinFam2_A = FINANCIAL_FAMILYR OR SCV.XR1_R2 = FIRST THEN 
+
+         IF SecA.relations.A028_RInNHome = YES THEN 
+
+         IF SecA.Financial.A055TRFinFam2_A = FINANCIALR OR 
+         SecA.Financial.A055TRFinFam2_A = FINANCIAL_FAMILYR OR SCV.XR1_R2 = FIRST THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA070                        NH: STILL OWN/RENT HOME
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.HousingLocation.NursingHome.A070_NHOwnRent
+
+         Did [R's First Name] still own or rent a residence outside the facility where
+         [he/she][and [his/her] [husband/wife/partner]] [were/was] living?
+
+         .................................................................................
+           147           1.  YES
+           191           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           641       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 = FIRST AND (SecA.relations.A028_RInNHome <> YES OR 
+         SecA.HousingLocation.NursingHome.A070_NHOwnRent = YES) THEN 
+         IF Preload_HH.X025_MainCty <> Empty THEN 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 = SECOND AND SecA.HousingLocation.A071_SameMainRes = Empty AND 
+         SecA.HousingLocation.A072_SameAreaMain = Empty THEN 
+         IF Preload_HH.X033_HHMoved = CHANGEDRES THEN 
+         ASSIGN: SecA.HousingLocation.A071_SameMainRes := 'NO' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 = SECOND AND SecA.HousingLocation.A071_SameMainRes = Empty AND 
+         SecA.HousingLocation.A072_SameAreaMain = Empty THEN 
+         IF Preload_HH.X033_HHMoved = MOVEDOUTAREA THEN 
+         ASSIGN: SecA.HousingLocation.A071_SameMainRes := 'NO' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 = SECOND AND SecA.HousingLocation.A071_SameMainRes = Empty AND 
+         SecA.HousingLocation.A072_SameAreaMain = Empty THEN 
+         IF NOT(piPreload_HHX033_HHMoved = MOVEDOUTAREA) THEN 
+         ASSIGN: SecA.HousingLocation.A071_SameMainRes := 'YES' 
+         IF SCV.XR1_R2 = FIRST AND (SecA.relations.A028_RInNHome <> YES OR 
+         SecA.HousingLocation.NursingHome.A070_NHOwnRent = YES) THEN 
+         IF Preload_HH.X025_MainCty <> Empty THEN 
+         IF SCV.XR1_R2 = SECOND AND SecA.HousingLocation.A071_SameMainRes = Empty AND 
+         SecA.HousingLocation.A072_SameAreaMain = Empty THEN 
+         IF Preload_HH.X033_HHMoved = CHANGEDRES THEN 
+         ASSIGN: SecA.HousingLocation.A071_SameMainRes := 'NO' 
+         IF SCV.XR1_R2 = SECOND AND SecA.HousingLocation.A071_SameMainRes = Empty AND 
+         SecA.HousingLocation.A072_SameAreaMain = Empty THEN 
+         IF Preload_HH.X033_HHMoved = MOVEDOUTAREA THEN 
+         ASSIGN: SecA.HousingLocation.A071_SameMainRes := 'NO' 
+         IF SCV.XR1_R2 = SECOND AND SecA.HousingLocation.A071_SameMainRes = Empty AND 
+         SecA.HousingLocation.A072_SameAreaMain = Empty THEN 
+         IF NOT(piPreload_HHX033_HHMoved = MOVEDOUTAREA) THEN 
+         ASSIGN: SecA.HousingLocation.A071_SameMainRes := 'YES' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA071                        SAME RESID AS PREV WAVE #1
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.HousingLocation.A071_SameMainRes
+
+         Next are some questions about changes in [[Respondent's First Name/ [and
+         your/[[his/her] [husband's/wife's/partner's]]] housing location.
+         
+         Our records show that [in [Prev Wave Iw Month - First R (per X034)], [Prev Wave
+         Iw Year - First R (per X035)/in [Prev Wave Iw Year - First R]/two years ago],
+         [[his/her]/their] residence/one of [/[his/her]/their] residences]] was in
+         /According to our records [they live in]]  [Prev Wave Main Residence City],
+         [Prev Wave Main Residence State].
+         
+         IF R LIVED IN A NURSING HOME or HOSPICE AT TIME OF DEATH (A167/A167_A028=1 or
+         2):
+         At the time [R's First Name] (died/passed away) [(did [he/she]/did they)] still
+         have the same residence in [Prev Wave Main Residence City], [Prev Wave Main
+         Residence State]?
+         
+         OTHERWISE:
+         At the time [R's First Name] (died/passed away) [were (was [he/she]/were they)]
+         still living, all or part of the year, in that same residence in [Prev Wave Main
+         Residence City], [Prev Wave Main Residence State]?"
+
+         .................................................................................
+           714           1.  YES
+            69           5.  NO
+             3           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           194       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.HousingLocation.A071_SameMainRes 
+         IF SecA.HousingLocation.A071_SameMainRes <> YES THEN 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 = SECOND AND SecA.HousingLocation.A071_SameMainRes = Empty AND 
+         SecA.HousingLocation.A072_SameAreaMain = Empty THEN 
+         IF Preload_HH.X033_HHMoved = CHANGEDRES THEN 
+         ASSIGN: SecA.HousingLocation.A072_SameAreaMain := 'YES' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 = SECOND AND SecA.HousingLocation.A071_SameMainRes = Empty AND 
+         SecA.HousingLocation.A072_SameAreaMain = Empty THEN 
+         IF Preload_HH.X033_HHMoved = MOVEDOUTAREA THEN 
+         ASSIGN: SecA.HousingLocation.A072_SameAreaMain := 'NO' 
+         IF SCV.XR1_R2 = SECOND AND SecA.HousingLocation.A071_SameMainRes = Empty AND 
+         SecA.HousingLocation.A072_SameAreaMain = Empty THEN 
+         IF Preload_HH.X033_HHMoved = CHANGEDRES THEN 
+         ASSIGN: SecA.HousingLocation.A072_SameAreaMain := 'YES' 
+         IF SCV.XR1_R2 = SECOND AND SecA.HousingLocation.A071_SameMainRes = Empty AND 
+         SecA.HousingLocation.A072_SameAreaMain = Empty THEN 
+         IF Preload_HH.X033_HHMoved = MOVEDOUTAREA THEN 
+         ASSIGN: SecA.HousingLocation.A072_SameAreaMain := 'NO' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA072                        SAME CITY/ST RESID # 1
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.HousingLocation.A072_SameAreaMain
+
+         IF R LIVED IN NURSING HOME (A028=1):
+         [Was your/(Was [his/her]/Was their)] residence still in or around  [Prev Wave
+         Main Residence City], [Prev Wave Main Residence State]?
+         
+         OTHERWISE:
+         [Did you/(Did [he/she]/Did they)] still live, all or part of the year, in a
+         residence in or around  [Prev Wave Main Residence City], [Prev Wave Main
+         Residence State]?
+
+         .................................................................................
+            36           1.  YES
+            35           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           908       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+
+         IF SCV.XR1_R2 = FIRST AND (SecA.relations.A028_RInNHome <> YES OR 
+         SecA.HousingLocation.NursingHome.A070_NHOwnRent = YES) THEN 
+
+         IF Preload_HH.X027_Has2ndRes = HASOTHRES THEN 
+
+         IF Preload_HH.X029_2ndResCty <> Empty THEN 
+
+         IF SCV.XR1_R2 = FIRST AND (SecA.relations.A028_RInNHome <> YES OR 
+         SecA.HousingLocation.NursingHome.A070_NHOwnRent = YES) THEN 
+
+         IF Preload_HH.X027_Has2ndRes = HASOTHRES THEN 
+
+         IF Preload_HH.X029_2ndResCty <> Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA073                        SAME RESID AS PREV WAVE #2
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.HousingLocation.A073_Same2ndRes
+
+         Our records also show that in [[Prev Wave IW Month] [Prev Wave IW Year - First
+         R]/[Prev Wave IW Year - First R]/two years ago] [First Name] had another
+         residence, one in [2nd Residence City], [2nd Residence State].
+         
+         IF R LIVED IN NURSING HOME (A028=1):
+         [Did you/(Did [he/she]/Did they)] still have the same residence in  [2nd
+         Residence City], [2nd Residence State]?
+         
+         OTHERWISE:
+         [Were you/(Was [he/she]/Were they)] still living, all or part of the year, in
+         that same residence in [2nd Residence City],[2nd Residence State]?
+
+         .................................................................................
+            38           1.  YES
+            57           5.  NO
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           884       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.HousingLocation.A073_Same2ndRes 
+
+         IF SecA.HousingLocation.A073_Same2ndRes <> YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA074                        SAME CITY/ST RESID #2
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.HousingLocation.A074_SameArea2nd
+
+         IF R LIVED IN NURSING HOME (A028=1):
+         [Did you/(Did [he/she]/Did they)] still have a home in or around  [2nd Residence
+         City], [2nd Residence State]?
+         
+         OTHERWISE
+         [Did you/(Did [he/she]/Did they)] still live, all or part of the year in or
+         around [2nd Residence City], [2nd Residence State]?
+
+         .................................................................................
+            14           1.  YES
+            44           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           922       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.HousingLocation.A075TCurResCty_A 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA076M                       CURRENT RESIDENCE STATE - MASKED
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.HousingLocation.A076TCurResST_A
+
+         At the time [he/she] (died/passed away), in what city and state was  [R First
+         Name]'s  [and [your/[his/her] [husband's/wife's/partner's]] residence located?
+         
+         City:
+         
+         State:
+         
+         INSTR: Enter 'ot' for other country
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+             1           1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+                         2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+             5           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+             4           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+            10           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+             2           6.  South Region: East South Central Division (KY, TN, AL, MS)
+             5           7.  South Region: West South Central Division (AR, LA, OK, TX)
+                         8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+             2           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+                        11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           951       Blank.  No Data From Prior Wave Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+
+         IF SCV.XR1_R2 = FIRST AND (SecA.relations.A028_RInNHome <> YES OR 
+         SecA.HousingLocation.NursingHome.A070_NHOwnRent = YES) THEN 
+
+         IF Preload_HH.X027_Has2ndRes <> HASOTHRES OR 
+         SecA.HousingLocation.A072_SameAreaMain = NO OR 
+         SecA.HousingLocation.A074_SameArea2nd = NO OR Preload_HH.X027_Has2ndRes = 
+         HASOTHRES AND Preload_HH.X029_2ndResCty = Empty THEN 
+
+         IF SCV.XR1_R2 = FIRST AND (SecA.relations.A028_RInNHome <> YES OR 
+         SecA.HousingLocation.NursingHome.A070_NHOwnRent = YES) THEN 
+
+         IF Preload_HH.X027_Has2ndRes <> HASOTHRES OR 
+         SecA.HousingLocation.A072_SameAreaMain = NO OR 
+         SecA.HousingLocation.A074_SameArea2nd = NO OR Preload_HH.X027_Has2ndRes = 
+         HASOTHRES AND Preload_HH.X029_2ndResCty = Empty THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA079                        OTHER HOMES/APTS
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.HousingLocation.A079_
+
+         IF R LIVED IN NURSING HOME (A028=1):
+         [Did you/(Did [he/she]/Did they)] have any other house or apartment?
+         
+         OTHERWISE:
+         [Did you/(Did [he/she]/Did they)] have any other house or apartment where [you
+         lived/([he/she] lived/they lived)] for 2 or more months of the year?
+         
+         INSTR: If proxy reports more than one additional residence, ask about the one
+         they used most
+
+         .................................................................................
+            19           1.  YES
+           706           5.  NO
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           255       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA.HousingLocation.A080TOthResCty_A 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA081M                       OTHER RESIDENCE STATE - MASKED
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA.HousingLocation.A081TOthResST_A
+
+         (In what city and state was that other residence located?)
+         
+         City: [OTHER RESIDENCE CITY]
+         
+         State:
+         
+         INSTR: Enter 'ot' for other country
+
+         User Note: Code categories have been collapsed to protect participant
+         confidentiality.
+
+         .................................................................................
+             1           1.  Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                             CT)
+             3           2.  Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+             2           3.  Midwest Region: East North Central Division (OH, IN, IL, MI,
+                             WI)
+             2           4.  Midwest Region: West North Central Division (MN, IA, MO, ND,
+                             SD, NE, KS)
+             4           5.  South Region: South Atlantic Division (DE, MD, DC, VA, WV,
+                             NC, SC, GA, FL)
+             4           6.  South Region: East South Central Division (KY, TN, AL, MS)
+             1           7.  South Region: West South Central Division (AR, LA, OK, TX)
+                         8.  West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                             NV)
+             2           9.  West Region: Pacific Division (WA, OR, CA, AK, HI)
+                        11.  Foreign Country: Not in a Census Division (includes
+                             U.S.territories)
+                        98.  DK (Don't Know); NA (Not Ascertained)
+                        99.  RF (Refused)
+           961       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF (SecA.HousingLocation.A071_SameMainRes = YES OR 
+         SecA.HousingLocation.A072_SameAreaMain = YES) AND 
+         (SecA.HousingLocation.A073_Same2ndRes = YES OR 
+         SecA.HousingLocation.A074_SameArea2nd = YES) OR SecA.HousingLocation.A079_ = 
+         YES THEN 
+         ASSIGN: SecA.HousingLocation.A084_NumRes := 'TWORES' 
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+         IF SCV.XR1_R2 = FIRST THEN 
+         ASSIGN: SecA.HousingLocation.A084_NumRes := 'ONERES' 
+         IF (SecA.HousingLocation.A071_SameMainRes = YES OR 
+         SecA.HousingLocation.A072_SameAreaMain = YES) AND 
+         (SecA.HousingLocation.A073_Same2ndRes = YES OR 
+         SecA.HousingLocation.A074_SameArea2nd = YES) OR SecA.HousingLocation.A079_ = 
+         YES THEN 
+         ASSIGN: SecA.HousingLocation.A084_NumRes := 'TWORES' 
+         IF SCV.XR1_R2 = FIRST THEN 
+         ASSIGN: SecA.HousingLocation.A084_NumRes := 'ONERES' 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA084                        ASSIGN 1 OR 2 RESIDENCES
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.HousingLocation.A084_NumRes
+
+         *
+
+         .................................................................................
+           898           1.  ONE RESIDENCE
+            64           2.  TWO RESIDENCE
+            18       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF (SecA.ContinuInterview.A218_AgeGreaterThan17 > 17 OR 
+         SecA.ContinuInterview.A019_RAge > 17) AND Preload_RVARS.Z145_TypeExit_V <> 
+         NEWPOSTEXIT AND Preload_RVARS.Z145_TypeExit_V <> FIRSTREPEATPOST AND 
+         Preload_RVARS.Z145_TypeExit_V <> SECREPEATPOST THEN 
+
+         IF Preload_HH.X024_ReIwHH_V = YES OR Preload_HH.X024_ReIwHH_V <> YES AND 
+         SecA.StartInterview.A007TRAlive_A = YES AND SecA.A158_NewCohortNotEligable <> 
+         CASEINELIGIBLE THEN 
+
+         IF SCV.XR1_R2 = FIRST AND SecA.HousingLocation.A084_NumRes = TWORES THEN 
+
+         IF SCV.XR1_R2 = FIRST AND SecA.HousingLocation.A084_NumRes = TWORES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA085                        MAIN RESIDENCE
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA.HousingLocation.A085_WhichMainRes
+
+         Which was [First Name]'s [and your/and [his/her] [husband/wife/partner]'s] main
+         residence,  the home in [[Main Residence City], [Main Residence State]/[2nd
+         Residence City], [2nd Residence State]/[Current Residence City], [Current
+         Residence State]]?  Or the one in [this other residence/[2nd Residence City],
+         [2nd Residence State]/[Other Residence City], [Other Residence State]]?
+         
+         Def: (Main residence, one where R spent the most time (MTY).)
+
+         .................................................................................
+            54           1.  HOME IN LAST IW 1ST RESIDENCE CITY (X026)
+             3           2.  HOME IN NEW CURRENT RESIDENCE CITY, STATE (A075)
+             5           3.  HOME IN LAST IW 2ND RESIDENCE CITY (X029)
+             2           4.  HOME IN NEW OTHER RESIDENCE CITY, STATE (A080)
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           916       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF ActiveLanguage = ENG AND IWType = EXT OR ActiveLanguage = SPN AND IWType = 
+         EXT THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA136                        EX SOMEONE MOVE IN
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn
+
+         IF R WAS NOT LIVING IN NURSING HOME WHEN S/HE DIED (A028 NOT 1):
+         Since [Prev Wave First R IW Month], [Prev Wave First R IW Year], did anyone move
+         into the house or apartment where [First Name] was living to help [him/her] but
+         then move out before [he/she] (died/passed away)?
+                 
+         IF R WAS LIVING IN NURSING HOME WHEN S/HE DIED (A028=1):
+         Between the time of our interview in [Prev Wave First R IW Month], [Prev Wave
+         First R IW Year], and when [First Name] went into the (nursing home/health care
+         facility) did anyone move into the house or apartment where [First Name] was
+         living to help [him/her] but then move out before [he/she] went into the
+         (nursing home/health care facility)?
+                
+         OTHERWISE:
+         In the two years preceding [his/her] death, did anyone move into the house or
+         apartment where [First Name] was living to help [him/her] but then move out
+         before [First Name] (died/passed away)?
+
+         .................................................................................
+            35           1.  YES
+           932           5.  NO
+            12           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+             1       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn 
+
+         IF SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA137M1                      EX SOMEONE WHO MOVED - 1
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A137_
+
+         Who moved in: was it (a child of [First Name]'s,) a grandchild, another
+         relative, or someone else?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  PARENT
+            17           2.  CHILD
+             5           4.  GRANDCHILD
+             4           5.  RELATIVE-OTHER
+             9           6.  OTHER INDIVIDUAL
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           945       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn 
+
+         IF SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA137M2                      EX SOMEONE WHO MOVED - 2
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A137_
+
+         Who moved in: was it (a child of [First Name]'s,) a grandchild, another
+         relative, or someone else?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  PARENT
+                         2.  CHILD
+             1           4.  GRANDCHILD
+             1           5.  RELATIVE-OTHER
+             2           6.  OTHER INDIVIDUAL
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           976       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn 
+
+         IF SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA137M3                      EX SOMEONE WHO MOVED - 3
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A137_
+
+         Who moved in: was it (a child of [First Name]'s,) a grandchild, another
+         relative, or someone else?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  PARENT
+                         2.  CHILD
+                         4.  GRANDCHILD
+             1           5.  RELATIVE-OTHER
+                         6.  OTHER INDIVIDUAL
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           979       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn 
+
+         IF SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA137M4                      EX SOMEONE WHO MOVED - 4
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A137_
+
+         Who moved in: was it (a child of [First Name]'s,) a grandchild, another
+         relative, or someone else?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  PARENT
+                         2.  CHILD
+                         4.  GRANDCHILD
+                         5.  RELATIVE-OTHER
+                         6.  OTHER INDIVIDUAL
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           980       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF CHILD IN A137_ THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA138M1                      EX SOMEONE WHICH CHILD?-1
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A138_[1]
+
+         Which children?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+            17                 041-990.  Other Person Number
+                                   993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           963                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF CHILD IN A137_ THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA138M2                      EX SOMEONE WHICH CHILD?-2
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A138_[2]
+
+         Which children?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+             3                 041-990.  Other Person Number
+                                   993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           977                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF CHILD IN A137_ THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA138M3                      EX SOMEONE WHICH CHILD?-3
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A138_[3]
+
+         Which children?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                               041-990.  Other Person Number
+                                   993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           980                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A137_ 
+         IF CHILD IN SecA2_EXMOVETOGETHER.A137_ THEN 
+         IF Init.A100_NumNRKids > 0 THEN 
+         IF Init.A100_NumNRKids = 1 THEN 
+         ASSIGN: SecA2_EXMOVETOGETHER.A139_ := SecA2_EXMOVETOGETHER.aArrayInteger [1] 
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.puA138_ 
+         IF SecA2_EXMOVETOGETHER.puA138_Cnt = 1 THEN 
+         ASSIGN: SecA2_EXMOVETOGETHER.A139_ := SecA2_EXMOVETOGETHER.aArrayInteger 
+         [OrdEnum(SetElement(puA138_,1))] 
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.puA138_ 
+         IF SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn <> SpecialAnswer AND 
+         SecA2_EXMOVETOGETHER.A138_ [1] <> SpecialAnswer AND 
+         (puSecA2_EXMOVETOGETHER.A138_ Cnt > 1 OR SecA2_EXMOVETOGETHER.A138_ [1] = 93) 
+         THEN 
+         ASSIGN: SecA2_EXMOVETOGETHER.A139_ := SecA2_EXMOVETOGETHER.aArrayInteger 
+         [OrdEnum(puSecA2_EXMOVETOGETHER.A139_ )] 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA139                        EX STAYED LONGEST-1
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A139_
+
+         Which child stayed the longest?
+
+         .................................................................................
+            17                 041-990.  Other Person Number
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           963                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A137_ 
+
+         IF CHILD IN SecA2_EXMOVETOGETHER.A137_ THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA140                        EX PERSON STAY WITH R
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A140_
+
+         About how many weeks or months did that [child stay?/person stay?]
+         
+         Please tell me the longest stay if there was more than one person who stayed
+         with [First Name].
+         
+         INSTR: Enter number of weeks or months
+
+         .................................................................................
+            17                    0-50.  Actual Value
+                                    98.  DK (Don't Know); NA (Not Ascertained)
+                                    99.  RF (Refused)
+           963                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A140_ 
+
+         IF SecA2_EXMOVETOGETHER.A140_ <> SpecialAnswer THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA141                        EX PERSON STAY WITH R WEEKS/MONTHS
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A141_
+
+         (About how many weeks or months did that [child stay?/person stay?]
+         
+         Please tell me the longest stay if there was more than one person who stayed
+         with [First Name].)
+         
+         Weeks or months:
+
+         .................................................................................
+             4           2.  WEEKS
+            11           4.  MONTHS
+             2           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           963       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA142                        EX R MOVED IN
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A142_RMovedInOut
+
+         IF R WAS NOT LIVING IN NURSING HOME WHEN S/HE DIED (A028 NOT 1):
+         Between the time of our interview in [Prev Wave First R IW Month], [Prev Wave
+         First R IW Year] and [First Name]'s death did [First Name] move into and then
+         out of someone else's house or apartment?
+         
+         IF R WAS LIVING IN NURSING HOME WHEN S/HE DIED (A028=1):
+         Between the time of our interview in [Prev Wave First R IW Month], [Prev Wave
+         First R IW Year] and when [First Name] went into the (nursing home/ health care
+         facility) did [First Name] move into and then out of someone else's house or
+         apartment?
+         	
+         OTHERWISE:
+         In the two years preceding [his/her] death, did [First Name] move into and then
+         out of someone else's house or apartment?
+
+         .................................................................................
+            56           1.  YES
+           918           5.  NO
+             5           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+             1       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn 
+
+         IF SecA2_EXMOVETOGETHER.A142_RMovedInOut = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA143M1                      EX R MOVE IN WITH-1
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A143_
+
+         With whom did [he/she] move in: was it (a child of [First Name]'s,) a
+         grandchild, another relative, or someone else?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  PARENT
+            41           2.  CHILD
+             4           4.  GRANDCHILD
+             5           5.  RELATIVE-OTHER
+             6           6.  OTHER INDIVIDUAL
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           924       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn 
+
+         IF SecA2_EXMOVETOGETHER.A142_RMovedInOut = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA143M2                      EX R MOVE IN WITH-2
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A143_
+
+         With whom did [he/she] move in: was it (a child of [First Name]'s,) a
+         grandchild, another relative, or someone else?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  PARENT
+             1           2.  CHILD
+             1           4.  GRANDCHILD
+             1           5.  RELATIVE-OTHER
+             1           6.  OTHER INDIVIDUAL
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           976       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn 
+
+         IF SecA2_EXMOVETOGETHER.A142_RMovedInOut = YES THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA143M3                      EX R MOVE IN WITH-3
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A143_
+
+         With whom did [he/she] move in: was it (a child of [First Name]'s,) a
+         grandchild, another relative, or someone else?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                         1.  PARENT
+                         2.  CHILD
+                         4.  GRANDCHILD
+                         5.  RELATIVE-OTHER
+                         6.  OTHER INDIVIDUAL
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           980       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF CHILD IN A143_ THEN 
+
+         IF piInitA100_NumNRKids > 0 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA144M1                      EX SOMEONE WHICH CHILD?-1
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A144_[1]
+
+         Which children?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+            37                 041-990.  Other Person Number
+             1                     993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+             1                     999.  RF (Refused)
+           941                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF CHILD IN A143_ THEN 
+
+         IF piInitA100_NumNRKids > 0 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA144M2                      EX SOMEONE WHICH CHILD?-2
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A144_[2]
+
+         Which children?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+             2                 041-990.  Other Person Number
+                                   993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           978                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF CHILD IN A143_ THEN 
+
+         IF piInitA100_NumNRKids > 0 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA144M3                      EX SOMEONE WHICH CHILD?-3
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A144_[3]
+
+         Which children?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+             1                 041-990.  Other Person Number
+                                   993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           979                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A143_ 
+         IF CHILD IN SecA2_EXMOVETOGETHER.A143_ THEN 
+         IF Init.A100_NumNRKids > 0 THEN 
+         IF Init.A100_NumNRKids = 1 THEN 
+         ASSIGN: SecA2_EXMOVETOGETHER.A145_ := SecA2_EXMOVETOGETHER.aArrayInteger [1] 
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.puA144_ 
+         IF SecA2_EXMOVETOGETHER.puA144_Cnt = 1 THEN 
+         ASSIGN: SecA2_EXMOVETOGETHER.A145_ := SecA2_EXMOVETOGETHER.aArrayInteger 
+         [OrdEnum(SetElement(puA144_,1))] 
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.puA144_ 
+         IF SecA2_EXMOVETOGETHER.A142_RMovedInOut <> SpecialAnswer AND 
+         SecA2_EXMOVETOGETHER.A144_ [1] <> SpecialAnswer AND 
+         (puSecA2_EXMOVETOGETHER.A144_ Cnt >= 1 OR SecA2_EXMOVETOGETHER.A144_ [1] = 93) 
+         THEN 
+         IF SecA2_EXMOVETOGETHER.puA144_Cnt > 1 THEN 
+         ASSIGN: SecA2_EXMOVETOGETHER.A145_ := SecA2_EXMOVETOGETHER.aArrayInteger 
+         [OrdEnum(puSecA2_EXMOVETOGETHER.A145_ )] 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA145                        EX STAYED LONGEST-1
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A145_
+
+         With which child did [he/she] stay the longest?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+            37                 041-990.  Other Person Number
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           943                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A143_ 
+
+         IF CHILD IN SecA2_EXMOVETOGETHER.A143_ THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA146                        EX R STAY WITH PERSON HOW MANY WEEKS/MONTHS
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A146_
+
+         About how many weeks or months did [Respondent First Name] stay with that
+         [child?/person?]
+         
+         Please tell me the longest stay if there was more than one person [First Name]
+         stayed with.
+         
+         INSTR: Enter number of weeks or months
+
+         .................................................................................
+            40                    1-72.  Actual Value
+             2                      98.  DK (Don't Know); NA (Not Ascertained)
+                                    99.  RF (Refused)
+           938                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A146_ 
+
+         IF SecA2_EXMOVETOGETHER.A146_ <> SpecialAnswer THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA147                        EX R STAY WITH PERSON UNIT HOW MANY WEEKS/MONTHS
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A147_
+
+         (About how many weeks or months did [Respondent First Name] stay with that
+         [child?/person?]
+         
+         Please tell me the longest stay if there was more than one person [First Name]
+         stayed with.)
+         
+         Weeks or Months:
+         
+         INSTR: Enter the numbe of weeks or months
+
+         .................................................................................
+            10           2.  WEEKS
+            30           4.  MONTHS
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           940       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn 
+
+         IF Init.A100_NumNRKids > 0 AND SecA2_EXMOVETOGETHER.iNonResKids = 1 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA148                        EX MOVE CLOSER
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A148_ChldMoveCloser
+
+         IF R WAS NOT LIVING IN NURSING HOME WHEN S/HE DIED (A028 NOT 1):
+         Between the time of our interview in [Prev Wave First R IW Month], [Prev Wave
+         First R IW Year] and when [Respondent First Name] died did [he/she] or any of
+         [his/her] children move in order to be closer to each other but not living in
+         the same house or apartment?
+         
+         IF R WAS LIVING IN NURSING HOME WHEN S/HE DIED (A028=1):
+         Between the time of our interview in [Prev Wave First R IW Month], [Prev Wave
+         First R IW Year] and when [Respondent First Name] went into the (nursing
+         home/health care facility) did [he/she] or any of [his/her] children move in
+         order to be closer to each other but not living in the same house or apartment?
+         	
+         OTHERWISE:
+         In the two years preceding [his/her] death, did [he/she] or any of [his/her]
+         children move in order to be closer to each other but not living in the same
+         house or apartment?
+
+         .................................................................................
+            40           1.  YES
+           815           5.  NO
+             3           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           122       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF A148_ChldMoveCloser= YES THEN 
+
+         IF Init.A100_NumNRKids = 1 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA149M1                      EX WHICH CHILD-1
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A149_[1]
+
+         Which child was that?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+            40                 041-990.  Other Person Number
+                                   993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           940                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF A148_ChldMoveCloser= YES THEN 
+
+         IF Init.A100_NumNRKids = 1 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA149M2                      EX WHICH CHILD-2
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A149_[2]
+
+         Which child was that?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+             4                 041-990.  Other Person Number
+                                   993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           976                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF A148_ChldMoveCloser= YES THEN 
+
+         IF Init.A100_NumNRKids = 1 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA149M3                      EX WHICH CHILD-3
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A149_[3]
+
+         Which child was that?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+             1                 041-990.  Other Person Number
+                                   993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           979                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         IF A148_ChldMoveCloser= YES THEN 
+
+         IF Init.A100_NumNRKids = 1 THEN 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA149M4                      EX WHICH CHILD-4
+         Section: A     Level: Respondent      Type: Character  Width: 3   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.A149_[4]
+
+         Which child was that?
+         
+         INSTR: Select all that apply
+
+         .................................................................................
+                               041-990.  Other Person Number
+                                   993.  ALL CHILDREN
+                                   998.  DK (Don't Know); NA (Not Ascertained)
+                                   999.  RF (Refused)
+           980                   Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn 
+         IF SecA2_EXMOVETOGETHER.A148_ChldMoveCloser = YES THEN 
+         IF SecA2_EXMOVETOGETHER.puChildMoveCloserCnt > 0 THEN 
+         For SecA2_EXMOVETOGETHER.cnt4 := 1 to 50 do 
+         IF SecA2_EXMOVETOGETHER.A149_ [cnt4] <> Empty THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA150_1                      EX WHO MOVED -1
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.childorRMoved[1].A150_
+
+         Did [Child Name] move or did [First Name] move?
+
+         .................................................................................
+            29           1.  CHILD MOVED
+            10           2.  R MOVED
+                         4.  BOTH
+             1           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           940       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.childorRMoved[].A150_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA151_1                      EX PERM/TEMP MOVE -1
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.childorRMoved[1].A151_
+
+         Was the move intended to be temporary or was it thought of as permanent?
+
+         .................................................................................
+            31           1.  PERMANENT MOVE
+             5           5.  TEMPORARY MOVE
+             4           8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           940       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn 
+         IF SecA2_EXMOVETOGETHER.A148_ChldMoveCloser = YES THEN 
+         IF SecA2_EXMOVETOGETHER.puChildMoveCloserCnt > 0 THEN 
+         For SecA2_EXMOVETOGETHER.cnt4 := 1 to 50 do 
+         IF SecA2_EXMOVETOGETHER.A149_ [cnt4] <> Empty THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA150_2                      EX WHO MOVED -2
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.childorRMoved[2].A150_
+
+         Did [Child Name] move or did [First Name] move?
+
+         .................................................................................
+             4           1.  CHILD MOVED
+                         2.  R MOVED
+                         4.  BOTH
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           976       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.childorRMoved[].A150_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA151_2                      EX PERM/TEMP MOVE -2
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.childorRMoved[2].A151_
+
+         Was the move intended to be temporary or was it thought of as permanent?
+
+         .................................................................................
+             4           1.  PERMANENT MOVE
+                         5.  TEMPORARY MOVE
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           976       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.A136_AnyoneMoveIn 
+         IF SecA2_EXMOVETOGETHER.A148_ChldMoveCloser = YES THEN 
+         IF SecA2_EXMOVETOGETHER.puChildMoveCloserCnt > 0 THEN 
+         For SecA2_EXMOVETOGETHER.cnt4 := 1 to 50 do 
+         IF SecA2_EXMOVETOGETHER.A149_ [cnt4] <> Empty THEN 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA150_3                      EX WHO MOVED -3
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.childorRMoved[3].A150_
+
+         Did [Child Name] move or did [First Name] move?
+
+         .................................................................................
+             1           1.  CHILD MOVED
+                         2.  R MOVED
+                         4.  BOTH
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           979       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         {PREVIOUS ASK} SecA2_EXMOVETOGETHER.childorRMoved[].A150_ 
+
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA151_3                      EX PERM/TEMP MOVE -3
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: SecA2_EXMOVETOGETHER.childorRMoved[3].A151_
+
+         Was the move intended to be temporary or was it thought of as permanent?
+
+         .................................................................................
+             1           1.  PERMANENT MOVE
+                         5.  TEMPORARY MOVE
+                         8.  DK (Don't Know); NA (Not Ascertained)
+                         9.  RF (Refused)
+           979       Blank.  INAP (Inapplicable); Partial Interview
+
+
+==========================================================================================
+
+         ASSIGN: Init.A098_NumHHM := '0' 
+         ASSIGN: Init.A098_NumHHM := PlusInt(Init.A098_NumHHM + '1') 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA098                        COUNT OF HHM
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: Init.A098_NumHHM
+
+         *
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            980        0          11          0.61          1.28       0
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+         ASSIGN: Init.A099_NumResKid := '0' 
+         ASSIGN: Init.A099_NumResKid := PlusInt(Init.A099_NumResKid + '1') 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA099                        NUMBER OF RESIDENT CHILDREN
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+         Ref: Init.A099_NumResKid
+
+         *
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            980        0           5          0.30          0.63       0
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+         ASSIGN: Init.A100_NumNRKids := '0' 
+         ASSIGN: Init.A100_NumNRKids := PlusInt(Init.A100_NumNRKids + '1') 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA100                        COUNT OF NONRESIDENT KIDS
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: Init.A100_NumNRKids
+
+         *
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            980        0          13          2.82          2.06       0
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+         ASSIGN: Init.A101_TotalKids := '0' 
+         ASSIGN: Init.A101_TotalKids := PlusInt(Init.A101_TotalKids + '1') 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA101                        COUNT OF KIDS - NOT THEIR SPOUSES
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: Init.A101_TotalKids
+
+         *
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            980        0          13          3.36          2.19       0
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+         ASSIGN: Init.A102_CntMoveInOut := '0' 
+         ASSIGN: Init.A102_CntMoveInOut := PlusInt(Init.A102_CntMoveInOut + '1') 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA102                        COUNT OF MOVE IN/OUT
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: Init.A102_CntMoveInOut
+
+         *
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            980        0          12          0.94          1.70       0
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+         ASSIGN: Init.A106_NumContactKids := '0' 
+         ASSIGN: Init.A106_NumContactKids := PlusInt(Init.A106_NumContactKids + '1') 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA106                        COUNT OF CONTACT KIDS
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: Init.A106_NumContactKids
+
+         *
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            980        0          13          3.12          2.08       0
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+         ASSIGN: Init.A113_Child_ChildIL_Grand := '0' 
+         ASSIGN: Init.A113_Child_ChildIL_Grand := PlusInt(Init.A113_Child_ChildIL_Grand 
+         + '1') 
+
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+XQA113                        COUNT OF CHILD CHILDLAW AND GRANDCHILD
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+         Ref: Init.A113_Child_ChildIL_Grand
+
+         *
+
+         .................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+            980        0          22          5.73          3.78       0
+         -----------------------------------------------------------------
+
+
+==========================================================================================
+
+XQVDATE                       2018 DATA MODEL VERSION
+         Section: A     Level: Respondent      Type: Numeric    Width: 2   Decimals: 0
+
+         User Note:  This variable identifies which data model was used to interview the
+         household.  Please reference the data description for a summary of changes in
+         each data model.
+
+         .................................................................................
+             7           1.  Version 1
+            28           2.  Version 2
+            20           3.  Version 3
+            28           4.  Version 4
+            66           5.  Version 5
+            63           6.  Version 6
+           163           7.  Version 7
+           200           8.  Version 8
+            50           9.  Version 9
+            10          10.  Version 10
+           237          11.  Version 11
+           108          12.  Version 12
+
+
+==========================================================================================
+
+XQVERSION                     2018 DATA RELEASE VERSION
+         Section: A     Level: Respondent      Type: Numeric    Width: 1   Decimals: 0
+
+         .................................................................................
+           980           1.  HRS 2018 Exit Final Release
+
+
+==========================================================================================

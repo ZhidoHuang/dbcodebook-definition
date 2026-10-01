@@ -1,0 +1,594 @@
+==========================================================================================
+2004 HRS Core (Final Release)
+ODBC Reference: [HRS2004]
+Perl script: CodebkD11.pl v6.16 Tue Oct  3 17:25:59 2006
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION F: Parents, Siblings and Transfers (Sibling)
+
+==========================================================================================
+
+HHID     HOUSEHOLD IDENTIFICATION NUMBER
+         Section: F     Level: Sibling         Type: Character  Width: 6   Decimals: 0
+
+        ..................................................................................
+        10873           000003-502761. Household Identification Number
+
+==========================================================================================
+
+PN       RESPONDENT PERSON IDENTIFICATION NUMBER
+         Section: F     Level: Sibling         Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+         5694         010. Person Identifier
+          197         011. Person Identifier
+           14         012. Person Identifier
+                      013. Person Identifier
+         3836         020. Person Identifier
+           88         021. Person Identifier
+            3         022. Person Identifier
+          345         030. Person Identifier
+           33         031. Person Identifier
+            4         032. Person Identifier
+          629         040. Person Identifier
+           28         041. Person Identifier
+            2         042. Person Identifier
+
+==========================================================================================
+
+JSUBHH   2004 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: F     Level: Sibling         Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+        10391           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+          267           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+          172           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+            9           5. Split household - one half of couple from SUBHH 1 or 2
+            2           6. Split household - one half of couple from SUBHH 1 or 2
+           32           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+HSUBHH   2002 SUB HOUSEHOLD IDENTIFICATION NUMBER
+         Section: F     Level: Sibling         Type: Character  Width: 1   Decimals: 0
+
+        ..................................................................................
+         3544           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+          231           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+          150           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+            3           5. Split household - one half of couple from SUBHH 1 or 2
+                        6. Split household - one half of couple from SUBHH 1 or 2
+           24           7. Reunited household - respondents from split household reunite
+         6921       Blank. NEW COHORT HH
+
+==========================================================================================
+
+JPN_SP   2004 SPOUSE/PARTNER PERSON NUMBER
+         Section: F     Level: Sibling         Type: Character  Width: 3   Decimals: 0
+
+        ..................................................................................
+         4178         010. Person Identifier
+          114         011. Person Identifier
+                      012. Person Identifier
+                      013. Person Identifier
+         3454         020. Person Identifier
+           14         021. Person Identifier
+                      022. Person Identifier
+          213         030. Person Identifier
+            9         031. Person Identifier
+                      032. Person Identifier
+          382         040. Person Identifier
+           31         041. Person Identifier
+            4         042. Person Identifier
+            3         811. Spouse of Non-Original Respondent
+                      812. Spouse of Non-Original Respondent
+                      821. Spouse of Non-Original Respondent
+                      831. Spouse of Non-Original Respondent
+                      832. Spouse of Non-Original Respondent
+            4         841. Spouse of Non-Original Respondent
+         2467       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+JCSR     2004 WHETHER COVERSHEET RESPONDENT
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+         6810           1. Yes
+            4           3. 2nd Coverscreen  R, answers not retained
+         4059           5. No
+
+==========================================================================================
+
+JFAMR    2004 WHETHER FAMILY RESPONDENT
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+         6821           1. Family R
+                        3. 2nd Family R, answers not retained
+         4052           5. Non-Family R
+
+==========================================================================================
+
+JFINR    2004 WHETHER FINANCIAL RESPONDENT
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+         6600           1. Financial R
+                        3. 2nd Financial R, answers not retained
+         4273           5. Non-Financial R
+
+==========================================================================================
+
+OPN      OTHER PERSON NUMBER
+         Section: F     Level: Sibling         Type: Character  Width: 3   Decimals: 0
+
+
+        PERSON NUMBER OF KID/HHM/SIB AND THEIR SPOUSES
+        ..................................................................................
+        10873                 101-995. Other Person Number
+
+==========================================================================================
+
+        Assign:
+         IF (F080_SibRoster <> NO)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JFX054   PEOPLE INDEX -1
+         Section: F     Level: Sibling         Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecF.SibFollowup.SibDied[1].X054APNdx
+        ..................................................................................
+        10873                    3-54. Actual Value
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF083    MONTH SIBLING DIED
+         Section: F     Level: Sibling         Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecF.SibFollowup.SibDied[1].F083_MoSibDie
+         2000 Link: G2217  2002 Link: HF083
+
+        In what month and year did ( ([See Blaise Specifications for piRelateR
+        assignment]))  (Name) die?
+        MONTH:
+        YEAR:
+        ..................................................................................
+           26           1. JAN
+           27           2. FEB
+           22           3. MAR
+           32           4. APR
+           32           5. MAY
+           30           6. JUN
+           27           7. JUL
+           31           8. AUG
+           24           9. SEP
+           27          10. OCT
+           26          11. NOV
+           23          12. DEC
+           68          98. DK (Don't Know); NA (Not Ascertained)
+            1          99. RF (Refused)
+        10477       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF084    YR SIBLING DIED
+         Section: F     Level: Sibling         Type: Numeric    Width: 4   Decimals: 0
+         CAI: SecF.SibFollowup.SibDied[1].F084_YrSibDie
+         2000 Link: G2218  2002 Link: HF084
+
+        (In what month and year did ( ([See Blaise Specifications for piRelateR
+        assignment]))  (Name) die?)
+        MONTH:  (MONTH SIBLING/SIBLING-IN-LAW DIED)
+        YEAR:
+        ..................................................................................
+          374               1946-2004. Actual Value
+           21                    9998. DK (Don't Know); NA (Not Ascertained)
+            1                    9999. RF (Refused)
+        10477                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF086    SIB AGE
+         Section: F     Level: Sibling         Type: Numeric    Width: 3   Decimals: 0
+         CAI: SecF.SibFollowup.SibAdded[1].F086_AgeSib
+         2000 Link: G2220  2002 Link: HF086
+
+        How old is  (Name) ( ([See Blaise Specifications for piRelateR assignment]))?
+        AGE:
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           7147        1          88         49.08          8.46    3380
+         -----------------------------------------------------------------
+          322         998. DK (Don't Know); NA (Not Ascertained)
+           24         999. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+         AND ((piInitE005_AltWaveFlag = ASKQUESTIONS) OR (piRVarsZ076_ReIwR_V = REIWR))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF087    NUM CHILDREN- SIB
+         Section: F     Level: Sibling         Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecF.SibFollowup.SibAdded[1].F087_NumSibKid
+         2000 Link: G2221  2002 Link: HF087
+
+        How many children does ( ([See Blaise Specifications for piRelateR
+        assignment]))  (Name) have?
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           7332        0          58          2.23          1.83    3380
+         -----------------------------------------------------------------
+          148          98. DK (Don't Know); NA (Not Ascertained)
+           13          99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+         AND ((piInitE005_AltWaveFlag = ASKQUESTIONS) OR (piRVarsZ076_ReIwR_V = REIWR))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF088    NUM GRANDKIDS- SIB
+         Section: F     Level: Sibling         Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecF.SibFollowup.SibAdded[1].F088_NumSibGKid
+         2000 Link: G2222  2002 Link: HF088
+
+        How many grandchildren does ( ([See Blaise Specifications for piRelateR
+        assignment]))  (Name) have?
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           7076        0          30          1.20          2.32    3380
+         -----------------------------------------------------------------
+          402          98. DK (Don't Know); NA (Not Ascertained)
+           15          99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF092    SIB WORK HRS PER WEEK
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecF.SibFollowup.SibLoop[1].F092_NumHrSibWk
+         2000 Link: G2227  2002 Link: HF092
+
+        Is ( ([See Blaise Specifications for piRelateR assignment]))  (Name) working
+        30 or more hours per week, under 30 hours, or not at all?
+        ..................................................................................
+         4387           1. 30+ HOURS
+          506           2. <30 HOURS
+         1977           3. NOT AT ALL
+          367           8. DK (Don't Know); NA (Not Ascertained)
+           33           9. RF (Refused)
+         3603       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF093    HHM UNDER 18 LIV W/SIB
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecF.SibFollowup.SibLoop[1].F093_SibLivWith
+         2000 Link: G2228  2002 Link: HF093
+
+        Does (he/she) have anyone under 18 living with (him/her)?
+        ..................................................................................
+         2127           1. YES
+         4896           5. NO
+          219           8. DK (Don't Know); NA (Not Ascertained)
+           28           9. RF (Refused)
+         3603       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+         AND ((piInitE005_AltWaveFlag = ASKQUESTIONS) OR (piRVarsZ076_ReIwR_V <>
+        REIWR))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF094    SIB/SIB-IN-LAW FIN SITUATION COMP TO R -
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecF.SibFollowup.SibLoop[1].F094_SibFinSitu
+
+        Would you say (his/her) financial situation is better, worse, or about the
+        same as yours?
+        ..................................................................................
+         2548           1. BETTER
+         1922           2. WORSE
+         2265           3. ABOUT THE SAME
+          478           8. DK (Don't Know); NA (Not Ascertained)
+           57           9. RF (Refused)
+         3603       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+         AND ((piInitE005_AltWaveFlag = ASKQUESTIONS) OR (piRVarsZ076_ReIwR_V <>
+        REIWR))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF095    SIB-IN-LAW OWN HOME -1
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecF.SibFollowup.SibLoop[1].F095_SibOwnHome
+
+        Does  ([See Blaise Specifications for piName assignment]) own a home?
+        ..................................................................................
+         5250           1. YES
+         1751           5. NO
+          231           8. DK (Don't Know); NA (Not Ascertained)
+           38           9. RF (Refused)
+         3603       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+         AND (((piParentsF021_F056F029_ParLivWSib <> 38) AND
+        (piParentsF021_F056F045_MaLivWSib <> 38)) AND (piParentsF057_F072F061_PaLivWSib
+        <> 38))
+         AND (piParentsF001_F020F001_MaAlive = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF096    SIB LIVE W/IN 10 MI FROM PARENTS/MOTHER
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecF.SibFollowup.SibLoop[1].F096_SibLiv10Mi
+         2000 Link: G2231  2002 Link: HF096
+
+        Does (he/she) live within 10 miles of your  ([See Blaise Specifications for
+        FLF096 assignment])?
+        ..................................................................................
+         2122           1. YES
+         3323           5. NO
+          249           6. (VOL) LIVES WITH PARENT(IN-LAWS)(S)
+           95           8. DK (Don't Know); NA (Not Ascertained)
+           25           9. RF (Refused)
+         5059       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+         AND (((piParentsF021_F056F029_ParLivWSib <> 38) AND
+        (piParentsF021_F056F045_MaLivWSib <> 38)) AND (piParentsF057_F072F061_PaLivWSib
+        <> 38))
+         AND ((piParentsF001_F020F011_PaAlive = YES) AND
+        (piParentsF021_F056F021_StillMarr <> YES))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF097    SIB LIVE W/IN 10 MI FROM FATHER
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecF.SibFollowup.SibLoop[1].F097_SibLiv10MiPa
+         2000 Link: G2232  2002 Link: HF097
+
+        Does (he/she) live within 10 miles of your father?
+        ..................................................................................
+          358           1. YES
+          863           5. NO
+           26           6. (VOL) LIVES WITH PARENT(IN-LAWS)(S)
+           37           8. DK (Don't Know); NA (Not Ascertained)
+            1           9. RF (Refused)
+         9588       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+         AND (piX074AChanged = ADDED)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF098    SIB HIGHEST GRADE
+         Section: F     Level: Sibling         Type: Numeric    Width: 2   Decimals: 0
+         CAI: SecF.SibFollowup.SibLoop[1].F098_SibHiGrade
+         2000 Link: G2233  2002 Link: HF098
+
+        What is the highest grade of school or year of college  ([See Blaise
+        Specifications for piName assignment]) completed?
+        0 NO FORMAL EDUCATION
+        1-11 GRADES
+        12 HIGH SCHOOL
+        13-15 SOME COLLEGE
+        16 COLLEGE GRAD
+        17 POST COLLEGE (17+ YEARS)
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N      Min         Max          Mean            SD    Miss
+           4063        0          17         12.97          3.00    6571
+         -----------------------------------------------------------------
+          214          98. DK (Don't Know); NA (Not Ascertained)
+           25          99. RF (Refused)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+         AND (piX074AChanged = ADDED)
+         AND (((F098_SibHiGrade < 13) OR (F098_SibHiGrade = DONTKNOW)) OR
+        (F098_SibHiGrade = REFUSAL))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF099    SIB GET HS DIPLOMA/GED
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecF.SibFollowup.SibLoop[1].F099_SibHSDipl
+         2000 Link: G2234  2002 Link: HF099
+
+        Did (he/she) get a high school diploma or pass a high school equivalency test?
+        ..................................................................................
+         1575           1. YES, DIPLOMA
+          149           2. YES, EQUIVALENCY [GED]
+          538           5. NO
+          180           8. DK (Don't Know); NA (Not Ascertained)
+           23           9. RF (Refused)
+         8408       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+         AND (piX074AChanged = ADDED)
+         AND (NOT (((F098_SibHiGrade < 13) OR (F098_SibHiGrade = DONTKNOW)) OR
+        (F098_SibHiGrade = REFUSAL)))
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF100    SIB GET COLLEGE DEGREE
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecF.SibFollowup.SibLoop[1].F100_SibCollDeg
+         2000 Link: G2235  2002 Link: HF100
+
+        (Did (he/she) get a college degree?)
+        ..................................................................................
+         1368           1. YES
+          448           5. NO
+           21           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         9036       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+         AND (piX074AChanged = ADDED)
+         AND (NOT (((F098_SibHiGrade < 13) OR (F098_SibHiGrade = DONTKNOW)) OR
+        (F098_SibHiGrade = REFUSAL)))
+         AND (F100_SibCollDeg = YES)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF101M   SIB HIGHEST DEGREE- MASKED
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecF.SibFollowup.SibLoop[1].F101_SibHiDeg
+         2000 Link: G2236M  2002 Link: HF101M
+
+        (What is the highest degree (he/she) earned?)
+
+        User Note: Code categories have been collapsed to protect participant
+        confidentiality.
+        ..................................................................................
+          166           1. LESS THAN BACHELORS
+          741           2. BACHELORS
+          293           3. MASTERS/MBA
+           97           6. MD, PHD, LAW
+           48           7. OTHER (SPECIFY)
+           23           8. DK (Don't Know); NA (Not Ascertained)
+                        9. RF (Refused)
+         9505       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+        Ask:
+         IF (NOT ((((piRTab1X013AMaAlive_V <> YES) AND (piRTab1X015APaAlive_V <> YES))
+        AND (Parents.F001_F020.F001_MaAlive <> YES)) AND
+        (Parents.F001_F020.F011_PaAlive <> YES)))
+         AND (StopFlag = 1)
+         AND (piCouplenss <> OTHER)
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+JF103    SIB SP WORK HRS PER WEEK
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+         CAI: SecF.SibFollowup.SibLoop[1].F103_Work30Hrs
+         2000 Link: G2237  2002 Link: HF103
+
+        Is ( ([See Blaise Specifications for piRelateR assignment]))  (Name)'s
+        (husband/wife/partner) working 30 or more hours per week, under 30 hours, or
+        not at all?
+        ..................................................................................
+         2934           1. 30+ HOURS
+          406           2. <30 HOURS
+         1480           3. NOT AT ALL
+          393           8. DK (Don't Know); NA (Not Ascertained)
+           27           9. RF (Refused)
+         5633       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+JVDATE   2004 DATA MODEL VERSION
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+
+
+        User Note:  This variable identifies which data model was used to interview
+        the household.  Please reference the data description for a summary of changes
+        in each data model.
+        ..................................................................................
+           36           1. Version 1
+          262           2. Version 2
+          394           3. Version 3
+         1004           4. Version 4
+         1165           5. Version 5
+          669           6. Version 6
+         1490           7. Version 7
+         5353           8. Version 8
+          500           9. Version 9
+
+==========================================================================================
+
+JVERSION 2004 DATA RELEASE VERSION
+         Section: F     Level: Sibling         Type: Numeric    Width: 1   Decimals: 0
+
+        ..................................................................................
+        10873           1. First Final Release
+

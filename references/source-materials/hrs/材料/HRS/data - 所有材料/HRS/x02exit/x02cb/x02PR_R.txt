@@ -1,0 +1,1073 @@
+==========================================================================================
+2002 HRS Exit (Final Release)
+ODBC Reference: [HRS2002x]
+Perl script: CodebkD11.pl v6.132 Mon Dec 11 11:20:08 2006
+
+Note to Users: This program is designed to create a codebook that matches the 
+distribution dataset. Codebook content is derived from Blaise .bmi metadata.
+If you have any questions or suggestions concerning codebook layout or content 
+please bring them to the attention of the HRS staff at hrsquest@isr.umich.edu. 
+
+Printing recommendation: Set margins (left/right/top/bottom) to .5"; print in 
+portrait orientation using a mono-space 10-point font.
+==========================================================================================
+
+SECTION PR: Preload (Respondent)
+
+==========================================================================================
+
+HHID      HOUSEHOLD IDENTIFICATION NUMBER
+          Section: PR     Level: Respondent  Type: Character   Width: 6    Decimals: 0
+
+        ..................................................................................
+         1501           000002-213399. Household Identifier
+
+==========================================================================================
+
+PN        RESPONDENT PERSON IDENTIFICATION NUMBER
+          Section: PR     Level: Respondent  Type: Character   Width: 3    Decimals: 0
+
+        ..................................................................................
+         1047         010. Person Identifier
+           14         011. Person Identifier
+          341         020. Person Identifier
+            2         021. Person Identifier
+           50         030. Person Identifier
+           47         040. Person Identifier
+
+==========================================================================================
+
+SSUBHH    2002 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+          Section: PR     Level: Respondent  Type: Character   Width: 1    Decimals: 0
+
+        ..................................................................................
+         1429           3. 1st deceased respondent from a household
+           72           4. 2nd deceased respondent from a household
+
+==========================================================================================
+
+GSUBHH    2000 SUB-HOUSEHOLD IDENTIFICATION NUMBER
+          Section: PR     Level: Respondent  Type: Character   Width: 1    Decimals: 0
+
+        ..................................................................................
+         1450           0. Original sample household - no split from divorce or
+                           separation of spouses or partners
+           16           1. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           15           2. Split household - one half of couple from SUBHH 0 and new
+                           spouse or partner, if any
+           17           3. 1st deceased respondent from a household
+            1           4. 2nd deceased respondent from a household
+            2           7. Reunited household - respondents from split household reunite
+
+==========================================================================================
+
+SPN_SP    2002 SPOUSE PERSON IDENTIFICATION NUMBER
+          Section: PR     Level: Respondent  Type: Character   Width: 3    Decimals: 0
+
+        ..................................................................................
+          254         010. Person Identifier
+           27         011. Person Identifier
+            1         012. Person Identifier
+          312         020. Person Identifier
+            2         021. Person Identifier
+           22         030. Person Identifier
+            2         031. Person Identifier
+           38         040. Person Identifier
+            1         041. Person Identifier
+            2         810. Person Identifier
+            1         811. Person Identifier
+          839       Blank. R not coupled
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); ptSCVXR1_R2 <> SECOND; (piHHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = MARRIED) OR
+        (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL)); A020TSameSpP_A = NO;
+        BA_Respondents[3].X054APNdx = EMPTY AND (A025_YrStopCoHabit = RESPONSE);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX004_R   R MONTH BORN-UPDATED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_RTab.X004AmoBorn
+        ..................................................................................
+          122           1. JAN
+          121           2. FEB
+          126           3. MAR
+           98           4. APR
+           93           5. MAY
+          127           6. JUN
+          122           7. JUL
+          139           8. AUG
+          121           9. SEP
+          111          10. OCT
+          117          11. NOV
+          114          12. DEC
+           90       Blank. Data Not Available
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        (((BA_Respondents[1].X066ACouplenss_V = MARRIED) AND (A020TSameSpP_A =
+        YESANDSPPTRISLIVING)) OR (A020TSameSpP_A = THATPTRISNOWRSSP)) OR (A026_Rmarried
+        = YES); A034_RMarSep = SEPARATED; BA_Respondents[3].X054APNdx = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX067_R   RESPONDENT YEAR BORN - UPDATED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: B_People.x067AYRborn
+        ..................................................................................
+         1501               1895-1962. Actual Value
+                                Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        (((BA_Respondents[1].X066ACouplenss_V = MARRIED) AND (A020TSameSpP_A =
+        YESANDSPPTRISLIVING)) OR (A020TSameSpP_A = THATPTRISNOWRSSP)) OR (A026_Rmarried
+        = YES); A034_RMarSep = SEPARATED; BA_Respondents[3].X054APNdx = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX007     RESP FAM/FIN TYPE - UPDATED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_RTab.X007AfinFam
+        ..................................................................................
+            5           1. FINANCIAL R
+            1           2. FAMILY R
+         1486           3. FINANCIAL & FAMILY R
+            9           4. NON-FINANCIAL & NON-FAMILY R
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SZ007     PREV WAVE R FIN/FAM TYPE
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_RTab.X077AfinFam_V
+        ..................................................................................
+          189           1. FINANCIAL R
+          123           2. FAMILY R
+          971           3. FINANCIAL & FAMILY R
+          217           4. NON-FINANCIAL & NON-FAMILY R
+            1       Blank. Data from prior wave not available
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; (piHHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = MARRIED) OR
+        (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL)); A020TSameSpP_A = NO;
+        BA_Respondents[3].X054APNdx = EMPTY AND (A025_YrStopCoHabit = RESPONSE);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SZ008     PREV WAVE R IN NH AT PREVIOUS WAVE
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_RTab.X008AInNHome_V
+        ..................................................................................
+          235           1. IN NURSING HOME
+         1259           5. R NOT IN NURSING HOME
+            7       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ023     WHICH COHORT
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_HouseHold.X023_Cohort_V
+        ..................................................................................
+          899           1. AHEAD (born before 1924)
+          155           2. CODA (1924-1930)
+          411           3. HRS (1931-1941)
+           35           4. WAR BABY (1942-1947)
+            1       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ024     PREV WAVE HH INTERVIEWED IN PRIOR WAVE
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_HouseHold.X024_ReIwHH_V
+        ..................................................................................
+         1500           1. YES
+                        5. NO
+            1       Blank. Data from prior wave not available
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        puA110TStophouseAssignments = RESPONSE; NursingHome.A070_NHOwnRent = NO;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX026M    1ST ADDRESS STATE - MASKED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_HouseHold.X026_MainST
+
+        User Note: Code categories have been collapsed to protect participant
+                confidentiality.
+        ..................................................................................
+           54           1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+          207           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+          233           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+          110           4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+          383           5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+           73           6. South Region: East South Central Division (KY, TN, AL, MS)
+          200           7. South Region: West South Central Division (AR, LA, OK, TX)
+           66           8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+          168           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+            1          11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+            1          97. OTHER COUNTRY
+            1          98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (refused)
+            4       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SX027     HAS 2ND RESIDENCE-UPDATED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_HouseHold.X027_Has2ndRes
+        ..................................................................................
+           87           1. HAS OTHER RESIDENCE
+         1413           5. NO OTHER RESIDENCE
+            1       Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SZ028     PREV WAVE HH HAS 2ND RESIDENCE
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_HouseHold.X028_Has2ndRes_V
+        ..................................................................................
+           69           1. HAS OTHER RESIDENCE
+         1431           5. NO OTHER RESIDENCE
+            1       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SX030M    2ND ADDRESS STATE - MASKED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_HouseHold.X030_2ndResST
+
+        User Note: Code categories have been collapsed to protect participant
+                confidentiality.
+        ..................................................................................
+            1           1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+           11           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+            4           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+            3           4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+           29           5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+            1           6. South Region: East South Central Division (KY, TN, AL, MS)
+            5           7. South Region: West South Central Division (AR, LA, OK, TX)
+            6           8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+            6           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+                       11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+            1          97. OTHER COUNTRY
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (refused)
+         1434       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ031M    PREV WAVE 2ND RESIDENCE STATE - MASKED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_HouseHold.X031_2ndResST_V
+
+        User Note: Code categories have been collapsed to protect participant
+                confidentiality.
+        ..................................................................................
+            1           1. Northeast Region: New England Division (ME, NH, VT, MA, RI,
+                           CT)
+           11           2. Northeast Region: Middle Atlantic Division (NY, NJ, PA)
+            4           3. Midwest Region: East North Central Division (OH, IN, IL, MI,
+                           WI)
+            3           4. Midwest Region: West North Central Division (MN, IA, MO, ND,
+                           SD, NE, KS)
+           29           5. South Region: South Atlantic Division (DE, MD, DC, VA, WV, NC,
+                           SC, GA, FL)
+            1           6. South Region: East South Central Division (KY, TN, AL, MS)
+            5           7. South Region: West South Central Division (AR, LA, OK, TX)
+            6           8. West Region: Mountain Division (MT, ID, WY, CO, NM, AZ, UT,
+                           NV)
+            6           9. West Region: Pacific Division (WA, OR, CA, AK, HI)
+                       10. U.S., NA state
+                       11. Foreign Country: Not in a Census Division (includes
+                           U.S.territories)
+                       96. Same State (see questionnaire)
+            1          97. OTHER COUNTRY
+                       98. DK (Don't Know); NA (Not Ascertained)
+                       99. RF (refused)
+         1434       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SX032     OWN 2ND RESIDENCE-UPDATED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_HouseHold.X032_Own2ndRes
+        ..................................................................................
+           67           1. YES
+         1431           5. NO
+            3       Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((A085_WhichMainRes = HOMEIN804805) OR (A085_WhichMainRes = HOMEIN778b)) OR
+        (A085_WhichMainRes = HOMEIN811812); A072_SameAreaMain = YES; NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        ((A085_WhichMainRes = HOMEIN804805) OR (A085_WhichMainRes = HOMEIN778b)) OR
+        (A085_WhichMainRes = HOMEIN811812); NOT (A072_SameAreaMain = YES); NOT
+        (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]); NOT
+        (((A085_WhichMainRes = HOMEIN804805) OR (A085_WhichMainRes = HOMEIN778b)) OR
+        (A085_WhichMainRes = HOMEIN811812)); (A071_SameMainRes <> YES) AND
+        (A072_SameAreaMain <> YES); NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT,
+        FIRSTREPEATPOST, SECREPEATPOST]); NOT (((A085_WhichMainRes = HOMEIN804805) OR
+        (A085_WhichMainRes = HOMEIN778b)) OR (A085_WhichMainRes = HOMEIN811812)); NOT
+        ((A071_SameMainRes <> YES) AND (A072_SameAreaMain <> YES)); (A071_SameMainRes
+        <> YES) AND (A072_SameAreaMain = YES); NOT (RVARS.Z145_TypeExit_V IN
+        [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]); NOT (((A085_WhichMainRes =
+        HOMEIN804805) OR (A085_WhichMainRes = HOMEIN778b)) OR (A085_WhichMainRes =
+        HOMEIN811812)); NOT ((A071_SameMainRes <> YES) AND (A072_SameAreaMain <> YES));
+        NOT ((A071_SameMainRes <> YES) AND (A072_SameAreaMain = YES));
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX033     HH MOVED SINCE PREVIOUS WAVE-UPDATED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_HouseHold.X033_HHMoved
+        ..................................................................................
+          365           1. R MOVED OUT OF THE AREA
+           75           3. R CHANGED RESIDENCE, BUT NOT AREA
+         1061           5. R DIDN'T MOVE
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SZ034     PREV WAVE FIRST R IW MONTH
+          Section: PR     Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_HouseHold.X034_1stRIwMo_V
+        ..................................................................................
+            3           1. JAN
+          106           2. FEB
+          319           3. MAR
+          216           4. APR
+          241           5. MAY
+          220           6. JUN
+          127           7. JUL
+          126           8. AUG
+           67           9. SEP
+           39          10. OCT
+           23          11. NOV
+            9          12. DEC
+            5       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ035     PREV WAVE FIRST R IW YEAR
+          Section: PR     Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: B_HouseHold.X035_1stRIwYr_V
+        ..................................................................................
+         1496               1992-2000. Actual Value
+            5                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SZ036     PREV WAVE IW MONTH OF FAMILY R
+          Section: PR     Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_HouseHold.X036_FamRIwMo_V
+        ..................................................................................
+            4           1. JAN
+          101           2. FEB
+          316           3. MAR
+          222           4. APR
+          242           5. MAY
+          217           6. JUN
+          129           7. JUL
+          126           8. AUG
+           67           9. SEP
+           38          10. OCT
+           24          11. NOV
+            8          12. DEC
+            7       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ037     PREV WAVE IW YEAR OF FAMILY R
+          Section: PR     Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: B_HouseHold.X037_FamRIwYr_V
+        ..................................................................................
+         1494               1992-2000. Actual Value
+            7                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SZ038     PREV WAVE IW MONTH OF FINANCIAL R
+          Section: PR     Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_HouseHold.X038_FinRIwMo_V
+        ..................................................................................
+            4           1. JAN
+          102           2. FEB
+          313           3. MAR
+          221           4. APR
+          238           5. MAY
+          218           6. JUN
+          131           7. JUL
+          125           8. AUG
+           69           9. SEP
+           41          10. OCT
+           24          11. NOV
+            8          12. DEC
+            7       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ039     PREV WAVE IW YEAR OF FINANCIAL R
+          Section: PR     Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: B_HouseHold.X039_FinRIwYr_V
+        ..................................................................................
+         1494               1992-2000. Actual Value
+            7                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; (piHHX024_ReIwHH_V = YES) AND
+        ((BA_Respondents[1].X066ACouplenss_V = MARRIED) OR
+        (BA_Respondents[1].X066ACouplenss_V = PARTNERED_VOL)); A020TSameSpP_A = NO;
+        BA_Respondents[3].X054APNdx = EMPTY AND (A025_YrStopCoHabit = RESPONSE);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SZ057_R   PREV WAVE RESIDENCY STATUS - RESPONDENT
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_People.X057AResStat_V
+        ..................................................................................
+         1500           1. RESIDENT
+                        2. AWAY/INST: THE PERSON IS TEMPORARILY AWAY (IN SCHOOL, JAIL,
+                           REHAB, ETC.) AND DOES NOT HAVE ANY OTHER PERMANENT ADDRESS
+                        3. AWAY/OTHER: THE PERSON IS TEMPORARILY AWAY (FOR ANOTHER
+                           REASON, SUCH AS TRAVELLING) AND DOES NOT HAVE ANY OTHER
+                           PERMANENT ADDRESS
+                        4. DIED
+                        5. NONRESIDENT
+                        6. HAVE NO CONTACT
+                        7. PERSON DOES NOT BELONG IN THIS GRID
+            1       Blank. Data from prior wave not available
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        (((BA_Respondents[1].X066ACouplenss_V = MARRIED) AND (A020TSameSpP_A =
+        YESANDSPPTRISLIVING)) OR (A020TSameSpP_A = THATPTRISNOWRSSP)) OR (A026_Rmarried
+        = YES); A034_RMarSep = SEPARATED; BA_Respondents[3].X054APNdx = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX060_R   SEX OF INDIVIDUAL - RESPONDENT-UPDATED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_People.X060ASex
+        ..................................................................................
+          707           1. MALE
+          794           2. FEMALE
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); ptSCVXR1_R2 <> SECOND; ((piHHX024_ReIwHH_V = NO) OR
+        (BA_Respondents[1].X066ACouplenss_V = OTHER)) OR (A020TSameSpP_A = NO);
+        A026_Rmarried <> YES; A027_Rpartnerd = YES; A020TSameSpP_A = NO;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SX065_R   COUPLENESS STATUS R - UPDATED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_People.X065ACouplenss
+        ..................................................................................
+          626           1. MARRIED
+                        2. REMARRIED
+           35           3. PARTNERED (VOLUNTEERED)
+                        4. REPARTNERED (VOLUNTEERED)
+          840           6. OTHER
+                    Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        (((BA_Respondents[1].X066ACouplenss_V = MARRIED) AND (A020TSameSpP_A =
+        YESANDSPPTRISLIVING)) OR (A020TSameSpP_A = THATPTRISNOWRSSP)) OR (A026_Rmarried
+        = YES); A034_RMarSep = SEPARATED; BA_Respondents[3].X054APNdx = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SZ066_R   PREV WAVE COUPLENESS STATUS R
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_People.X066ACouplenss_V
+        ..................................................................................
+          669           1. MARRIED
+                        2. REMARRIED
+           31           3. PARTNERED (VOLUNTEERED)
+                        4. REPARTNERED (VOLUNTEERED)
+          800           6. OTHER
+            1       Blank. Data from prior wave not available
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        NOT (A047_ = EMPTY); ptSCVXR1_R2 <> SECOND; A030_LivTogethr = NO;
+        (((BA_Respondents[1].X066ACouplenss_V = MARRIED) AND (A020TSameSpP_A =
+        YESANDSPPTRISLIVING)) OR (A020TSameSpP_A = THATPTRISNOWRSSP)) OR (A026_Rmarried
+        = YES); A034_RMarSep = SEPARATED; BA_Respondents[3].X054APNdx = EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SZ068_R   PREV WAVE RESPONDENT YEAR BORN
+          Section: PR     Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: B_People.X068AYrBorn_V
+        ..................................................................................
+         1497               1895-1962. Actual Value
+            4                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; NOT (ptSCVXR1_R2 <> SECOND); SCV.XNewSp = NESSPP;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SZ076     R EVER INTERVIEWED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z076_ReIwR_V
+        ..................................................................................
+                        0. NEW S/P OF PREV WAVE(S) HH R
+         1495           1. REINTERVIEW R
+            5           5. NEVER INTERVIEWED R
+            1       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ077     R ORIG SAMP MEMBER
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z077_OrigSamp_V
+        ..................................................................................
+         1482           1. ORIGINAL SAMPLE MEMBER
+           18           5. NOT AN ORIGINAL SAMPLE MEMBER
+            1       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ078     R AGE ELIGIBLE
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z078_AgeElig_V
+        ..................................................................................
+         1492           1. YES
+            6           5. NO
+            3       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ080     PREV WAVE R MARITAL STATUS
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z080_MarStat_V
+        ..................................................................................
+          648           1. MARRIED
+           11           2. MARRIED SP ABSENT (IN INSTITUTION)
+           10           3. MARRIED SP ABSENT (NOT IN INSTITUTION)
+          111           4. DIVORCED/SEPARATED
+          450           5. WIDOWED
+           45           6. NEVER MARRIED
+          226       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ081     S/P DIE DURING STUDY
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z081_SpPDie_V
+        ..................................................................................
+           74           1. YES
+         1182           5. NO
+          245       Blank. Data from prior wave not available
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; NOT (ptSCVXR1_R2 <> SECOND); SCV.XNewSp = NESSPP;
+        RTab[1].X012AVocLst_V = '1';
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SZ083     UNFOLD VALUE - TOTAL COST MEDICAL
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z083_UnfMedCost_V
+        ..................................................................................
+          468           1. RANDOM ASSIGNMENT
+          478           2. RANDOM ASSIGNMENT
+          554           3. RANDOM ASSIGNMENT
+            1       Blank. Data from prior wave not available
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; NOT (ptSCVXR1_R2 <> SECOND); SCV.XNewSp = NESSPP;
+        RTab[1].X012AVocLst_V = '1';
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SZ084     UNFOLD VALUE - TOTAL O/O/P HOSP/NH
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z084_UnfNHHosp_V
+        ..................................................................................
+          456           1. RANDOM ASSIGNMENT
+          517           2. RANDOM ASSIGNMENT
+          527           3. RANDOM ASSIGNMENT
+            1       Blank. Data from prior wave not available
+
+==========================================================================================
+        NOT (RVARS.Z145_TypeExit_V IN [NEWPOSTEXIT, FIRSTREPEATPOST, SECREPEATPOST]);
+        A047_ = EMPTY; NOT (ptSCVXR1_R2 <> SECOND); SCV.XNewSp = NESSPP;
+        RTab[1].X012AVocLst_V = '1';
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SZ086     UNFOLD VALUE - TOTAL O/O/P RX
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z086_UnfPrescript_V
+        ..................................................................................
+          502           1. RANDOM ASSIGNMENT
+          483           2. RANDOM ASSIGNMENT
+          515           3. RANDOM ASSIGNMENT
+            1       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ089     PREV WAVE R HAS GLAUCOMA
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z089_Glaucoma_V
+        ..................................................................................
+          120           1. YES
+         1339           5. NO
+           42       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ090     PREV WAVE R USES HEARING AID
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z090_HearAid_V
+        ..................................................................................
+          139           1. YES
+         1339           5. NO
+           23       Blank. Data from prior wave not available
+
+==========================================================================================
+        puA120_UPDATER > 0; RVARS.Z092_IwMo_V = EMPTY AND RVARS.Z093_IwYr_V = EMPTY;
+        HH.X034_1stRIwMo_V <> EMPTY AND HH.X035_1stRIwYr_V <> EMPTY;
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SZ092     PREV WAVE IW MONTH
+          Section: PR     Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Rvars.Z092_IwMo_V
+        ..................................................................................
+            3           1. JAN
+          107           2. FEB
+          311           3. MAR
+          222           4. APR
+          243           5. MAY
+          217           6. JUN
+          134           7. JUL
+          120           8. AUG
+           71           9. SEP
+           42          10. OCT
+           20          11. NOV
+           10          12. DEC
+            1       Blank. Data from prior wave not available
+
+==========================================================================================
+        puA120_UPDATER > 0; RVARS.Z092_IwMo_V = EMPTY AND RVARS.Z093_IwYr_V = EMPTY;
+        HH.X034_1stRIwMo_V <> EMPTY AND HH.X035_1stRIwYr_V <> EMPTY; puA120_UPDATER >
+        0; RVARS.Z092_IwMo_V = EMPTY AND RVARS.Z093_IwYr_V = EMPTY; NOT
+        (HH.X034_1stRIwMo_V <> EMPTY AND HH.X035_1stRIwYr_V <> EMPTY);
+        - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SZ093     PREV WAVE IW YEAR
+          Section: PR     Level: Respondent  Type: Numeric     Width: 4    Decimals: 0
+         CAI Reference: B_Rvars.Z093_IwYr_V
+        ..................................................................................
+         1500               1992-2000. Actual Value
+            1                   Blank. INAP (Inapplicable)
+
+==========================================================================================
+
+SZ095     PREV WAVE IW SELF/PROXY
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z095_SelfPrxyIw_V
+        ..................................................................................
+         1055           1. SELF
+          411           2. PROXY
+           25           3. PROXY NAME NOT PRELOADED
+           10       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ096     PREV WAVE PROXY RTR
+          Section: PR     Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Rvars.Z096_PrxyRTR_V
+        ..................................................................................
+          152           2. SPOUSE/PARTNER
+           41           3. SON
+                        4. STEPSON OR SON OF PARTNER
+            3           5. SPOUSE/PARTNER OF DAUGHTER
+          120           6. DAUGHTER
+                        7. STEPDAUGHTER OR DAUGHTER OF PARTNER
+           19           8. SPOUSE/PARTNER OF SON
+           15           9. GRANDCHILD OF R OR SP/P
+                       10. FATHER
+                       11. FATHER OF SPOUSE/PARTNER
+                       12. MOTHER
+                       13. MOTHER OF SPOUSE/PARTNER
+                       14. R'S PARENTS
+            4          15. BROTHER
+                       16. BROTHER-IN-LAW OR BROTHER OF SP/P
+           10          17. SISTER
+                       18. SISTER-IN-LAW OR SISTER OF SP/P
+           27          19. OTHER RELATIVE
+           10          20. OTHER INDIVIDUAL
+                       21. ORGANIZATION
+                       22. EMPLOYEE OF 'INSTITUTION'
+            2          23. PAID HELPER
+            8          24. PROFESSIONAL
+                       25. PROFESSIONAL (SPECIFY)
+                       26. LATE SPOUSE/PARTNER
+                       27. EX-SPOUSE/PARTNER
+                       28. UNLISTED CHILD OR CHILD-IN-LAW
+                       29. NOT PROXY INTERVIEW
+                       30. FORMER STEP-CHILD
+                       31. FORMER CHILD-IN-LAW
+            5          32. RELATIONSHIP UNKNOWN
+                       33. SP/P OF GRANDCHILD
+         1085       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ098     PREV WAVE OWN OTHER REAL ESTATE
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z098_OthRealEstate_V
+        ..................................................................................
+          126           1. YES
+         1363           5. NO
+           12       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ101     PREV WAVE R HAS HIGH BLOODPRESSURE
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z101_HighBP_V
+        ..................................................................................
+          884           1. YES
+          602           5. NO
+           15       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ102     PREV WAVE R HAS DIABETES
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z102_Diabetes_V
+        ..................................................................................
+          367           1. YES
+         1114           5. NO
+           20       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ103     PREV WAVE R HAS CANCER
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z103_Cancer_V
+        ..................................................................................
+          323           1. YES
+         1156           5. NO
+           22       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ104     PREV WAVE R HAS LUNG PROBLEMS
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z104_Lung_V
+        ..................................................................................
+          296           1. YES
+         1185           5. NO
+           20       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ105     PREV WAVE R HAS HEART PROBLEMS
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z105_Heart_V
+        ..................................................................................
+          661           1. YES
+          808           5. NO
+           32       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ106     PREV WAVE R HAS HAD STROKE
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z106_Stroke_V
+        ..................................................................................
+          298           1. YES
+         1181           5. NO
+           22       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ107     PREV WAVE R HAS PSYCHIATRIC PROBLEMS
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z107_Psychiatric_V
+        ..................................................................................
+          304           1. YES
+         1178           5. NO
+           19       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ108     PREV WAVE R HAS ARTHRITIS
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z108_Arthritis_V
+        ..................................................................................
+          964           1. YES
+          520           5. NO
+           17       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ109     PREV WAVE R HAS FALLEN
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z109_Fallen_V
+        ..................................................................................
+          529           1. YES
+          920           5. NO
+           52       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ110     PREV WAVE R HAS HAD BROKEN HIP
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z110_BrokeHip_V
+        ..................................................................................
+           49           1. YES
+         1418           5. NO
+           34       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ111     PREV WAVE R HAS HAD JOINT REPLACEMENT
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z111_JointReplaced_V
+        ..................................................................................
+           35           1. YES
+         1435           5. NO
+           31       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ112     PREV WAVE R HAS HAD CATARACTS
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z112_Cataract_V
+        ..................................................................................
+           75           1. YES, ONE EYE DONE
+           92           2. YES, BOTH EYES DONE
+         1300           5. NO
+           34       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ113     PREV WAVE GAVE MEDICARE NUMBER
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z113_GaveMedcareNo_V
+        ..................................................................................
+         1133           1. YES
+          155           5. NO
+          213       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ114     PREV WAVE NUMBER OF GRANDCHILDREN
+          Section: PR     Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Rvars.Z114_NumGKids_V
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            860          1         80          7.54          7.35     275
+         -----------------------------------------------------------------
+          366          95. NO GRANDKIDS
+
+==========================================================================================
+
+SZ115     PREV WAVE OWN BUSINESS
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z115_OwnBiz_V
+        ..................................................................................
+           50           1. YES
+         1114           5. NO
+          337       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ116     PREV WAVE OWN STOCKS
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z116_OwnStock_V
+        ..................................................................................
+          239           1. YES
+          910           5. NO
+          352       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ117     PREV WAVE R HAS MEMORY DISEASE
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z117_MemryDisease_V
+        ..................................................................................
+          133           1. YES
+         1293           5. NO
+           75       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ123     PREV WAVE R CURRENTLY WORKING
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z123_CurWorkng_V
+        ..................................................................................
+          147           1. YES
+         1345           5. NO
+            9       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ124     PREV WAVE R RETIRED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z124_Retired_V
+        ..................................................................................
+          899           1. YES
+          599           5. NO
+            3       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ125     PREV WAVE R RECEIVES SS
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z125_RGetSS_V
+        ..................................................................................
+         1288           1. YES
+          206           5. NO
+            7       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ126     PREV WAVE S/P RECEIVES SS
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z126_SpPGetSS_V
+        ..................................................................................
+          525           1. YES
+          182           5. NO
+          794       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ127     PREV WAVE R RECEIVES SSI
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z127_RGetSSI_V
+        ..................................................................................
+          125           1. YES
+           33           5. NO
+         1343       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ132     PREV WAVE R OWNS OR RENTS
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z132_OwnRent_V
+        ..................................................................................
+          599           1. OWN
+          222           2. RENT
+           98           7. NEITHER OWN/RENT
+          582       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ133     PREV WAVE R HAD PENSION ON JOB
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z133_JobPension_V
+        ..................................................................................
+           46           1. YES
+         1400           5. NO
+           55       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ134     PREV WAVE RETIREMENT STATUS
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z134_RetireStat_V
+        ..................................................................................
+          709           1. FULLY
+           43           3. PARTLY
+           92           5. NOT
+          657       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ135     PREV WAVE LIVE ON FARM
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z135_LivFarm_V
+        ..................................................................................
+           25           1. YES
+         1475           5. NO
+            1       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SZ136     PREV WAVE SELF/ELSE EMPLOYED
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z136_SelfElseEmp_V
+        ..................................................................................
+          110           1. ELSE
+           37           2. SELF
+         1354       Blank. Not Employed Prev Wave
+
+==========================================================================================
+
+SZ137     PREV WAVE HRS WORKED PER WEEK
+          Section: PR     Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Rvars.Z137_WorkHrWk_V
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            108          2         90         33.06         15.86    1393
+         -----------------------------------------------------------------
+
+==========================================================================================
+
+SZ138     PREV WAVE WEEKS WORKED/YEAR
+          Section: PR     Level: Respondent  Type: Numeric     Width: 2    Decimals: 0
+         CAI Reference: B_Rvars.Z138_WorkWkYr_V
+        ..................................................................................
+
+         -----------------------------------------------------------------
+              N        Min        Max          Mean            SD    Miss
+            107         12         52         48.94          7.25    1394
+         -----------------------------------------------------------------
+
+==========================================================================================
+
+SZ144     PREV WAVE LIVE IN COMPLEX W/SERVICES
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+         CAI Reference: B_Rvars.Z144_LivComplex_V
+        ..................................................................................
+          244           1. YES
+         1140           5. NO
+          117       Blank. Data from prior wave not available
+
+==========================================================================================
+
+SVDATE    2002 DATA MODEL VERSION
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+
+
+        User Note:  This variable identifies which data model was used to interview
+        the proxy respondent.  Please reference the data description for a summary of
+        changes in each data model.
+        ..................................................................................
+          608           1. Version 1
+          337           2. Version 2
+          449           3. Version 3
+          107           4. Version 4
+
+==========================================================================================
+
+SVERSION  2002 EXIT FINAL RELEASE VERSION NUMBER
+          Section: PR     Level: Respondent  Type: Numeric     Width: 1    Decimals: 0
+
+        ..................................................................................
+         1501           1. HRS 2002 Exit Final Release #1
+
+==========================================================================================
+
+SQNR      BLAISE IDENTIFICATION NUMBER
+          Section: PR     Level: Respondent  Type: Character   Width: 11   Decimals: 0
+
+        ..................................................................................
+         1501 00000200010-21339900010. Blaise Identifier
+
