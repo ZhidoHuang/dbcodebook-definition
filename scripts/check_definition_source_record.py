@@ -50,7 +50,8 @@ QUESTION_COVERAGE_STATUSES = {"questionnaire", "not_applicable"}
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 LOCAL_EVIDENCE_ROOTS = {
     "CHARLS": SKILL_ROOT / "references" / "source-materials" / "charls",
-    "ELSA": SKILL_ROOT / "references" / "source-materials" / "elsa",
+    "ELSA": SKILL_ROOT / "references" / "databases" / "elsa" / "official-materials",
+    "HRS": SKILL_ROOT / "references" / "source-materials" / "hrs",
 }
 CANDIDATE_DECISIONS = {"include", "exclude", "partial"}
 SOURCE_HANDLING_DECISIONS = {"merge", "keep_separate", "single_period"}
@@ -743,38 +744,32 @@ def validate_download_selection(
         fail(f"topic_id must be {topic_id}")
     if record.get("status") != READY_STATUS:
         fail(f"status must be {READY_STATUS} before download")
+    if schema_version in {4, 5, 6, 7}:
+        selected = read_selection_vars(selection_path)
+        checked = validate_record(record_path, None, None, topic_id, selection=selected)
+        return {"ok": True, "mode": "pre_download_selection", "topic_id": topic_id,
+                "variables": len(selected), "alias_families": checked["alias_families"],
+                "selection_file": str(selection_path)}
     validate_logic_review(record)
 
     groups = record.get("source_groups")
     if not isinstance(groups, list) or not groups:
         fail("source_groups must contain the final source list")
     recorded_raw: list[str] = []
-    source_periods: dict[str, set[str]] = {}
     for index, item in enumerate(groups, start=1):
         if not isinstance(item, dict):
             fail(f"source_groups[{index}] must be an object")
         variables = item.get("raw_variables")
         if not isinstance(variables, list) or not variables:
             fail(f"source_groups[{index}].raw_variables must not be empty")
-        recorded_raw.extend(
+        group_raw = [
             nonempty_text(value, f"source_groups[{index}].raw_variables")
             for value in variables
-        )
-        if schema_version in {6, 7}:
-            concept = nonempty_text(
-                item.get("concept"), f"source_groups[{index}].concept"
-            )
-            if concept in source_periods:
-                fail(f"source_groups repeats concept: {concept}")
-            periods = item.get("periods")
-            if not isinstance(periods, list) or not periods:
-                fail(f"source_groups[{index}].periods must not be empty")
-            source_periods[concept] = {
-                nonempty_text(value, f"source_groups[{index}].periods")
-                for value in periods
-            }
-    if len(recorded_raw) != len(set(recorded_raw)):
-        fail("source_groups contain duplicate raw variables")
+        ]
+        if len(group_raw) != len(set(group_raw)):
+            fail(f"source_groups[{index}].raw_variables contains duplicates")
+        recorded_raw.extend(group_raw)
+    recorded_raw = list(dict.fromkeys(recorded_raw))
     alias_family_count = validate_alias_families(record, recorded_raw)
 
     selected = read_selection_vars(selection_path)
@@ -786,24 +781,7 @@ def validate_download_selection(
             f"missing={missing}, unexpected={unexpected}"
         )
 
-    if schema_version in {4, 5, 6, 7}:
-        validate_human_record(record_path, record, record.get("exploration_log"))
-    if schema_version in {5, 6, 7}:
-        validate_evidence_reviews(record, record.get("exploration_log"))
-    if schema_version in {6, 7}:
-        validate_questionnaire_evidence(
-            record, record.get("exploration_log"), source_periods
-        )
-    if schema_version == 7:
-        validate_questionnaire_path_closure(
-            record,
-            record.get("exploration_log"),
-            groups,
-            record.get("approved_analysis_vars"),
-            record.get("definition_plan"),
-            require_observed=False,
-        )
-    if schema_version in {2, 3, 4, 5, 6, 7}:
+    if schema_version in {2, 3}:
         decisions = record.get("candidate_decisions")
         if not isinstance(decisions, list) or not decisions:
             fail("candidate_decisions must contain the final include/exclude decisions")
@@ -958,14 +936,38 @@ def extract_summary_paths(source: str) -> list[str]:
     )
 
 
+def validate_exploration_log(record: dict) -> set[int]:
+    if record.get("recording_mode") != "contemporaneous":
+        fail("schema v2+ recording_mode must be contemporaneous")
+    log = record.get("exploration_log")
+    if not isinstance(log, list) or not log:
+        fail("schema v2+ exploration_log must record the actual exploration sequence")
+    steps = set()
+    for expected_step, item in enumerate(log, start=1):
+        if not isinstance(item, dict):
+            fail(f"exploration_log[{expected_step}] must be an object")
+        step = item.get("step")
+        if step != expected_step:
+            fail("exploration_log steps must be consecutive and start at 1")
+        if item.get("action") not in EXPLORATION_ACTIONS:
+            fail(f"exploration_log[{expected_step}].action must be one of {sorted(EXPLORATION_ACTIONS)}")
+        for field in ("input", "observed", "decision", "reason"):
+            nonempty_text(item.get(field), f"exploration_log[{expected_step}].{field}")
+        steps.add(step)
+    return steps
+
+
 def validate_record(
     record_path: Path,
-    r_script_path: Path,
-    raw_codebook_path: Path,
+    r_script_path: Path | None,
+    raw_codebook_path: Path | None,
     topic_id: str,
+    *,
+    selection: list[str] | None = None,
 ) -> dict:
     record = load_json(record_path)
-    source = r_script_path.read_text(encoding="utf-8")
+    pre_download = selection is not None
+    source = "" if pre_download else r_script_path.read_text(encoding="utf-8")
 
     schema_version = record.get("schema_version")
     if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
@@ -983,28 +985,8 @@ def validate_record(
     exploration_log: object = None
     evidence_reviews: list[dict] = []
     if schema_version in {2, 3, 4, 5, 6, 7}:
-        if record.get("recording_mode") != "contemporaneous":
-            fail("schema v2+ recording_mode must be contemporaneous")
+        exploration_steps = validate_exploration_log(record)
         exploration_log = record.get("exploration_log")
-        if not isinstance(exploration_log, list) or not exploration_log:
-            fail("schema v2+ exploration_log must record the actual exploration sequence")
-        for expected_step, item in enumerate(exploration_log, start=1):
-            if not isinstance(item, dict):
-                fail(f"exploration_log[{expected_step}] must be an object")
-            step = item.get("step")
-            if step != expected_step:
-                fail("exploration_log steps must be consecutive and start at 1")
-            action = item.get("action")
-            if action not in EXPLORATION_ACTIONS:
-                fail(
-                    f"exploration_log[{expected_step}].action must be one of "
-                    f"{sorted(EXPLORATION_ACTIONS)}"
-                )
-            for field in ("input", "observed", "decision", "reason"):
-                nonempty_text(
-                    item.get(field), f"exploration_log[{expected_step}].{field}"
-                )
-            exploration_steps.add(step)
         if schema_version in {4, 5, 6, 7}:
             validate_human_record(record_path, record, exploration_log)
         if schema_version in {5, 6, 7}:
@@ -1016,14 +998,20 @@ def validate_record(
     if not isinstance(directories, list) or not directories:
         fail("directory_entries must contain at least one verified directory")
     directory_paths: set[str] = set()
+    database = nonempty_text(record.get("database"), "database").upper()
+    directory_prefixes = {
+        "HRS": ("Full HRS >",),
+    }.get(database, ("Core data >",))
     for index, item in enumerate(directories, start=1):
         if not isinstance(item, dict):
             fail(f"directory_entries[{index}] must be an object")
         full_path = nonempty_text(
             item.get("full_path"), f"directory_entries[{index}].full_path"
         )
-        if not full_path.startswith("Core data >"):
-            fail(f"directory_entries[{index}].full_path is not a full Core data path")
+        if not full_path.startswith(directory_prefixes):
+            fail(
+                f"directory_entries[{index}].full_path is not a full {database} data path"
+            )
         if item.get("verified_in_ui") is not True:
             fail(f"directory_entries[{index}] was not verified in the website UI")
         nonempty_text(item.get("purpose"), f"directory_entries[{index}].purpose")
@@ -1057,8 +1045,10 @@ def validate_record(
         variables = item.get("raw_variables")
         if not isinstance(variables, list) or not variables:
             fail(f"source_groups[{index}].raw_variables must not be empty")
-        for variable in variables:
-            recorded_raw.append(nonempty_text(variable, "raw variable"))
+        group_raw = [nonempty_text(variable, "raw variable") for variable in variables]
+        if len(group_raw) != len(set(group_raw)):
+            fail(f"source_groups[{index}].raw_variables contains duplicates")
+        recorded_raw.extend(group_raw)
         period_field = "periods" if schema_version in {3, 4, 5, 6, 7} else "years"
         periods = item.get(period_field)
         if not isinstance(periods, list) or not periods:
@@ -1176,16 +1166,15 @@ def validate_record(
         else:
             fail(f"source_groups[{index}].discovery.mode is invalid")
 
-    if len(recorded_raw) != len(set(recorded_raw)):
-        fail("source_groups contain duplicate raw variables")
+    recorded_raw = list(dict.fromkeys(recorded_raw))
     questionnaire_summary = {"questions": 0, "covered_periods": 0}
     if schema_version in {6, 7}:
         questionnaire_summary = validate_questionnaire_evidence(
-            record, exploration_log, source_periods, require_rendered=True
+            record, exploration_log, source_periods, require_rendered=not pre_download
         )
     alias_family_count = validate_alias_families(record, recorded_raw)
-    raw_vars = read_raw_vars(raw_codebook_path)
-    exported_identity_vars = read_exported_identity_vars(raw_codebook_path)
+    raw_vars = selection if pre_download else read_raw_vars(raw_codebook_path)
+    exported_identity_vars = set() if pre_download else read_exported_identity_vars(raw_codebook_path)
     if not set(raw_vars).issubset(recorded_raw) or not set(recorded_raw).issubset(
         set(raw_vars) | exported_identity_vars
     ):
@@ -1260,7 +1249,7 @@ def validate_record(
     ]
     if len(approved_names) != len(set(approved_names)):
         fail("approved_analysis_vars contains duplicates")
-    r_analysis_vars = extract_r_vector(source, "analysis_vars")
+    r_analysis_vars = approved_names if pre_download else extract_r_vector(source, "analysis_vars")
     if approved_names != r_analysis_vars:
         fail(
             "analysis_vars differs from the approved naming list; "
@@ -1319,6 +1308,7 @@ def validate_record(
             groups,
             approved_names,
             definition_plan,
+            require_observed=not pre_download,
         )
 
     r_summary_paths = extract_summary_paths(source)

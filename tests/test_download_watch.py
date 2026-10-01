@@ -162,6 +162,18 @@ with tempfile.TemporaryDirectory() as temp:
     execution_first = subprocess.run(prepare_args + ["--overwrite"], capture_output=True,
                                     text=True, encoding="utf-8", env={**os.environ, "PYTHONUTF8": "1"})
     assert execution_first.returncode == 0, execution_first.stderr
+    # New reports must not prepare paid actions before the actual dual merge.
+    before_dual = prepare_snapshot.read_bytes()
+    (source_path.parent / "execution_report.json").write_text(json.dumps({
+        "review_policy": REVIEW_POLICY, "exploration_policy": "dual_exploration_v1"
+    }), encoding="utf-8")
+    unmerged = subprocess.run(prepare_args + ["--overwrite"], capture_output=True,
+                             text=True, encoding="utf-8", env={**os.environ, "PYTHONUTF8": "1"})
+    assert unmerged.returncode != 0 and "双路探索尚未登记" in unmerged.stderr
+    assert prepare_snapshot.read_bytes() == before_dual
+    assert original.read_text() == "keep until a valid replacement exists"
+    (source_path.parent / "execution_report.json").write_text(
+        json.dumps({"review_policy": REVIEW_POLICY}), encoding="utf-8")
     source_record["logic_review"]["result"] = "pending"
     source_path.write_text(json.dumps(source_record), encoding="utf-8")
     incomplete = subprocess.run(prepare_args + ["--overwrite"], capture_output=True,
@@ -172,6 +184,20 @@ with tempfile.TemporaryDirectory() as temp:
     prepared_run = execution_first
     assert prepared_run.stdout.isascii()
     prepared = json.loads(prepared_run.stdout)
+    # The preferred handoff writes the payload directly, without model copying.
+    action_file = work / "action.json"
+    compact = subprocess.run(prepare_args + ["--overwrite", "--action-file", str(action_file)],
+                             capture_output=True, text=True, encoding="utf-8",
+                             env={**os.environ, "PYTHONUTF8": "1"})
+    assert compact.returncode == 0, compact.stdout + compact.stderr
+    receipt = json.loads(compact.stdout)
+    payload = json.loads(action_file.read_text(encoding="utf-8"))
+    assert "browser_action" not in receipt and "run_script" not in compact.stdout
+    assert receipt["attempt_id"] == payload["browser_action"]["attempt_id"]
+    before = prepare_snapshot.read_bytes()
+    repeated = subprocess.run(prepare_args + ["--overwrite", "--action-file", str(action_file)], capture_output=True)
+    assert repeated.returncode != 0 and before == prepare_snapshot.read_bytes()
+    prepared = payload
     assert prepared["next_action"] == "run_browser_action_once"
     browser_action = prepared["browser_action"]
     assert browser_action["existing_tab_path"] == "http://localhost:8000/home/charls/"

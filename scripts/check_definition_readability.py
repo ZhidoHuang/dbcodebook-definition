@@ -14,7 +14,13 @@ import sys
 from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from check_reader_copy import Document, validate_note, normalized
+from check_reader_copy import Document, validate_note, normalized, route_matches
+from writing_evidence import copy_execution_conclusions, scope_bindings, carry_copy_scopes
+
+
+def is_question_instruction(attrs: dict) -> bool:
+    return (attrs.get("data-summary-question-instruction") == "true"
+            or attrs.get("data-summary-question-detail-role") == "instruction")
 
 
 AUDIT_NAME = "readability_audit.json"
@@ -152,7 +158,7 @@ class QuestionnaireMarkupParser(HTMLParser):
             self.question_id_parts = []
         if values.get("data-summary-question-option") == "true":
             self.current_line["option_count"] += 1
-        if values.get("data-summary-question-instruction") == "true":
+        if is_question_instruction(values):
             self.current_line["instruction_count"] += 1
 
     def handle_data(self, data: str) -> None:
@@ -322,7 +328,7 @@ def validate_questionnaire_rendering(
             if item.get("response_type") == "closed_options":
                 expected_text = [normalized(f"{option['value']} {option['label']}") for option in expected_options]
                 if [normalized(option.text()) for option in options] != expected_text:
-                    fail(f"final note period {period} option values/labels/order differ for {question_id}")
+                    fail(f"final note period {period} option values/labels/order differ for {question_id}; expected={expected_text!r}; actual={[normalized(option.text()) for option in options]!r}")
             for jump in expected_jumps:
                 trigger = normalized(jump["when"])
                 destination = normalized(jump["destination"])
@@ -332,14 +338,12 @@ def validate_questionnaire_rendering(
                     rows = list(node.find(lambda e: e.attrs.get("data-summary-question-detail") == "true"
                                           and any(option is matching_options[0] for option in e.children)))
                     descriptions = [instruction.text() for row in rows for instruction in row.find(
-                        lambda e: e.attrs.get("data-summary-question-instruction") == "true")]
+                        lambda e: is_question_instruction(e.attrs))]
                 else:
                     descriptions = [e.text() for e in node.find(lambda e:
-                        e.attrs.get("data-summary-question-instruction") == "true"
-                        or e.attrs.get("data-summary-question-detail-role") == "instruction")
+                        is_question_instruction(e.attrs))
                         if trigger in normalized(e.text())]
-                target_pattern = r"(?<![A-Za-z0-9_])" + re.escape(destination) + r"(?![A-Za-z0-9_])"
-                if not any(re.search(target_pattern, text) for text in descriptions):
+                if not any(route_matches(jump["destination"], text) for text in descriptions):
                     fail(f"final note period {period} route differs for {question_id}: {jump['when']} -> {jump['destination']}")
             rendered_pairs.add((question_id, str(period)))
 
@@ -592,6 +596,58 @@ def normalized_visible_text(text: str) -> str:
     text = html.unescape(text)
     text = re.sub(r"(?m)^\s{0,3}#{1,6}\s+", "", text)
     return re.sub(r"\s+", " ", text).strip()
+
+
+def author_review_text(note_text: str) -> str:
+    """Keep full content and fenced code, without loading presentation code."""
+    class TextView(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.parts = []
+            self.hidden = 0
+            self.links = []
+
+        def handle_starttag(self, tag, attrs):
+            values = dict(attrs)
+            if tag in {"style", "script"}:
+                self.hidden += 1
+            if self.hidden:
+                return
+            if tag in {"div", "section", "p", "br", "tr", "li", "h1", "h2", "h3", "h4"}:
+                self.parts.append("\n")
+            if tag == "a":
+                self.links.append(values.get("href", ""))
+            if tag == "img" and values.get("alt"):
+                self.parts.append(values["alt"])
+
+        def handle_endtag(self, tag):
+            if tag in {"style", "script"}:
+                self.hidden = max(0, self.hidden - 1)
+                return
+            if self.hidden:
+                return
+            if tag == "a" and self.links:
+                href = self.links.pop()
+                if href and not href.startswith("data:"):
+                    self.parts.append(f" ({href})")
+            self.parts.append("\n" if tag in {"div", "section", "p", "tr", "li"} else " ")
+
+        def handle_data(self, data):
+            if not self.hidden:
+                self.parts.append(data)
+
+    # R comparison operators inside Markdown fences are not HTML tags.
+    parts = re.split(r"(?ms)(^```[^\n]*\n.*?^```[^\n]*$)", note_text)
+    output = []
+    for index, part in enumerate(parts):
+        if index % 2:
+            output.append(part)
+        else:
+            parser = TextView()
+            parser.feed(part)
+            parser.close()
+            output.append("\n".join(line.strip() for line in "".join(parser.parts).splitlines() if line.strip()))
+    return "\n\n".join(part for part in output if part.strip()) + "\n"
 
 
 def first_complete_sentence(text: str) -> str:
@@ -1054,7 +1110,15 @@ def initialize_audit(
         ],
         "unresolved_issues": [],
     }
+    payload["copy_scope_bindings"] = scope_bindings(formal_dir, process_dir, artifacts)
+    payload["copy_execution_conclusions"] = copy_execution_conclusions(process_dir, formal_dir / READER_COPY_NAME)
+    payload["carried_copy_scopes"] = carry_copy_scopes(previous_audit, payload)
     write_json(audit_path, payload)
+    author_input_path = process_dir / "author_review_input.md"
+    author_input_path.write_text(
+        author_review_text((formal_dir / artifacts["note"]["path"]).read_text(encoding="utf-8-sig")),
+        encoding="utf-8",
+    )
     reader_review_path = process_dir / READER_REVIEW_NAME
     if reader_review_path.exists() and not preserve_reader:
         reader_review_path.unlink()
@@ -1068,6 +1132,7 @@ def initialize_audit(
         "ok": True,
         "status": "DRAFT_CREATED",
         "audit": str(audit_path),
+        "author_input": str(author_input_path),
         "artifacts": artifacts,
         "change_impact": change_impact,
         "questionnaire_rendering": questionnaire_rendering,
@@ -1415,8 +1480,8 @@ def build_cua_sync_action(
         fail("--create cannot be combined with --post-id")
     if create and not (website_title and directory_tag and directory_tag.strip()):
         fail("--create requires --website-title and --directory-tag")
-    if not create and not re.fullmatch(r"[1-9][0-9]*", post_id):
-        fail("--post-id must be a positive integer")
+    if not create and not re.fullmatch(r"(?:local-)?[1-9][0-9]*", post_id):
+        fail("--post-id must be a positive integer or local- followed by a positive integer")
 
     attachments = [
         {"role": item["role"], "path": item["path"], "name": Path(item["path"]).name,
@@ -1442,14 +1507,15 @@ def build_cua_sync_action(
         "post_id": post_id,
         "post_url": None if create else f"{base_url}/nodes/post/{post_id}/",
         "post_url_prefix": f"{base_url}/nodes/post/",
-        "edit_url": f"{base_url}/nodes/edit/" if create else f"{base_url}/nodes/edit/{post_id}/",
-        "success_url_pattern": "**/nodes/post/*/" if create else f"**/nodes/post/{post_id}/**",
+        "edit_url": f"{base_url}/nodes/edit/" if create else f"{base_url}/nodes/edit/{post_id.removeprefix('local-')}/",
+        "success_url_pattern": "**/nodes/post/*/",
         "identity_title_parts": (
             [topic_id.zfill(3), database] if website_title else expected_title_parts
         ),
         "expected_title_parts": expected_title_parts,
         "desired_title": website_title,
         "note": upload["note"],
+        "note_sha256": sha256_file(Path(upload["note"])),
         "body_check": upload["body_check"],
         "attachments": attachments,
         "previous_sync": upload.get("previous_sync", {}),
@@ -1460,7 +1526,14 @@ def build_cua_sync_action(
     }
     existing_tab_match = [url for url in (payload["post_url"], payload["edit_url"]) if url]
     existing_tab_match_json = json.dumps(existing_tab_match, ensure_ascii=False)
-    helper_script = rf'''async function resolveDbCodeBookTab(expectedUrls) {{
+    helper_script = rf'''function validDbCodeBookPostUrl(postUrl, payload) {{
+  const prefix = payload.post_url_prefix;
+  if (!postUrl.startsWith(prefix) || !/^(?:local-)?[1-9][0-9]*\/$/.test(postUrl.slice(prefix.length))) return false;
+  if (payload.create) return true;
+  const identity = url => url.slice(prefix.length).replace(/^local-/, "");
+  return payload.post_url.startsWith(prefix) && identity(postUrl) === identity(payload.post_url);
+}}
+async function resolveDbCodeBookTab(expectedUrls) {{
   if (typeof dbCodeBookBrowser === "undefined" || !dbCodeBookBrowser?.tabs) {{
     throw new Error("请先按浏览器技能连接选定的 Chrome 或 Edge，并绑定 dbCodeBookBrowser");
   }}
@@ -1670,8 +1743,7 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
     }}
     await returned;
     const postUrl = await tab.url();
-    const postSuffix = postUrl.slice(payload.post_url_prefix.length);
-    if (!postUrl.startsWith(payload.post_url_prefix) || !/^[1-9][0-9]*\/$/.test(postSuffix)) {{
+    if (!validDbCodeBookPostUrl(postUrl, payload)) {{
       throw new Error(`提交后未返回文章地址：${{postUrl}}`);
     }}
     timings.submit_and_return_ms = Date.now() - stepStarted;
@@ -1749,6 +1821,8 @@ def parse_args() -> argparse.Namespace:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    preview = subparsers.add_parser("preview", help="Read note text even if checks failed; never creates audit or publication permission")
+    preview.add_argument("--note", type=Path, required=True)
     impact_parser = subparsers.add_parser("init-impact")
     impact_parser.add_argument("--process-dir", required=True, type=Path)
     impact_parser.add_argument("--topic-id", required=True)
@@ -1789,6 +1863,9 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if args.command == "preview":
+        print(author_review_text(args.note.read_text(encoding="utf-8-sig")))
+        return 0
     sync = None
     sync_requested = args.command == "verify-ready" and args.start_sync
     browser_target_requested = args.command == "verify-ready" and any(

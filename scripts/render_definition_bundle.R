@@ -135,15 +135,21 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
   inline_parts <- function(text) {
     pieces <- strsplit(text, "**", fixed = TRUE)[[1]]
     lapply(seq_along(pieces), function(i) {
-      if (i %% 2L == 0L) summary_concept_part(pieces[i], quote = FALSE) else pieces[i]
+      if (i %% 2L == 0L) {
+        if (grepl("^[0-9]+$", pieces[i])) summary_count_part(as.integer(pieces[i]), "") else summary_concept_part(pieces[i], quote = FALSE)
+      } else pieces[i]
     })
   }
   render_values <- function(text) {
-    pieces <- strsplit(text, "`", fixed = TRUE)[[1]]
+    # Append one ordinary character so strsplit() cannot discard a trailing
+    # empty field when a valid inline-code span ends the line.
+    padded <- paste0(text, " ")
+    pieces <- strsplit(padded, "`", fixed = TRUE)[[1]]
     for (i in seq.int(1L, length(pieces), by = 2L)) {
       pieces[i] <- gsub("\\[([^][]+)\\]", "<u>[\\1]</u>", pieces[i], perl = TRUE)
     }
-    paste(pieces, collapse = "`")
+    rendered <- paste(pieces, collapse = "`")
+    substr(rendered, 1L, nchar(rendered) - 1L)
   }
   criteria <- lapply(copy$criteria, function(fields) {
     paste0(vapply(names(fields), function(field) {
@@ -156,8 +162,9 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
   })
   result <- list(
     criteria = criteria,
-    summary_entry = list(paragraphs = lapply(paragraphs(copy$summary), function(text) {
-      list(parts = inline_parts(text))
+    summary_entry = list(paragraphs = lapply(copy$summary_blocks, function(block) {
+      if (identical(block$type, "code_tree")) return(block)
+      list(parts = inline_parts(block$text))
     })),
     summary_insight_items = if (nzchar(copy$insight)) paragraphs(copy$insight) else NULL,
     reference_lines = c("## 参考资料说明", "", copy$references)
@@ -291,6 +298,10 @@ compose_definition_note_lines <- function(
     extract_box,
     publish_code,
     detail_html_lines) {
+  visible_code <- trimws(publish_code[nzchar(trimws(publish_code))])
+  if (length(visible_code) && grepl("^#[- #]*[0-9]+[ .、_-]", tail(visible_code, 1))) {
+    warning("公开代码以空小节标题结束；请把正式工作簿写出放在 # 输出 之前。", call. = FALSE)
+  }
   c(
     summary_section,
     if (length(summary_extra_lines) > 0) c(summary_extra_lines, "") else character(),
@@ -314,6 +325,25 @@ definition_period_counts <- function(data) {
   tidyr::pivot_longer(
     counts, cols = -year, names_to = "Variable", values_to = "Count"
   )
+}
+
+definition_source_entry <- function(value, database = "CHARLS") {
+  if (is.null(value)) return(NULL)
+  if (is.list(value) && !is.null(value$path)) {
+    note <- if (is.null(value$note)) "" else value$note
+    if (!is.character(note) || length(note) != 1L || is.na(note)) stop("summary_source note must be one string.")
+    return(list(class = "raw-source-link", lines = list(list(parts = list(
+      list(type = "source_link", value = value$path, database = database), note
+    )))))
+  }
+  if (is.character(value) && length(value) && all(!is.na(value)) && all(nzchar(value))) {
+    return(list(class = "raw-source-link", lines = lapply(value, function(path) {
+      list(parts = list(list(type = "source_link", value = path, database = database)))
+    })))
+  }
+  if (!is.list(value) || is.null(value$lines)) stop("summary_source requires nonempty text or a source entry with lines.")
+  value$class <- "raw-source-link"
+  value
 }
 
 render_definition_bundle <- function(
@@ -346,7 +376,39 @@ render_definition_bundle <- function(
     hist_mode = "linear",
     evidence_lines = character(),
     reference_lines = character(),
-    summary_extra_lines = character()) {
+    summary_extra_lines = character(),
+    database = "CHARLS") {
+  database <- toupper(database)
+  if (!database %in% c("CHARLS", "ELSA", "HRS")) stop("Unsupported definition database: ", database)
+  period_col <- if (database == "ELSA") "Wave" else "year"
+  if (database == "ELSA" && missing(cycle_order)) stop("ELSA requires explicit, evidence-based cycle_order.")
+  if (database == "ELSA") {
+    wave_numbers <- suppressWarnings(as.integer(sub("^Wave ", "", cycle_order)))
+    if (anyNA(wave_numbers) || any(wave_numbers < 1L) ||
+        !identical(as.character(cycle_order), paste("Wave", wave_numbers)) ||
+        anyDuplicated(wave_numbers) || is.unsorted(wave_numbers)) stop("Invalid ELSA Wave order.")
+    for (frame in list(data, db_data, analysis_data)) {
+      if (!all(c("ID", "idauniq", "Wave") %in% names(frame))) stop("ELSA requires ID, idauniq and Wave.")
+      if (any(!is.na(frame$Wave) & !frame$Wave %in% cycle_order)) stop("Observed Wave outside declared cycle_order.")
+    }
+    # Local rendering copies only; formal input and exported identities remain unchanged.
+    db_data$year <- db_data$Wave
+    analysis_data$year <- analysis_data$Wave
+  }
+  if (database == "HRS") {
+    if (missing(cycle_order)) stop("HRS requires explicit, evidence-based cycle_order.")
+    hrs_years <- suppressWarnings(as.integer(cycle_order))
+    if (anyNA(hrs_years) || any(hrs_years < 1900L) || any(hrs_years > 2100L) ||
+        !identical(as.character(cycle_order), as.character(hrs_years)) ||
+        anyDuplicated(hrs_years) || is.unsorted(hrs_years)) stop("Invalid HRS year order.")
+    for (frame in list(data, db_data, analysis_data)) {
+      if (!all(c("HHID", "PN", "year") %in% names(frame))) stop("HRS requires HHID, PN and year.")
+      if (any(!is.na(frame$year) & !as.character(frame$year) %in% cycle_order)) stop("Observed year outside declared cycle_order.")
+    }
+  }
+  summary_source <- definition_source_entry(summary_source, database)
+  # Validate source structure before any output files are written.
+  if (!is.null(summary_source)) render_summary_selection_paragraph(summary_source, theme_color)
   definition_copy_check(source = list(
     summary = render_summary_entry_paragraph(summary_entry, theme_color),
     criteria = as.list(criteria[analysis_vars]),
@@ -363,7 +425,7 @@ render_definition_bundle <- function(
   library("tidyr")
   library("dbCodeBookr")
   expected_charls_cycles <- c("2011", "2013", "2015", "2018", "2020")
-  if (!identical(as.character(cycle_order), expected_charls_cycles)) {
+  if (database == "CHARLS" && !identical(as.character(cycle_order), expected_charls_cycles)) {
     stop(
       "CHARLS target cycles must be 2011, 2013, 2015, 2018, and 2020; ",
       "a topic cannot redefine full-cycle coverage from its observed rows."
@@ -386,7 +448,7 @@ render_definition_bundle <- function(
     summary_meanings,
     summary_groups,
     summary_reviewed,
-    period_col = "year",
+    period_col = period_col,
     expected_periods = cycle_order,
     object_overrides = summary_object_overrides
   )
@@ -429,7 +491,7 @@ render_definition_bundle <- function(
   )
   writeLines(
     qa_lines,
-    paste0("CHARLS_", file_stem, "_QA.txt"),
+    paste0(database, "_", file_stem, "_QA.txt"),
     useBytes = TRUE
   )
 
@@ -452,6 +514,17 @@ render_definition_bundle <- function(
     show_cycle_heatmap = FALSE
   )
   details <- vapply(details, append_linear_histogram_endpoint, character(1))
+  date_detail_vars <- names(detail_data)[vapply(detail_data, inherits, logical(1), "Date")]
+  date_detail_positions <- match(date_detail_vars, names(db_data))
+  date_detail_positions <- date_detail_positions[!is.na(date_detail_positions)]
+  if (length(date_detail_vars) > 0L) {
+    details[date_detail_positions] <- gsub(
+      "Unsupported type",
+      "日期变量（近似构造）",
+      details[date_detail_positions],
+      fixed = TRUE
+    )
+  }
   names(details) <- names(db_data)
   analysis_source_rows <- match(codebook$Variable, names(formatted_card_sources))
   has_analysis_source <- !is.na(analysis_source_rows)
@@ -462,7 +535,7 @@ render_definition_bundle <- function(
   codebook$easylabel <- codebook$Label
 
   identity_columns <- intersect(
-    c("ID", "id", "householdid", "communityid"),
+    c("ID", "id", "idauniq", "HHID", "PN", "HHIDPN", "RAHHIDPN", "Wave", "householdid", "communityid"),
     names(detail_data)
   )
   z <- detail_data[, setdiff(names(detail_data), identity_columns), drop = FALSE]
@@ -474,6 +547,8 @@ render_definition_bundle <- function(
     values_fill = NA,
     names_sort = FALSE
   )
+  period_columns <- intersect(as.character(cycle_order), names(wide_data))
+  wide_data <- wide_data[c(setdiff(names(wide_data), period_columns), period_columns)]
   wide_data <- wide_data[
     order(factor(wide_data$Variable, levels = names(db_data))),
   ]
@@ -500,7 +575,7 @@ render_definition_bundle <- function(
   generate_html_definition_long(
     heat_df,
     meta_df,
-    paste0("CHARLS_", file_stem, "_detail.html"),
+    paste0(database, "_", file_stem, "_detail.html"),
     "#2c3e50",
     theme_color
   )
@@ -529,6 +604,14 @@ render_definition_bundle <- function(
     append_linear_histogram_endpoint,
     character(1)
   )
+  if (length(date_detail_positions) > 0L) {
+    definition_details[date_detail_positions] <- gsub(
+      "Unsupported type",
+      "日期变量（近似构造）",
+      definition_details[date_detail_positions],
+      fixed = TRUE
+    )
+  }
   names(definition_details) <- names(db_data)
   definition_data$detail <- unname(
     definition_details[definition_data$Variable]
@@ -540,7 +623,7 @@ render_definition_bundle <- function(
   ]
   generate_html_definition(
     definition_data,
-    paste0("CHARLS_", file_stem, "_definition.html"),
+    paste0(database, "_", file_stem, "_definition.html"),
     theme_color
   )
 
@@ -550,8 +633,8 @@ render_definition_bundle <- function(
     text <- gsub("&emsp;&emsp;", "", text, fixed = TRUE)
     writeLines(text, path, useBytes = TRUE)
   }
-  clean_html(paste0("CHARLS_", file_stem, "_detail.html"))
-  clean_html(paste0("CHARLS_", file_stem, "_definition.html"))
+  clean_html(paste0(database, "_", file_stem, "_detail.html"))
+  clean_html(paste0(database, "_", file_stem, "_definition.html"))
 
   extract_vars <- paste0(raw_codebook$Variable, "=", raw_codebook$newname)
   extract_box <- c(
@@ -578,12 +661,12 @@ render_definition_bundle <- function(
     script_lines[seq_len(output_idx[1] - 1)]
   }
   definition_html_lines <- readLines(
-    paste0("CHARLS_", file_stem, "_definition.html"),
+    paste0(database, "_", file_stem, "_definition.html"),
     encoding = "UTF-8",
     warn = FALSE
   )
   detail_html_lines <- readLines(
-    paste0("CHARLS_", file_stem, "_detail.html"),
+    paste0(database, "_", file_stem, "_detail.html"),
     encoding = "UTF-8",
     warn = FALSE
   )

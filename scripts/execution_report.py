@@ -15,6 +15,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from writing_evidence import capture_copy, skill_version
+from exploration_handoff import POLICY as EXPLORATION_POLICY, validate_exploration, add_commands
+
 
 REPORT_NAME = "execution_report.json"
 MARKDOWN_NAME = "执行报告.md"
@@ -125,10 +128,19 @@ def validate_full_definition_completion(
     if report.get("workflow", "general") != "full_definition":
         return
     latest = {stage["stage_id"]: stage for stage in report.get("stages", [])}
+    required_stages = dict(FULL_DEFINITION_STAGES)
+    # The three production steps may be timed separately; do not require a
+    # fabricated aggregate stage just to satisfy a different stage name.
+    if "formal_r" not in latest and any(key in latest for key in ("copy", "public_r", "generate")):
+        required_stages.pop("formal_r")
+        required_stages.update(copy="文案定稿", public_r="正式 R 编写与复核", generate="成果生成")
+    if "validation" not in latest and any(key in latest for key in ("results", "review")):
+        required_stages.pop("validation")
+        required_stages.update(results="结果验证", review="成品交接")
     terminal_statuses = {"completed", "completed_with_issues", "skipped"}
     missing = [
         f"{stage_id}（{label}）"
-        for stage_id, label in FULL_DEFINITION_STAGES.items()
+        for stage_id, label in required_stages.items()
         if stage_id not in latest
         or latest[stage_id].get("status") not in terminal_statuses
     ]
@@ -136,7 +148,7 @@ def validate_full_definition_completion(
         raise SystemExit("完整定义流程缺少已收口环节：" + "、".join(missing))
     unexplained_skips = [
         f"{stage_id}（{label}）"
-        for stage_id, label in FULL_DEFINITION_STAGES.items()
+        for stage_id, label in required_stages.items()
         if latest[stage_id].get("status") == "skipped"
         and not latest[stage_id].get("summary")
     ]
@@ -144,6 +156,8 @@ def validate_full_definition_completion(
         raise SystemExit(
             "完整定义流程的未执行环节没有说明原因：" + "、".join(unexplained_skips)
         )
+
+    validate_exploration(report)
 
     closed_roles = {
         review.get("role")
@@ -191,11 +205,12 @@ def validate_full_definition_completion(
         covered_seconds += (merged_end - merged_start).total_seconds()
     total_seconds = max(0.0, (run_end - run_start).total_seconds())
     untracked_seconds = max(0.0, total_seconds - covered_seconds)
-    if untracked_seconds > MAX_UNTRACKED_SECONDS:
-        raise SystemExit(
-            "完整定义流程有未计入任何环节的时间："
-            f"{duration_text(untracked_seconds)}；请按原始时间记录工作、等待或返工，不能留空。"
-        )
+    report["timing_coverage"] = {
+        "covered_seconds": round(covered_seconds, 3),
+        "untracked_seconds": round(untracked_seconds, 3),
+        "status": "incomplete" if untracked_seconds > MAX_UNTRACKED_SECONDS else "complete",
+        "note": "未归属区间不推定为工作或等待，不补造阶段；不代替成果质量结论。",
+    }
 
 
 def current_session_log() -> Path | None:
@@ -306,8 +321,11 @@ def read_review_log(log_path: Path, role: str) -> dict[str, Any]:
         raise ValueError("selected log has no agent identity or review turns")
     source = meta.get("source", {})
     spawn = source.get("subagent", {}).get("thread_spawn", {}) if isinstance(source, dict) else {}
+    if not spawn and meta.get("forked_from_id"):
+        # Session logs contain timestamps and parent identity; CLI console JSONL does not.
+        spawn = {"parent_thread_id": meta["forked_from_id"], "agent_nickname": meta["id"]}
     if not spawn:
-        raise ValueError("selected log is not a subagent log")
+        raise ValueError("selected log has no verifiable reviewer parent; use the reviewer session log, not CLI console output")
     rounds = sorted(turns.values(), key=lambda item: parse_time(item["started_at"]))
     prior_end = None
     for item in rounds:
@@ -356,13 +374,19 @@ def command_review_import(args: argparse.Namespace) -> dict[str, Any]:
             "between_rounds_seconds": review["between_rounds_seconds"], "closed": review["closed"]}
 
 
-def input_hashes(paths):
+def input_hashes(paths, r_scope="full"):
     result = {}
     for value in paths:
         path = Path(value).resolve(strict=True)
         if not path.is_file():
             raise ValueError("审核输入必须是文件：" + str(path))
         content = path.read_bytes()
+        if r_scope == "public" and path.suffix.lower() == ".r":
+            source = content.decode("utf-8-sig")
+            matches = list(re.finditer(r"(?m)^# 输出\s*$", source))
+            if len(matches) != 1:
+                raise ValueError("公开 R 范围绑定要求唯一的 # 输出 分界")
+            content = source[:matches[0].start()].encode("utf-8")
         if path.name == "definition_search_record.json":
             plan = json.loads(content.decode("utf-8-sig"))
             # Recording the review verdict does not change its source-plan input.
@@ -374,12 +398,17 @@ def input_hashes(paths):
     return result
 
 
-def validate_stage_review(report, role):
+def validate_stage_review(report, role, required_inputs=None):
     review = report.get("stage_reviews", {}).get(role)
     if not review or review.get("status") != "pass" or not review.get("evidence", "").strip():
         raise ValueError("本环节审核尚未通过：" + role)
-    if input_hashes(review["inputs"]) != review["inputs"]:
+    if input_hashes(review["inputs"], review.get("r_scope", "full")) != review["inputs"]:
         raise ValueError("审核输入已变化，须复核受影响部分：" + role)
+    if required_inputs:
+        expected = input_hashes(required_inputs, review.get("r_scope", "full"))
+        bound = {Path(path): digest for path, digest in review["inputs"].items()}
+        if any(bound.get(Path(path)) != digest for path, digest in expected.items()):
+            raise ValueError("实际运行输入未绑定到本次审核：" + role)
     if review.get("mode") == "isolated":
         if report.get("review_policy") == REVIEW_POLICY and role == COMBINED_REVIEW_ROLE:
             raise ValueError("定义逻辑与 R 实现需要独立复核，隔离自查不能替代")
@@ -399,6 +428,8 @@ def command_review_stage(args):
     report_path, markdown_path = paths(args.process_dir)
     report = load(report_path)
     if args.command == "review-check":
+        if args.role == COMBINED_REVIEW_ROLE:
+            validate_exploration(report)
         if args.role not in report.get("stage_reviews", {}):
             candidates = sorted(report_path.parent.glob("archived_runs/*/execution_report.json"),
                                 key=lambda path: path.stat().st_mtime, reverse=True)
@@ -410,30 +441,55 @@ def command_review_stage(args):
                     continue
                 if args.role not in previous.get("stage_reviews", {}):
                     continue
-                prior = validate_stage_review(previous, args.role)
+                prior = validate_stage_review(previous, args.role, getattr(args, "input", None))
                 agent = prior.get("prior_agent_record") or next((item for item in previous.get("reviews", [])
                     if item["agent_id"] == prior.get("agent_id")), None)
                 report.setdefault("stage_reviews", {})[args.role] = {
                     **prior, "reused_from": str(path), "prior_agent_record": agent}
-                if report["status"] == "running":
+                if report["status"] == "running" and not getattr(args, "read_only", False):
                     save(report_path, markdown_path, report)
                 break
-        review = validate_stage_review(report, args.role)
+        review = validate_stage_review(report, args.role, getattr(args, "input", None))
         return {"ok": True, "role": args.role, "mode": review["mode"], "input_count": len(review["inputs"])}
     if report["status"] != "running":
         raise ValueError("审核交接须在正在执行的报告中登记")
     reviews = report.setdefault("stage_reviews", {})
     if args.command == "review-start":
-        reviews[args.role] = {"status": "pending", "started_at": iso(), "inputs": input_hashes(args.input)}
+        scope = getattr(args, "r_scope", "full")
+        inputs = input_hashes(args.input, scope)
+        previous = reviews.get(args.role)
+        if previous:
+            report.setdefault("stage_review_history", {}).setdefault(args.role, []).append(dict(previous))
+        reviews[args.role] = {"status": "pending", "started_at": iso(), "inputs": inputs, "r_scope": scope}
+        if previous and any(not f["resolved"] for f in previous.get("findings", [])):
+            reviews[args.role]["findings"] = [dict(f) for f in previous["findings"] if not f["resolved"]]
     else:
         prior = reviews.get(args.role)
-        if not prior or input_hashes(prior["inputs"]) != prior["inputs"]:
+        if not prior or input_hashes(prior["inputs"], prior.get("r_scope", "full")) != prior["inputs"]:
             raise ValueError("先绑定稳定输入；审核期间发生变化则重新发起受影响复核")
         if not args.evidence.strip():
             raise ValueError("必须保留审核者的具体发现与结论")
         updated = {**prior, "status": args.result, "evidence": args.evidence,
                    "agent_id": args.agent_id, "limitation": args.isolated_reason,
                    "mode": "isolated" if args.isolated_reason else "independent", "finished_at": iso()}
+        findings_file = getattr(args, "findings_file", None)
+        if findings_file:
+            findings = json.loads(findings_file.read_text(encoding="utf-8-sig"))
+            if not isinstance(findings, list):
+                raise ValueError("findings-file must contain a JSON list")
+            for finding in findings:
+                if not isinstance(finding, dict) or any(not isinstance(finding.get(k), str) or not finding[k].strip()
+                        for k in ("category", "location", "problem", "evidence")):
+                    raise ValueError("Each finding requires category, location, problem and evidence")
+                if any(type(finding.get(k)) is not bool for k in ("changed_artifact", "resolved")):
+                    raise ValueError("changed_artifact and resolved must be booleans")
+            if args.result == "pass" and any(not f["resolved"] for f in findings):
+                raise ValueError("Unresolved review findings cannot pass")
+            updated["findings"] = findings
+        if args.result == "pass" and any(not f["resolved"] for f in updated.get("findings", [])):
+            raise ValueError("Unresolved review findings cannot pass")
+        if prior.get("status") != "pending":
+            report.setdefault("stage_review_history", {}).setdefault(args.role, []).append(dict(prior))
         reviews[args.role] = updated
         if args.result == "pass":
             validate_stage_review(report, args.role)
@@ -469,6 +525,17 @@ def render_markdown(report: dict[str, Any]) -> str:
         "| --- | --- | --- | --- | --- | ---: | --- |",
     ]
 
+    exploration = report.get("exploration")
+    if exploration:
+        merge = exploration.get("merge", {})
+        lines[12:12] = ["## 双路探索", "", f"- 已登记分支：{', '.join(exploration.get('branches', {})) or '无'}",
+            f"- 主线程合并：{merge.get('status', '未完成')}",
+            f"- 未决事项：{'; '.join(merge.get('unresolved', [])) or '见合并依据'}",
+            f"- 合并依据：{', '.join(merge.get('decision', {})) or '未提供'}", ""]
+
+    timing = report.get("timing_coverage")
+    if timing:
+        lines.insert(8, f"- 未归属阶段时间：{duration_text(timing['untracked_seconds'])}；计时覆盖：{timing['status']}。不推定其为工作或等待，不影响成果完成状态。")
     for correction in report.get("start_amendments", []):
         lines.insert(8, f"- 起始时间更正：{correction['previous_started_at']} → {correction['started_at']}；依据：{correction['evidence']}")
     if not stages:
@@ -520,6 +587,20 @@ def render_markdown(report: dict[str, Any]) -> str:
                          f"{lifecycle} |")
             if review.get("close_unavailable"):
                 lines.append(f"关闭限制（{review['nickname']}）：{review['close_unavailable']}")
+    if report.get("execution_metrics"):
+        metrics = report["execution_metrics"]
+        lines.extend(["", "## 执行用量（指定日志范围）", "",
+                      "请求数仅指有用量事件的请求；缓存输入包含在总输入内。不换算价格或额度，缺失值显示未提供。",
+                      "| 会话 | 有用量请求 | 输入 | 缓存输入 | 输出 | 最大请求输入 | 工具调用 | 相同调用重复 | 最大工具输出字符 |",
+                      "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"])
+        for item in metrics["logs"]:
+            tokens = item["tokens"] or {}
+            values = [item["session_id"] or item["log"], item["requests_with_usage"],
+                      tokens.get("input_tokens"), tokens.get("cached_input_tokens"), tokens.get("output_tokens"),
+                      item["largest_request_input_tokens"], item["tool_calls"],
+                      item["repeated_identical_tool_calls"], item["max_tool_output_chars"]]
+            lines.append("| " + " | ".join("未提供" if v is None else str(v) for v in values) + " |")
+        lines.append(f"已登记返工段：{metrics['rework_segments']}。相同调用不等于无效调用；任意 shell 的重复读文件次数、错误重跑原因无法可靠自动推断，未伪造统计。")
     if report.get("summary"):
         lines.extend(["", "## 执行结果", "", *report["summary"]])
     if report.get("turn_timing"):
@@ -532,12 +613,43 @@ def render_markdown(report: dict[str, Any]) -> str:
         for role, review in report["stage_reviews"].items():
             mode = "隔离自查（非独立复核）" if review.get("mode") == "isolated" else "只读角色复核"
             lines.append(f"- {role}：{review['status']}；{mode}；输入 {len(review['inputs'])} 份。")
+            findings = review.get("findings")
+            if findings is not None:
+                lines.append(f"  当前结论发现 {len(findings)} 条；改变成果 {sum(f['changed_artifact'] for f in findings)} 条；当前未解决 {sum(not f['resolved'] for f in findings)} 条。")
+                for finding in findings:
+                    lines.append(f"  - {finding['category']} / {finding['location']}：{finding['problem']}；依据：{finding['evidence']}")
+            else:
+                lines.append("  发现数量未结构化登记，不等于零发现。")
             if review.get("limitation"):
                 lines.append("  环境限制：" + review["limitation"])
             if review.get("reused_from"):
                 lines.append("  沿用当前输入未变的既有结论，不计本轮新增审核耗时：" + review["reused_from"])
             if review.get("evidence"):
                 lines.append("  实际结论：" + review["evidence"])
+            history = report.get("stage_review_history", {}).get(role, [])
+            if history:
+                rounds = [*history, review]
+                structured = [r for r in rounds if "findings" in r]
+                occurrences = sum(len(r["findings"]) for r in structured)
+                changed = sum(any(f["changed_artifact"] for f in r["findings"]) for r in structured)
+                lines.append(f"  保留 {len(rounds)} 次绑定/结论记录；累计结构化发现 {occurrences} 条次（同一问题跨轮可重复），其中 {changed} 次记录包含成果修改。")
+                lines.append("  未结构化登记的记录不推定零发现；修改记录数不等于独立审核会话轮次。")
+                for i, prior in enumerate(history, 1):
+                    lines.append(f"  - 历史 {i}：{prior['status']}；{prior.get('evidence', '未完成结论')}；输入版本保存在 JSON。")
+                    for finding in prior.get("findings", []):
+                        lines.append(f"    - {finding['location']}：{finding['problem']}；已解决={finding['resolved']}")
+            else:
+                lines.append("  未保存此前结构化轮次，不以当前结论反推整个过程零发现。")
+    if report.get("first_copy"):
+        first = report["first_copy"]
+        lines.extend(["", "## 首次完整文案", ""])
+        if first["status"] == "captured":
+            lines.extend([f"- 首稿：{first['snapshot_path']}", f"- SHA256：{first['sha256']}",
+                          f"- Skill 内容版本：{first['skill_version']}",
+                          "- 保存时点为首次 copy 环节完成；这是版本证据，不是语义合格证明。"])
+        else:
+            lines.append(first["reason"])
+        lines.append(f"- 已登记文案交接 {len(report.get('copy_history', []))} 次；后续版本不覆盖首次记录。")
     lines.extend(["", "## Bug 与异常", ""])
     if not issues:
         lines.append("本次尚未记录 Bug 或异常。")
@@ -583,6 +695,7 @@ def command_init(args: argparse.Namespace) -> dict[str, Any]:
     report = {
         "schema_version": 1,
         "review_policy": REVIEW_POLICY,
+        "exploration_policy": EXPLORATION_POLICY if getattr(args, "workflow", "full_definition") == "full_definition" else None,
         "run_id": str(uuid.uuid4()),
         "database": args.database,
         "topic_id": args.topic_id,
@@ -597,6 +710,9 @@ def command_init(args: argparse.Namespace) -> dict[str, Any]:
         "stages": [],
         "issues": [],
     }
+    version = skill_version()
+    report["skill_version_at_start"] = version["id"]
+    report["skill_versions"] = {version["id"]: version["files"]}
     save(report_path, markdown_path, report)
     return {"ok": True, "run_id": report["run_id"]}
 
@@ -631,14 +747,23 @@ def command_stage_start(args: argparse.Namespace) -> dict[str, Any]:
 def command_start_amend(args: argparse.Namespace) -> dict[str, Any]:
     report_path, markdown_path = paths(args.process_dir)
     report = load(report_path)
-    value = parse_time(args.started_at)
+    value = None
+    with args.log.open(encoding="utf-8-sig") as stream:
+        for line in stream:
+            event = json.loads(line)
+            payload = event.get("payload", {})
+            if (event.get("type") == "event_msg" and payload.get("type") == "task_started"
+                    and payload.get("turn_id") == args.turn_id):
+                value = parse_time(event["timestamp"])
+                break
+    if value is None:
+        raise SystemExit("日志中没有该轮次的开始事件；保留现有计时，不估算。")
     if value.tzinfo is None or value > parse_time(report["started_at"]):
         raise SystemExit("起始时间必须带时区，且只能依据记录补回更早的实际开始时间。")
-    if not args.evidence.strip():
-        raise SystemExit("必须提供原始计时依据，不能估算。")
+    evidence = f"{args.log.resolve()} / turn_id={args.turn_id} / task_started"
     report.setdefault("start_amendments", []).append({
         "amended_at": iso(), "previous_started_at": report["started_at"],
-        "started_at": iso(value), "evidence": args.evidence,
+        "started_at": iso(value), "evidence": evidence,
     })
     report["started_at"] = iso(value)
     for review in report.get("reviews", []):
@@ -661,6 +786,8 @@ def command_stage_finish(args: argparse.Namespace) -> dict[str, Any]:
     stage["status"] = args.status
     stage["summary"] = args.summary or []
     stage["outputs"] = args.output or []
+    if args.stage_id == "copy" and args.status in ("completed", "completed_with_issues"):
+        capture_copy(report, report_path.parent, stage, getattr(args, "copy", None))
     save(report_path, markdown_path, report)
     return {"ok": True, "stage_id": args.stage_id, "elapsed_seconds": stage["elapsed_seconds"]}
 
@@ -888,9 +1015,56 @@ def command_website_finish(args: argparse.Namespace) -> dict[str, Any]:
             "next_action": "保存其余记录后执行 finish；提交返回之后的时间单列为网站收口。"}
 
 
+def command_check(args: argparse.Namespace) -> dict[str, Any]:
+    report = load(args.report)
+    if report.get("workflow") != "full_definition":
+        raise SystemExit("Only full_definition registration is supported by check.")
+    if not report.get("finished_at"):
+        raise SystemExit("Report has no finished_at; historical completion cannot be checked.")
+    validate_full_definition_completion(report, parse_time(report["finished_at"]))
+    return {"ok": True, "scope": "registration_only", "read_only": True,
+            "report": str(args.report), "historical_quality_verified": False}
+
+
+def command_metrics(args):
+    from execution_metrics import summarize_log
+    report_path, markdown_path = paths(args.process_dir)
+    report = load(report_path)
+    selected = list(dict.fromkeys(str(p.resolve()) for p in args.log))
+    end = report.get("finished_at") or iso()
+    report["execution_metrics"] = {
+        "started_at": report["started_at"], "finished_at": end,
+        "logs": [summarize_log(p, report["started_at"], end) for p in selected],
+        "rework_segments": sum(s.get("mode") == "rework" for s in report.get("stages", [])),
+    }
+    ids = [x["session_id"] for x in report["execution_metrics"]["logs"] if x["session_id"]]
+    if len(ids) != len(set(ids)):
+        raise ValueError("Multiple logs for one session may overlap; select one complete log per session")
+    save(report_path, markdown_path, report)
+    return {"ok": True, **report["execution_metrics"]}
+
+
+def command_find_log(args):
+    from execution_metrics import find_logs
+    return {"ok": True, "logs": find_logs(args.sessions_root, args.agent_id, args.parent_id)}
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    metrics = subparsers.add_parser("metrics-import", help="Import scoped log metrics without estimating missing telemetry")
+    metrics.add_argument("--process-dir", required=True)
+    metrics.add_argument("--log", type=Path, action="append", required=True)
+    metrics.set_defaults(func=command_metrics)
+    finder = subparsers.add_parser("find-log", help="Find exact agent log and verify its metadata")
+    finder.add_argument("--agent-id", required=True)
+    finder.add_argument("--parent-id")
+    finder.add_argument("--sessions-root", type=Path, required=True)
+    finder.set_defaults(func=command_find_log)
+    check = subparsers.add_parser("check", help="Check finished registration without writing files")
+    check.add_argument("--report", required=True, type=Path)
+    check.set_defaults(func=command_check)
 
     preparation = subparsers.add_parser("website-prepare")
     preparation.add_argument("--process-dir", required=True)
@@ -919,8 +1093,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     start_amend = subparsers.add_parser("start-amend")
     start_amend.add_argument("--process-dir", required=True)
-    start_amend.add_argument("--started-at", required=True)
-    start_amend.add_argument("--evidence", required=True)
+    start_amend.add_argument("--log", required=True, type=Path)
+    start_amend.add_argument("--turn-id", required=True)
     start_amend.set_defaults(func=command_start_amend)
 
     stage_start = subparsers.add_parser("stage-start")
@@ -942,6 +1116,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     stage_finish.add_argument("--summary", action="append")
     stage_finish.add_argument("--output", action="append")
+    stage_finish.add_argument("--copy", type=Path, help="Current complete 文案.md at copy handoff; --output 文案.md also captures it")
     stage_finish.set_defaults(func=command_stage_finish)
 
     issue_parser = subparsers.add_parser("issue")
@@ -991,15 +1166,21 @@ def build_parser() -> argparse.ArgumentParser:
         stage_review = subparsers.add_parser(name)
         stage_review.add_argument("--process-dir", required=True)
         stage_review.add_argument("--role", required=True)
+        if name == "review-check":
+            stage_review.add_argument("--input", action="append", help="Require this actual execution input to be bound to the review; repeat for each input")
+            stage_review.add_argument("--read-only", action="store_true", help="Inspect current or reusable review without modifying the report")
         if name == "review-start":
             stage_review.add_argument("--input", action="append", required=True)
+            stage_review.add_argument("--r-scope", choices=("full", "public"), default="full", help="Bind business code before # 输出; backend generation remains subject to output tests.")
         if name == "review-result":
+            stage_review.add_argument("--findings-file", type=Path, help="Optional actual findings JSON; [] explicitly records zero findings")
             stage_review.add_argument("--evidence", required=True)
             stage_review.add_argument("--result", choices=("pass", "blocked"), required=True)
             stage_review.add_argument("--agent-id")
             stage_review.add_argument("--isolated-reason")
         stage_review.set_defaults(func=command_review_stage)
 
+    add_commands(subparsers)
     return parser
 
 

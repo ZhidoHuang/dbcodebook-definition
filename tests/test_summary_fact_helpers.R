@@ -35,6 +35,12 @@ expect_error_contains <- function(name, expression, expected) {
   list(name = name, expected = expected, actual = message, ok = TRUE)
 }
 
+expect_identical(
+  "record-based topic may omit questionnaire selection",
+  render_summary_selection_paragraph(NULL, "#005A9C"),
+  ""
+)
+
 charls_periods <- c(2011L, 2013L, 2015L, 2018L, 2020L)
 mixed_charls <- data.frame(
   period = charls_periods,
@@ -88,6 +94,23 @@ note_order_fixture <- compose_definition_note_lines(
     "DETAIL"
   )
 )
+empty_heading_warning <- FALSE
+invisible(withCallingHandlers(
+  compose_definition_note_lines("S", character(), "D", character(), "E",
+                                c("x <- 1", "# ----------- 5 正式输出 -----------"), "DETAIL"),
+  warning = function(w) {
+    empty_heading_warning <<- grepl("空小节标题", conditionMessage(w), fixed = TRUE)
+    invokeRestart("muffleWarning")
+  }
+))
+stopifnot(empty_heading_warning)
+normal_heading_warning <- FALSE
+invisible(withCallingHandlers(
+  compose_definition_note_lines("S", character(), "D", character(), "E",
+                                c("# ----------- 5 正式输出 -----------", "write.xlsx(x, 'x.xlsx')"), "DETAIL"),
+  warning = function(w) { normal_heading_warning <<- TRUE; invokeRestart("muffleWarning") }
+))
+stopifnot(!normal_heading_warning)
 summary_section_fixture <- render_summary_note_section(
   entry = list(parts = list("目录说明。")),
   selection = list(
@@ -190,6 +213,28 @@ source_display_raw_codebook <- data.frame(
 )
 
 checks <- list(
+  expect_error_contains(
+    "HRS requires an explicit cycle order",
+    render_definition_bundle(database = "HRS"),
+    "HRS requires explicit, evidence-based cycle_order."
+  ),
+  expect_error_contains(
+    "HRS rejects invalid year order",
+    render_definition_bundle(
+      data = data.frame(), db_data = data.frame(), analysis_data = data.frame(),
+      database = "HRS", cycle_order = c("1992", "not-a-year")
+    ),
+    "Invalid HRS year order."
+  ),
+  expect_error_contains(
+    "HRS requires HHID, PN and year identities",
+    render_definition_bundle(
+      data = data.frame(x = 1), db_data = data.frame(x = 1),
+      analysis_data = data.frame(x = 1), database = "HRS",
+      cycle_order = c("1992", "1993")
+    ),
+    "HRS requires HHID, PN and year."
+  ),
   expect_identical(
     "definition cards do not accept a separate source subset",
     "definition_card_sources" %in% names(formals(render_definition_bundle)),
@@ -627,6 +672,20 @@ for (periods in list(2011L, c(2011L, 2013L))) {
   }
 }
 cat("single/multiple period and variable count fixtures PASS\n")
+
+for (database in c("CHARLS", "ELSA", "HRS")) {
+  source_fixture <- render_summary_selection_paragraph(definition_source_entry(
+    list(path = "Core data > Social isolation/loneliness", note = "；另用 pscede。"), database), "#005A9C")
+  expected_href <- paste0('/home/', tolower(database), '/?nav=Core%20data%3ESocial%20isolation%2Floneliness')
+  stopifnot(grepl(expected_href, source_fixture, fixed = TRUE))
+  stopifnot(grepl('</a>；另用 pscede。', source_fixture, fixed = TRUE))
+  stopifnot(!grepl('nav=[^"]*pscede', source_fixture))
+}
+expect_error_contains("mixed source sentence is rejected", render_summary_selection_paragraph(
+  definition_source_entry("Core data > Loneliness；另用 pscede。", "ELSA"), "#005A9C"), "put explanatory text in note")
+stopifnot(grepl('href="/home/elsa/', render_summary_selection_paragraph(
+  definition_source_entry("Core data > Loneliness", "ELSA"), "#005A9C"), fixed = TRUE))
+cat("source path and note separation PASS\n")
 
 report <- list(ok = TRUE, checks = checks, questionnaire_html = question_layout_fixture)
 args <- commandArgs(trailingOnly = TRUE)

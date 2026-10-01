@@ -1,10 +1,31 @@
 param(
   [string]$Rscript = "",
+  [string]$Config = "",
+  [string]$Python = "",
   [switch]$InstallMissing,
   [switch]$UpdateDbCodeBookr
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'r_environment.ps1')
+if (-not $Config) { $Config = $env:DBCODEBOOK_DEFINITION_CONFIG }
+if (-not $Config) {
+  $candidate = Join-Path (Split-Path -Parent $PSScriptRoot) 'config.local.json'
+  if (Test-Path -LiteralPath $candidate) { $Config = $candidate }
+}
+if ($Config) {
+  $Config = (Resolve-Path -LiteralPath $Config).Path
+  $settings = Get-Content -LiteralPath $Config -Raw -Encoding UTF8 | ConvertFrom-Json
+  foreach ($name in @('rscript', 'python')) {
+    if (-not (Get-Variable -Name $name -ValueOnly) -and $settings.executables.$name) {
+      $value = [Environment]::ExpandEnvironmentVariables([string]$settings.executables.$name)
+      if (-not [IO.Path]::IsPathRooted($value)) { $value = Join-Path (Split-Path -Parent $Config) $value }
+      Set-Variable -Name $name -Value $value
+    }
+  }
+}
+$rEnvironment = Start-DefinitionREnvironment -Config $Config -Python $Python
+try {
 
 if ([string]::IsNullOrWhiteSpace($Rscript)) {
   $command = Get-Command "Rscript" -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -66,7 +87,7 @@ cat("\n")
 "@
 
 $tempScript = Join-Path (
-  [System.IO.Path]::GetTempPath()
+  $rEnvironment.TempRoot
 ) ("definition_environment_" + [guid]::NewGuid().ToString("N") + ".R")
 try {
   [System.IO.File]::WriteAllText(
@@ -82,3 +103,5 @@ try {
 finally {
   Remove-Item -LiteralPath $tempScript -Force -ErrorAction SilentlyContinue
 }
+
+} finally { Stop-DefinitionREnvironment -State $rEnvironment }

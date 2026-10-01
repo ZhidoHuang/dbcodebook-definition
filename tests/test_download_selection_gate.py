@@ -71,6 +71,22 @@ def main() -> int:
         assert result["variables"] == 5
         assert result["alias_families"] == 1
 
+        # Different concepts may depend on the same input; download it once.
+        record["source_groups"][1]["raw_variables"].append("raw_a")
+        record_path.write_text(json.dumps(record), encoding="utf-8")
+        result = checker.validate_download_selection(record_path, selection_path, "037")
+        assert result["variables"] == 5
+        record["source_groups"][1]["raw_variables"].append("raw_a")
+        record_path.write_text(json.dumps(record), encoding="utf-8")
+        try:
+            checker.validate_download_selection(record_path, selection_path, "037")
+        except ValueError as error:
+            assert "raw_variables contains duplicates" in str(error)
+        else:
+            raise AssertionError("Duplicate within a group was not rejected")
+        record["source_groups"][1]["raw_variables"] = ["family_2_early"]
+        record_path.write_text(json.dumps(record), encoding="utf-8")
+
         record["logic_review"]["result"] = "pending"
         record_path.write_text(json.dumps(record), encoding="utf-8")
         try:

@@ -77,8 +77,20 @@ with tempfile.TemporaryDirectory() as temporary:
         "--evidence", "The plan was checked against this fixture.",
         "--isolated-reason", "This subprocess test has no independent agent.")
     cli("review-check", "--process-dir", process, "--role", "logic")
+    other = root / "other.txt"
+    other.write_bytes(source.read_bytes())
+    cli("review-check", "--process-dir", process, "--role", "logic", "--input", source)
+    mismatch = cli("review-check", "--process-dir", process, "--role", "logic", "--input", other, ok=False)
+    assert "实际运行输入未绑定" in mismatch.stderr
     cli("finish", "--process-dir", process, "--status", "completed", "--summary", "Fixture review finished.")
     init()
+    original_report = (process / "execution_report.json").read_bytes()
+    cli("review-check", "--process-dir", process, "--role", "logic", "--input", other, ok=False)
+    assert (process / "execution_report.json").read_bytes() == original_report
+    cli("review-check", "--process-dir", process, "--role", "logic", "--read-only")
+    assert (process / "execution_report.json").read_bytes() == original_report
+    cli("review-check", "--process-dir", process, "--role", "logic", "--input", source, "--read-only")
+    assert (process / "execution_report.json").read_bytes() == original_report
     cli("review-check", "--process-dir", process, "--role", "logic")
     saved = json.loads((process / "execution_report.json").read_text(encoding="utf-8"))
     assert Path(saved["stage_reviews"]["logic"]["reused_from"]).is_file()
@@ -92,4 +104,26 @@ with tempfile.TemporaryDirectory() as temporary:
         "--isolated-reason", "This subprocess test has no independent agent.")
     cli("review-check", "--process-dir", process, "--role", "logic", ok=False)
 
-print("STAGE_REVIEW_TESTS_PASS: actual/latest review, stable inputs, CLI handoff, archived reuse, pending/blocked cannot reuse")
+with tempfile.TemporaryDirectory() as temporary:
+    root = Path(temporary)
+    r = root / "A.R"
+    source = root / "definition_search_record.json"
+    codebook = root / "raw_codebook.csv"
+    r.write_text("x <- 1\n# 输出\nprint(x)\n", encoding="utf-8")
+    source.write_text('{"approved_analysis_vars": ["x"]}', encoding="utf-8")
+    codebook.write_text("name\nx\n", encoding="utf-8")
+    inputs = [r, source, codebook]
+    report = {"stage_reviews": {"fixture": {
+        "status": "pass", "evidence": "Synthetic fixture only", "mode": "isolated",
+        "limitation": "unit test", "r_scope": "public", "inputs": input_hashes(inputs, "public")}}}
+    validate_stage_review(report, "fixture", inputs)
+    for original in inputs:
+        other = root / ("other_" + original.name)
+        other.write_bytes(original.read_bytes())
+        rejects(lambda: validate_stage_review(report, "fixture", [other]), "实际运行输入未绑定")
+    r.write_text("x <- 1\n# 输出\nprint(summary(x))\n", encoding="utf-8")
+    validate_stage_review(report, "fixture", inputs)
+    r.write_text("x <- 2\n# 输出\nprint(x)\n", encoding="utf-8")
+    rejects(lambda: validate_stage_review(report, "fixture", inputs), "输入已变化")
+
+print("STAGE_REVIEW_TESTS_PASS: actual/latest review, execution input binding, public scope, CLI handoff, archived reuse, pending/blocked cannot reuse")

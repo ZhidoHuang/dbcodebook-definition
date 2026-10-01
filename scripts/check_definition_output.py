@@ -41,6 +41,16 @@ def split_csv(value: str | None) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+
+def include_formal_r(formal_dir, expected_files):
+    if any(name.lower().endswith(".r") for name in expected_files):
+        return expected_files
+    candidates = sorted(path.name for path in formal_dir.glob("define_*.R"))
+    if len(candidates) != 1:
+        raise ValueError(f"Include the intended formal R in --expected-files; expected one define_*.R, found {candidates}")
+    return [*expected_files, candidates[0]]
+
+
 def normalize_var(value: str) -> str:
     return value.split(" (", 1)[0].strip()
 
@@ -49,7 +59,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Check definition output artifacts.")
     parser.add_argument(
         "--db",
-        choices=["charls", "elsa"],
+        choices=["charls", "elsa", "hrs"],
         default="charls",
         help="Database identity mode. Defaults to charls for backward compatibility.",
     )
@@ -87,6 +97,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-md", type=int, default=1)
     parser.add_argument("--report", type=Path, help="Optional QA report path.")
     args = parser.parse_args()
+    if args.complete and args.report is None and args.process_dir is not None:
+        args.report = args.process_dir / "result_check.json"
     if args.complete:
         required = ("formal_dir", "process_dir", "expected_files", "raw_vars", "analysis_db",
                     "analysis_columns", "analysis_codebook", "analysis_vars",
@@ -139,6 +151,8 @@ def read_codebook_vars(path: Path) -> list[str]:
 def expected_raw_header(db: str, raw_vars: list[str]) -> list[str]:
     if db == "elsa":
         return ["ID", "idauniq", *raw_vars]
+    if db == "hrs":
+        return ["ID", "HHID", "PN", "Wave_id", *raw_vars]
     return ["ID", "id", "year", *raw_vars]
 
 
@@ -280,21 +294,27 @@ def check_identity_values(
     analysis_rows: list[list[object]],
     analysis_header: list[str],
     results: list[dict],
+    db: str = "",
 ) -> None:
     identity_candidates = [
         "ID",
         "id",
         "year",
+        "HHID",
+        "PN",
         "householdid",
         "respondent_id",
         "communityid",
         "idauniq",
     ]
-    identity_columns = [
-        name
-        for name in identity_candidates
-        if name in raw_header and name in analysis_header
-    ]
+    if db == "hrs":
+        identity_columns = [name for name in ["HHID", "PN"] if name in raw_header and name in analysis_header]
+    else:
+        identity_columns = [
+            name
+            for name in identity_candidates
+            if name in raw_header and name in analysis_header
+        ]
     if not identity_columns:
         ok(results, "analysis identity values", "no shared identity columns")
         return
@@ -319,6 +339,8 @@ def check_identity_values(
     mismatches: list[dict] = []
     for row_number, analysis_row in enumerate(analysis_rows[1:], start=2):
         analysis_identity = identity(analysis_row, analysis_indexes)
+        if raw_identities[analysis_identity] > 0 and db == "hrs":
+            continue
         if remaining[analysis_identity] > 0:
             remaining[analysis_identity] -= 1
             continue
@@ -358,7 +380,11 @@ def check_identity_values(
                 "columns": identity_columns,
                 "raw_rows": sum(raw_identities.values()),
                 "analysis_rows": len(analysis_rows) - 1,
-                "relation": "analysis identity combinations occur in raw data",
+                "relation": (
+                    "analysis persons occur in raw data"
+                    if db == "hrs"
+                    else "analysis identity combinations occur in raw data"
+                ),
             },
         )
 
@@ -647,9 +673,10 @@ def check_public_code_outline(
     note_text: str,
     results: list[dict],
     db: str,
+    formal_r: Path | None = None,
 ) -> None:
-    scripts = sorted(formal_dir.glob("define*.R"))
-    if len(scripts) != 1:
+    scripts = [formal_r] if formal_r is not None else sorted(formal_dir.glob("define*.R"))
+    if len(scripts) != 1 or not scripts[0].is_file():
         fail(results, "public R outline source", [path.name for path in scripts])
         return
     source = scripts[0].read_text(encoding="utf-8", errors="replace")
@@ -756,6 +783,23 @@ def check_public_code_outline(
             structural_issues.append(
                 "CHARLS public raw reads must not add fileEncoding or na.strings; "
                 "use the shared empty-string step after reading"
+            )
+    elif db == "hrs":
+        simple_codebook_read = 'name_z <- read.csv("raw_codebook.csv")' in source_public
+        if not simple_codebook_read:
+            structural_issues.append(
+                "HRS public R must read raw_codebook.csv without extra options"
+            )
+        hrs_identity_read = bool(re.search(
+            r'read\.csv\(\s*["\']raw_data\.csv["\'][^)]*'
+            r'colClasses\s*=\s*c\(\s*HHID\s*=\s*["\']character["\']\s*,'
+            r'\s*PN\s*=\s*["\']character["\']\s*\)',
+            source_public,
+            flags=re.I | re.S,
+        ))
+        if not hrs_identity_read:
+            structural_issues.append(
+                "HRS public R must preserve HHID and PN as character when reading raw_data.csv"
             )
 
     if re.search(r"(?m)^raw_row_count\s*<-\s*nrow\(data\)\s*$", source_public):
@@ -1074,6 +1118,7 @@ def check_summary_facts(
     analysis_codebook_name: str | None,
     results: list[dict],
     db: str,
+    formal_r: Path | None = None,
 ) -> None:
     """Check the current summary and definition table without a legacy five-list."""
     if not analysis_db_name or not analysis_codebook_name:
@@ -1140,7 +1185,7 @@ def check_summary_facts(
     else:
         ok(results, "definition variables in analysis_db", codebook_variables)
 
-    check_public_code_outline(formal_dir, note_text, results, db)
+    check_public_code_outline(formal_dir, note_text, results, db, formal_r)
     check_category_order(formal_dir, note_text, results)
 
 
@@ -1258,6 +1303,11 @@ def main() -> int:
 
     expected_files = split_csv(args.expected_files)
     if args.complete:
+        try:
+            expected_files = include_formal_r(formal_dir, expected_files)
+        except ValueError as error:
+            fail(results, "public R discovery", str(error))
+    if args.complete:
         required_names = {"raw_data.csv", "raw_codebook.csv", args.analysis_db, args.analysis_codebook}
         missing = required_names - set(expected_files)
         roles = {"public_r": any(name.lower().endswith(".r") for name in expected_files),
@@ -1289,7 +1339,13 @@ def main() -> int:
             if args.db == "charls"
             else [expected_header]
         )
-        if header in layered_headers:
+        hrs_header_matches = (
+            args.db == "hrs"
+            and header[:4] == ["ID", "HHID", "PN", "Wave_id"]
+            and len(header[4:]) == len(raw_vars)
+            and set(header[4:]) == set(raw_vars)
+        )
+        if header in layered_headers or hrs_header_matches:
             ok(results, "raw_data header", header)
         elif args.db == "charls" and header == ["ID", "year", *raw_vars]:
             identifier_check = check_charls_household_identifier(raw_data)
@@ -1357,6 +1413,7 @@ def main() -> int:
                 rows,
                 header,
                 results,
+                args.db,
             )
 
         forbidden_found = sorted(forbid_vars.intersection(set(header)))
@@ -1380,12 +1437,17 @@ def main() -> int:
             ok(results, "analysis_codebook vars", variables)
 
     if args.check_summary_facts:
+        r_names = [name for name in expected_files if name.lower().endswith('.r')]
+        if len(r_names) > 1:
+            fail(results, "public R outline source", "Expected one explicitly selected formal R")
+        selected_r = formal_dir / r_names[0] if len(r_names) == 1 else None
         check_summary_facts(
             formal_dir,
             args.analysis_db,
             args.analysis_codebook,
             results,
             args.db,
+            selected_r,
         )
     if args.complete:
         from check_definition_source_record import load_json

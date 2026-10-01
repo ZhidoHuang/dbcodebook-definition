@@ -11,7 +11,7 @@
 - dbCodeBook 页面：外部配置中的 `website.base_url + website.database_paths.charls`。
 - 正式主题目录：外部配置中的 `paths.formal_root/CHARLS/<编号_主题>`。
 - 过程证据目录：外部配置中的 `paths.process_root/CHARLS/<编号_主题>`。
-- 主题编号、状态、最终变量、transaction 和唯一日志，以 `主题索引.md` 与 `定义验收台账.md` 为准。
+- 新主题编号和重复检查只读 `主题索引.md` 及正式主题目录名，不枚举全部成果文件。只有任务需要某个既有主题的状态、transaction 或唯一日志时，才定位 `定义验收台账.md` 的对应行，不全文加载旧审核结论。
 - 已完成主题的口径以正式 R、raw、codebook、definition、笔记和机器闭环证据为准；不得从本 profile 推断具体变量。
 
 ## 2. 数据库级核验

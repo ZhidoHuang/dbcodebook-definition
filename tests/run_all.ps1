@@ -63,6 +63,8 @@ if (-not [string]::IsNullOrWhiteSpace($rscript)) {
   Remove-Item Env:LC_CTYPE -ErrorAction SilentlyContinue
   & $rscript --vanilla --encoding=UTF-8 (Join-Path $PSScriptRoot "test_summary_fact_helpers.R")
   if ($LASTEXITCODE -ne 0) { throw "test_summary_fact_helpers.R failed." }
+  & $rscript --vanilla --encoding=UTF-8 (Join-Path $PSScriptRoot "test_hrs_renderer.R")
+  if ($LASTEXITCODE -ne 0) { throw "test_hrs_renderer.R failed." }
 } else {
   Write-Output "R_TESTS_SKIP: Rscript is not configured or on PATH"
 }

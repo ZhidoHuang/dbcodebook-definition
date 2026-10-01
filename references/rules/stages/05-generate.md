@@ -1,35 +1,60 @@
 # 5. 成果生成
 
-## 本步执行与验收
+## 1. 准备、运行与交接
 
-- 输入：已通过预检及公开 R 复核的脚本、当前 raw、定稿文案和变更影响
-- 另读：数据库 workflow 的正式输出部分；既有生成脚本 API 按需要查看
-- 执行：用现有 runner 从头运行一次；公开 R 全选运行仍可生成完整笔记，不能事后手改产物
-- 交付：当前数据、字典、HTML、笔记和唯一运行日志
-- 程序检查：生成前比较实际传入文案，生成后从笔记反向比较；检查退出码；来源卡从正式来源关系生成
-- 模型判断：本步不重新发明研究口径；生成顺序、图表与文本必须忠于已验收输入
-- 未通过：定位生成或输入问题，仅返回受影响步骤，不重复探索和下载
+本步stage_id为generate。输入为已通过预检及公开R复核的唯一正式脚本、当前raw、定稿文案和变更影响；只读所选数据库workflow的正式输出部分。保持已经裁决的定义，不在生成时重新研究或改写文案。
 
-在 Skill 根目录运行，使用本次任务既定路径和数据库，不另建第二份正式脚本：
+先按下方“文案读取与展示”接入输入、确认数据库参数，再在Skill根目录运行：
 
 ```powershell
 ./scripts/run_r_definition.ps1 -WorkDir $Formal -Script $RFile -LogPrefix $LogPrefix -ProcessDir $Process -Config $Config -Database $Database
 ```
 
-通过本步才交接给下一步；一次命令或点击不是一个独立验收环节。只读复核者接收本步稳定输入、对应标准及具体问题，不接收整个历史对话。
+从头运行同一正式脚本，不另建第二份脚本或手改产物。检查退出码和唯一最终日志。公共生成器在生成前比较实际文案输入，生成后自动提取摘要、问卷、Criteria、小book和参考说明核对文字一致性，不另做一轮人工全文比对。文本不一致不交付，需改字先回文案。来源卡由正式来源关系生成。文字一致不代表定义正确；计算、数据及整套产物的完整性由下一步结果验证负责。
 
-### 3.4 `generate_var_details()`
+通过后将当前产物和日志交[结果验证](06-results.md)。失败只返回出错的输入、代码或生成部分，不重做无关探索下载。下列接口、安装定位和样式用于接入或排查相应问题，不作为额外执行阶段。
 
+## 文案读取与展示
+
+后台调用 `copy <- read_definition_copy(analysis_vars)`，把criteria、summary_entry、summary_insight_items、reference_lines、summary_selection传给现有生成器。definition_data$Criteria、定义HTML和笔记使用同份文案，不能另写一份或覆盖copy$summary_selection。
+
+新主题或本次修改问卷展示时，将问卷迁入文案并删除R中的重复文字；旧主题仅改其它内容、问卷未变时允许沿用既有R问卷。无原题不传问卷展示。输入格式使用[文案模板](../../../templates/reader-copy.md)与[问卷模板](../../../templates/questionnaire-copy.md)，内容要求由[写作环节](03-copy.md)负责。
+
+## 数据库适配边界
+
+ELSA调用公共render_definition_bundle并设置database="ELSA"、cycle_order为已核实时期顺序，输入保留ID/idauniq/Wave。Full HRS用database="HRS"及本轮核实年份，保留字符型HHID/PN和year；不在主题复制渲染器。顺序取自证据，不从非缺失行反推；概览和文件前缀随参数生成。
+
+summary_source只在此生成目录入口，不在文案摘要重复。单目录传纯路径字符串；需要附加说明时传 `list(path = "已核实的完整目录", note = "；其它来源说明。")`，链接仅使用path，note显示在链接外。不要把说明句拼进路径。带lines的既有结构仍兼容。下面仅示范参数，不替代完整业务定义及正式生成调用：
+
+```r
+# 名称逐项对应 analysis_vars；含义与分组取自本主题已核对的定义。
+summary_meanings <- c(defined_a = "第一项定义变量的具体含义", defined_b = "第二项定义变量的具体含义")
+summary_groups <- c(defined_a = "研究概念一", defined_b = "研究概念二")
+# 按需传给 render_definition_bundle：
+# summary_meanings = summary_meanings, summary_groups = summary_groups,
+# summary_selection = copy$summary_selection,
+# hist_mode = "linear"（默认）或有依据的 "zero_plus_log"
+# hist_binwidth = 1，或按变量命名的已裁决分组宽度
+```
+
+CHARLS 五期是当前共同覆盖契约，不能依据本主题恰好出现的年份缩减。Full HRS 的年份覆盖由本轮实际选择的 Tracker、Core 与跨波次文件共同确定；地理等文件落后于 Tracker 时按结构性缺失处理，不把 RAND Wave 契约套到原始库。升级新波次时先核实正式来源，再同步 renderer 契约与对应测试，运行完整回归后发布；ELSA 与 HRS 的已测范围以 tests/acceptance-matrix.md 为准，不据此宣称其它文件族、产品路线或未来波次均已验收。
+
+## 正式输出与图表
+
+- `### 1-提取变量` 必须包含非空、可直接粘贴到网站批量输入框的 `网站完整原始变量身份=下载别名` 列表和一个 `Go to 提取变量` 按钮；左右两侧来源、括号保留和逐项格式按 [来源关系](02-download.md#先按出现位置区分三种变量关系) 执行。
+- detail/组分概览按真实研究概念分组，每组先显示 `source variables`，再显示 `defined variables`。分组名称使用普通读者能理解的业务概念；source variable 的 Easy.label 说明原题，defined variable 的显示标签说明分析变量。正式 R 显式设置 factor levels；未匹配变量进入 `Other / check` 并触发 warning 或 QA。
+- detail 片段自行提供 `## 定义的组分概览` 和 `## 定义的组分详情`；笔记拼装器不得再额外添加“定义的组分详情”。最终笔记各保留一个标题，不能形成“详情 → 概览 → 详情”的重复结构。
 - 周期热图文字始终使用深色。周期不超过 6 个时单行显示；超过 6 个时按原顺序分两行，两行仍溢出才使用横向滑动与箭头。
 - 连续变量默认自动选择自然刻度，使柱数约为 12–16 根；横轴显示分组起点，完整区间留在悬停提示中。
 - 非负金额正值跨度很大、线性图会挤压主要分布时，直接使用 `hist_mode = "zero_plus_log"`：`0` 单独展示，正值按对数分档。存在负值、`0` 含义特殊或口径不明确时才需裁决。
 - 只有正式业务分组宽度已经明确时才设置 `hist_binwidth`；不同变量需要不同宽度时使用命名向量。
 
-### 3.5 宣传代码提示边界
 
-定义笔记公开 R 与正式业务 R 保持一致，不显示 raw 获取提示。`# raw_data.csv从网站dbcodebook.cn对应笔记，go to提取变量获得` 只由公众号 SVG/富文本渲染工具注入，不写回正式 R 或定义笔记。
+保持完整生成调用；四份write.xlsx在唯一 `# 输出` 前，后台QA和渲染在后，写法见[字典模板](../../../templates/public-r-dictionary.R)。生成器对公开代码以空编号标题结束发出警告。
 
-### 3.6 公共生成脚本的定位
+定义笔记公开R不显示raw获取提示；`# raw_data.csv从网站dbcodebook.cn对应笔记，go to提取变量获得`只由公众号SVG/富文本工具注入。宣传材料不作定义措辞底稿；定义事实变化后，由独立宣传任务评估更新。用户材料不显示工具、版本史、验收或过程证据。
+
+## 安装定位与独立运行
 
 主题 R 无论通过正式 runner 运行，还是在 RStudio 中直接全选运行，都必须继续生成完整笔记。正式 runner 会把当前 Skill 根目录写入环境变量 `DBCODEBOOK_DEFINITION_SKILL_ROOT`；直接全选时，R 自动从当前 `CODEX_HOME` 或用户目录下的 `.codex/skills/dbcodebook-definition` 查找已经安装的 Skill。不按成果目录层级寻找 `_工具`，也不写死作者电脑路径：
 
@@ -64,33 +89,27 @@ eval(parse(
 
 这一段属于正式输出机制，不放进公开 R。既有主题在下次实质修改或重新生成时改用该入口；在完成迁移前，不提前删除仍被旧主题引用的兼容文件。正式检查必须拒绝只能由 runner 运行、无法在 RStudio 中全选生成完整笔记的脚本。
 
-#### 6.2.1 调查时期分组的笔记生成规则
+## 展示标准
 
-调查时期分组用于按年份、Wave、调查阶段或问卷版本分别保存完整说明，CHARLS、ELSA 及其它数据库共用同一套笔记结构。
+公共组件负责下列样式，主题只提供文案和语义标记，不复制CSS。文案输入格式在[文案模板](../../../templates/reader-copy.md)和[问卷模板](../../../templates/questionnaire-copy.md)，本节不重复内容取舍。
 
-1. 主题生成源使用 `.raw-source-structure` 包住整个来源说明，按真实调查顺序为每个时期建立 `.raw-source-period`，并用 `data-label` 保存该时期的读者可见名称。
-2. `.raw-source-period-label` 只保存无脚本环境需要显示的时期名称，必须使用普通文本容器，不得使用 Markdown 标题或 `h1` 至 `h6`。
-3. 每个时期的正文必须完整保留在对应分组中。主题脚本不得生成标签按钮、展开收起逻辑、内容高度、边框、间距或其它网站样式。
-4. 没有网站脚本、打印、复制全文或导出时，所有时期正文和时期名称仍须完整显示，不能因网站采用标签页而丢失内容。
+| 内容 | 展示要求 |
+| --- | --- |
+| 摘要结果、共享维度及数量 | 保留名称的中文双引号；只有引号内概念和数字使用主题色，不染整句、连接词及标点。核对实际名称与标记，不用固定高亮数验收 |
+| 时期正文与设计说明 | 时期内容统一为正文0.92em；问卷设计首段顶格，其后自然段首行缩进。说明中引号内核心问题用主题色，引号及其它文字普通色 |
+| 原题题块 | 分组标题主题色加粗，题号加粗；标题、题号和问题顶格。中文题干不加引号；题号、题干、填写及访员说明继承正文颜色 |
+| 选项与跳转 | 逐行缩进；选项独立0.8em、#888888；题干后进入条件用全角括号，条件及跳转独立0.72em、正文深色。同一行选项与跳转为同级元素，不嵌套相乘字号，外层只管换行缩进 |
+| 间距 | 时期首个分组标题无额外上间距；后续题组及相邻问题保留轻量间距 |
+| Criteria | 结构、颜色和缩进由公共helper生成；仅多条判定共同依赖的跨期组成、适用对象或解释前提使用criteria_context()浅底背景，普通含义、清单、赋值及公式不加底色 |
+| 小book | 正文外层14px；首段顶格，其后自然段首行缩进2em；编号项不缩进，不在子段重复缩放 |
+| 其它 | dbCodeBook普通样式，完整目录使用目录标记；数字与量词使用不可断开容器，百分号紧贴数字；关系树保留前导空格和树线 |
 
-网站识别上述语义结构后，由公共前端自动完成标签显示和交互；主题生成源不得重复实现网站渲染逻辑。
+问卷沿用 `summary_questionnaire_line()`。语义标记对应：设计问题为 `.summary-period-question[data-summary-period-question="true"]`；原题为 `.summary-question[data-summary-question="true"]`；进入条件为 `.summary-question-condition[data-summary-question-condition="true"]` 或结构化题块的 `[data-summary-question-detail-role="instruction"][data-summary-question-position="before"]`；选项为 `[data-summary-question-option="true"]` 或 `[data-summary-question-detail-role="option"]`；选项后跳转为 `[data-summary-question-instruction="true"]`。结构化题块使用 `.summary-questionnaire-line`。变量代码由成对反引号转换，不手写code标签。
 
-- “摘要导读”只有整节最开头的总述首段顶格；后续自然段由网站统一设置缩进。笔记正文不手写空格或 HTML 空格模拟缩进。
-- 来源组成之后，用一句单独成行的简短文字说明可从 dbCodeBook 的哪个真实完整目录进入。多个来源共享父目录时优先展示一次稳定父目录；来源分散时展示最能说明主题的入口，并中性说明还有其它来源。目录记录数只有帮助理解且能对应紧邻展示的同一实际目录时才保留。
-- 普通检索关键词、翻页、排除候选和其它探索过程不进入摘要。真实发现路径、页面观察和判断过程同步保留在数据库流程规定的 `探索记录.md`；`definition_search_record.json` 只保存与同号步骤对应的机器对账信息。
-- 摘要和时期标签不展开逐变量赋值、特殊编码、公式、补零、缺失、QA、下载、验收和制作过程，也不另设“定义处理”块。影响单个变量的判定写入 `Criteria`；影响多个变量或整个主题使用的边界写入小book提示。
+### 时期分组与全文保留
 
-## 7. 其它用户材料与同步
+`.raw-source-structure` 包含完整来源说明；按真实调查顺序建立 `.raw-source-period`，`data-label` 保存读者可见时期名，`.raw-source-period-label` 使用普通文本容器而非Markdown或HTML标题。
 
-- `### 1-提取变量` 必须包含非空、可直接粘贴到网站批量输入框的 `网站完整原始变量身份=下载别名` 列表和一个 `Go to 提取变量` 按钮；左右两侧来源、括号保留和逐项格式按 [来源关系](02-download.md#先按出现位置区分三种变量关系) 执行。
-- detail/组分概览按真实研究概念分组，每组先显示 `source variables`，再显示 `defined variables`。分组名称使用普通读者能理解的业务概念；source variable 的 Easy.label 说明原题，defined variable 的显示标签说明分析变量。正式 R 显式设置 factor levels；未匹配变量进入 `Other / check` 并触发 warning 或 QA。
-- detail 片段自行提供 `## 定义的组分概览` 和 `## 定义的组分详情`；笔记拼装器不得再额外添加“定义的组分详情”。最终笔记各保留一个标题，不能形成“详情 → 概览 → 详情”的重复结构。
-- 用户材料只解释数据对象、变量语义、周期逻辑、必要来源差异和研究使用影响；工具、版本史、验收状态和过程证据留在机器报告或内部证据。
-- 定义笔记摘要负责“定义结果、变量关系、来源组成和目录入口”；`Criteria` 负责逐变量判定；小book提示负责主题级边界；公开 R 负责解释并实现定义过程；宣传材料负责把已确认事实重新组织成适合相应平台阅读的内容。
-- 摘要、`Criteria`、detail 分组和公开 R 分别从各自正式生成源同步。正式定义事实变化后，再由独立的宣传任务评估并刷新需要更新的宣传材料；宣传材料不作为定义笔记或正式 R 的措辞底稿。
+前端负责标签页及展开收起；主题不写按钮、隐藏逻辑、高度、边框或网站样式。无脚本、复制、打印和导出时，所有时期名与全文仍须存在。正文不靠删减来适应折叠。
 
-## 数据库适配边界
-
-read_definition_copy() 返回 summary_selection 时，直接使用该值，勿在调用之后覆盖。问卷文字只改文案.md 的“原始问卷”，程序负责转成既有展示结构并检查一致。
-
-当前 render_definition_bundle() 包含 CHARLS 五期、year 与文件名假设。ELSA 及新数据库在实际采用这条生成路径前必须完成相应适配；有 profile 或路由不代表生成器已经验收。本轮不以 CHARLS 测试代替 ELSA 实题验收。
+摘要整节总述首段顶格，后续自然段由展示端缩进；问卷设计与小book按上表的专门规则。参考资料位于完整定义表之后、材料之前。定义表覆盖全部分析变量，与analysis_vars、analysis_db、analysis_codebook顺序相同，综合主题先组成变量后综合变量，不再生成摘要五列表。

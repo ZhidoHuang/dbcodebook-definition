@@ -13,6 +13,9 @@ import tempfile
 from skill_config import load_config, configured_executable, configured_path, playwright_command
 
 
+from r_runtime import runtime_plan
+
+
 R_PACKAGES = ("openxlsx", "dplyr", "tidyr", "jsonlite", "dbCodeBookr")
 
 
@@ -81,6 +84,12 @@ def check_environment(config, mode, browser, explicit_browser=None):
             rscript = executable("rscript")
             # Match the runner's UTF-8 startup without changing the host's locale.
             env = dict(os.environ)
+            plan = runtime_plan(config)
+            for key, value in plan["environment"].items():
+                if value is None:
+                    env.pop(key, None)
+                else:
+                    env[key] = value
             for key in ("LC_ALL", "LANG", "LC_CTYPE"):
                 env.pop(key, None)
             code = ('pkgs <- c(' + ','.join(json.dumps(p) for p in R_PACKAGES) + '); '
@@ -91,7 +100,7 @@ def check_environment(config, mode, browser, explicit_browser=None):
                     'stopifnot(identical(readLines(f), "runtime check")); unlink(f); '
                     'if(length(missing)) stop(paste("Missing R packages:", paste(missing, collapse=", "))); '
                     'cat("R_RUNTIME_READY\\n")')
-            with tempfile.TemporaryDirectory(prefix="definition_env_") as temporary:
+            with tempfile.TemporaryDirectory(prefix="definition_env_", dir=plan["temp_root"]) as temporary:
                 script = Path(temporary) / "probe.R"
                 script.write_text(code, encoding="utf-8")
                 return command_probe([rscript, "--vanilla", "--encoding=UTF-8", str(script)],
@@ -109,7 +118,7 @@ def check_environment(config, mode, browser, explicit_browser=None):
             return command_probe([node, "--version"])
 
         check("node", node_probe,
-              "Install Node.js and make node and npx available to this task, then retry the check.")
+              "Set executables.node to the installed node executable; npm/npx is not required when executables.playwright_cli points to the CLI JavaScript entry.")
 
         def cli_probe():
             return command_probe(playwright_command(config) + ["--version"])

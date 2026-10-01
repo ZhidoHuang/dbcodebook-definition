@@ -68,14 +68,14 @@
 - Core、COVID、Wave 0、Nurse、Life History、End of Life、HCAP、Nutrition、Pension Grid 和 Harmonised ELSA 不能只按裸 Variable 拼接。
 - 出现 raw 与官方 derived 二选一、core member/partner/proxy/copied value/refreshment sample、非个人-Wave单位、同一 `idauniq` 多行、权重或负值编码歧义、特殊文件族是否纳入等问题时，必须先裁决。
 
-候选审核包只需包含：`探索记录.md`、`definition_search_record.json`、候选矩阵、关键官方或文献证据、主题与命名判断、Wave 完整性和逐 Wave 可用性、方案比较及待裁决问题。未裁决前不下载 raw、不创建正式主题目录、不写正式 R。
+探索交付沿用共同双路机制，两路结果和主线程合并依据包含：`探索记录.md`、`definition_search_record.json`、候选矩阵、关键官方或文献证据、主题与命名判断、Wave 完整性和逐 Wave 可用性、方案比较及待裁决问题。未裁决前不下载 raw、不创建正式主题目录、不写正式 R。
 
 ## 3. 下载与恢复
 
-收到明确裁决后：
+主线程合并方案、解决影响下载的未决问题后直接继续；只有需要用户作研究选择时才等待用户裁决：
 
 1. 固定 `Variable (File)`、分析对象、Wave、权重和编码边界；来源别名、周期互补组和完整变量族按公共规范第 1.2 节确定，并写入 `definition_search_record.json`。
-2. 在页面设置已经确定的最终别名，再核对标签、预览、header、记录数和文件分组；正式 raw 和 codebook 必须直接带有最终别名。
+2. 用[固定选择入口](../../rules/stages/02-download.md#固定选择与别名输入)设置已定来源和最终别名，再按本节查看预览、header、记录数和文件分组；正式 raw 和 codebook 必须直接带有最终别名。
 3. 保存本轮确有判定价值的选择列表、File/Wave 覆盖和预览证据；截图必须真实存在、非空且可解码。
 4. 页面下载生成本次 transaction。
 5. 下载完成后，使用 `<skill-root>/scripts/recover_dbcodebook_export.py --archive <本次下载包> --database elsa --out <正式主题目录> --expect-vars-file <download_selection.txt>` 保存并核对本次 zip/raw。

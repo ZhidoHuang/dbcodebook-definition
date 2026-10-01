@@ -7,6 +7,7 @@ import tempfile
 import argparse
 import base64
 import shutil
+import hashlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from playwright_session_action import build_code, Session, run_sync
@@ -102,7 +103,12 @@ const page = {
             def discard(self, url):
                 calls.append('discard')
                 return {"url": url, "editor": 1}
-        website = {"payload": {"note": "note", "edit_url": "editor", "attachments": [{"path": "data"}, {"path": "book"}]},
+        files = [root / name for name in ("note.md", "data.xlsx", "book.xlsx")]
+        for item in files:
+            item.write_bytes(b"stable fixture")
+        signature = hashlib.sha256(b"stable fixture").hexdigest().upper()
+        website = {"payload": {"note": str(files[0]), "note_sha256": signature,
+                   "edit_url": "editor", "attachments": [{"path": str(p), "sha256": signature} for p in files[1:]]},
                    "existing_tab_match": ["editor"]}
         with patch('playwright_session_action.build_code'):
             result = run_sync(FakeSession(), website, {"preload_script": ""})
@@ -123,6 +129,23 @@ const page = {
             uncertain.code = fail_submit
             result = run_sync(uncertain, website, {"preload_script": ""})
             assert result["status"] == 'SUBMISSION_UNCERTAIN' and 'discard' not in calls
+            for item in files:
+                calls.clear()
+                item.write_bytes(b"changed after readiness")
+                result = run_sync(FakeSession(), website, {"preload_script": ""})
+                assert result["status"] == "SYNC_FAILED" and "SYNC_INPUT_CHANGED" in result["error"]
+                assert calls == [] and not result["recovery_attempted"]
+                item.write_bytes(b"stable fixture")
+            calls.clear()
+            changed_during_upload = FakeSession()
+            def upload_then_change(selector, path):
+                calls.append(selector)
+                files[2].write_bytes(b"changed during sync")
+            changed_during_upload.upload = upload_then_change
+            result = run_sync(changed_during_upload, website, {"preload_script": ""})
+            assert result["status"] == "SYNC_FAILED" and result["recovery_confirmed"]
+            assert calls.count('code') == 2 and calls[-1] == 'discard'
+            files[2].write_bytes(b"stable fixture")
     if args.live_session:
         args.out.mkdir(parents=True, exist_ok=True)
         target = args.out / "fixture-download.zip"

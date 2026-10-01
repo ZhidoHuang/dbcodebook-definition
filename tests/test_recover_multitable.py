@@ -84,6 +84,21 @@ def main() -> int:
         assert reports["raw_data.csv"]["data_vars"] == ["householdid"]
         assert reports["raw_data_household.csv"]["data_vars"] == ["ce007"]
 
+        hrs_dir = out_dir / "hrs"
+        hrs_dir.mkdir()
+        (hrs_dir / "raw_data.csv").write_bytes(
+            bom + b"HHID,PN,HHIDPN,Wave_id,year,BIRTHYR\n1,010,1010,1992-2022,1992,1931\n"
+        )
+        hrs_reports = recover.validate_data_members(
+            hrs_dir,
+            ["raw_data.csv"],
+            ["BIRTHYR"],
+        )
+        assert hrs_reports["raw_data.csv"]["identity_columns"] == [
+            "HHID", "PN", "HHIDPN", "Wave_id", "year"
+        ]
+        assert hrs_reports["raw_data.csv"]["data_vars"] == ["BIRTHYR"]
+
         recover.prepare_output_dir(out_dir, overwrite=True)
         assert not (out_dir / "raw_data.csv").exists()
         assert not (out_dir / "raw_data_household.csv").exists()

@@ -14,7 +14,7 @@ from test_reader_copy import render_note
 
 FIXTURE_QUESTION = "过去一年，您或您的配偶从父母那里得到过经济支持吗？"
 FIXTURE_CONTENT = {
-    "summary": f"问卷询问：\"{FIXTURE_QUESTION}\"这道题用于判断家庭是否从父母获得支持。",
+    "summary": f"问卷询问：\"{FIXTURE_QUESTION}\"这道题用于判断**家庭是否从父母获得支持**。",
     "criteria": {"support_status": {
         "定义": "家庭在过去一年是否从父母获得经济支持。",
         "定义逻辑": "回答是记为[1]，回答否记为[0]；没有回答保留缺失。",
@@ -53,7 +53,7 @@ def complete_impact(checker, formal: Path, process: Path) -> None:
     question = FIXTURE_QUESTION
     copy.write_text(
         "## 摘要导读\n"
-        f"问卷询问：\"{question}\"这道题用于判断家庭是否从父母获得支持。\n\n"
+        f"问卷询问：\"{question}\"这道题用于判断**家庭是否从父母获得支持**。\n\n"
         "## Criteria\n### support_status\n#### 定义\n家庭在过去一年是否从父母获得经济支持。\n\n"
         "#### 定义逻辑\n回答是记为[1]，回答否记为[0]；没有回答保留缺失。\n\n"
         "#### 分类\n- [1] 是\n- [0] 否\n\n"
@@ -310,6 +310,45 @@ def main() -> int:
         )
         assert questionnaire_result["status"] == "QUESTIONNAIRE_RENDERING_PASS"
         assert questionnaire_result["rendered_question_periods"] == 1
+        fenced_r = '```r\nx <- 1\nflag <- x < 2 & x > 0\nhtml <- "<div>text</div>"\n```'
+        view = checker.author_review_text(
+            '# Topic\n<style>.hidden_css { color: red; }</style>'
+            '<script>hidden_script()</script><p>Definition &amp; limits</p>'
+            '<p>References: <a href="https://example.org/source">Official source</a></p>'
+            '\n## Materials\n' + fenced_r
+        )
+        assert 'hidden_css' not in view and 'hidden_script' not in view
+        assert 'Definition & limits' in view and 'Official source (https://example.org/source)' in view
+        assert fenced_r in view and view.index('Definition') < view.index('References') < view.index('Materials')
+
+        # The phrase destination must ignore spacing on both sides, while
+        # preserving the distinction between a question and its longer prefix.
+        old_destination = source_record["questionnaire_evidence"][0]["skip_logic"][0]["destination"]
+        source_record["questionnaire_evidence"][0]["skip_logic"][0]["destination"] = "跳至 FB001"
+        checker.write_json(questionnaire_process / checker.SOURCE_RECORD_NAME, source_record)
+        assert checker.validate_questionnaire_rendering(questionnaire_formal, questionnaire_process, questionnaire_note.name)["rendered_question_periods"] == 1
+        source_record["questionnaire_evidence"][0]["skip_logic"][0]["destination"] = old_destination
+        checker.write_json(questionnaire_process / checker.SOURCE_RECORD_NAME, source_record)
+        original_note = questionnaire_note.read_text(encoding="utf-8")
+        role_note = original_note.replace('data-summary-question-instruction="true"',
+                                          'data-summary-question-detail-role="instruction"')
+        questionnaire_note.write_text(role_note, encoding="utf-8")
+        assert checker.validate_questionnaire_rendering(
+            questionnaire_formal, questionnaire_process, questionnaire_note.name
+        )["rendered_question_periods"] == 1
+        source_record["questionnaire_evidence"][0]["skip_logic"][0]["when"] = "符合进入条件"
+        checker.write_json(questionnaire_process / checker.SOURCE_RECORD_NAME, source_record)
+        standalone_note = role_note.replace("→ 跳至 FB001", "符合进入条件 → 跳至 FB001")
+        questionnaire_note.write_text(standalone_note, encoding="utf-8")
+        assert checker.validate_questionnaire_rendering(
+            questionnaire_formal, questionnaire_process, questionnaire_note.name
+        )["rendered_question_periods"] == 1
+        questionnaire_note.write_text(standalone_note.replace("FB001", "FB009"), encoding="utf-8")
+        expect_failure(lambda: checker.validate_questionnaire_rendering(
+            questionnaire_formal, questionnaire_process, questionnaire_note.name), "route differs")
+        source_record["questionnaire_evidence"][0]["skip_logic"][0]["when"] = "1 是"
+        checker.write_json(questionnaire_process / checker.SOURCE_RECORD_NAME, source_record)
+        questionnaire_note.write_text(original_note, encoding="utf-8")
 
         # Both publication checks must accept the same multi-period headings.
         from check_definition_output import check_summary_prose
@@ -560,6 +599,14 @@ def main() -> int:
         assert created["payload"]["post_url"] is None
         assert created["existing_tab_match"] == ["http://localhost:8000/nodes/edit/"]
         assert created["payload"]["directory_tag"] == "medical"
+        local_action = checker.build_cua_sync_action(
+            upload, "http://localhost:8000", "local-384", "ELSA", "004", "孤独感",
+        )
+        assert local_action["payload"]["edit_url"] == "http://localhost:8000/nodes/edit/384/"
+        for invalid_id in ("local-0", "local-01", "local--1", "LOCAL-384", "local-384/", "../384", "384?x=1"):
+            expect_failure(lambda: checker.build_cua_sync_action(
+                upload, "http://localhost:8000", invalid_id, "ELSA", "004", "孤独感"
+            ), "positive integer")
         assert created["preload_sha256"] == prepared_action["preload_sha256"]
         assert 'if (blank.title || blank.body || blank.attachments)' in preload_script
         assert 'name: /发布文章/' in preload_script
@@ -587,6 +634,16 @@ let result;
 const nodeRepl = { write: value => { result = JSON.parse(value); } };
 ''' + preload_script + '''
 assert.equal(result.status, "SYNC_TAB_READY");
+const prefix = "http://localhost:8000/nodes/post/";
+assert.equal(validDbCodeBookPostUrl(prefix + "local-384/", {create:false, post_url_prefix:prefix, post_url:prefix + "384/"}), true);
+for (const id of ["384", "local-384"]) {
+  assert.equal(validDbCodeBookPostUrl(prefix + id + "/", {create:true, post_url_prefix:prefix}), true);
+  assert.equal(validDbCodeBookPostUrl(prefix + id + "/", {create:false, post_url_prefix:prefix, post_url:prefix + id + "/"}), true);
+}
+for (const url of [prefix + "0/", prefix + "local-0/", prefix + "local-01/", prefix + "local-384/?x=1", prefix + "local-384/#x", prefix + "local-384/extra/", "http://evil.test/nodes/post/local-384/"]) {
+  assert.equal(validDbCodeBookPostUrl(url, {create:true, post_url_prefix:prefix}), false);
+}
+assert.equal(validDbCodeBookPostUrl(prefix + "local-385/", {create:false, post_url_prefix:prefix, post_url:prefix + "local-384/"}), false);
 assert.equal(result.url, "http://localhost:8000/nodes/post/221/");
 dbCodeBookBrowser = { ...dbCodeBookBrowser, browserId: "edge-existing" };
 selectedUrl = null;

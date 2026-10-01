@@ -306,14 +306,14 @@ def write_zip_and_extract(response, out_dir: Path) -> tuple[list[str], list[str]
 
 def identity_columns_for_member(data_member: str) -> set[str]:
     if data_member == "raw_data.csv":
-        return {"ID", "id", "year", "idauniq", "Wave"}
+        return {"ID", "id", "year", "idauniq", "Wave", "Wave_id", "HHID", "PN", "HHIDPN"}
     if data_member == "raw_data_household.csv":
         return {"ID", "id", "year", "householdid", "respondent_id"}
     if data_member == "raw_data_psu.csv":
         return {"communityid", "year"}
     return {
         "ID", "id", "year", "idauniq", "Wave", "householdid",
-        "respondent_id", "communityid",
+        "respondent_id", "communityid", "Wave_id", "HHID", "PN", "HHIDPN",
     }
 
 
@@ -445,6 +445,8 @@ def prepare_download(args: argparse.Namespace) -> dict:
     validate_download_selection(record_path, args.expect_vars_file, str(record["topic_id"]).zfill(3))
     from execution_report import load, validate_stage_review, REVIEW_POLICY
     report = load(record_path.parent / "execution_report.json")
+    from exploration_handoff import validate_exploration
+    validate_exploration(report, record_path)
     if report.get("review_policy") != REVIEW_POLICY:
         validate_stage_review(report, "定义逻辑复核")
     check_output_replacement(args.out, args.overwrite)
@@ -548,13 +550,17 @@ def parse_args() -> argparse.Namespace:
     source.add_argument("--snapshot-downloads", type=Path)
     source.add_argument("--watch-downloads", type=Path)
     parser.add_argument("--snapshot-file", type=Path)
+    parser.add_argument("--action-file", type=Path,
+                        help="Save the prepared CLI payload and print a compact receipt (prepare only).")
     parser.add_argument("--wait-seconds", type=float, default=20)
-    parser.add_argument("--database", type=str.lower, choices=("charls", "elsa"))
+    parser.add_argument("--database", type=str.lower, choices=("charls", "elsa", "hrs"))
     parser.add_argument("--base-url")
     parser.add_argument("--out", type=Path)
     parser.add_argument("--expect-vars-file", type=Path)
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
+    if args.action_file and not args.prepare_download:
+        parser.error("--action-file requires --prepare-download")
     if (args.prepare_download or args.snapshot_downloads or args.watch_downloads) and not args.snapshot_file:
         parser.error("snapshot and watch modes require --snapshot-file")
     if not args.snapshot_downloads and not all((args.database, args.out, args.expect_vars_file)):
@@ -570,7 +576,20 @@ def main() -> int:
     args = parse_args()
     try:
         if args.prepare_download:
-            print(json.dumps(prepare_download(args), ensure_ascii=True))
+            if args.action_file and (args.action_file.exists()
+                                     or args.action_file.resolve() == args.snapshot_file.resolve()):
+                raise ValueError("Action file must be new and distinct from the snapshot; reuse an existing prepared action instead of preparing again.")
+            prepared = prepare_download(args)
+            if args.action_file:
+                args.action_file.parent.mkdir(parents=True, exist_ok=True)
+                with args.action_file.open("x", encoding="utf-8") as handle:
+                    json.dump(prepared, handle, ensure_ascii=False, indent=2)
+                print(json.dumps({"ok": True, "next_action": "playwright_session_action.py --mode download",
+                                  "action_file": str(args.action_file.resolve()),
+                                  "snapshot_file": prepared["snapshot_file"],
+                                  "attempt_id": prepared["browser_action"]["attempt_id"]}, ensure_ascii=True))
+            else:
+                print(json.dumps(prepared, ensure_ascii=True))
             return 0
         if args.snapshot_downloads:
             snapshot = download_snapshot(args.snapshot_downloads)

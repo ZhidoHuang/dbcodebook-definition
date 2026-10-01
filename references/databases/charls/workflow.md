@@ -183,7 +183,7 @@ dbCodeBook 仍是变量发现入口。本地官方材料用于候选发现后的
 
 ### 4.2 预览
 
-把网页最终选择顺序逐行写入当前执行目录的 `download_selection.txt`，一行一个最终别名。该文件只保存这一次准备下载的变量，不写说明文字，也不另抄第二份变量清单。
+按[固定选择入口](../../rules/stages/02-download.md#固定选择与别名输入)输入完整来源与别名，并由同一输入生成 `download_selection.txt`，一行一个最终别名；不从网页重新手抄清单。
 
 点击下载前，先用来源检查器核对 `download_selection.txt` 与 `definition_search_record.json`：两者变量集合必须完全一致；网页顺序可以不同于来源分组顺序。检查不通过时回到网页补选或清理候选，不先下载再补解释。
 
@@ -223,7 +223,7 @@ python <skill-root>/scripts/check_definition_source_record.py `
 
 ### 5.1 CHARLS 代码补充
 
-通用前置条件、固定头部、代码组织和首次预检统一见 [公开 R](../../rules/stages/04-public-r.md)。变更影响先在 [纯文案](../../rules/stages/03-copy.md) 完成，不在本文件另写时序。
+通用前置条件、固定头部、代码组织和首次预检统一见 [公开 R](../../rules/stages/04-public-r.md)。变更影响在写作阶段按 [变更影响](../../rules/validation.md#定义变更影响) 完成，不在本文件另写时序。
 
 CHARLS 补充要求：
 

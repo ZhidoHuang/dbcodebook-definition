@@ -57,6 +57,10 @@ if (-not [string]::IsNullOrWhiteSpace($Config)) {
   }
 }
 
+. (Join-Path $PSScriptRoot 'r_environment.ps1')
+$rEnvironment = Start-DefinitionREnvironment -Config $Config -Python $Python
+try {
+
 # Codex may expose the Linux locale name C.UTF-8. Windows R cannot use that
 # locale and may rewrite Chinese punctuation as <U+....>. Let R select the
 # machine's native UTF-8 locale instead.
@@ -111,7 +115,7 @@ function Invoke-RCode {
   )
 
   $tempScript = Join-Path (
-    [System.IO.Path]::GetTempPath()
+    $rEnvironment.TempRoot
   ) ("definition_preflight_" + [guid]::NewGuid().ToString("N") + ".R")
   try {
     [System.IO.File]::WriteAllText(
@@ -420,6 +424,14 @@ if ($scriptBytes.Length -ge 3 -and $scriptBytes[0] -eq 0xEF -and $scriptBytes[1]
 }
 
 if ($PreflightOnly) {
+  if ($topicLeaf -match '^\d{3}_') {
+    & $resolvedPython @pythonArguments -X utf8 (Join-Path $PSScriptRoot "execution_report.py") `
+      review-check --process-dir $ProcessDir --role "公开 R 复核" --read-only `
+      --input $resolvedScript --input $resolvedSourceRecord --input $resolvedRawCodebook
+    if ($LASTEXITCODE -ne 0) {
+      Write-Warning "R_REVIEW_NOT_READY: preflight syntax/data checks may pass, but formal generation still requires a current independent review."
+    }
+  }
   $overallWatch.Stop()
   Write-Output "Definition preflight completed successfully."
   foreach ($phase in $phaseSeconds.GetEnumerator()) {
@@ -431,7 +443,13 @@ if ($PreflightOnly) {
 
 if ($topicLeaf -match '^\d{3}_') {
   & $resolvedPython @pythonArguments -X utf8 (Join-Path $PSScriptRoot "execution_report.py") `
-    review-check --process-dir $ProcessDir --role "公开 R 复核"
+    exploration-check --process-dir $ProcessDir --record $resolvedSourceRecord
+  if ($LASTEXITCODE -ne 0) {
+    throw "Current exploration merge is missing, stale or bound to a different source plan."
+  }
+  & $resolvedPython @pythonArguments -X utf8 (Join-Path $PSScriptRoot "execution_report.py") `
+    review-check --process-dir $ProcessDir --role "公开 R 复核" `
+    --input $resolvedScript --input $resolvedSourceRecord --input $resolvedRawCodebook
   if ($LASTEXITCODE -ne 0) {
     throw "Current public R review is missing or stale; formal R was not executed."
   }
@@ -473,7 +491,7 @@ $psi.StandardOutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $psi.StandardErrorEncoding = [System.Text.UTF8Encoding]::new($false)
 $scriptForR = $resolvedScript.Replace('\', '/').Replace("'", "\\'")
 $runtimeScriptPath = Join-Path (
-  [System.IO.Path]::GetTempPath()
+  $rEnvironment.TempRoot
 ) ("definition_runtime_" + [guid]::NewGuid().ToString("N") + ".R")
 $runtimeSource = @"
 script_lines <- readLines('$scriptForR', encoding = "UTF-8", warn = FALSE)
@@ -563,3 +581,5 @@ Write-Output "Rscript completed successfully."
 Write-Output "Log: $logPath"
 Write-Output ("Duration: {0}" -f (Format-Duration $overallWatch.Elapsed.TotalSeconds))
 exit 0
+
+} finally { Stop-DefinitionREnvironment -State $rEnvironment }

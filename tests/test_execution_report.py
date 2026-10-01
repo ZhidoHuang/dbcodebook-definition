@@ -42,6 +42,42 @@ full_report = {
 }
 full_end = execution_report.parse_time("2026-09-08T10:05:00+08:00")
 execution_report.validate_full_definition_completion(full_report, full_end)
+with tempfile.TemporaryDirectory() as folder:
+    path = Path(folder) / "execution_report.json"
+    for variant, expected in (({**full_report, "finished_at": execution_report.iso(full_end)}, 0),
+                              ({**full_report, "finished_at": execution_report.iso(full_end), "stages": []}, 1),
+                              (full_report, 1),
+                              ({"workflow": "general"}, 1)):
+        path.write_text(json.dumps(variant), encoding="utf-8")
+        before = path.read_bytes()
+        result = subprocess.run([sys.executable, str(SCRIPT), "check", "--report", str(path)],
+                                capture_output=True, text=True, encoding="utf-8")
+        assert result.returncode == expected, result.stderr
+        assert path.read_bytes() == before
+        assert list(Path(folder).iterdir()) == [path]
+        if expected == 0:
+            receipt = json.loads(result.stdout)
+            assert receipt["scope"] == "registration_only"
+            assert receipt["historical_quality_verified"] is False
+split_report = copy.deepcopy(full_report)
+production = next(s for s in split_report["stages"] if s["stage_id"] == "formal_r")
+split_report["stages"].remove(production)
+for index, stage_id in enumerate(("copy", "public_r", "generate")):
+    split_report["stages"].append({**production, "stage_id": stage_id,
+        "started_at": f"2026-09-08T10:03:{index * 20:02d}+08:00",
+        "finished_at": (f"2026-09-08T10:03:{(index + 1) * 20:02d}+08:00"
+                        if index < 2 else "2026-09-08T10:04:00+08:00")})
+execution_report.validate_full_definition_completion(split_report, full_end)
+split_report["stages"].pop()
+expect_system_exit(lambda: execution_report.validate_full_definition_completion(split_report, full_end), "generate")
+split_validation = copy.deepcopy(full_report)
+validation = next(s for s in split_validation["stages"] if s["stage_id"] == "validation")
+split_validation["stages"].remove(validation)
+for stage_id in ("results", "review"):
+    split_validation["stages"].append({**validation, "stage_id": stage_id})
+execution_report.validate_full_definition_completion(split_validation, full_end)
+split_validation["stages"].pop()
+expect_system_exit(lambda: execution_report.validate_full_definition_completion(split_validation, full_end), "review")
 skipped_stage = copy.deepcopy(full_report)
 skipped_stage["stages"][2]["status"] = "skipped"
 skipped_stage["stages"][2]["summary"] = ["来源未变化，不重复下载。"]
@@ -72,13 +108,10 @@ expect_system_exit(
     ),
     "缺少已完成审核",
 )
-expect_system_exit(
-    lambda: execution_report.validate_full_definition_completion(
-        full_report,
-        execution_report.parse_time("2026-09-08T10:08:00+08:00"),
-    ),
-    "未计入任何环节的时间",
-)
+execution_report.validate_full_definition_completion(
+    full_report, execution_report.parse_time("2026-09-08T10:08:00+08:00"))
+assert full_report["timing_coverage"]["status"] == "incomplete"
+assert full_report["timing_coverage"]["untracked_seconds"] == 180
 
 
 def browser_result(process_dir: Path) -> Path:
@@ -345,15 +378,23 @@ with tempfile.TemporaryDirectory() as temp_dir:
     path = Path(temp_dir) / "execution_report.json"
     initial = json.loads(path.read_text(encoding="utf-8"))
     earlier = execution_report.parse_time(initial["started_at"]) - timedelta(seconds=50)
-    run("start-amend", "--process-dir", temp_dir, "--started-at", earlier.isoformat(),
-        "--evidence", "fixture first tool timestamp")
+    log = Path(temp_dir) / "task.jsonl"
+    def write_start(value):
+        log.write_text(json.dumps({"timestamp": value, "type": "event_msg",
+            "payload": {"type": "task_started", "turn_id": "measured"}}) + "\n", encoding="utf-8")
+    write_start(earlier.isoformat())
+    run("start-amend", "--process-dir", temp_dir, "--log", str(log), "--turn-id", "measured")
     amended = json.loads(path.read_text(encoding="utf-8"))
     assert amended["start_amendments"][0]["previous_started_at"] == initial["started_at"]
     before = path.read_bytes()
     for value in (initial["started_at"], "2026-01-01T00:00:00"):
-        run("start-amend", "--process-dir", temp_dir, "--started-at", value,
-            "--evidence", "invalid correction", ok=False)
+        write_start(value)
+        run("start-amend", "--process-dir", temp_dir, "--log", str(log), "--turn-id", "measured", ok=False)
         assert path.read_bytes() == before
+    run("start-amend", "--process-dir", temp_dir, "--log", str(log), "--turn-id", "missing", ok=False)
+    run("start-amend", "--process-dir", temp_dir, "--started-at", earlier.isoformat(),
+        "--evidence", "estimated midnight", ok=False)
+    assert path.read_bytes() == before
     run("stage-start", "--process-dir", temp_dir, "--stage-id", "website",
         "--name", "website", "--role", "writer")
     run("issue", "--process-dir", temp_dir, "--stage-id", "website", "--kind", "abnormal",
@@ -369,7 +410,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
     assert result["elapsed_seconds"] >= 50
     markdown = (Path(temp_dir) / "执行报告.md").read_text(encoding="utf-8")
     assert "未解决：1" in markdown and "根因待修复 1" in markdown
-    assert "fixture first tool timestamp" in markdown
+    assert "task.jsonl" in markdown and "turn_id=measured" in markdown
     assert "发现问题并解决" not in markdown
 
 with tempfile.TemporaryDirectory() as temp_dir:

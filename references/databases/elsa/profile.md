@@ -6,6 +6,10 @@
 
 正式源：本文件是 Skill 仓库中的 ELSA profile；机器路径和网站域名由外部配置提供。
 
+## 官方材料入口
+
+ELSA官方问卷、用户指南和技术文档已随Skill保存在 [official-materials](official-materials/) 目录。先读[材料索引](official-materials/材料索引.md)，按用途、Wave和文件族定位材料；完整文件路径及去重追溯见其中的材料清单。不依赖原设备的数据库路径，不扫描整个数据库目录。引用仍须核实具体文件、版本和页码；材料目录不替代dbCodeBook变量选择和正式下载。
+
 ## 1. 基本身份
 
 | 项目 | 稳定规则 |

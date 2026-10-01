@@ -113,6 +113,16 @@ def main() -> int:
         )
         assert result == {"questions": 1, "covered_periods": 2}
 
+        lexical_codes = copy.deepcopy(record)
+        lexical_question = lexical_codes["questionnaire_evidence"][0]
+        lexical_question["options"] = [{"value": "01", "label": "是"}, {"value": "02", "label": "否"}]
+        lexical_question["skip_logic"][0]["when"] = "01 是"
+        roundtrip = json.loads(json.dumps(lexical_codes))
+        checker.validate_questionnaire_evidence(roundtrip, exploration_log, source_periods)
+        assert [x["value"] for x in roundtrip["questionnaire_evidence"][0]["options"]] == ["01", "02"]
+        roundtrip["questionnaire_evidence"][0]["options"][0]["value"] = 1
+        expect_failure(checker, roundtrip, exploration_log, source_periods, ".value")
+
         not_rendered = copy.deepcopy(record)
         not_rendered["questionnaire_evidence"][0]["rendered_in_copy"] = False
         not_rendered["questionnaire_evidence"][0]["copy_locator"] = (
@@ -241,13 +251,22 @@ def main() -> int:
         download_record = copy.deepcopy(pending)
         download_record.update({
             "schema_version": 7, "topic_id": "001", "status": "READY",
+            "recording_mode": "contemporaneous",
+            "dbcodebook_url": "http://localhost:8000/home/charls/", "searched_at": "2026-09-22",
+            "directory_entries": [{"full_path": "Core data > Work", "verified_in_ui": True,
+                "purpose": "Locate work questions"}],
+            "normal_searches": [{"performed": True, "keyword": "work", "result": "FA002 and FA003"}],
             "logic_review": {**dict.fromkeys((*checker.REQUIRED_LOGIC_CHECKS, *checker.REQUIRED_V3_LOGIC_CHECKS, *checker.REQUIRED_V7_LOGIC_CHECKS), True), "result": "clear"},
             "logic_issues": [],
             "human_record": "exploration.md", "source_groups": source_groups,
             "approved_analysis_vars": approved_names, "definition_plan": definition_plan,
-            "exploration_log": [{**exploration_log[0], "human_step_id": "S001"}],
+            "exploration_log": [{**exploration_log[0], "human_step_id": "S001",
+                "input": "Official questionnaire FA002", "observed": "Two options and an exit route",
+                "decision": "Retain both options", "reason": "Needed for the definition"}],
             "alias_families": [],
-            "candidate_decisions": [{"selected_raw": ["fa002_p", "fa003_p"]}],
+            "candidate_decisions": [{"concept": "work", "decision": "include",
+                "selected_raw": ["fa002_p", "fa003_p"], "excluded_raw": [],
+                "reason": "Direct work questions", "evidence_steps": [1]}],
             "evidence_reviews": [{
                 "source_type": "official_questionnaire", "title": "Questionnaire",
                 "locator": "FA002", "reviewed_at": "2026-09-04",
@@ -255,12 +274,53 @@ def main() -> int:
                 "decision_effect": "Plan the source list", "evidence_steps": [1],
             }],
         })
+        download_record["source_groups"] = [{**source_groups[0],
+            "detail_verified": True, "selection_reason": "Direct work evidence", "evidence_steps": [1],
+            "period_comparison": [{"periods": ["2011", "2013"], "question_meaning": "Worked last week",
+                "population": "Respondents", "reference_period": "Last week", "recording_and_coding": "Yes or no"}],
+            "common_meaning": "Work status", "material_differences": [],
+            "handling_decision": "merge", "handling_reason": "Same question and codes",
+            "discovery": {"mode": "ordinary_search", "value": "work"}}]
+        download_record["definition_plan"] = [{**definition_plan[0], "meaning": "Worked last week",
+            "construction": "Combine direct work responses", "missing_and_jump": "Preserve nonresponse"}]
         record_path = Path(tmp) / "record.json"
         selection_path = Path(tmp) / "selection.txt"
         (Path(tmp) / "exploration.md").write_text("### S001\nReviewed question.\n", encoding="utf-8")
         record_path.write_text(json.dumps(download_record), encoding="utf-8")
         selection_path.write_text("fa002_p\nfa003_p\n", encoding="utf-8")
         assert checker.validate_download_selection(record_path, selection_path, "001")["ok"]
+
+        shared = copy.deepcopy(download_record)
+        shared["source_groups"].append({**copy.deepcopy(shared["source_groups"][0]), "concept": "shared_work_source"})
+        for question in download_record["questionnaire_evidence"]:
+            shared["questionnaire_evidence"].append({**copy.deepcopy(question),
+                "source_group": "shared_work_source", "evidence_id": question["evidence_id"] + "_shared"})
+        for coverage in download_record["questionnaire_coverage"]:
+            shared["questionnaire_coverage"].append({**copy.deepcopy(coverage),
+                "source_group": "shared_work_source",
+                "evidence_ids": [value + "_shared" for value in coverage.get("evidence_ids", [])]})
+        record_path.write_text(json.dumps(shared), encoding="utf-8")
+        assert checker.validate_download_selection(record_path, selection_path, "001")["variables"] == 2
+
+        invalid_action = copy.deepcopy(download_record)
+        invalid_action["exploration_log"][0]["action"] = "normal_search_and_detail"
+        record_path.write_text(json.dumps(invalid_action), encoding="utf-8")
+        try:
+            checker.validate_download_selection(record_path, selection_path, "001")
+        except ValueError as error:
+            assert "exploration_log[1].action" in str(error)
+        else:
+            raise AssertionError("Invalid action was deferred until the post-download check")
+
+        invalid_discovery = copy.deepcopy(download_record)
+        invalid_discovery["source_groups"][0]["discovery"]["mode"] = "normal_search"
+        record_path.write_text(json.dumps(invalid_discovery), encoding="utf-8")
+        try:
+            checker.validate_download_selection(record_path, selection_path, "001")
+        except ValueError as error:
+            assert "discovery.mode" in str(error)
+        else:
+            raise AssertionError("Invalid discovery was deferred until the post-download check")
 
         for flag in ("all_observed_paths_mapped", "structural_missing_explained"):
             for missing_field in ("observed_count", "unexplained_count"):

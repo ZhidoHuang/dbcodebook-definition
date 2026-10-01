@@ -1,16 +1,20 @@
 # 2. 选择与下载
 
+执行记录：本步 `stage_id` 为 `download`。
+
+若任务仅要求离线准备交接文件，直接使用 [离线准备](../scoped-tasks.md#offline-download)，不要连接浏览器或执行下方完整下载流程。`--prepare-download` 只生成本地动作和快照；生成的动作交给浏览器执行才会联网下载。
+
 ## 本步执行与验收
 
 - 输入：执行者已核对的来源方案、完整身份和别名清单
-- 另读：所选数据库 workflow 的选择、预览、落盘部分；[写入边界](../write-boundaries.md) 中下载与来源缺口部分
+- 另读：所选数据库 workflow 的选择、预览、落盘部分；[共用浏览器会话](../write-boundaries.md#浏览器会话)和[来源缺口](../write-boundaries.md#来源缺口)
 - 执行：按共同浏览器规则连接 Chrome 或 Edge，确认登录、选择和实际下载目录，再执行下方固定下载动作一次；核对本次包和 raw
 - 交付：当前下载包、原样 raw/codebook、下载凭据和实际取值/路径记录
 - 程序检查：prepare-download 直接检查选择；恢复与正式 R 前来源检查对账清单、包内原文件和实际路径人数
 - 模型判断：原始取值是否与问卷含义相符；数据异常是否要求修订方案
 - 未通过：来源或别名变更回到方案并重新全量下载；下载失败查同次尝试，不重复点击
 
-进入下载前由 prepare-download 校验来源方案、用途、别名和未解决问题。新流程不要求下载前另派逻辑复核；定义与实现的独立复核在第4步合并进行。旧执行报告仍按原有要求校验，不手改历史记录跳过审核。
+进入下载前由 prepare-download 校验来源方案、用途、别名和未解决问题。新流程在下载前验证双路探索及主线程合并已完成，不另派下载前审核；第4步复核实现是否符合合并方案。旧执行报告仍按原有要求校验，不手改历史记录跳过审核。
 
 通过本步才交接给下一步；一次命令或点击不是一个独立验收环节。只读复核者接收本步稳定输入、对应标准及具体问题，不接收整个历史对话。
 
@@ -55,12 +59,87 @@ ztooth (health status and functioning)=ztooth
 
 ## Download Commands
 
-Read [browser session setup](../write-boundaries.md#浏览器会话) and [download execution](../write-boundaries.md#下载结果与找回). Reuse the named extension-free Playwright CLI session, verify the source list and final download control in its logged-in tab, and set `$Downloads` to the execution directory where the CLI action saves its result and ZIP. Then prepare the local observer:
+### 固定选择与别名输入
 
-Treat the variable-selection page's normal export as the primary download path. A test of recovery cannot substitute for a forward test of that normal export.
+来源和别名确定后，将网站完整身份与别名按 `Variable (File)=alias` 写入本任务 `source_selection.txt`，每行一项。完整身份来自已完成的来源探索，不从别名猜文件名，也不把旧记录中只有文件名的 `source_identities` 当作完整身份。该文件是批量输入载荷；研究依据仍保存在原来源记录中。
+
+先离线生成动作及下载别名清单，两者来自同一输入，不从网页再抄一份：
 
 ```powershell
-& $Python -X utf8 scripts/recover_dbcodebook_export.py --prepare-download $Downloads --snapshot-file "$Process/download_before.json" --database $Database --base-url $BaseUrl --out $Formal --expect-vars-file "$Process/download_selection.txt"
+& $Python -X utf8 "$Skill/scripts/prepare_source_selection.py" --config $Config --database $Database --input "$Process/source_selection.txt" --action-file "$Process/selection_action.json" --expect-vars-file "$Process/download_selection.txt"
+& $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --config $Config --mode select --database $Database --action "$Process/selection_action.json" --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out "$Process/selection_result.json"
 ```
 
-Save the command's complete JSON output as `$Action`, then use `playwright_session_action.py --mode download` with the session and workdir recorded at setup (full command in the linked browser-session section). It checks selected count, waits for the download before clicking once, and saves the file to the execution directory. The local attempt record is claimed before CLI dispatch, so a timeout or lost connection does not permit repeating the paid action. When it returns `DOWNLOAD_FILE_READY`, pass `download_path` unchanged to the existing `--archive` command with the same database, output, selection file and intentional `--overwrite` setting. If no file is verified, use the original observer and existing paid record; do not dispatch the action again. No extension setup or manual `dbCodeBookBrowser` binding is needed.
+固定动作只操作绑定页：检查页面和登录，打开批量输入框，填入完整清单，点击一次确认，读取网站返回的无效项并检查总数量及加载结束。别名由网站原有输入功能设置；不另写 `addTag`、直接请求验证接口或修改页面 DOM 的脚本，不预先清空旧选择，不逐项重复探索已确定的来源。
+
+| 返回 | 处理 |
+| --- | --- |
+| `SELECTION_READY` | 选择完成，继续已有下载步骤；仍须通过原有包内来源核对 |
+| `LOGIN_REQUIRED` | 按共用登录步骤交还用户，登录后再执行选择 |
+| `SOURCE_REJECTED` / `SELECTION_COUNT_MISMATCH` | 不下载；只调查返回的缺项或数量差异，需要修改方案时返回来源探索 |
+| `INPUT_DIALOG_ALREADY_OPEN` | 保留现场，确认是本任务未提交的输入后关闭，再运行固定动作 |
+| `WRONG_PAGE` / 控件变化 / 登录状态未知 | 核实绑定页或页面结构，不换页猜选项 |
+| `SELECTION_UNCERTAIN` / `SESSION_UNAVAILABLE_OR_UNCERTAIN` | 保存结果并检查原页是否仍在处理；未确认结束前不重发。已结束但状态不明时重新按完整清单选择，不触发下载 |
+
+此入口适用于 CHARLS、ELSA、Full HRS 的现有批量输入页面。来源含输入分隔符或页面不再支持此格式时明确报告，不静默删改身份。离线生成成功只证明输入格式成立，不证明来源存在或已登录。
+
+复用已记录的Chrome/Edge会话和本任务标签页，确认登录、来源清单和最终下载控件。`$Downloads`是执行入口保存动作结果及ZIP的目录，不猜测系统Downloads。新设备与绑定方法见[浏览器会话](../write-boundaries.md#浏览器会话)。
+
+1. 运行一次本地准备，建立快照和唯一尝试。成功后直接使用生成的动作文件，不复制脚本或重复准备：
+
+```powershell
+$Action = "$Process/download_action.json"
+& $Python -X utf8 scripts/recover_dbcodebook_export.py --prepare-download $Downloads --snapshot-file "$Process/download_before.json" --action-file $Action --database $Database --base-url $BaseUrl --out $Formal --expect-vars-file "$Process/download_selection.txt"
+```
+
+2. 同一会话执行一次动作。入口在最终点击前等待下载事件，保存文件并返回实际路径；分派前原子登记尝试，连接丢失不允许重新分派同次付费动作：
+
+```powershell
+& $Python -X utf8 scripts/playwright_session_action.py --config $Config --mode download --action $Action --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $Result
+```
+
+3. 返回 `DOWNLOAD_FILE_READY` 时将 `download_path` 原样作为 `$Archive`，校验并安装：
+
+```powershell
+& $Python -X utf8 scripts/recover_dbcodebook_export.py --archive $Archive --database $Database --out $Formal --expect-vars-file "$Process/download_selection.txt"
+```
+
+有意替换现有正式raw时才加 `--overwrite`。返回 `run_watch_command` 时运行原快照对应的观察命令；观察器已安装文件则不重复安装。变量清单及包内CSV通过校验才算成功，点击返回或尝试已登记不等于文件已到达。
+
+正常导出验收必须证明本次选择页的新包完整落盘，不能用找回测试替代。包安装核验结束下载计时；下载后实际取值、路径人数与方案修订另记sources工作或返工段。
+
+## 下载结果与找回
+
+| 结果 | 下一步 |
+| --- | --- |
+| 本次新包已校验安装 | 继续定义，不再等事件、找回或重下 |
+| 临时文件仍在下载 | 保留原页和原快照继续观察，不重新准备 |
+| 没有匹配文件 | 查看同次下载记录，不据此认定未生成或再次付费 |
+| 多个匹配文件 | 辨明本次文件，不自动选最新一个 |
+
+仅接受相对快照新增或变化、稳定且完整校验的包；旧包、临时文件及来源不符的包不作结果。分派前认领不能证明已点击，失败需根据原动作结果区分未点击、已提交和文件未取得。
+
+没有文件时，在原浏览器按本次时间、数据库、来源及别名核对下载记录。已有对应记录且下载环境可用时才使用其找回入口，不重新导出。直接下载链接先建立 `page.waitForEvent("download")` 再点击已核实链接，以 `saveAs` 保存到本次目录，再走同一archive校验。页面显示“已找回”不代表落盘；仍无文件时保留事实，不消耗其它找回机会。
+
+只有确证浏览器关闭或崩溃导致失败时，先用 `tests/probe_browser_download.py --browser msedge --config $Config --out <独立测试目录>`（Chrome用chrome）做免费本地19MB下载测试；它仅关闭自己的临时会话，不访问网站。测试通过只证明测试环境可落盘，不证明生产会话恢复。生产会话确已关闭才用原配置恢复并重新绑定；不凭saveAs错误断言崩溃，不新建登录挤掉其它任务。
+
+观察或找回均不授权重新付费导出。重试前说明已有记录及文件状态；不明确或仍在下载时停止重试。用户已授权付费复测时，在确认前次未成功且无进行中的下载后沿用授权，不重复确认；该授权不包括改网站、重启服务或切换浏览器。
+
+## 记录字段的阶段边界
+
+下载后某个实际取值涉及哪些时期，直接从逐期统计提取，再用于探索记录和R注释，不手写另一份时期清单。可运行 `scripts/observed_value_periods.py --raw <raw_data.csv> --variable <原列名> --value <完整原值> --period-column <时期列> --out <过程目录/取值时期.json>`；仅在已确认ID由“时期+分隔符+身份”组成时改传ID列并加 `--id-separator <分隔符>`。这只证明实际出现范围，不能反推问卷施测范围或缺失原因。
+
+下表右列在各自环节完成：实际人数归下载后数据核实；问卷展示标记归文案完成。不能在下载结束时提前填文案已展示。
+
+| 字段 | 下载前 | 下载后、正式 R 前 |
+| --- | --- | --- |
+| status / logic_review.result | READY；clear 或 reported_and_resolved，未决问题不得掩盖 | 继续保留真实结论 |
+| directory_entries / discovery.value | 完整 UI 路径且 verified_in_ui=true；discovery 指向已登记条目 | 保留同一来源身份 |
+| 单期 source_group | handling_decision=single_period | 与实际时期核对 |
+| questionnaire_evidence | 官方完整题文、选项、路径；local_material_path 相对本数据库材料根 | rendered_in_copy=true、copy_locator 指向实际文案 |
+| questionnaire_path_closure | 真实进入/退出条件；未知人数和统计结论用 null | observed_count 为非负整数，unexplained_count=0，实际闭合有依据 |
+| human_record / evidence_steps | 探索记录存在同号 S001 等步骤标题 | 沿用可追溯步骤，不为过检查编造观察 |
+
+跨期复用同一 raw 列但题义变化时，按研究概念登记来源组，在各组列出准确单期与路由；组间可以共享该 raw，下载清单只保留一次。不能把不同题义合并成一个定义，也不在下载后复制列以绕过去重。
+
+材料路径正例：`官方问卷/2011/2011 家户问卷.pdf`；反例：`references/source-materials/charls/官方问卷/...`。`locator` 是页码/题号/章节定位，不是第二个文件路径；同一个材料文件统一使用前述相对路径。校验器提示基址错误时按提示改记录，不自动改选另一份材料。

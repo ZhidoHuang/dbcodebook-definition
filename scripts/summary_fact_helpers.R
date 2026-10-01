@@ -546,6 +546,20 @@ summary_render_parts <- function(parts, theme_color) {
     if (identical(part$type, "path")) {
       return(summary_path_span(part$value, theme_color))
     }
+    if (identical(part$type, "source_link")) {
+      path <- part$value
+      database <- tolower(part$database)
+      if (!is.character(path) || length(path) != 1L || is.na(path) || !nzchar(trimws(path)) ||
+          grepl("[；;。\r\n]", path)) {
+        stop("summary_source path must contain only the directory; put explanatory text in note.")
+      }
+      if (length(database) != 1L || !database %in% c("charls", "elsa", "hrs")) stop("Invalid source-link database.")
+      # The URL uses only the path, never the adjacent explanatory note.
+      nav <- gsub("\\s*>\\s*", ">", trimws(path), perl = TRUE)
+      return(paste0('<a data-summary-path="true" href="/home/', database,
+        '/?nav=', utils::URLencode(enc2utf8(nav), reserved = TRUE), '">',
+        summary_escape_html(path), '</a>'))
+    }
     if (identical(part$type, "search")) {
       return(summary_search_span(part$value, theme_color))
     }
@@ -612,6 +626,14 @@ render_summary_entry_paragraph <- function(entry, theme_color) {
     }
     rendered <- vapply(seq_along(entry$paragraphs), function(i) {
       paragraph <- entry$paragraphs[[i]]
+      if (is.list(paragraph) && identical(paragraph$type, "code_tree")) {
+        if (!is.character(paragraph$text) || length(paragraph$text) != 1L || !nzchar(trimws(paragraph$text))) {
+          stop("摘要代码树不能为空。")
+        }
+        return(paste0('<pre class="summary-code-tree" data-summary-tree="true" ',
+          'style="margin:0 0 0.75em;text-indent:0;white-space:pre;overflow-x:auto;font-family:monospace;">',
+          '<code>', summary_escape_html(paragraph$text), '</code></pre>'))
+      }
       parts <- if (is.list(paragraph) && !is.null(paragraph$parts)) {
         paragraph$parts
       } else {
@@ -661,6 +683,9 @@ render_summary_entry_paragraph <- function(entry, theme_color) {
 }
 
 render_summary_selection_paragraph <- function(selection, theme_color) {
+  # Record-based topics may have no single questionnaire block. In that case
+  # the reader copy omits the section and the renderer emits no placeholder.
+  if (is.null(selection)) return("")
   wrap_source_structure <- function(content) {
     class_name <- selection$class
     if (is.null(class_name) || !nzchar(class_name)) {

@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import re
 import time
+import uuid
 from skill_config import load_config, playwright_command
 
 
@@ -52,17 +53,79 @@ const wrapPage = p => ({
 });
 const dbCodeBookBrowser = {tabs: {
   selected: async () => wrapPage(page),
-  list: async () => page.context().pages().map((p, i) => ({id: String(i), url: p.url()})),
-  get: async id => wrapPage(page.context().pages()[Number(id)])
+  list: async () => typeof dbCodeBookBoundPage !== 'undefined'
+    ? [{id: 'bound', url: page.url()}]
+    : page.context().pages().map((p, i) => ({id: String(i), url: p.url()})),
+  get: async id => {
+    if (typeof dbCodeBookBoundPage !== 'undefined') {
+      if (id !== 'bound') throw new Error('Tab is outside this task binding');
+      return wrapPage(page);
+    }
+    return wrapPage(page.context().pages()[Number(id)]);
+  }
 }};
 let actionResult;
 const nodeRepl = {write: value => {actionResult = JSON.parse(value);}};
 '''
 
 
+def bind_code(code, tab_id, receipt_id=None):
+    if not tab_id:
+        return code
+    return """async defaultPage => {
+      let selected;
+      for (const candidate of defaultPage.context().pages()) {
+        if (candidate.isClosed()) continue;
+        const cdp = await defaultPage.context().newCDPSession(candidate);
+        let target;
+        try { target = await cdp.send('Target.getTargetInfo'); }
+        finally { await cdp.detach(); }
+        if (target.targetInfo.targetId === %s) { selected = candidate; break; }
+      }
+      if (!selected) throw new Error('Bound tab is closed or unavailable; do not select another tab');
+      const dbCodeBookBoundPage = selected;
+      const cancellations = [], pending = [];
+      const onDialog = dialog => {
+        if (dialog.type() !== 'confirm' || !/清空[^\\r\\n]*标签/.test(dialog.message())) return;
+        const record = {type: 'confirm', message: dialog.message(), action: 'dismiss', confirmed: false};
+        cancellations.push(record);
+        pending.push(dialog.dismiss().then(() => {record.confirmed = true;},
+          error => {record.error = String(error);}));
+      };
+      selected.on('dialog', onDialog);
+      const operation = (async () => { try {
+        const result = await (%s)(selected);
+        await Promise.all(pending);
+        if (cancellations.some(item => !item.confirmed)) throw new Error('Native dialog cancellation failed: ' + JSON.stringify(cancellations));
+        if (!cancellations.length) return result;
+        return result && typeof result === 'object' && !Array.isArray(result)
+          ? {...result, native_dialogs: cancellations} : {result, native_dialogs: cancellations};
+      } finally { selected.off('dialog', onDialog); } })();
+      const receiptId = %s;
+      if (receiptId) selected[Symbol.for('dbCodeBook.boundAction')] = {id:receiptId, operation};
+      return await operation;
+    }""" % (json.dumps(tab_id), code, json.dumps(receipt_id))
+
+
 def read_action(path: Path) -> dict:
     data = json.loads(path.read_text(encoding="utf-8-sig"))
     return data.get("browser_action", data)
+
+
+def cli_action_result(result):
+    """Keep structured failure evidence even when the CLI exits unsuccessfully."""
+    for stream in (result.stdout, result.stderr):
+        try:
+            payload = json.loads(stream.strip())
+        except (json.JSONDecodeError, AttributeError):
+            continue
+        if isinstance(payload, dict) and isinstance(payload.get("ok"), bool):
+            if result.returncode and payload["ok"]:
+                break
+            return payload
+    return {"ok": False, "status": "CLI_ACTION_UNCERTAIN",
+            "allow_new_export": False, "cli_returncode": result.returncode,
+            "message": result.stdout + result.stderr}
 
 
 def build_code(action: dict, mode: str, preflight: dict | None, download_target: Path) -> str:
@@ -86,10 +149,11 @@ def build_code(action: dict, mode: str, preflight: dict | None, download_target:
 
 
 class Session:
-    def __init__(self, name, workdir, code_path, config=None):
+    def __init__(self, name, workdir, code_path, config=None, tab_id=None):
         self.command = playwright_command(config) + ["-s=" + name]
         self.workdir, self.code_path = workdir, code_path
         self.deadline = None
+        self.tab_id = tab_id
 
     def call(self, *args, timeout=40):
         if self.deadline is not None:
@@ -104,8 +168,20 @@ class Session:
         return result.stdout
 
     def code(self, code):
-        self.code_path.write_text(code, encoding="utf-8")
+        receipt_id = uuid.uuid4().hex
+        self.code_path.write_text(bind_code(code, self.tab_id, receipt_id), encoding="utf-8")
         output = self.call("--raw", "run-code", "--filename", str(self.code_path.resolve()))
+        # The CLI returns early when its selected tab opens a dialog, even if
+        # our bound handler dismisses it. Retrieve that same operation only;
+        # never replay the click/upload/submit to obtain a result.
+        if not output.strip() and self.tab_id:
+            recovery = '''async page => {
+              const receipt = page[Symbol.for('dbCodeBook.boundAction')];
+              if (!receipt || receipt.id !== %s) throw new Error('Bound action receipt unavailable; do not replay');
+              return await receipt.operation;
+            }''' % json.dumps(receipt_id)
+            self.code_path.write_text(bind_code(recovery, self.tab_id), encoding="utf-8")
+            output = self.call("--raw", "run-code", "--filename", str(self.code_path.resolve()))
         try:
             return json.loads(output)
         except json.JSONDecodeError as exc:
@@ -115,12 +191,22 @@ class Session:
         # CLI owns the intercepted chooser. Native setFiles in run-code leaves it pending.
         if not Path(path).is_file():
             raise FileNotFoundError(path)
+        if self.tab_id:
+            self.code('async page => { await page.locator(' + json.dumps(selector)
+                      + ').setInputFiles(' + json.dumps(str(Path(path).resolve()))
+                      + '); return {ok:true}; }')
+            return
         output = self.call("click", selector)
         if "[File chooser]" not in output:
             raise RuntimeError("Upload click did not open a CLI file chooser")
         self.call("upload", str(Path(path).resolve()))
 
     def select_target(self, urls):
+        if self.tab_id:
+            actual = self.code('async page => ({url: page.url()})')
+            if actual['url'].rstrip('/') not in {url.rstrip('/') for url in urls}:
+                raise RuntimeError('Bound tab URL does not match the prepared action')
+            return
         listing = self.call("tab-list")
         tabs = re.findall(r"^- (\d+): (.*?)\((https?://[^\s)]+)\)\s*$", listing, re.M)
         matches = [tab for tab in tabs if tab[2].rstrip('/') in {url.rstrip('/') for url in urls}]
@@ -131,6 +217,11 @@ class Session:
         self.call("tab-select", matches[0][0])
 
     def discard(self, edit_url):
+        if self.tab_id:
+            return self.code('async page => { if (page.url() !== ' + json.dumps(edit_url)
+                             + ') throw new Error("Unexpected editor URL");'
+                             + ' await page.goto(' + json.dumps(edit_url)
+                             + '); return {url:page.url(),editor:await page.locator("#editor").count()}; }')
         listing = self.call("tab-list")
         current = re.search(r"^- (\d+): \(current\).*\((https?://[^\s)]+)\)", listing, re.M)
         if not current or current[2] != edit_url:
@@ -139,6 +230,17 @@ class Session:
         self.call("tab-new", edit_url)
         self.call("tab-close", current[1])
         return self.code('async page => ({url: page.url(), editor: await page.locator("#editor").count()})')
+
+
+def validate_sync_files(payload):
+    files = [{"path": payload["note"], "sha256": payload.get("note_sha256")},
+             *payload["attachments"]]
+    for item in files:
+        expected = item.get("sha256")
+        path = Path(item["path"])
+        if (not expected or not path.is_file()
+                or hashlib.sha256(path.read_bytes()).hexdigest().upper() != expected.upper()):
+            raise ValueError("SYNC_INPUT_CHANGED: " + str(path))
 
 
 def run_sync(session, action, preflight):
@@ -158,12 +260,16 @@ def run_sync(session, action, preflight):
         return session.code(script)
 
     try:
+        validate_sync_files(payload)
         session.select_target(action["existing_tab_match"])
         state = step()
+        validate_sync_files(payload)
         session.upload("#content-import-input", payload["note"])
         state = step()
         for attachment in payload["attachments"][state["keep"]:]:
+            validate_sync_files(payload)
             session.upload("#documents-sidebar-input", attachment["path"])
+        validate_sync_files(payload)
         # A failed submit call may already have written remotely; never retry or discard it.
         submitted = True
         return step()
@@ -187,27 +293,79 @@ def run_sync(session, action, preflight):
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--action", required=True, type=Path)
-    parser.add_argument("--mode", choices=["download", "preflight", "sync"], required=True)
+    parser.add_argument("--action", type=Path)
+    parser.add_argument("--mode", choices=["bind", "tab-code", "login-status", "login-open", "select", "download", "preflight", "sync"], required=True)
+    parser.add_argument("--database", choices=["charls", "elsa", "hrs"])
+    parser.add_argument("--script", type=Path, help="tab-code: async page function restricted to the bound page")
+    parser.add_argument("--tab-index", type=int, help="Observed tab-list index; only used to create a binding")
+    parser.add_argument("--tab-id", help="Stable Chromium target id from mode bind; never an index")
     parser.add_argument("--preflight", type=Path)
     parser.add_argument("--session", required=True)
     parser.add_argument("--session-workdir", required=True, type=Path)
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--config", type=Path)
     args = parser.parse_args()
-    action = read_action(args.action)
-    preflight = read_action(args.preflight) if args.preflight else None
     config = load_config(args.config)
     command = playwright_command(config)
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    if args.mode in {"login-status", "login-open", "select"}:
+        from prepare_source_selection import browser_code
+        from skill_config import database_url
+        if not args.tab_id or not args.database:
+            parser.error('login/selection requires --tab-id and --database')
+        action = read_action(args.action) if args.action else {}
+        url = database_url(config, args.database)
+        if args.mode == 'select':
+            if action.get('url') != url:
+                parser.error('selection action must match the configured database URL')
+        else:
+            action = {'url': url}
+        code = browser_code(action, args.mode)
+        try:
+            payload = Session(args.session, args.session_workdir,
+                              args.out.with_suffix('.browser.js'), config, args.tab_id).code(code)
+        except (RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
+            payload = {'ok': False, 'status': 'SESSION_UNAVAILABLE_OR_UNCERTAIN', 'error': str(exc)}
+        args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+        print(json.dumps(payload, ensure_ascii=False))
+        raise SystemExit(0 if payload.get('ok') else 1)
+    if args.mode == "tab-code":
+        if not args.tab_id or not args.script:
+            parser.error('tab-code requires --tab-id and --script')
+        payload = Session(args.session, args.session_workdir,
+                          args.out.with_suffix('.browser.js'), config, args.tab_id).code(
+                              args.script.read_text(encoding='utf-8-sig'))
+        args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+        print(json.dumps(payload, ensure_ascii=False))
+        return
+    if args.mode == "bind":
+        if args.tab_index is None or args.tab_index < 0:
+            parser.error('bind requires a nonnegative --tab-index from tab-list')
+        session = Session(args.session, args.session_workdir, args.out.with_suffix('.browser.js'), config)
+        payload = session.code('''async page => {
+          const selected = page.context().pages()[%d];
+          if (!selected) throw new Error('Observed tab index no longer exists');
+          const cdp=await page.context().newCDPSession(selected);
+          try { const result=await cdp.send('Target.getTargetInfo');
+            return {ok:true,tab_id:result.targetInfo.targetId,url:selected.url()}; }
+          finally {await cdp.detach();}
+        }''' % args.tab_index)
+        payload.update(session=args.session, session_workdir=str(args.session_workdir.resolve()))
+        args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+        print(json.dumps(payload, ensure_ascii=False))
+        return
+    if not args.action:
+        parser.error('--action is required for browser actions')
+    action = read_action(args.action)
+    preflight = read_action(args.preflight) if args.preflight else None
     target = args.out.parent / ("download-" + action.get("attempt_id", "unused") + ".zip")
     if args.mode == "sync":
-        payload = run_sync(Session(args.session, args.session_workdir, args.out.with_suffix(".browser.js"), config),
+        payload = run_sync(Session(args.session, args.session_workdir, args.out.with_suffix(".browser.js"), config, args.tab_id),
                            action, preflight)
         args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         print(json.dumps(payload, ensure_ascii=False))
         raise SystemExit(0 if payload.get("ok") else 1)
-    code = build_code(action, args.mode, preflight, target)
+    code = bind_code(build_code(action, args.mode, preflight, target), args.tab_id)
     code_path = args.out.with_suffix(".browser.js")
     code_path.write_text(code, encoding="utf-8")
     if args.mode == "download":
@@ -216,17 +374,16 @@ def main() -> None:
         with attempt_file.open("x", encoding="utf-8") as handle:
             json.dump({"attempt_id": action["attempt_id"], "session": args.session,
                        "status": "claimed_before_cli_dispatch"}, handle)
-    result = subprocess.run(
-        command + ["-s=" + args.session, "--raw", "run-code", "--filename", str(code_path.resolve())],
-        cwd=args.session_workdir, encoding="utf-8", capture_output=True,
-        timeout=action.get("timeout_ms", 90000) / 1000 + 30, stdin=subprocess.DEVNULL,
-    )
-    if result.returncode:
-        raise RuntimeError(result.stdout + result.stderr)
     try:
-        payload = json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("CLI did not return an action result: " + result.stdout) from exc
+        result = subprocess.run(
+            command + ["-s=" + args.session, "--raw", "run-code", "--filename", str(code_path.resolve())],
+            cwd=args.session_workdir, encoding="utf-8", capture_output=True,
+            timeout=action.get("timeout_ms", 90000) / 1000 + 30, stdin=subprocess.DEVNULL,
+        )
+        payload = cli_action_result(result)
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        payload = {"ok": False, "status": "CLI_ACTION_UNCERTAIN",
+                   "allow_new_export": False, "message": str(exc)}
     args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(payload, ensure_ascii=False))
     if not payload.get("ok"):

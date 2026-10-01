@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -10,7 +11,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from check_reader_copy import compare_content, read_copy, validate_note, require_equal, criteria_fields
+from check_reader_copy import compare_content, read_copy, validate_note, require_equal, criteria_fields, read_questionnaire_copy
 
 
 def rejects(action, reason):
@@ -32,12 +33,19 @@ def render_note(content):
         )
         rows.append(f'<tr><td class="plain-cell">{variable}</td><td>{body}</td><td>distribution</td></tr>')
     insight = (f'<div data-summary-insight-body="true">{content["insight"]}</div>' if content["insight"] else "")
-    return (f'## 摘要导读\n{content["summary"]}\n<div class="raw-source-structure">questionnaire</div>\n'
+    summary = re.sub(r'\*\*(.*?)\*\*', r'<span data-summary-concept="true">\1</span>', content["summary"])
+    return (f'## 摘要导读\n{summary}\n<div class="raw-source-structure">questionnaire</div>\n'
             f'{insight}\n## 定义\n<table><tr><th>Definition</th><th>Criteria</th><th>detail</th></tr>'
             + "".join(rows) + f'</table>\n## 参考资料说明\n{content["references"]}\n## 材料\n')
 
 
 def main():
+    base_questionnaire = "### 2011 年\n\n询问当前健康。\n\n#### DA001\n\n您的健康怎么样？\n\n- 1 好\n"
+    expected = read_questionnaire_copy(base_questionnaire)
+    for heading in ("**问卷设计**", "问卷设计"):
+        assert read_questionnaire_copy(base_questionnaire.replace("询问当前健康。", heading + "\n\n询问当前健康。")) == expected
+    assert read_questionnaire_copy(base_questionnaire.replace("询问当前健康。", "问卷设计发生变化。"))["2011"]["design"] == "问卷设计发生变化。"
+    rejects(lambda: read_questionnaire_copy(base_questionnaire.replace("询问当前健康。", "**问卷设计**")), "缺少时期设计说明")
     with tempfile.TemporaryDirectory() as directory:
         folder = Path(directory)
         path = folder / "文案.md"
@@ -125,6 +133,9 @@ cat("R_COPY_FORWARD_PASS\\n")
         assert "R_COPY_FORWARD_PASS" in run.stdout
         assert validate_note(path, note)["ok"]
         questionnaire_copy = (ROOT / "templates/questionnaire-copy.md").read_text(encoding="utf-8")
+        # Exercise the accepted heading through the actual R loader and renderer.
+        questionnaire_copy = questionnaire_copy.replace("### 2011年\n", "### 2011年\n\n**问卷设计**\n", 1)
+        assert "**问卷设计**" in questionnaire_copy
         path.write_text(original + "\n\n" + questionnaire_copy, encoding="utf-8")
         questionnaire_script = folder / "questionnaire.R"
         questionnaire_script.write_text('''
@@ -150,6 +161,7 @@ cat("QUESTIONNAIRE_COPY_FORWARD_PASS\\n")
         assert "QUESTIONNAIRE_COPY_FORWARD_PASS" in run.stdout
         generated = folder / "questionnaire_note.md"
         assert validate_note(path, generated)["ok"]
+        assert "**问卷设计**" not in generated.read_text(encoding="utf-8")
         generated.write_text(generated.read_text(encoding="utf-8").replace("跳至 Q002", "跳至 Q999"), encoding="utf-8")
         rejects(lambda: validate_note(path, generated), "原始问卷")
     print("READER_COPY_TESTS_PASS: copy, actual R inputs, rendered output, optional notes, missing fields, extra insight, order, values")

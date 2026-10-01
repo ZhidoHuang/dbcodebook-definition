@@ -75,6 +75,17 @@ def normalized(text):
     return re.sub(r"\s+", "", text)
 
 
+
+def route_matches(destination, description):
+    # Ignore presentation whitespace symmetrically while retaining identifier
+    # boundaries: DA002 must never match DA0020 or XDA002.
+    target = normalized(destination)
+    if not target:
+        return False
+    pattern = r"(?<![A-Za-z0-9_])" + r"\s*".join(re.escape(c) for c in target) + r"(?![A-Za-z0-9_])"
+    return re.search(pattern, str(description)) is not None
+
+
 def sections(text, level):
     matches = list(re.finditer(rf"(?m)^{'#' * level} (.+?)\s*$", text))
     result = {}
@@ -85,6 +96,66 @@ def sections(text, level):
         end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
         result[name] = text[match.end():end].strip()
     return result
+
+
+def summary_blocks(text):
+    """Parse prose and literal trees once; renderers must not reinterpret fences."""
+    lines = str(text).splitlines()
+    blocks, prose = [], []
+
+    def flush():
+        if prose:
+            blocks.append({"type": "paragraph", "text": "\n".join(prose)})
+            prose.clear()
+
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        fence = re.fullmatch(r" {0,3}(`{3,}|~{3,})(?:text|plaintext)?[ \t]*", line)
+        if fence:
+            flush()
+            marker, body = fence[1], []
+            i += 1
+            while i < len(lines) and not re.fullmatch(r" {0,3}" + re.escape(marker[0]) + "{" + str(len(marker)) + r",}[ \t]*", lines[i]):
+                body.append(lines[i])
+                i += 1
+            if i == len(lines):
+                raise ValueError("摘要代码树缺少结束围栏")
+            if not any(x.strip() for x in body):
+                raise ValueError("摘要代码树不能为空")
+            blocks.append({"type": "code_tree", "text": "\n".join(body)})
+        elif re.match(r" {0,3}(?:`{3,}|~{3,})", line):
+            raise ValueError("摘要代码树使用无语言或 text 围栏")
+        elif line.startswith("    "):
+            flush()
+            body = []
+            while i < len(lines) and (lines[i].startswith("    ") or not lines[i].strip()):
+                body.append(lines[i][4:] if lines[i].startswith("    ") else "")
+                i += 1
+            while body and not body[-1]:
+                body.pop()
+            blocks.append({"type": "code_tree", "text": "\n".join(body)})
+            continue
+        elif not line.strip():
+            flush()
+        else:
+            prose.append(line)
+        i += 1
+    flush()
+    return blocks
+
+
+def summary_prose(text):
+    return "\n\n".join(b["text"] for b in summary_blocks(text) if b["type"] == "paragraph")
+
+
+def rendered_summary_trees(markup):
+    trees = []
+    for node in Document(markup).root.find(lambda e: e.attrs.get("data-summary-tree") == "true"):
+        if node.tag != "pre":
+            raise ValueError("摘要代码树必须用 pre 保留换行和缩进")
+        trees.append(node.text())
+    return trees
 
 
 def read_copy(path, expected_vars=None):
@@ -119,6 +190,7 @@ def read_copy(path, expected_vars=None):
         insight = ""
     result = {"summary": parts["摘要导读"], "criteria": criteria,
               "insight": insight, "references": parts["参考资料说明"]}
+    result["summary_blocks"] = summary_blocks(result["summary"])
     if "原始问卷" in parts:
         result["questionnaire"] = read_questionnaire_copy(parts["原始问卷"])
     return result
@@ -131,6 +203,8 @@ def read_questionnaire_copy(text):
         if not period or period in periods:
             raise ValueError("原始问卷时期标识为空或重复：" + label)
         design = re.split(r"(?m)^#### ", body, maxsplit=1)[0].strip()
+        # The renderer owns the title; an optional copy heading is not body text.
+        design = re.sub(r"\A(?:\*\*问卷设计\*\*|问卷设计)[ \t]*(?:\n|$)", "", design, count=1).strip()
         if not normalized(design):
             raise ValueError("原始问卷缺少时期设计说明：" + label)
         questions = []
@@ -214,11 +288,23 @@ def criteria_fields(markup):
 
 
 def compare_content(copy, actual, *, source=False):
+    blocks = summary_blocks(copy["summary"])
+    expected_trees = [b["text"] for b in blocks if b["type"] == "code_tree"]
+    actual_trees = rendered_summary_trees(actual.get("summary", "")) if source else actual.get("summary_trees", [])
+    # Raw copy comparisons are useful before rendering; publication and R source
+    # comparisons always supply rendered trees and check their exact structure.
+    if not source and "summary_blocks" in actual and "summary_trees" not in actual:
+        actual_trees = [b["text"] for b in summary_blocks(actual["summary"]) if b["type"] == "code_tree"]
+    if expected_trees != actual_trees:
+        raise ValueError("summary 代码树的节点、顺序、换行或缩进与文案不一致")
     for field in ("summary", "insight", "references"):
         value = actual.get(field, "")
         if source:
             value = visible_markup(value)
-        require_equal(copy[field], value, field)
+        expected = "\n\n".join(b["text"] for b in blocks) if field == "summary" else copy[field]
+        if field == "summary" and not source and "summary_blocks" in actual and "summary_trees" not in actual:
+            value = "\n\n".join(b["text"] for b in summary_blocks(value))
+        require_equal(expected, value, field)
     actual_criteria = actual.get("criteria", {})
     if list(copy["criteria"]) != list(actual_criteria):
         raise ValueError("生成内容的 Criteria 变量或顺序与文案不一致")
@@ -271,6 +357,7 @@ def note_content(text):
     # Generated detail HTML is not part of the reference prose.
     references = re.split(r"<style\b|<table\b", references, maxsplit=1, flags=re.I)[0]
     return {"summary": visible_markup(summary), "criteria": criteria,
+            "summary_trees": rendered_summary_trees(summary),
             "insight": insight[0].text() if insight else "", "references": visible_markup(references),
             "questionnaire": questionnaire_content(text)}
 
@@ -283,7 +370,91 @@ def validate_note(copy_path, note_path, codebook_path=None):
         column = rows[0].index("Variable")
         expected = [str(row[column]) for row in rows[1:]]
     copy = read_copy(copy_path, expected)
-    return compare_content(copy, note_content(Path(note_path).read_text(encoding="utf-8-sig")))
+    text = Path(note_path).read_text(encoding="utf-8-sig")
+    result = compare_content(copy, note_content(text))
+    errors = summary_markup_errors(copy["summary"])
+    if errors:
+        raise ValueError("；".join(errors))
+    summary = sections(text, 2).get("摘要导读", "")
+    opening = re.split(r'<div\s+class="raw-source-structure"|<!-- summary-insight-card:start -->|<div\s+class="raw-source-link"', summary, maxsplit=1)[0]
+    validate_summary_marks(copy["summary"], opening)
+    return result
+
+
+def validate_summary_marks(summary, rendered):
+    summary = summary_prose(summary)
+    expected = [("count" if re.fullmatch(r"[0-9]+", value) else "concept", value)
+                for value in re.findall(r"\*\*([^*\n]+)\*\*", summary)]
+    actual = []
+    for element in Document(rendered).root.find(lambda e: e.attrs.get("data-summary-concept") == "true" or e.attrs.get("data-summary-count") == "true"):
+        kind = "count" if element.attrs.get("data-summary-count") == "true" else "concept"
+        actual.append((kind, element.text()))
+    if expected != actual:
+        raise ValueError(f"摘要语义标记与文案不一致：expected={expected!r}, actual={actual!r}")
+
+
+def questionnaire_copy_errors(copy, record):
+    """Check all source/copy differences before R generation, without editing either."""
+    # Use the publication check's normalization, not a looser early-stage rule.
+    from check_definition_readability import normalized_evidence_text, normalized_period
+
+    if record.get("schema_version", 0) < 6:
+        return []
+    evidence = record.get("questionnaire_evidence")
+    if not isinstance(evidence, list):
+        return ["questionnaire_evidence must be a list"]
+    periods = {}
+    for period in copy.get("questionnaire", {}).values():
+        periods.setdefault(normalized_period(period["label"]), []).append(period)
+    errors = []
+    for item in evidence:
+        question_id = str(item.get("question_id", ""))
+        text = normalized_evidence_text(item.get("question_text", ""))
+        if not question_id or not text or not isinstance(item.get("periods"), list):
+            errors.append(f"{question_id or '?'}: missing question id/text/periods")
+            continue
+        for period in item["periods"]:
+            label = f"{period}/{question_id}"
+            matches = periods.get(normalized_period(period), [])
+            if len(matches) != 1:
+                errors.append(f"{label}: expected one questionnaire period")
+                continue
+            questions = [q for q in matches[0]["questions"] if normalized(q["id"]) == normalized(question_id)]
+            if len(questions) != 1:
+                errors.append(f"{label}: expected one question")
+                continue
+            question = questions[0]
+            if text not in normalized_evidence_text(question["text"]):
+                errors.append(f"{label}: incomplete or different question text")
+            if text in normalized_evidence_text(matches[0]["design"]):
+                errors.append(f"{label}: question duplicated in design note")
+            options = question["options"]
+            if item.get("response_type") == "closed_options":
+                expected = [normalized(f"{o['value']} {o['label']}") for o in item.get("options", [])]
+                if [normalized(o["text"]) for o in options] != expected:
+                    errors.append(f"{label}: option values/labels/order differ; expected={expected!r}; actual={[normalized(o['text']) for o in options]!r}")
+            for jump in item.get("skip_logic", []):
+                trigger = normalized(jump["when"])
+                matching = [o for o in options if normalized(o["text"]) == trigger]
+                if matching:
+                    descriptions = [o["jump"] for o in matching]
+                else:
+                    descriptions = [s for s in question["instructions"] if trigger in normalized(s)]
+                    descriptions += [o["jump"] for o in options if trigger in normalized(o["jump"])]
+                if not any(route_matches(jump["destination"], s) for s in descriptions):
+                    errors.append(f"{label}: route differs: {jump['when']} -> {jump['destination']}")
+    return errors
+
+
+def summary_markup_errors(summary):
+    summary = summary_prose(summary)
+    marks = re.findall(r"\*\*([^*\n]+)\*\*", summary)
+    errors = []
+    if not any(not re.fullmatch(r"\d+(?:\.\d+)?", mark.strip()) for mark in marks):
+        errors.append("摘要结果名称缺少语义标记：按文案模板用 **名称** 标记实际结果或共享维度；数量标记不能代替结果名称。")
+    if summary.count("**") % 2:
+        errors.append("摘要语义标记必须成对。")
+    return errors
 
 
 def main():
@@ -297,9 +468,17 @@ def main():
     args = parser.parse_args()
     try:
         expected = None
+        record = None
         if args.record:
-            expected = json.loads(Path(args.record).read_text(encoding="utf-8-sig"))["approved_analysis_vars"]
+            record = json.loads(Path(args.record).read_text(encoding="utf-8-sig"))
+            expected = record["approved_analysis_vars"]
         copy = read_copy(args.copy, expected)
+        errors = questionnaire_copy_errors(copy, record) if record else []
+        # Only verify declared markup; semantic completeness remains an author's judgment.
+        errors.extend(summary_markup_errors(copy["summary"]))
+        if errors:
+            print(json.dumps({"ok": False, "errors": errors}, ensure_ascii=False))
+            return 1
         result = {"ok": True, "variables": list(copy["criteria"])}
         if args.source_json:
             actual = json.loads(Path(args.source_json).read_text(encoding="utf-8-sig"))
@@ -308,6 +487,11 @@ def main():
             result = validate_note(args.copy, args.note, args.analysis_codebook)
         if args.export:
             Path(args.export).write_text(json.dumps(copy, ensure_ascii=False, indent=2), encoding="utf-8")
+        if record is not None:
+            result["questionnaire_check"] = {
+                "scope": "record_to_copy" if record.get("schema_version", 0) >= 6 else "not_checked_legacy_record",
+                "original_material_check": "not_performed_by_this_command",
+            }
         print(json.dumps(result, ensure_ascii=False))
         return 0
     except (ValueError, OSError, KeyError) as error:
