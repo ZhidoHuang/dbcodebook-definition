@@ -16,6 +16,7 @@ from urllib.parse import urlsplit
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_reader_copy import Document, validate_note, normalized, route_matches
 from writing_evidence import copy_execution_conclusions, scope_bindings, carry_copy_scopes
+from questionnaire_groups import period_keys, original_options
 
 
 def is_question_instruction(attrs: dict) -> bool:
@@ -240,6 +241,7 @@ def validate_questionnaire_rendering(
             for value in (section["period"], section["label"])
             if normalized_period(value)
         }
+        keys.update(period_keys(section["label"]))
         for key in keys:
             sections.setdefault(key, []).append(section)
 
@@ -268,13 +270,16 @@ def validate_questionnaire_rendering(
 
         for period in periods:
             period_key = normalized_period(period)
-            matches = sections.get(period_key, [])
+            matches = [s for s in sections.get(period_key, [])
+                       if any(question_id in line["question_ids"] for line in s["lines"])]
             if not matches:
+                if sections.get(period_key):
+                    fail(f"final note period {period} does not render question {question_id}")
                 fail(f"final note has no questionnaire period section for {period}")
             if len(matches) > 1:
                 fail(f"final note renders questionnaire period {period} more than once")
             section = matches[0]
-            if period_key not in validated_periods:
+            if section["period"] not in validated_periods:
                 period_notes = section["period_notes"]
                 if len(period_notes) != 1:
                     fail(
@@ -286,7 +291,7 @@ def validate_questionnaire_rendering(
                         f"final note period {period} questionnaire design note "
                         "must be titled 问卷设计"
                     )
-                validated_periods.add(period_key)
+                validated_periods.add(section["period"])
             if any(
                 question_text in normalized_evidence_text(note.get("text", ""))
                 for note in section["period_notes"]
@@ -318,21 +323,22 @@ def validate_questionnaire_rendering(
                 fail(f"final note period {period} omits options for {question_id}")
             if expected_jumps and line["instruction_count"] < 1:
                 fail(f"final note period {period} omits jump instructions for {question_id}")
-            period_nodes = list(document.find(lambda e: normalized_period(e.attrs.get("data-raw-source-period", "")) == period_key))
+            period_nodes = list(document.find(lambda e: e.attrs.get("data-raw-source-period") == section["period"]))
             question_nodes = list(period_nodes[0].find(lambda e: e.attrs.get("data-summary-questionnaire-line") == "true"))
             node = next(e for e in question_nodes if any(
                 normalized(q.text()) == normalized(question_id)
                 for q in e.find(lambda q: q.attrs.get("data-summary-question-id") == "true")
             ))
             options = list(node.find(lambda e: e.attrs.get("data-summary-question-option") == "true"))
+            option_text = original_options([option.text() for option in options], section["period_notes"][0]["text"], period)
             if item.get("response_type") == "closed_options":
                 expected_text = [normalized(f"{option['value']} {option['label']}") for option in expected_options]
-                if [normalized(option.text()) for option in options] != expected_text:
+                if [normalized(option) for option in option_text] != expected_text:
                     fail(f"final note period {period} option values/labels/order differ for {question_id}; expected={expected_text!r}; actual={[normalized(option.text()) for option in options]!r}")
             for jump in expected_jumps:
                 trigger = normalized(jump["when"])
                 destination = normalized(jump["destination"])
-                matching_options = [option for option in options if normalized(option.text()) == trigger]
+                matching_options = [option for option, raw in zip(options, option_text) if normalized(raw) == trigger]
                 if matching_options:
                     # An option and its route belong to the same rendered detail row.
                     rows = list(node.find(lambda e: e.attrs.get("data-summary-question-detail") == "true"

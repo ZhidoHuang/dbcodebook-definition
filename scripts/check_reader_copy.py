@@ -8,6 +8,7 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
+from questionnaire_groups import period_keys, original_options
 
 
 NO_INSIGHT = "本主题没有需要单独提示的主题级边界"
@@ -405,7 +406,8 @@ def questionnaire_copy_errors(copy, record):
         return ["questionnaire_evidence must be a list"]
     periods = {}
     for period in copy.get("questionnaire", {}).values():
-        periods.setdefault(normalized_period(period["label"]), []).append(period)
+        for key in period_keys(period["label"]):
+            periods.setdefault(key, []).append(period)
     errors = []
     for item in evidence:
         question_id = str(item.get("question_id", ""))
@@ -415,7 +417,8 @@ def questionnaire_copy_errors(copy, record):
             continue
         for period in item["periods"]:
             label = f"{period}/{question_id}"
-            matches = periods.get(normalized_period(period), [])
+            matches = [p for p in periods.get(normalized_period(period), [])
+                       if any(normalized(q["id"]) == normalized(question_id) for q in p["questions"])]
             if len(matches) != 1:
                 errors.append(f"{label}: expected one questionnaire period")
                 continue
@@ -429,13 +432,14 @@ def questionnaire_copy_errors(copy, record):
             if text in normalized_evidence_text(matches[0]["design"]):
                 errors.append(f"{label}: question duplicated in design note")
             options = question["options"]
+            option_text = original_options([o["text"] for o in options], matches[0]["design"], period)
             if item.get("response_type") == "closed_options":
                 expected = [normalized(f"{o['value']} {o['label']}") for o in item.get("options", [])]
-                if [normalized(o["text"]) for o in options] != expected:
+                if [normalized(o) for o in option_text] != expected:
                     errors.append(f"{label}: option values/labels/order differ; expected={expected!r}; actual={[normalized(o['text']) for o in options]!r}")
             for jump in item.get("skip_logic", []):
                 trigger = normalized(jump["when"])
-                matching = [o for o in options if normalized(o["text"]) == trigger]
+                matching = [o for o, raw in zip(options, option_text) if normalized(raw) == trigger]
                 if matching:
                     descriptions = [o["jump"] for o in matching]
                 else:
