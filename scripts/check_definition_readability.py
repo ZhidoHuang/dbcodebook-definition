@@ -34,7 +34,7 @@ SOURCE_RECORD_NAME = "definition_search_record.json"
 PASS_STATUS = "FULL_TEXT_READABILITY_PASS"
 IMPACT_PASS_STATUS = "CHANGE_IMPACT_PASS"
 READER_REVIEW_PASS_STATUS = "READER_COMPREHENSION_PASS"
-AUDIT_SCHEMA_VERSION = 5
+AUDIT_SCHEMA_VERSION = 6
 REVIEW_POLICY = "execution_first_v1"
 IMPACT_SCHEMA_VERSION = 2
 READER_REVIEW_SCHEMA_VERSION = 2
@@ -851,7 +851,7 @@ def initialize_reader_review(
         fail(f"{AUDIT_NAME} does not exist; the author review must be completed first")
     with audit_path.open("r", encoding="utf-8-sig") as handle:
         audit = json.load(handle)
-    if audit.get("schema_version") != AUDIT_SCHEMA_VERSION:
+    if audit.get("schema_version") not in (5, AUDIT_SCHEMA_VERSION):
         fail(
             f"author review schema_version must be {AUDIT_SCHEMA_VERSION}; "
             "initialize a new author review first"
@@ -1087,9 +1087,8 @@ def initialize_audit(
         "reader_review_required": reader_required,
         "topic_id": topic_id.zfill(3),
         "status": "DRAFT",
-        "audited_at": "",
         "reviewer": "",
-        "full_read_confirmation": "",
+        "review_scope": "",
         "artifacts": artifacts,
         "change_impact": {
             "path": change_impact["path"],
@@ -1169,7 +1168,7 @@ def validate_audit(
         audit = json.load(handle)
 
     expected_topic = topic_id.zfill(3)
-    if audit.get("schema_version") != AUDIT_SCHEMA_VERSION:
+    if audit.get("schema_version") not in (5, AUDIT_SCHEMA_VERSION):
         fail(
             f"readability audit schema_version must be {AUDIT_SCHEMA_VERSION}; "
             "initialize a new audit for the current workflow"
@@ -1178,11 +1177,19 @@ def validate_audit(
         fail(f"readability audit topic_id must be {expected_topic}")
     if audit.get("status") != PASS_STATUS:
         fail(f"readability audit status must be {PASS_STATUS}")
-    audited_at = validate_iso_datetime(audit.get("audited_at"))
     reviewer = nonempty_text(audit.get("reviewer"), "reviewer", 3)
-    confirmation = nonempty_text(
-        audit.get("full_read_confirmation"), "full_read_confirmation", 20
-    )
+    if audit.get("schema_version") == 5:
+        # Preserve the original claims in historical records; do not upgrade them.
+        review_record = {
+            "audited_at": validate_iso_datetime(audit.get("audited_at")),
+            "full_read_confirmation": nonempty_text(
+                audit.get("full_read_confirmation"), "full_read_confirmation", 20
+            ),
+        }
+    else:
+        if "audited_at" in audit or "full_read_confirmation" in audit:
+            fail("new audits use review_scope; checked_at is recorded by the checker")
+        review_record = {"review_scope": nonempty_text(audit.get("review_scope"), "review_scope")}
 
     current_impact = validate_impact(formal_dir, process_dir, expected_topic)
     recorded_impact = audit.get("change_impact")
@@ -1338,9 +1345,8 @@ def validate_audit(
         "status": "PUBLISH_READY",
         "result_check": result_check,
         "topic_id": expected_topic,
-        "audited_at": audited_at,
         "reviewer": reviewer,
-        "full_read_confirmation": confirmation,
+        **review_record,
         "scope_count": len(scopes),
         "finding_count": finding_count,
         "audit": str(audit_path),

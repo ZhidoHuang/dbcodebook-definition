@@ -114,10 +114,9 @@ def initialize_fixture_audit(checker, formal, process, topic, files, **kwargs):
 def complete_audit(checker, audit_path: Path) -> None:
     audit = checker.json.loads(audit_path.read_text(encoding="utf-8"))
     audit["status"] = checker.PASS_STATUS
-    audit["audited_at"] = "2026-08-12T03:30:00+08:00"
     audit["reviewer"] = "definition task full-text pass"
-    audit["full_read_confirmation"] = (
-        "已按最终拼装顺序从标题读到文献引用，并重新核对公开 R 注释。"
+    audit["review_scope"] = (
+        "本次查看最终摘要及段落衔接；定义、问卷和公开 R 沿用绑定未变的执行结论。"
     )
     for scope in audit["scopes"]:
         scope["result"] = "pass"
@@ -446,6 +445,27 @@ def main() -> int:
         # A new execution-first topic can publish without an extra reader role.
         ready = checker.validate_audit(formal, process, "025")
         assert ready["reader_review"] == {"status": "NOT_REQUESTED", "required": False}
+        assert "review_scope" in ready and "full_read_confirmation" not in ready
+        assert "audited_at" not in ready and checker.validate_iso_datetime(ready["checked_at"])
+        current_audit = json.loads(audit_path.read_text(encoding="utf-8"))
+        before = audit_path.read_bytes()
+        checker.validate_audit(formal, process, "025", write_report=False)
+        assert audit_path.read_bytes() == before
+        missing_scope = dict(current_audit, review_scope="")
+        checker.write_json(audit_path, missing_scope)
+        expect_failure(lambda: checker.validate_audit(formal, process, "025"), "review_scope")
+        checker.write_json(audit_path, dict(current_audit, audited_at="2099-01-01T00:00:00+00:00"))
+        expect_failure(lambda: checker.validate_audit(formal, process, "025"), "checked_at")
+        legacy = dict(current_audit, schema_version=5,
+                      audited_at="2026-08-12T03:30:00+08:00",
+                      full_read_confirmation="历史记录声明已按最终拼装顺序完整通读全文及公开 R。")
+        legacy.pop("review_scope")
+        checker.write_json(audit_path, legacy)
+        legacy_bytes = audit_path.read_bytes()
+        legacy_ready = checker.validate_audit(formal, process, "025", write_report=False)
+        assert legacy_ready["audited_at"] == legacy["audited_at"]
+        assert audit_path.read_bytes() == legacy_bytes
+        checker.write_json(audit_path, current_audit)
         reader_init = checker.initialize_reader_review(
             formal, process, "025", files["note"]
         )
