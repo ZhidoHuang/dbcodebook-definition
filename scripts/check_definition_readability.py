@@ -1497,6 +1497,7 @@ def build_cua_sync_action(
     sync_attempt: int | None = None,
     cross_database_topic: str | None = None,
     taxonomy_plan: dict | None = None,
+    edit_id: str | None = None,
 ) -> dict:
     base_url = base_url.strip().rstrip("/")
     parsed = urlsplit(base_url)
@@ -1505,6 +1506,11 @@ def build_cua_sync_action(
     post_id = (post_id or "").strip()
     if create and post_id:
         fail("--create cannot be combined with --post-id")
+    if edit_id is not None:
+        if create:
+            fail("--create cannot be combined with --edit-id")
+        if not re.fullmatch(r"[1-9][0-9]*", edit_id):
+            fail("--edit-id must be the observed positive integer editor ID")
     plans = dict(taxonomy_plan or {})
     for field, value in (("directory_tag", directory_tag), ("cross_database_topic", cross_database_topic)):
         if value:
@@ -1560,7 +1566,7 @@ def build_cua_sync_action(
         "post_id": post_id,
         "post_url": None if create else f"{base_url}/nodes/post/{post_id}/",
         "post_url_prefix": f"{base_url}/nodes/post/",
-        "edit_url": f"{base_url}/nodes/edit/" if create else f"{base_url}/nodes/edit/{post_id.removeprefix('local-')}/",
+        "edit_url": f"{base_url}/nodes/edit/" if create else f"{base_url}/nodes/edit/{edit_id or post_id.removeprefix('local-')}/",
         "success_url_pattern": "**/nodes/post/*/",
         "identity_title_parts": expected_title_parts,
         "expected_title_parts": expected_title_parts,
@@ -1909,6 +1915,7 @@ def parse_args() -> argparse.Namespace:
     verify_parser.add_argument("--database")
     verify_parser.add_argument("--topic-name")
     verify_parser.add_argument("--post-id")
+    verify_parser.add_argument("--edit-id", help="Editor ID observed by opening Edit from the original article; does not change expected article identity")
     verify_parser.add_argument("--create", action="store_true")
     verify_parser.add_argument("--directory-tag")
     verify_parser.add_argument("--cross-database-topic")
@@ -1983,6 +1990,7 @@ def main() -> int:
                     result["upload"], args.base_url, args.post_id, args.database,
                     args.topic_id, args.topic_name, args.website_title,
                     create=args.create, directory_tag=args.directory_tag,
+                    edit_id=args.edit_id,
                     cross_database_topic=args.cross_database_topic,
                     taxonomy_plan=json.loads(args.taxonomy_plan.read_text(encoding="utf-8-sig")) if args.taxonomy_plan else None,
                 )
@@ -1998,6 +2006,7 @@ def main() -> int:
                         args.database, args.topic_id, args.topic_name,
                         args.website_title, sync["started_at"], include_preload=False,
                         create=args.create, directory_tag=args.directory_tag,
+                        edit_id=args.edit_id,
                         cross_database_topic=args.cross_database_topic,
                         taxonomy_plan=json.loads(args.taxonomy_plan.read_text(encoding="utf-8-sig")) if args.taxonomy_plan else None,
                         sync_run_id=sync["run_id"], sync_attempt=sync["attempt"],

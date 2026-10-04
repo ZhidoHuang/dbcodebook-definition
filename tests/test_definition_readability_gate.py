@@ -648,6 +648,19 @@ def main() -> int:
         assert local_action["payload"]["desired_title"] == "ELSA 孤独感"
         assert local_action["payload"]["identity_title_parts"] == ["ELSA", "孤独感"]
         assert local_action["payload"]["taxonomy_plan"] == {}
+        mapped_action = checker.build_cua_sync_action(
+            upload, "http://localhost:8000", "134", "CHARLS", "009", "IADL", edit_id="337",
+        )
+        assert mapped_action["payload"]["edit_url"] == "http://localhost:8000/nodes/edit/337/"
+        assert mapped_action["payload"]["post_url"] == "http://localhost:8000/nodes/post/134/"
+        assert mapped_action["payload"]["post_id"] == "134"
+        for invalid_edit_id in ("0", "01", "local-337", "../337", "337?x=1", ""):
+            expect_failure(lambda: checker.build_cua_sync_action(
+                upload, "http://localhost:8000", "134", "CHARLS", "009", "IADL", edit_id=invalid_edit_id,
+            ), "positive integer")
+        expect_failure(lambda: checker.build_cua_sync_action(
+            upload, "http://localhost:8000", "", "CHARLS", "009", "IADL", create=True, edit_id="337",
+        ), "--create cannot be combined with --edit-id")
         taxonomy_action = checker.build_cua_sync_action(
             upload, "http://localhost:8000", "local-384", "ELSA", "004", "孤独感",
             taxonomy_plan={"directory_tag": {"value": "心理社会", "mode": "existing"},
