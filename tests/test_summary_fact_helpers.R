@@ -681,8 +681,12 @@ for (database in c("CHARLS", "ELSA", "HRS")) {
   stopifnot(grepl('</a>；另用 pscede。', source_fixture, fixed = TRUE))
   stopifnot(!grepl('nav=[^"]*pscede', source_fixture))
 }
-expect_error_contains("mixed source sentence is rejected", render_summary_selection_paragraph(
-  definition_source_entry("Core data > Loneliness；另用 pscede。", "ELSA"), "#005A9C"), "put explanatory text in note")
+punctuated_path <- "Core data > Disabilities: activities. aids used; sources of help; who pays"
+linked <- render_summary_selection_paragraph(definition_source_entry(
+  list(path = punctuated_path, note = "；另用其它来源。"), "CHARLS"), "#005A9C")
+stopifnot(grepl("%3B", linked, fixed = TRUE), grepl("</a>；另用其它来源。", linked, fixed = TRUE))
+expect_error_contains("multiline source is rejected", render_summary_selection_paragraph(
+  definition_source_entry("Core data > ADL\nextra", "CHARLS"), "#005A9C"), "put explanatory text in note")
 stopifnot(grepl('href="/home/elsa/', render_summary_selection_paragraph(
   definition_source_entry("Core data > Loneliness", "ELSA"), "#005A9C"), fixed = TRUE))
 cat("source path and note separation PASS\n")

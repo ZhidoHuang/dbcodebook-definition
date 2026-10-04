@@ -636,6 +636,11 @@ def main() -> int:
             "ELSA 生活质量 CASP-19", create=True, directory_tag="medical",
         )
         assert unnumbered["payload"]["desired_title"] == "ELSA 生活质量 CASP-19"
+        isolated = checker.build_cua_sync_action(
+            upload, "http://localhost:8000", "", "CHARLS", "isolated_ADL", "日常生活活动能力",
+            "CHARLS — 日常生活活动能力（ADL）", create=True, directory_tag="健康",
+        )
+        assert isolated["payload"]["desired_title"] == "CHARLS — 日常生活活动能力（ADL）"
         local_action = checker.build_cua_sync_action(
             upload, "http://localhost:8000", "local-384", "ELSA", "004", "孤独感",
         )

@@ -98,6 +98,14 @@ cat("RUN_OK\n")
   $configPath = Join-Path $tempDir "config.json"
   @{ schema_version = 1; executables = @{ rscript = $Rscript } } |
     ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $configPath -Encoding UTF8
+  $unNumberedBlocked = $false
+  try {
+    & $runner -WorkDir $tempDir -Script "fixture.R" -LogPrefix "fixture" -Config $configPath -ProcessDir (Join-Path $tempDir "process") -PreflightOnly *> $null
+  } catch {
+    $unNumberedBlocked = $_.Exception.Message -match "Definition source-search record"
+  }
+  if (-not $unNumberedBlocked) { throw "Unnumbered definition bypassed source checks." }
+
   $preflightOutput = & $runner `
     -WorkDir $tempDir `
     -Script "fixture.R" `

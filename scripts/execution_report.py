@@ -646,7 +646,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         if first["status"] == "captured":
             lines.extend([f"- 首稿：{first['snapshot_path']}", f"- SHA256：{first['sha256']}",
                           f"- Skill 内容版本：{first['skill_version']}",
-                          "- 保存时点为首次 copy 环节完成；这是版本证据，不是语义合格证明。"])
+                          "- 首份已记录完整文案的快照；是否早于检查以实际记录为准，不是语义合格证明。"])
         else:
             lines.append(first["reason"])
         lines.append(f"- 已登记文案交接 {len(report.get('copy_history', []))} 次；后续版本不覆盖首次记录。")
@@ -786,7 +786,7 @@ def command_stage_finish(args: argparse.Namespace) -> dict[str, Any]:
     stage["status"] = args.status
     stage["summary"] = args.summary or []
     stage["outputs"] = args.output or []
-    if args.stage_id == "copy" and args.status in ("completed", "completed_with_issues"):
+    if args.stage_id == "copy" and (args.status in ("completed", "completed_with_issues") or getattr(args, "copy", None)):
         capture_copy(report, report_path.parent, stage, getattr(args, "copy", None))
     save(report_path, markdown_path, report)
     return {"ok": True, "stage_id": args.stage_id, "elapsed_seconds": stage["elapsed_seconds"]}

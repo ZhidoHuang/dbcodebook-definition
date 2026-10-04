@@ -30,6 +30,18 @@ EVIDENCE_ACTIONS = {
     "harmonized_review",
     "literature_review",
 }
+
+# Equivalent action names from independent notes; unknown actions still fail.
+ACTION_ALIASES = {
+    "normal_search": "ordinary_search", "source_detail": "detail_open",
+    "direct_research_review": "literature_review",
+    "definition_plan": "candidate_decision", "primary_merge": "candidate_decision",
+}
+
+def exploration_action(value):
+    return ACTION_ALIASES.get(value, value) if isinstance(value, str) else None
+
+
 EVIDENCE_SOURCE_TYPES = {
     "official_questionnaire",
     "technical_document",
@@ -191,7 +203,7 @@ def validate_human_record(
             fail(
                 f"exploration_log[{expected_step}].human_step_id must be {expected_id}"
             )
-        if not re.search(rf"(?m)^###\s+{re.escape(expected_id)}(?:\s|$)", human_text):
+        if not re.search(rf"(?m)^#{{2,6}}\s+{re.escape(expected_id)}(?:\s|$)", human_text):
             fail(f"human_record lacks the matching step heading: {expected_id}")
     return human_path
 
@@ -205,7 +217,7 @@ def validate_evidence_reviews(
     if not isinstance(exploration_log, list) or not exploration_log:
         fail("schema v5+ exploration_log must not be empty")
     step_actions = {
-        item.get("step"): item.get("action")
+        item.get("step"): exploration_action(item.get("action"))
         for item in exploration_log
         if isinstance(item, dict)
     }
@@ -261,7 +273,7 @@ def validate_questionnaire_evidence(
     if not isinstance(exploration_log, list) or not exploration_log:
         fail("schema v6+ exploration_log must not be empty")
     step_actions = {
-        item.get("step"): item.get("action")
+        item.get("step"): exploration_action(item.get("action"))
         for item in exploration_log
         if isinstance(item, dict)
     }
@@ -945,6 +957,11 @@ def validate_exploration_log(record: dict) -> set[int]:
     log = record.get("exploration_log")
     if not isinstance(log, list) or not log:
         fail("schema v2+ exploration_log must record the actual exploration sequence")
+    invalid_actions = [i for i, item in enumerate(log, 1) if isinstance(item, dict)
+                       and exploration_action(item.get("action")) not in EXPLORATION_ACTIONS | {"environment_read"}]
+    if invalid_actions:
+        fields = ", ".join(f"exploration_log[{i}].action" for i in invalid_actions)
+        fail(f"{fields} must be one of {sorted(EXPLORATION_ACTIONS)}; known aliases are accepted")
     steps = set()
     for expected_step, item in enumerate(log, start=1):
         if not isinstance(item, dict):
@@ -952,7 +969,7 @@ def validate_exploration_log(record: dict) -> set[int]:
         step = item.get("step")
         if step != expected_step:
             fail("exploration_log steps must be consecutive and start at 1")
-        if item.get("action") not in EXPLORATION_ACTIONS:
+        if exploration_action(item.get("action")) not in EXPLORATION_ACTIONS | {"environment_read"}:
             fail(f"exploration_log[{expected_step}].action must be one of {sorted(EXPLORATION_ACTIONS)}")
         for field in ("input", "observed", "decision", "reason"):
             nonempty_text(item.get(field), f"exploration_log[{expected_step}].{field}")

@@ -4,7 +4,7 @@
 
 本步stage_id为public_r。依据当前raw/codebook、已确定方案、别名和定稿文案编写唯一正式R；特殊编码与分析单位读所选数据库对应部分，字典使用[现有模板](../../../templates/public-r-dictionary.R)。研究口径未确定或必要来源缺失时退回方案/下载，不在公开代码运行时才决定，也不把未下载写成调查未收集。
 
-写完后先运行一次预检，集中解决问题，再按[复核交接](../review-roles.md#稳定输入到复核结论)完成一次依据当前合并方案的R实现只读复核。预检只检查来源、文案、环境、头部、字典及语法，不生成成果，也不要求尚未发生的独立复核：
+写完后先运行一次预检，集中解决问题，再按[复核交接](../review-roles.md#稳定输入到复核结论)完成一次依据当前合并方案的R实现只读复核。预检按ProcessDir及来源记录识别任务，不依赖正式目录是否带数字编号；检查来源、文案、环境、头部、字典及语法，不生成成果，也不要求尚未发生的独立复核：
 
 ```powershell
 ./scripts/run_r_definition.ps1 -WorkDir $Formal -Script $RFile -LogPrefix $LogPrefix -ProcessDir $Process -Config $Config -Database $Database -PreflightOnly

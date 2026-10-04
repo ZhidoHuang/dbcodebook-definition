@@ -492,12 +492,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--copy", required=True)
     parser.add_argument("--record")
+    parser.add_argument("--process-dir", help="Save the submitted complete draft before checking; requires an active copy stage")
     parser.add_argument("--source-json")
     parser.add_argument("--note")
     parser.add_argument("--analysis-codebook")
     parser.add_argument("--export")
     args = parser.parse_args()
     try:
+        if args.process_dir:
+            from writing_evidence import capture_before_check
+            capture_before_check(args.process_dir, args.copy)
         expected = None
         record = None
         if args.record:

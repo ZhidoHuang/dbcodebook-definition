@@ -453,6 +453,7 @@ def prepare_download(args: argparse.Namespace) -> dict:
     check_output_replacement(args.out, args.overwrite)
     if args.snapshot_file.exists():
         raise ValueError("Snapshot file must be new; preserve the previous attempt and use a new snapshot filename.")
+    args.prepare_download.mkdir(parents=True, exist_ok=True)
     snapshot = download_snapshot(args.prepare_download)
     snapshot["expected_vars"] = expected
     attempt_id = str(uuid.uuid4())

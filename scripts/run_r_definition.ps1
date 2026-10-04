@@ -358,6 +358,9 @@ $packageWatch.Stop()
 $phaseSeconds["Package check"] = $packageWatch.Elapsed.TotalSeconds
 
 $topicLeaf = Split-Path -Leaf $resolvedWorkDir
+$numberedTopic = $topicLeaf -match '^(\d{3})_'
+$definitionTask = $numberedTopic -or -not [string]::IsNullOrWhiteSpace($ProcessDir)
+$topicId = if ($numberedTopic) { $Matches[1] } else { "" }
 $defaultSourceChecker = Join-Path $PSScriptRoot "check_definition_source_record.py"
 $sourceCheckerPath = if ([string]::IsNullOrWhiteSpace($SourceChecker)) {
   $defaultSourceChecker
@@ -366,8 +369,7 @@ $sourceCheckerPath = if ([string]::IsNullOrWhiteSpace($SourceChecker)) {
 }
 
 $sourceWatch = [System.Diagnostics.Stopwatch]::StartNew()
-if ($topicLeaf -match '^(\d{3})_') {
-  $topicId = $Matches[1]
+if ($definitionTask) {
   $resolvedPython = Resolve-Executable -Configured $Python -Candidates @("py", "python", "python3") -Kind "Python"
   $pythonArguments = @()
   if ((Split-Path -Leaf $resolvedPython) -ieq "py.exe") {
@@ -380,6 +382,11 @@ if ($topicLeaf -match '^(\d{3})_') {
   $rawCodebook = Join-Path $resolvedWorkDir "raw_codebook.csv"
 
   $resolvedSourceRecord = Resolve-RequiredPath -Path $sourceRecord -Kind "Definition source-search record"
+  if (-not $numberedTopic) {
+    $topicId = [string]((Get-Content -LiteralPath $resolvedSourceRecord -Raw | ConvertFrom-Json).topic_id)
+    if ([string]::IsNullOrWhiteSpace($topicId)) { throw "Source record topic_id is required." }
+    $topicId = $topicId.PadLeft(3, '0')
+  }
   $resolvedSourceChecker = Resolve-RequiredPath -Path $sourceCheckerPath -Kind "Definition source-record checker"
   $resolvedRawCodebook = Resolve-RequiredPath -Path $rawCodebook -Kind "raw_codebook.csv"
 
@@ -410,7 +417,7 @@ if ($topicLeaf -match '^(\d{3})_') {
 $sourceWatch.Stop()
 $phaseSeconds["Source check"] = $sourceWatch.Elapsed.TotalSeconds
 
-if ($topicLeaf -match '^\d{3}_') {
+if ($definitionTask) {
   & $resolvedPython @pythonArguments -X utf8 (Join-Path $PSScriptRoot 'check_definition_output.py') `
     --public-r-script $resolvedScript
   if ($LASTEXITCODE -ne 0) {
@@ -424,7 +431,7 @@ if ($scriptBytes.Length -ge 3 -and $scriptBytes[0] -eq 0xEF -and $scriptBytes[1]
 }
 
 if ($PreflightOnly) {
-  if ($topicLeaf -match '^\d{3}_') {
+  if ($definitionTask) {
     & $resolvedPython @pythonArguments -X utf8 (Join-Path $PSScriptRoot "execution_report.py") `
       review-check --process-dir $ProcessDir --role "公开 R 复核" --read-only `
       --input $resolvedScript --input $resolvedSourceRecord --input $resolvedRawCodebook
@@ -441,7 +448,7 @@ if ($PreflightOnly) {
   exit 0
 }
 
-if ($topicLeaf -match '^\d{3}_') {
+if ($definitionTask) {
   & $resolvedPython @pythonArguments -X utf8 (Join-Path $PSScriptRoot "execution_report.py") `
     exploration-check --process-dir $ProcessDir --record $resolvedSourceRecord
   if ($LASTEXITCODE -ne 0) {

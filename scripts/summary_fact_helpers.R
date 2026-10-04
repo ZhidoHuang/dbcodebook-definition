@@ -550,7 +550,7 @@ summary_render_parts <- function(parts, theme_color) {
       path <- part$value
       database <- tolower(part$database)
       if (!is.character(path) || length(path) != 1L || is.na(path) || !nzchar(trimws(path)) ||
-          grepl("[；;。\r\n]", path)) {
+          grepl("[\r\n]", path)) {
         stop("summary_source path must contain only the directory; put explanatory text in note.")
       }
       if (length(database) != 1L || !database %in% c("charls", "elsa", "hrs")) stop("Invalid source-link database.")

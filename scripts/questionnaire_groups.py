@@ -55,7 +55,9 @@ def shared_question_info(design, question_id=None, question_ids=None):
     Each declaration ends with 。; its question IDs are an explicit list.
     """
     options, routes = [], []
-    pattern = r"共同(选项|跳题)（([^）]+)）：([^。]+)。"
+    # A label may end with 。 before the option separator; that punctuation
+    # belongs to the label, not to the whole declaration.
+    pattern = r"共同(选项|跳题)（([^）]+)）：(.+?)。(?![；;])"
     for match in re.finditer(pattern, design):
         kind, scope, body = match.groups()
         ids = [x.strip().strip('`') for x in re.split(r'[、,，；;]', scope)]

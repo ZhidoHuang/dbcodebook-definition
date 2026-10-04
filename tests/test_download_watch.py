@@ -124,7 +124,7 @@ with tempfile.TemporaryDirectory() as temp:
     original.write_text("keep until a valid replacement exists", encoding="utf-8")
     prepare_snapshot = work / "before.json"
     prepare_args = [sys.executable, str(Path(recovery.__file__)),
-                    "--prepare-download", str(fresh), "--snapshot-file", str(prepare_snapshot),
+                    "--prepare-download", str(work / "new-download-folder"), "--snapshot-file", str(prepare_snapshot),
                     "--database", "CHARLS", "--out", str(protected),
                     "--expect-vars-file", str(selection), "--base-url", "http://localhost:8000",
                     "--wait-seconds", "2"]
@@ -211,6 +211,8 @@ with tempfile.TemporaryDirectory() as temp:
     snapshot_reuse = subprocess.run(prepare_args + ['--overwrite'], capture_output=True)
     assert snapshot_reuse.returncode != 0 and prepare_snapshot.read_bytes() == before
     prepared = payload
+    fresh = work / "new-download-folder"
+    assert fresh.is_dir()
     assert prepared["next_action"] == "run_browser_action_once"
     browser_action = prepared["browser_action"]
     assert browser_action["existing_tab_path"] == "http://localhost:8000/home/charls/"

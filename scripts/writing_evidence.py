@@ -46,6 +46,9 @@ def capture_copy(report, process_dir, stage, copy_path=None):
         data = source.read_bytes()
         if not data.strip():
             raise ValueError("首次文案快照不能保存空文件")
+        history = report.get("copy_history", [])
+        if history and history[-1].get("stage_attempt") == stage.get("attempt") and history[-1].get("sha256") == digest(data):
+            return history[-1]
         folder = Path(process_dir) / "copy_versions" / report["run_id"]
         folder.mkdir(parents=True, exist_ok=True)
         filename = datetime.now().astimezone().strftime("%Y%m%dT%H%M%S%f%z") + ".md"
@@ -57,6 +60,18 @@ def capture_copy(report, process_dir, stage, copy_path=None):
     report.setdefault("copy_history", []).append(entry)
     report.setdefault("first_copy", dict(entry))
     return entry
+
+
+def capture_before_check(process_dir, copy_path):
+    """Explicitly preserve the complete submitted draft before parsing/checks."""
+    from execution_report import paths, load, latest_stage, save
+    report_path, markdown_path = paths(process_dir)
+    report = load(report_path)
+    stage = latest_stage(report, "copy")
+    if stage["status"] != "running":
+        raise ValueError("保存检查前文案需要当前运行中的copy环节")
+    capture_copy(report, report_path.parent, stage, copy_path)
+    save(report_path, markdown_path, report)
 
 
 def copy_execution_conclusions(process_dir, copy_path):

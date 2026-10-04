@@ -1518,9 +1518,10 @@ def build_cua_sync_action(
     expected_title_parts = [database, topic_name]
     website_title = website_title.strip() if website_title else f"{database.upper()} {topic_name}"
     # Topic numbers belong to local organization, not the published title.
-    website_title = re.sub(
-        rf"^0*{re.escape(str(int(topic_id)))}[\s_—–.、:：-]+", "", website_title
-    ).strip()
+    if str(topic_id).isdigit():
+        website_title = re.sub(
+            rf"^0*{re.escape(str(int(topic_id)))}[\s_—–.、:：-]+", "", website_title
+        ).strip()
     if website_title:
         folded_title = website_title.casefold()
         missing_parts = [
