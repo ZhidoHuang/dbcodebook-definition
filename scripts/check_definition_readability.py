@@ -15,7 +15,7 @@ from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_reader_copy import Document, validate_note, normalized, route_matches
-from questionnaire_groups import period_keys, original_options, shared_question_info
+from questionnaire_groups import period_keys, original_options, shared_question_info, referenced_options, referenced_jump_options
 from questionnaire_display import display_question
 
 
@@ -325,14 +325,8 @@ def validate_questionnaire_rendering(
                 if normalized_evidence_text(instruction) not in visible:
                     fail(f"final note period {period} omits display instruction for {question_id}")
             shared_options, shared_routes = shared_question_info(
-                section["period_notes"][0]["text"], question_id,
+                section["period_notes"][0]["text"] + "\n" + "\n".join(entry["text"] for entry in section["lines"]), question_id,
                 [qid for entry in section["lines"] for qid in entry["question_ids"]])
-            if item.get("response_type") == "closed_options" and (
-                not shared_options and line["option_count"] < len(expected_options)
-            ):
-                fail(f"final note period {period} omits options for {question_id}")
-            if expected_jumps and line["instruction_count"] < 1 and not shared_routes:
-                fail(f"final note period {period} omits jump instructions for {question_id}")
             period_nodes = list(document.find(lambda e: e.attrs.get("data-raw-source-period") == section["period"]))
             question_nodes = list(period_nodes[0].find(lambda e: e.attrs.get("data-summary-questionnaire-line") == "true"))
             node = next(e for e in question_nodes if any(
@@ -340,9 +334,33 @@ def validate_questionnaire_rendering(
                 for q in e.find(lambda q: q.attrs.get("data-summary-question-id") == "true")
             ))
             options = list(node.find(lambda e: e.attrs.get("data-summary-question-option") == "true"))
+            entries = []
+            for entry in question_nodes:
+                entry_ids = list(entry.find(lambda e: e.attrs.get("data-summary-question-id") == "true"))
+                if entry_ids:
+                    entries.append((entry_ids[0].text().strip(), [o.text() for o in entry.find(
+                        lambda e: e.attrs.get("data-summary-question-option") == "true")], entry.text()))
+            referenced = referenced_options(node.text(), question_id, entries)
+            jump_entries = []
+            for entry in question_nodes:
+                entry_ids = list(entry.find(lambda e: e.attrs.get("data-summary-question-id") == "true"))
+                option_rows = []
+                for row in entry.find(lambda e: e.attrs.get("data-summary-question-detail") == "true"):
+                    for option in row.find(lambda e: e.attrs.get("data-summary-question-option") == "true"):
+                        option_rows.append({"text": option.text(), "jump": " ".join(
+                            e.text() for e in row.find(lambda e: is_question_instruction(e.attrs)))})
+                if entry_ids:
+                    jump_entries.append((entry_ids[0].text().strip(), option_rows, entry.text()))
+            inherited_jumps = referenced_jump_options(question_id, jump_entries)
+            if expected_jumps and line["instruction_count"] < 1 and not (shared_routes or inherited_jumps):
+                fail(f"final note period {period} omits jump instructions for {question_id}")
+            if referenced and options:
+                fail(f"final note repeats referenced options for {question_id}")
+            if item.get("response_type") == "closed_options" and not (shared_options or referenced) and len(options) < len(expected_options):
+                fail(f"final note period {period} omits options for {question_id}")
             if shared_options and options:
                 fail(f"final note repeats common options for {question_id}")
-            option_text = shared_options or original_options([option.text() for option in options], section["period_notes"][0]["text"], period)
+            option_text = shared_options or original_options(referenced or [option.text() for option in options], section["period_notes"][0]["text"], period)
             if item.get("response_type") == "closed_options":
                 expected_text = [normalized(f"{option['value']} {option['label']}") for option in expected_options]
                 if [normalized(option) for option in option_text] != expected_text:
@@ -360,8 +378,10 @@ def validate_questionnaire_rendering(
                 else:
                     descriptions = [e.text() for e in node.find(lambda e:
                         is_question_instruction(e.attrs))
-                        if trigger in normalized(e.text())]
+                        if not e.text().strip().startswith("共同跳题（") and trigger in normalized(e.text())]
                 descriptions += [r["destination"] for r in shared_routes if normalized(r["when"]) == trigger]
+                descriptions += [o["jump"] for o in inherited_jumps
+                    if normalized(o["text"]) == trigger or trigger in normalized(o["jump"])]
                 if not any(route_matches(jump["destination"], text) for text in descriptions):
                     fail(f"final note period {period} route differs for {question_id}: {jump['when']} -> {jump['destination']}")
             rendered_pairs.add((question_id, str(period)))

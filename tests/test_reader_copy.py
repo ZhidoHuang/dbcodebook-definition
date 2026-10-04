@@ -50,6 +50,15 @@ def main():
     assert [q["id"] for q in changed["questions"]] == ["DA001"]
     assert read_questionnaire_copy(base_questionnaire.replace("询问当前健康。", "问卷设计发生变化。"))["2011"]["design"] == "问卷设计发生变化。"
     rejects(lambda: read_questionnaire_copy(base_questionnaire.replace("询问当前健康。", "**问卷设计**")), "缺少时期设计说明")
+    grouped = base_questionnaire.replace("#### DA001", "#### ADL上游问题\n\n##### DA001") + "\n#### ADL原始问题\n\n##### DA002\n\n第二道题。\n\n选项与 DA001 相同。\n"
+    parsed = read_questionnaire_copy(grouped)["2011"]
+    assert [q["group"] for q in parsed["questions"]] == ["ADL上游问题", "ADL原始问题"]
+    assert parsed["questions"][1]["options"] == []
+    modules = grouped.replace("ADL上游问题", "身体活动").replace("ADL原始问题", "日常生活活动")
+    assert [q["group"] for q in read_questionnaire_copy(modules)["2011"]["questions"]] == ["身体活动", "日常生活活动"]
+    rejects(lambda: read_questionnaire_copy(grouped.replace("选项与 DA001", "选项与 DA999")), "前面已展示")
+    rejects(lambda: read_questionnaire_copy(grouped.replace("选项与 DA001", "选项与 DA002")), "前面已展示")
+    rejects(lambda: read_questionnaire_copy(grouped + "\n- 1 好\n"), "引用选项与单题选项重复")
     with tempfile.TemporaryDirectory() as directory:
         folder = Path(directory)
         path = folder / "文案.md"
@@ -173,6 +182,30 @@ cat("QUESTIONNAIRE_COPY_FORWARD_PASS\\n")
         generated.write_text(rendered, encoding="utf-8")
         generated.write_text(generated.read_text(encoding="utf-8").replace("跳至 Q002", "跳至 Q999"), encoding="utf-8")
         rejects(lambda: validate_note(path, generated), "原始问卷")
+        # Real template -> Python parser -> R renderer -> copy fidelity check.
+        template = (ROOT / "templates/reader-copy.md").read_text(encoding="utf-8")
+        adl = template.split("**分期问卷的展示格式**", 1)[1].split("```markdown", 1)[1].split("```", 1)[0]
+        path.write_text(original + "\n\n" + adl, encoding="utf-8")
+        run = subprocess.run([rscript, "--vanilla", "--encoding=UTF-8", str(questionnaire_script)],
+                             cwd=folder, env=env, capture_output=True, text=True, encoding="utf-8")
+        assert run.returncode == 0, run.stdout + run.stderr
+        rendered = generated.read_text(encoding="utf-8")
+        assert validate_note(path, generated)["ok"]
+        assert rendered.count("ADL上游问题") == 1 and rendered.count("ADL原始问题") == 1
+        assert rendered.count('data-summary-question-option="true"') == 8
+        assert rendered.count("选项与 DB001 相同。") == 1
+        assert rendered.count("DB001–DB015 的选项设置相同，该范围内的后续题目不再逐一展开选项。") == 1
+        # A dropped group title must not escape the same full-text check.
+        generated.write_text(rendered.replace("ADL上游问题", ""), encoding="utf-8")
+        rejects(lambda: validate_note(path, generated), "原始问卷")
+        # Module names are authored headings, not special parser keywords.
+        path.write_text((original + "\n\n" + adl).replace("ADL上游问题", "身体活动").replace("ADL原始问题", "日常生活活动"), encoding="utf-8")
+        run = subprocess.run([rscript, "--vanilla", "--encoding=UTF-8", str(questionnaire_script)],
+                             cwd=folder, env=env, capture_output=True, text=True, encoding="utf-8")
+        assert run.returncode == 0, run.stdout + run.stderr
+        assert validate_note(path, generated)["ok"]
+        rendered_modules = generated.read_text(encoding="utf-8")
+        assert rendered_modules.count("身体活动</") == 1
     print("READER_COPY_TESTS_PASS: copy, actual R inputs, rendered output, optional notes, missing fields, extra insight, order, values")
     return 0
 

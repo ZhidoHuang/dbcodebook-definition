@@ -8,7 +8,7 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
-from questionnaire_groups import period_keys, original_options, shared_question_info
+from questionnaire_groups import period_keys, original_options, shared_question_info, referenced_options, referenced_jump_options
 from questionnaire_display import display_question
 
 
@@ -214,8 +214,19 @@ def read_questionnaire_copy(text):
         if not normalized(design):
             raise ValueError("原始问卷缺少时期设计说明：" + label)
         questions = []
-        for question_id, content in sections(questionnaire_body, 4).items():
+        question_blocks = []
+        for title, content in sections(questionnaire_body, 4).items():
+            grouped = sections(content, 5)
+            if grouped or title.endswith(("上游问题", "原始问题")):
+                if not grouped or re.split(r"(?m)^##### ", content, maxsplit=1)[0].strip():
+                    raise ValueError("题目分组下须用五级标题逐题展示：" + title)
+                question_blocks.extend((qid, body, title) for qid, body in grouped.items())
+            else:
+                question_blocks.append((title, content, ""))
+        for question_id, content, group in question_blocks:
             question = {"id": question_id, "text": "", "condition": "", "options": [], "instructions": []}
+            if group:
+                question["group"] = group
             text_lines = []
             for line in content.splitlines():
                 line = line.strip()
@@ -227,6 +238,11 @@ def read_questionnaire_copy(text):
                     question["condition"] = line.removeprefix("适用对象：").strip()
                 elif line.startswith("跳题说明："):
                     question["instructions"].append(line.removeprefix("跳题说明：").strip())
+                elif line.startswith("共同跳题（"):
+                    question["instructions"].append(line)
+                elif (re.search(r"(?:选项|跳题规则)与\s*[A-Za-z][A-Za-z0-9_]*\s*相同。", line)
+                      or re.search(r"的选项设置相同，(?:该范围内的后续题目|下列题目)不再逐一展开选项。", line)):
+                    question["instructions"].append(line)
                 elif line.startswith("- "):
                     option = re.split(r"\s*(?:→|->)\s*", line[2:], maxsplit=1)
                     question["options"].append({"text": option[0], "jump": "→ " + option[1] if len(option) > 1 else ""})
@@ -241,8 +257,16 @@ def read_questionnaire_copy(text):
         if not questions and not summary_only:
             raise ValueError("原始问卷缺少题目：" + label)
         ids = [q["id"] for q in questions]
+        if len(ids) != len(set(ids)):
+            raise ValueError("本时期题号重复：" + label)
         for question in questions:
-            shared_options, _ = shared_question_info(design, question["id"], ids)
+            referenced_jump_options(question["id"], [(q["id"], q["options"], "\n".join(q["instructions"])) for q in questions])
+            referenced = referenced_options("\n".join(question["instructions"]), question["id"],
+                [(q["id"], [o["text"] for o in q["options"]], "\n".join(q["instructions"])) for q in questions])
+            if referenced and question["options"]:
+                raise ValueError("引用选项与单题选项重复：" + question["id"])
+            shared_text = design + "\n" + "\n".join(s for q in questions for s in q["instructions"] if s.startswith("共同跳题（"))
+            shared_options, _ = shared_question_info(shared_text, question["id"], ids)
             if shared_options and question["options"]:
                 raise ValueError("共同选项与单题选项重复：" + question["id"])
         periods[period] = {"label": label, "design_title": design_title, "design": design, "questions": questions}
@@ -253,7 +277,12 @@ def read_questionnaire_copy(text):
 
 def questionnaire_text(period):
     parts = [period["label"], period.get("design_title", "问卷设计"), period["design"]]
+    previous_group = None
     for question in period["questions"]:
+        group = question.get("group")
+        if group and group != previous_group:
+            parts.append(group)
+        previous_group = group
         parts.extend([question["id"], question["text"]])
         if question["condition"]:
             parts.append("（" + question["condition"] + "）")
@@ -457,8 +486,13 @@ def questionnaire_copy_errors(copy, record):
                 if normalized_evidence_text(instruction) not in visible:
                     errors.append(f"{label}: missing display instruction")
             options = question["options"]
-            shared_options, shared_routes = shared_question_info(matches[0]["design"], question_id)
-            option_text = shared_options or original_options([o["text"] for o in options], matches[0]["design"], period)
+            inherited_jumps = referenced_jump_options(question_id,
+                [(q["id"], q["options"], "\n".join(q["instructions"])) for q in matches[0]["questions"]])
+            shared_text = matches[0]["design"] + "\n" + "\n".join(s for q in matches[0]["questions"] for s in q["instructions"] if s.startswith("共同跳题（"))
+            shared_options, shared_routes = shared_question_info(shared_text, question_id)
+            referenced = referenced_options("\n".join(question["instructions"]), question_id,
+                [(q["id"], [o["text"] for o in q["options"]], "\n".join(q["instructions"])) for q in matches[0]["questions"]])
+            option_text = shared_options or original_options(referenced or [o["text"] for o in options], matches[0]["design"], period)
             if item.get("response_type") == "closed_options":
                 expected = [normalized(f"{o['value']} {o['label']}") for o in item.get("options", [])]
                 if [normalized(o) for o in option_text] != expected:
@@ -469,9 +503,11 @@ def questionnaire_copy_errors(copy, record):
                 if matching:
                     descriptions = [o["jump"] for o in matching]
                 else:
-                    descriptions = [s for s in question["instructions"] if trigger in normalized(s)]
+                    descriptions = [s for s in question["instructions"] if not s.startswith("共同跳题（") and trigger in normalized(s)]
                     descriptions += [o["jump"] for o in options if trigger in normalized(o["jump"])]
                 descriptions += [r["destination"] for r in shared_routes if normalized(r["when"]) == trigger]
+                descriptions += [o["jump"] for o in inherited_jumps
+                    if normalized(o["text"]) == trigger or trigger in normalized(o["jump"])]
                 if not any(route_matches(jump["destination"], s) for s in descriptions):
                     errors.append(f"{label}: route differs: {jump['when']} -> {jump['destination']}")
     return errors

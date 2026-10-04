@@ -174,14 +174,20 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
     result$summary_selection <- list(class = "raw-source-structure", display = "period-tabs",
       groups = lapply(names(copy$questionnaire), function(period) {
         block <- copy$questionnaire[[period]]
-        lines <- c(list(summary_period_note(paragraphs(block$design), title = block$design_title)),
-          lapply(block$questions, function(question) {
-            summary_questionnaire_line(question$id, question$text,
+        lines <- list(summary_period_note(paragraphs(block$design), title = block$design_title))
+        previous_group <- ""
+        for (question in block$questions) {
+            group <- if (is.null(question$group)) "" else question$group
+            if (nzchar(group) && !identical(group, previous_group)) {
+              lines <- c(lines, list(summary_period_heading_line(group)))
+            }
+            previous_group <- group
+            lines <- c(lines, list(summary_questionnaire_line(question$id, question$text,
               condition = if (nzchar(question$condition)) question$condition else character(),
               options = lapply(question$options, function(option) {
                 summary_questionnaire_option(option$text, option$jump)
-              }), after = unlist(question$instructions, use.names = FALSE))
-          }))
+              }), after = unlist(question$instructions, use.names = FALSE))))
+        }
         list(period = period, label = block$label, lines = lines)
       }))
   }
@@ -345,21 +351,62 @@ definition_period_counts <- function(data) {
   )
 }
 
-definition_source_entry <- function(value, database = "CHARLS") {
+definition_source_count <- function(raw_vars, raw_codebook, database) {
+  if (!length(raw_vars) || anyNA(raw_vars) || any(!nzchar(raw_vars)) ||
+      !all(c("Variable", "newname") %in% names(raw_codebook))) {
+    stop("Source count requires raw_vars and complete raw_codebook identities.")
+  }
+  identities <- vapply(unique(raw_vars), function(alias) {
+    rows <- which(!is.na(raw_codebook$newname) & raw_codebook$newname == alias)
+    values <- unique(trimws(as.character(raw_codebook$Variable[rows])))
+    if (!length(values) || anyNA(values) || any(!nzchar(values)) || length(values) != 1L) {
+      stop("Source identity missing or ambiguous for: ", alias)
+    }
+    values
+  }, character(1))
+  length(unique(paste(toupper(database), identities, sep = "::")))
+}
+
+definition_source_entry <- function(value, database = "CHARLS", source_count = NULL) {
   if (is.null(value)) return(NULL)
+  if (is.character(value)) value <- list(path = value)
   if (is.list(value) && !is.null(value$path)) {
+    paths <- unique(value$path)
+    if (!is.character(paths) || !length(paths) || anyNA(paths) || any(!nzchar(trimws(paths)))) {
+      stop("summary_source path must contain verified nonempty directory paths.")
+    }
     note <- if (is.null(value$note)) "" else value$note
     if (!is.character(note) || length(note) != 1L || is.na(note)) stop("summary_source note must be one string.")
-    return(list(class = "raw-source-link", lines = list(list(parts = list(
-      list(type = "source_link", value = value$path, database = database), note
-    )))))
-  }
-  if (is.character(value) && length(value) && all(!is.na(value)) && all(nzchar(value))) {
-    return(list(class = "raw-source-link", lines = lapply(value, function(path) {
-      list(parts = list(list(type = "source_link", value = path, database = database)))
-    })))
+    for (count in list(value$variable_count, source_count)) {
+      if (!is.null(count) && (!is.numeric(count) || length(count) != 1L ||
+          is.na(count) || !is.finite(count) || count < 1 || count != floor(count))) {
+        stop("summary_source variable_count must be a verified positive integer.")
+      }
+    }
+    if (!is.null(source_count) && !is.null(value$variable_count) && source_count != value$variable_count) {
+      stop("summary_source variable_count differs from the actual source identities.")
+    }
+    count <- if (is.null(source_count)) value$variable_count else source_count
+    prefix <- if (is.null(count)) {
+      list("以上问卷问题对应的原始变量，可从 dbCodeBook 的目录 ")
+    } else {
+      c(list(paste0("以上问卷问题在数据中对应 ", count, " 个")),
+        list(if (length(paths) == 1L) "原始变量，可从 dbCodeBook 的目录 " else "原始变量，可分别从 dbCodeBook 的目录 "))
+    }
+    links <- list()
+    for (path in paths) {
+      if (length(links)) links <- c(links, list("、"))
+      links <- c(links, list(list(type = "source_link", value = path, database = database)))
+    }
+    note <- sub("^[；;]", "", trimws(note))
+    return(list(class = "raw-source-link", lines = list(list(parts = c(prefix, links,
+      list(" 进入检索和查看。", note))))))
   }
   if (!is.list(value) || is.null(value$lines)) stop("summary_source requires nonempty text or a source entry with lines.")
+  if (!is.null(source_count)) {
+    value$lines <- c(list(list(parts = list("本主题共使用 ",
+      paste0(source_count, " 个"), "原始变量。"))), value$lines)
+  }
   value$class <- "raw-source-link"
   value
 }
@@ -425,7 +472,8 @@ render_definition_bundle <- function(
       if (any(!is.na(frame$year) & !as.character(frame$year) %in% cycle_order)) stop("Observed year outside declared cycle_order.")
     }
   }
-  summary_source <- definition_source_entry(summary_source, database)
+  summary_source <- definition_source_entry(summary_source, database,
+    source_count = if (is.null(summary_source)) NULL else definition_source_count(raw_vars, raw_codebook, database))
   # Validate source structure before any output files are written.
   if (!is.null(summary_source)) render_summary_selection_paragraph(summary_source, theme_color)
   definition_copy_check(source = list(

@@ -16,7 +16,7 @@
 
 ## 文案读取与展示
 
-后台调用 `copy <- read_definition_copy(analysis_vars)`，把criteria、criteria_intro、summary_entry、summary_insight_items、reference_lines、summary_selection传给现有生成器。调用时显式传入`criteria_intro = copy$criteria_intro`，共同说明显示在定义表前，独立定义HTML与笔记均保留；没有参考资料时reference_lines为空，不生成空标题。definition_data$Criteria、定义HTML和笔记使用同份文案，不能另写一份或覆盖copy$summary_selection。
+后台调用 `copy <- read_definition_copy(analysis_vars)`，把criteria、criteria_intro、summary_entry、summary_insight_items、reference_lines、summary_selection传给现有生成器。新文案从首个变量直接开始，criteria_intro为空，不生成定义表前的共同说明；该参数仅保留旧稿兼容。没有参考资料时reference_lines为空，不生成空标题。definition_data$Criteria、定义HTML和笔记使用同份文案，不能另写一份或覆盖copy$summary_selection。
 
 新主题或本次修改问卷展示时，将问卷迁入文案并删除R中的重复文字；旧主题仅改其它内容、问卷未变时允许沿用既有R问卷。没有已核实的问卷展示内容时，不传问卷展示；仅核实题意、未取得完整原题的，仍按第3步保留已明确标注的题意概括和原因说明。内容要求和输入格式见[文案写作](03-copy.md)，模板与实例见[reader-copy](../../../templates/reader-copy.md)。
 
@@ -24,7 +24,11 @@
 
 ELSA调用公共render_definition_bundle并设置database="ELSA"、cycle_order为已核实时期顺序，输入保留ID/idauniq/Wave。Full HRS用database="HRS"及本轮核实年份，保留字符型HHID/PN和year；不在主题复制渲染器。顺序取自证据，不从非缺失行反推；概览和文件前缀随参数生成。
 
-summary_source只在此生成目录入口，不在文案摘要重复。单目录传纯路径字符串；需要附加说明时传 `list(path = "已核实的完整目录", note = "；其它来源说明。")`，链接仅使用path，note显示在链接外。不要把说明句拼进路径。目录名称自身的分号、句号等标点原样保留，不靠标点判断是否混入说明。带lines的既有结构仍兼容。下面仅示范参数，不替代完整业务定义及正式生成调用：
+summary_source提供已核实的目录路径，生成器从正式来源清单自动取得原始变量数量，衔接为：“以上问卷问题在数据中对应 N 个原始变量，可从 dbCodeBook 的目录［目录路径］进入检索和查看。”数量取raw_vars在raw_codebook中的完整来源身份，按数据库、文件及原变量名去重；包含必要前置题，同一来源跨期不重复计数，不统计最终变量、下载别名数量或网页搜索结果总数。来源身份缺失或无法对应时返回来源清单修正，不省略数量或猜数。
+
+目录只写上述衔接句，数字用普通正文，不加粗或单独强调；目录链接保留现有斜体样式。不另加“本次使用”“还可查找”等解释。优先传一个已核实的主题目录路径；确需多个入口时可传路径向量，不重复总数。旧note、lines输入保持兼容，新主题及本次更新不为目录另写说明段。旧variable_count参数仅作兼容核对，与自动统计不一致时报错。
+
+下面仅示范参数，不替代完整业务定义及正式生成调用：
 
 ```r
 # 名称逐项对应 analysis_vars；含义与分组取自本主题已核对的定义。
@@ -98,6 +102,7 @@ eval(parse(
 | 内容 | 展示要求 |
 | --- | --- |
 | 摘要结果、共享维度及数量 | 保留名称的中文双引号；只有引号内概念和数字使用主题色，不染整句、连接词及标点。核对实际名称与标记，不用固定高亮数验收 |
+| 题目分组与选项引用 | 按文案显示题目分组标题，包括上游／原始问题及实际模块名称；共用选项只展开一次并保留适用题号说明。各题跳转保留在对应题目下，整组检查点保留在组末；不因选项相同而复制跳转，不把跳转移到首题或设计说明中 |
 | 时期正文与设计说明 | 时期内容统一为正文0.92em；问卷设计首段顶格，其后自然段首行缩进。说明中引号内核心问题用主题色，引号及其它文字普通色 |
 | 原题题块 | 分组标题主题色加粗，题号加粗；标题、题号和问题顶格。中文题干不加引号；题号、题干、填写及访员说明继承正文颜色 |
 | 选项与跳转 | 逐行缩进；选项独立0.8em、#888888；题干后进入条件用全角括号，条件及跳转独立0.72em、正文深色。同一行选项与跳转为同级元素，不嵌套相乘字号，外层只管换行缩进 |

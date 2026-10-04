@@ -678,17 +678,47 @@ for (database in c("CHARLS", "ELSA", "HRS")) {
     list(path = "Core data > Social isolation/loneliness", note = "；另用 pscede。"), database), "#005A9C")
   expected_href <- paste0('/home/', tolower(database), '/?nav=Core%20data%3ESocial%20isolation%2Floneliness')
   stopifnot(grepl(expected_href, source_fixture, fixed = TRUE))
-  stopifnot(grepl('</a>；另用 pscede。', source_fixture, fixed = TRUE))
+  stopifnot(grepl('</a> 进入检索和查看。另用 pscede。', source_fixture, fixed = TRUE))
   stopifnot(!grepl('nav=[^"]*pscede', source_fixture))
 }
 punctuated_path <- "Core data > Disabilities: activities. aids used; sources of help; who pays"
 linked <- render_summary_selection_paragraph(definition_source_entry(
   list(path = punctuated_path, note = "；另用其它来源。"), "CHARLS"), "#005A9C")
-stopifnot(grepl("%3B", linked, fixed = TRUE), grepl("</a>；另用其它来源。", linked, fixed = TRUE))
+stopifnot(grepl("%3B", linked, fixed = TRUE), grepl("</a> 进入检索和查看。另用其它来源。", linked, fixed = TRUE))
 expect_error_contains("multiline source is rejected", render_summary_selection_paragraph(
   definition_source_entry("Core data > ADL\nextra", "CHARLS"), "#005A9C"), "put explanatory text in note")
 stopifnot(grepl('href="/home/elsa/', render_summary_selection_paragraph(
   definition_source_entry("Core data > Loneliness", "ELSA"), "#005A9C"), fixed = TRUE))
+counted_source <- render_summary_selection_paragraph(definition_source_entry(
+  list(path = punctuated_path, variable_count = 77), "CHARLS"), "#005A9C")
+stopifnot(grepl("以上问卷问题在数据中对应", counted_source, fixed = TRUE),
+          grepl('对应 77 个原始变量', counted_source, fixed = TRUE),
+          grepl('</a> 进入检索和查看。', counted_source, fixed = TRUE),
+          !grepl('nav=[^"]*77', counted_source),
+          !grepl('data-summary-count=', counted_source, fixed = TRUE))
+stopifnot(grepl("以上问卷问题对应的原始变量", linked, fixed = TRUE),
+          !grepl('data-summary-count=', linked, fixed = TRUE))
+for (bad_count in list(0, -1, 1.5, NA_real_, Inf, "77", c(1, 2))) {
+  expect_error_contains("unverified or invalid variable count", definition_source_entry(
+    list(path = punctuated_path, variable_count = bad_count)), "verified positive integer")
+}
+# Count full source identities, not periods, aliases, or unused dictionary rows.
+source_map <- data.frame(Variable = c("v (file_a)", "v (file_a)", "v (file_b)", "unused (file_c)"),
+  newname = c("a", "a_again", "b", "unused"))
+source_n <- definition_source_count(c("a", "a", "a_again", "b"), source_map, "ELSA")
+stopifnot(source_n == 2L)
+expect_error_contains("missing identity", definition_source_count("absent", source_map, "ELSA"), "missing or ambiguous")
+ambiguous <- rbind(source_map, data.frame(Variable = "other (file_a)", newname = "a"))
+expect_error_contains("ambiguous alias", definition_source_count("a", ambiguous, "ELSA"), "missing or ambiguous")
+expect_error_contains("stale manual count", definition_source_entry(
+  list(path = "Core data > ADL", variable_count = 77), "CHARLS", source_n), "differs")
+auto_source <- render_summary_selection_paragraph(definition_source_entry(
+  c("Core data > ADL", "Core data > Physical function"), "CHARLS", source_n), "#005A9C")
+stopifnot(grepl('对应 2 个原始变量', auto_source, fixed = TRUE),
+  grepl("可分别从", auto_source, fixed = TRUE),
+  length(regmatches(auto_source, gregexpr('href=', auto_source))[[1]]) == 2L)
+legacy_source <- definition_source_entry(list(lines = list("既有来源说明")), "CHARLS", source_n)
+stopifnot(length(legacy_source$lines) == 2L)
 cat("source path and note separation PASS\n")
 
 report <- list(ok = TRUE, checks = checks, questionnaire_html = question_layout_fixture)

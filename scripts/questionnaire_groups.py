@@ -2,8 +2,84 @@
 import re
 
 
+def option_reference(text):
+    matches = re.findall(r"选项与\s*([A-Za-z][A-Za-z0-9_]*)\s*相同。", text)
+    if len(matches) > 1:
+        raise ValueError("一道题不能引用多套选项")
+    return matches[0] if matches else None
+
+
+def referenced_options(text, question_id, entries):
+    """Read one scoped statement below the question that displays the options.
+
+    Entries contain id, option labels and optional visible instructions.
+    Historical per-question references remain readable. Routes are not shared.
+    """
+    pattern = r"([A-Za-z][A-Za-z0-9_]*(?:\s*、\s*[A-Za-z][A-Za-z0-9_]*)*)\s*的选项与\s*([A-Za-z][A-Za-z0-9_]*)\s*相同。"
+    ids = [entry[0] for entry in entries]
+    targets = []
+    covered = set()
+    for entry in entries:
+        visible = entry[2] if len(entry) > 2 else ""
+        def expand_range(match):
+            first, last = match.groups()
+            start = re.fullmatch(r"([A-Za-z_]+)(\d+)", first)
+            end = re.fullmatch(r"([A-Za-z_]+)(\d+)", last)
+            if (not start or not end or start[1] != end[1] or len(start[2]) != len(end[2])
+                    or not 0 < int(end[2]) - int(start[2]) <= 1000 or first != entry[0]):
+                raise ValueError("连续选项范围须从本题开始，使用同一题号前缀和顺序：" + match[0])
+            scope = [start[1] + str(i).zfill(len(start[2])) for i in range(int(start[2]) + 1, int(end[2]) + 1)]
+            return "、".join(scope) + " 的选项与 " + first + " 相同。"
+        visible = re.sub(r"([A-Za-z][A-Za-z0-9_]*)\s*[–—-]\s*([A-Za-z][A-Za-z0-9_]*)\s*的选项设置相同，(?:该范围内的后续题目|下列题目)不再逐一展开选项。", expand_range, visible)
+        for match in re.finditer(pattern, visible):
+            scope, source = match.groups()
+            scope = [x.strip() for x in scope.split("、")]
+            if source != entry[0] or not entry[1]:
+                raise ValueError("共同选项说明须放在完整展示选项的题目下：" + source)
+            if len(scope) != len(set(scope)) or covered.intersection(scope):
+                raise ValueError("共同选项说明重复覆盖题目")
+            if any(q not in ids or ids.index(q) <= ids.index(source) for q in scope):
+                raise ValueError("共同选项说明须列出本时期后续题号：" + match[0])
+            covered.update(scope)
+            if question_id in scope:
+                targets.append(source)
+    target = option_reference(re.sub(pattern, "", text))
+    if target:
+        targets.append(target)
+    if len(targets) > 1:
+        raise ValueError("一道题不能引用多套选项")
+    target = targets[0] if targets else None
+    if not target:
+        return []
+    for entry in entries:
+        identifier, options = entry[:2]
+        if identifier == question_id:
+            break
+        if identifier == target:
+            if not options:
+                raise ValueError("引用题须完整展示选项：" + target)
+            return options
+    raise ValueError("选项须引用本时期前面已展示的题目：" + target)
+
+
 def period_key(value):
     return re.sub(r"[^0-9A-Za-z\u3400-\u9fff]+", "", str(value)).casefold().replace("年", "").replace("期", "")
+
+
+def referenced_jump_options(question_id, entries):
+    """Share option-attached jumps only with explicitly named questions.
+
+    entries: (id, option dictionaries, visible instructions). Reuse scope
+    validation; ordinary option references never imply shared jumps.
+    """
+    scoped = []
+    for identifier, options, instructions in entries:
+        declarations = "\n".join(match.group(0).replace("的跳题规则与", "的选项与")
+            for match in re.finditer(r"[A-Za-z][A-Za-z0-9_]*(?:\s*、\s*[A-Za-z][A-Za-z0-9_]*)*\s*的跳题规则与\s*[A-Za-z][A-Za-z0-9_]*\s*相同。", instructions))
+        if declarations and not any(option.get("jump") for option in options):
+            raise ValueError("引用题须在选项后完整展示跳题规则：" + identifier)
+        scoped.append((identifier, options, declarations))
+    return referenced_options("", question_id, scoped)
 
 
 def period_keys(label):
