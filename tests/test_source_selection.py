@@ -1,18 +1,40 @@
 """Offline input contracts and browser failure branches; no website or paid export."""
 import json
+import copy
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-from prepare_source_selection import build_action, browser_code, parse_selection
+from prepare_source_selection import build_action, build_record_action, browser_code, parse_selection
 
 
 def main():
     action = build_action('q1 (Core data)=q1,\nq1 (Other file)=q1_other',
                           'http://localhost:8000/home/elsa/')
     assert action['aliases'] == ['q1', 'q1_other']
+    record = {'status':'READY', 'database':'ELSA', 'source_groups':[
+        {'source_identities':['q1 (Core data)'], 'raw_variables':['q1']},
+        {'source_identities':['q1 (Core data)','q1 (Other file)'], 'raw_variables':['q1','q1_other']}]}
+    original = copy.deepcopy(record)
+    assert build_record_action(record, action['url']) == action
+    assert record == original, 'Generating a list must preserve concept associations'
+    invalid_records = [dict(record, status='DRAFT')]
+    for field, value in [('raw_variables',['changed','q1_other']),
+                         ('raw_variables',['q1','q1']),
+                         ('raw_variables',['q1']),
+                         ('source_identities',['Core data','q1 (Other file)'])]:
+        bad = copy.deepcopy(record)
+        bad['source_groups'][1][field] = value
+        invalid_records.append(bad)
+    for bad in invalid_records:
+        try:
+            build_record_action(bad, action['url'])
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('Accepted conflicting, incomplete or unmerged record')
     for invalid in ['', 'q1=x', 'q1 (Core)=', 'q1 (Core)=x\nq2 (Core)=x',
                     'q1 (Core)=x\nq1 (Core)=y', 'q1 (Core)=a=b']:
         try:
@@ -36,6 +58,18 @@ async function scenario(options = {}) {
   const calls = [];
   const locator = selector => ({
     count: async () => selector === '#tag-area .tag' ? (options.count ?? 2) : 1,
+    evaluateAll: async fn => {
+      let rows = [{variable:'q1',file:'Core data',alias:'q1'},
+                  {variable:'q1',file:'Other file',alias:'q1_other'}];
+      if (options.wrongSource) rows[1].file = 'Old selection';
+      if (options.wrongAlias) rows[1].alias = 'old_alias';
+      if (options.duplicate) rows[1] = {...rows[0]};
+      if (options.reorder) rows.reverse();
+      return fn(rows.map(row => ({
+        getAttribute: name => options.missingAttribute ? null : row[name.replace('data-','').replace('display','alias')],
+        querySelector: () => ({textContent: options.wrongText ? 'wrong' : row.alias})
+      })));
+    },
     isVisible: async () => !!options.open,
     waitFor: async () => {if (options.stuck) throw Error('still loading');},
     fill: async value => {assert.equal(value, __INPUT_TEXT__); calls.push('fill');},
@@ -78,7 +112,10 @@ async function scenario(options = {}) {
     [{auth:false},'LOGIN_REQUIRED'], [{auth:null},'LOGIN_STATE_UNKNOWN'],
     [{open:true},'INPUT_DIALOG_ALREADY_OPEN'], [{reject:true},'SOURCE_REJECTED'],
     [{malformed:true},'SELECTION_UNCERTAIN'], [{timeout:true},'SELECTION_UNCERTAIN'],
-    [{count:1},'SELECTION_COUNT_MISMATCH'], [{stuck:true},'SELECTION_UNCERTAIN']]) {
+    [{count:1},'SELECTION_COUNT_MISMATCH'], [{stuck:true},'SELECTION_UNCERTAIN'],
+    [{wrongSource:true},'SELECTION_CONTENT_MISMATCH'], [{wrongAlias:true},'SELECTION_CONTENT_MISMATCH'],
+    [{duplicate:true},'SELECTION_CONTENT_MISMATCH'], [{wrongText:true},'SELECTION_CONTENT_MISMATCH'],
+    [{missingAttribute:true},'SELECTION_CONTENT_MISMATCH'], [{reorder:true},'SELECTION_READY']]) {
     const {result,calls} = await scenario(options);
     assert.equal(result.status,status);
     if (options.wrong || options.auth === false || options.auth === null || options.open)
@@ -111,6 +148,16 @@ async function scenario(options = {}) {
         assert json.loads(output.read_text(encoding='utf-8')) == action
         assert aliases.read_text(encoding='utf-8').splitlines() == action['aliases']
         previous = (output.read_bytes(), aliases.read_bytes())
+        record_file = root / 'record.json'
+        record_file.write_text(json.dumps(record), encoding='utf-8')
+        record_command = command.copy()
+        idx = record_command.index('--input')
+        record_command[idx:idx+2] = ['--record', str(record_file)]
+        subprocess.run(record_command, check=True, capture_output=True)
+        assert previous == (output.read_bytes(), aliases.read_bytes())
+        record_file.write_text(json.dumps(dict(record, status='DRAFT')), encoding='utf-8')
+        assert subprocess.run(record_command, capture_output=True).returncode != 0
+        assert previous == (output.read_bytes(), aliases.read_bytes())
         source.write_text('missing-file=alias', encoding='utf-8')
         assert subprocess.run(command, capture_output=True).returncode != 0
         assert previous == (output.read_bytes(), aliases.read_bytes()), 'Invalid input overwrote outputs'

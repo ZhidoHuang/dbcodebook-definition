@@ -16,9 +16,9 @@
 
 ## 文案读取与展示
 
-后台调用 `copy <- read_definition_copy(analysis_vars)`，把criteria、summary_entry、summary_insight_items、reference_lines、summary_selection传给现有生成器。definition_data$Criteria、定义HTML和笔记使用同份文案，不能另写一份或覆盖copy$summary_selection。
+后台调用 `copy <- read_definition_copy(analysis_vars)`，把criteria、criteria_intro、summary_entry、summary_insight_items、reference_lines、summary_selection传给现有生成器。调用时显式传入`criteria_intro = copy$criteria_intro`，共同说明显示在定义表前，独立定义HTML与笔记均保留；没有参考资料时reference_lines为空，不生成空标题。definition_data$Criteria、定义HTML和笔记使用同份文案，不能另写一份或覆盖copy$summary_selection。
 
-新主题或本次修改问卷展示时，将问卷迁入文案并删除R中的重复文字；旧主题仅改其它内容、问卷未变时允许沿用既有R问卷。无原题不传问卷展示。输入格式使用[文案模板](../../../templates/reader-copy.md)与[问卷模板](../../../templates/questionnaire-copy.md)，内容要求由[写作环节](03-copy.md)负责。
+新主题或本次修改问卷展示时，将问卷迁入文案并删除R中的重复文字；旧主题仅改其它内容、问卷未变时允许沿用既有R问卷。没有已核实的问卷展示内容时，不传问卷展示；仅核实题意、未取得完整原题的，仍按第3步保留已明确标注的题意概括和原因说明。内容要求和输入格式见[文案写作](03-copy.md)，模板与实例见[reader-copy](../../../templates/reader-copy.md)。
 
 ## 数据库适配边界
 
@@ -34,7 +34,9 @@ summary_groups <- c(defined_a = "研究概念一", defined_b = "研究概念二"
 # summary_meanings = summary_meanings, summary_groups = summary_groups,
 # summary_selection = copy$summary_selection,
 # hist_mode = "linear"（默认）或有依据的 "zero_plus_log"
-# hist_binwidth = 1，或按变量命名的已裁决分组宽度
+# hist_binwidth：仅在正式业务分组宽度已明确时传入；
+# 未明确时省略，使用自动分箱。宽度已确定为1时才传入1；
+# 不同变量使用不同宽度时，传按变量命名的向量。
 ```
 
 CHARLS 五期是当前共同覆盖契约，不能依据本主题恰好出现的年份缩减。Full HRS 的年份覆盖由本轮实际选择的 Tracker、Core 与跨波次文件共同确定；地理等文件落后于 Tracker 时按结构性缺失处理，不把 RAND Wave 契约套到原始库。升级新波次时先核实正式来源，再同步 renderer 契约与对应测试，运行完整回归后发布；ELSA 与 HRS 的已测范围以 tests/acceptance-matrix.md 为准，不据此宣称其它文件族、产品路线或未来波次均已验收。
@@ -91,7 +93,7 @@ eval(parse(
 
 ## 展示标准
 
-公共组件负责下列样式，主题只提供文案和语义标记，不复制CSS。文案输入格式在[文案模板](../../../templates/reader-copy.md)和[问卷模板](../../../templates/questionnaire-copy.md)，本节不重复内容取舍。
+公共组件负责下列样式，主题只提供文案和语义标记，不复制CSS。文案输入格式见[文案写作](03-copy.md)，本节只规定生成样式。
 
 | 内容 | 展示要求 |
 | --- | --- |

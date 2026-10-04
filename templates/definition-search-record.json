@@ -13,9 +13,9 @@
       "step": 1,
       "human_step_id": "S001",
       "action": "directory_open",
-      "input": "Core data > ...",
-      "observed": "页面实际显示的内容、记录数和初步候选",
-      "decision": "下一步继续查看什么、转向哪里或停止",
+      "input": "实际目录与本次网页结果文件位置",
+      "observed": "影响本步判断的页面事实及必要人数；完整网页结果引用input中的文件，不复制整份返回内容",
+      "decision": "具体采用或排除什么，或下一步查哪个问题；不只写继续核对",
       "reason": "作出该决定的具体理由"
     },
     {
@@ -114,12 +114,12 @@
       "branches": [
         {
           "path_id": "P001",
-          "entry_condition": "进入这条问卷路径的实际条件",
+          "entry_condition": "本次赋值、筛选或验证分支的完整条件；前置题共同决定时列全组合。允许合并的NA分支写清范围，不冒称已识别各缺失原因",
           "route": [
             "Q001: 1 -> Q002",
             "Q002: 2 -> 结束本主题分支"
           ],
-          "terminal_outcome": "这条路径最终得到什么问卷信息",
+          "terminal_outcome": "这条分支最终能判定什么；合并NA时说明无法区分的原因，不包含尚未解决的异常",
           "definition_result": "1_OR_0_OR_NA_OR_CATEGORY_OR_VALUE",
           "required_raw_variables": [
             "raw_name"
@@ -145,7 +145,7 @@
         "raw_name"
       ],
       "source_identities": [
-        "CHARLS模块来源_OR_ELSA Variable (File)"
+        "网站完整 Variable (File)，与同位置raw_variables中的最终下载别名对应"
       ],
       "discovery": {
         "mode": "directory",
@@ -202,7 +202,7 @@
         "研究概念或来源组"
       ],
       "construction": "用通俗语言说明采用哪些信息以及怎样得到结果",
-      "missing_and_jump": "特殊缺失、筛选和结构性跳题怎样处理；没有特殊处理时说明按原记录保留缺失"
+      "missing_and_jump": "特殊缺失、筛选和结构性跳题怎样处理；前置跳题补值写清适用时期、触发回答、受影响结果和补值；目标题已有回答、前置回答相互矛盾时，写清是否补值、结果及理由，不只写记录异常；不适用路径另行区分；所需前置变量同时登记到来源组及路径required_raw_variables。没有特殊处理时说明按原记录保留缺失"
     }
   ],
   "logic_review": {
@@ -225,5 +225,6 @@
       "reported_to_user_at": "",
       "decision": ""
     }
-  ]
+  ],
+  "questionnaire_display_policy": "chinese_v1"
 }

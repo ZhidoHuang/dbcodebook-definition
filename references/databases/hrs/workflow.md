@@ -16,7 +16,7 @@
 4. RAND HRS 或 Harmonized HRS 仅可作为辅助映射证据；所有正式 raw 必须回到 Full HRS 页面与官方原始代码本核实。
 5. 文件的最新时期不一致时明确记录结构性缺失，不得向前或向后填补。
 
-从第一次网页操作起同步维护 `探索记录.md` 与 schema v7 `definition_search_record.json`。网页尚未实际读取或结果只来自本地代码本时，必须写明限制。
+从第一次网页操作起同步维护 `探索记录.md` 与 schema v7 `definition_search_record.json`。记录写法与证据引用按[第1步](../../rules/stages/01-source-plan.md#怎样保存方案)执行。网页尚未实际读取或结果只来自本地代码本时，必须写明限制。
 
 ## 3. 下载与恢复
 

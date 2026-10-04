@@ -8,7 +8,8 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
-from questionnaire_groups import period_keys, original_options
+from questionnaire_groups import period_keys, original_options, shared_question_info
+from questionnaire_display import display_question
 
 
 NO_INSIGHT = "本主题没有需要单独提示的主题级边界"
@@ -164,7 +165,7 @@ def read_copy(path, expected_vars=None):
     if re.search(r"<(?:div|span|section|style)\b", text, re.I):
         raise ValueError("文案.md 只能保存纯文案，不能含展示 HTML。")
     parts = sections(text, 2)
-    for key in ("摘要导读", "Criteria", "小book提示", "参考资料说明"):
+    for key in ("摘要导读", "Criteria", "小book提示"):
         if not normalized(parts.get(key, "")):
             raise ValueError(f"文案缺少内容：{key}")
     criteria = {}
@@ -190,7 +191,8 @@ def read_copy(path, expected_vars=None):
     if normalized(insight) == NO_INSIGHT:
         insight = ""
     result = {"summary": parts["摘要导读"], "criteria": criteria,
-              "insight": insight, "references": parts["参考资料说明"]}
+              "criteria_intro": re.split(r"(?m)^### ", parts["Criteria"], maxsplit=1)[0].strip(),
+              "insight": insight, "references": parts.get("参考资料说明", "")}
     result["summary_blocks"] = summary_blocks(result["summary"])
     if "原始问卷" in parts:
         result["questionnaire"] = read_questionnaire_copy(parts["原始问卷"])
@@ -203,13 +205,16 @@ def read_questionnaire_copy(text):
         period = re.sub(r"[^A-Za-z0-9]+", "_", label).strip("_")
         if not period or period in periods:
             raise ValueError("原始问卷时期标识为空或重复：" + label)
-        design = re.split(r"(?m)^#### ", body, maxsplit=1)[0].strip()
-        # The renderer owns the title; an optional copy heading is not body text.
-        design = re.sub(r"\A(?:\*\*问卷设计\*\*|问卷设计)[ \t]*(?:\n|$)", "", design, count=1).strip()
+        # Read the authored heading as a title, separately from its body.
+        heading = re.match(r"\A(?:####[ \t]+|\*\*)?(问卷设计变化|问卷设计)(?:\*\*)?[ \t]*(?:\n|$)", body.strip())
+        design_title = heading.group(1) if heading else "问卷设计"
+        # Unheaded legacy copy keeps its former default; new copy supplies a heading.
+        questionnaire_body = body.strip()[heading.end():].lstrip() if heading else body
+        design = re.split(r"(?m)^#### ", questionnaire_body, maxsplit=1)[0].strip()
         if not normalized(design):
             raise ValueError("原始问卷缺少时期设计说明：" + label)
         questions = []
-        for question_id, content in sections(body, 4).items():
+        for question_id, content in sections(questionnaire_body, 4).items():
             question = {"id": question_id, "text": "", "condition": "", "options": [], "instructions": []}
             text_lines = []
             for line in content.splitlines():
@@ -231,16 +236,23 @@ def read_questionnaire_copy(text):
             if not question["text"]:
                 raise ValueError("原始问卷缺少完整题文：" + question_id)
             questions.append(question)
-        if not questions:
+        summary_only = all(re.search(r"(?m)^" + marker + r"[：:][ \t]*\S", design)
+                           for marker in ("题意概括", "未取得完整原题的原因"))
+        if not questions and not summary_only:
             raise ValueError("原始问卷缺少题目：" + label)
-        periods[period] = {"label": label, "design": design, "questions": questions}
+        ids = [q["id"] for q in questions]
+        for question in questions:
+            shared_options, _ = shared_question_info(design, question["id"], ids)
+            if shared_options and question["options"]:
+                raise ValueError("共同选项与单题选项重复：" + question["id"])
+        periods[period] = {"label": label, "design_title": design_title, "design": design, "questions": questions}
     if not periods:
         raise ValueError("原始问卷没有时期内容")
     return periods
 
 
 def questionnaire_text(period):
-    parts = [period["label"], "问卷设计", period["design"]]
+    parts = [period["label"], period.get("design_title", "问卷设计"), period["design"]]
     for question in period["questions"]:
         parts.extend([question["id"], question["text"]])
         if question["condition"]:
@@ -298,11 +310,11 @@ def compare_content(copy, actual, *, source=False):
         actual_trees = [b["text"] for b in summary_blocks(actual["summary"]) if b["type"] == "code_tree"]
     if expected_trees != actual_trees:
         raise ValueError("summary 代码树的节点、顺序、换行或缩进与文案不一致")
-    for field in ("summary", "insight", "references"):
+    for field in ("summary", "insight", "references", "criteria_intro"):
         value = actual.get(field, "")
         if source:
             value = visible_markup(value)
-        expected = "\n\n".join(b["text"] for b in blocks) if field == "summary" else copy[field]
+        expected = "\n\n".join(b["text"] for b in blocks) if field == "summary" else copy.get(field, "")
         if field == "summary" and not source and "summary_blocks" in actual and "summary_trees" not in actual:
             value = "\n\n".join(b["text"] for b in summary_blocks(value))
         require_equal(expected, value, field)
@@ -357,7 +369,11 @@ def note_content(text):
     references = parts.get("参考资料说明", "")
     # Generated detail HTML is not part of the reference prose.
     references = re.split(r"<style\b|<table\b", references, maxsplit=1, flags=re.I)[0]
+    intros = list(root.find(lambda e: e.attrs.get("data-criteria-intro") == "true"))
+    if len(intros) > 1:
+        raise ValueError("成品有重复的Criteria共同说明")
     return {"summary": visible_markup(summary), "criteria": criteria,
+            "criteria_intro": intros[0].text() if intros else "",
             "summary_trees": rendered_summary_trees(summary),
             "insight": insight[0].text() if insight else "", "references": visible_markup(references),
             "questionnaire": questionnaire_content(text)}
@@ -411,7 +427,12 @@ def questionnaire_copy_errors(copy, record):
     errors = []
     for item in evidence:
         question_id = str(item.get("question_id", ""))
-        text = normalized_evidence_text(item.get("question_text", ""))
+        try:
+            display_text, display_instructions = display_question(item, record)
+        except ValueError as error:
+            errors.append(str(error))
+            continue
+        text = normalized_evidence_text(display_text)
         if not question_id or not text or not isinstance(item.get("periods"), list):
             errors.append(f"{question_id or '?'}: missing question id/text/periods")
             continue
@@ -431,8 +452,13 @@ def questionnaire_copy_errors(copy, record):
                 errors.append(f"{label}: incomplete or different question text")
             if text in normalized_evidence_text(matches[0]["design"]):
                 errors.append(f"{label}: question duplicated in design note")
+            visible = normalized_evidence_text(question["text"] + " " + matches[0]["design"] + " " + " ".join(question["instructions"]))
+            for instruction in display_instructions:
+                if normalized_evidence_text(instruction) not in visible:
+                    errors.append(f"{label}: missing display instruction")
             options = question["options"]
-            option_text = original_options([o["text"] for o in options], matches[0]["design"], period)
+            shared_options, shared_routes = shared_question_info(matches[0]["design"], question_id)
+            option_text = shared_options or original_options([o["text"] for o in options], matches[0]["design"], period)
             if item.get("response_type") == "closed_options":
                 expected = [normalized(f"{o['value']} {o['label']}") for o in item.get("options", [])]
                 if [normalized(o) for o in option_text] != expected:
@@ -445,6 +471,7 @@ def questionnaire_copy_errors(copy, record):
                 else:
                     descriptions = [s for s in question["instructions"] if trigger in normalized(s)]
                     descriptions += [o["jump"] for o in options if trigger in normalized(o["jump"])]
+                descriptions += [r["destination"] for r in shared_routes if normalized(r["when"]) == trigger]
                 if not any(route_matches(jump["destination"], s) for s in descriptions):
                     errors.append(f"{label}: route differs: {jump['when']} -> {jump['destination']}")
     return errors

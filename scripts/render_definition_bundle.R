@@ -162,18 +162,19 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
   })
   result <- list(
     criteria = criteria,
+    criteria_intro = copy$criteria_intro,
     summary_entry = list(paragraphs = lapply(copy$summary_blocks, function(block) {
       if (identical(block$type, "code_tree")) return(block)
       list(parts = inline_parts(block$text))
     })),
     summary_insight_items = if (nzchar(copy$insight)) paragraphs(copy$insight) else NULL,
-    reference_lines = c("## 参考资料说明", "", copy$references)
+    reference_lines = if (nzchar(copy$references)) c("## 参考资料说明", "", copy$references) else character()
   )
   if (!is.null(copy$questionnaire)) {
     result$summary_selection <- list(class = "raw-source-structure", display = "period-tabs",
       groups = lapply(names(copy$questionnaire), function(period) {
         block <- copy$questionnaire[[period]]
-        lines <- c(list(summary_period_note(paragraphs(block$design))),
+        lines <- c(list(summary_period_note(paragraphs(block$design), title = block$design_title)),
           lapply(block$questions, function(question) {
             summary_questionnaire_line(question$id, question$text,
               condition = if (nzchar(question$condition)) question$condition else character(),
@@ -185,6 +186,23 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
       }))
   }
   result
+}
+
+render_criteria_intro <- function(text) {
+  if (is.null(text) || !nzchar(trimws(text))) return(character())
+  lines <- strsplit(text, "\n", fixed = TRUE)[[1]]
+  lines <- lines[nzchar(trimws(lines))]
+  paste0('<div data-criteria-intro="true">',
+         paste0(vapply(lines, criteria_item, character(1)), collapse = ''), '</div>')
+}
+
+definition_html_with_intro <- function(lines, intro) {
+  if (is.null(intro) || !nzchar(trimws(intro))) return(lines)
+  text <- paste(lines, collapse = "\n")
+  table_start <- regexpr("<table\\b", text, perl = TRUE)
+  if (table_start[[1]] < 0L) stop("定义HTML缺少表格，不能放入共同说明。")
+  paste0(substr(text, 1L, table_start[[1]] - 1L), render_criteria_intro(intro),
+         "\n", substring(text, table_start[[1]]))
 }
 
 validate_criteria_markup <- function(criteria, variable_names = character()) {
@@ -372,12 +390,13 @@ render_definition_bundle <- function(
     cycle_order = c("2011", "2013", "2015", "2018", "2020"),
     raw_source_years = NULL,
     raw_row_count = nrow(data),
-    hist_binwidth = 1,
+    hist_binwidth = NULL,
     hist_mode = "linear",
     evidence_lines = character(),
     reference_lines = character(),
     summary_extra_lines = character(),
-    database = "CHARLS") {
+    database = "CHARLS",
+    criteria_intro = "") {
   database <- toupper(database)
   if (!database %in% c("CHARLS", "ELSA", "HRS")) stop("Unsupported definition database: ", database)
   period_col <- if (database == "ELSA") "Wave" else "year"
@@ -412,6 +431,7 @@ render_definition_bundle <- function(
   definition_copy_check(source = list(
     summary = render_summary_entry_paragraph(summary_entry, theme_color),
     criteria = as.list(criteria[analysis_vars]),
+    criteria_intro = paste(render_criteria_intro(criteria_intro), collapse = ""),
     insight = paste(summary_insight_items, collapse = "\n\n"),
     references = paste(reference_lines[!grepl("^## 参考资料说明$", reference_lines)], collapse = "\n"),
     questionnaire = if (missing(summary_selection)) "" else render_summary_selection_paragraph(summary_selection, theme_color)
@@ -635,6 +655,12 @@ render_definition_bundle <- function(
   }
   clean_html(paste0(database, "_", file_stem, "_detail.html"))
   clean_html(paste0(database, "_", file_stem, "_definition.html"))
+  if (nzchar(trimws(criteria_intro))) {
+    definition_path <- paste0(database, "_", file_stem, "_definition.html")
+    definition_text <- definition_html_with_intro(
+      readLines(definition_path, encoding = "UTF-8", warn = FALSE), criteria_intro)
+    writeLines(definition_text, definition_path, useBytes = TRUE)
+  }
 
   extract_vars <- paste0(raw_codebook$Variable, "=", raw_codebook$newname)
   extract_box <- c(

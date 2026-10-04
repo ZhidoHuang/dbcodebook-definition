@@ -82,6 +82,31 @@ const page = {
                           "}).catch(error => {console.error(error);process.exitCode=1;});", encoding="utf-8")
         subprocess.run(["node", str(script)], check=True)
         assert not (root / "attempt.json").exists(), "CLI action must not import fs or claim twice"
+
+        failure_cases = root / "download-failures.cjs"
+        failure_cases.write_text(fixture + "\nconst run = " + code + r""";
+(async () => {
+  const before = {...page, locator: () => {throw Error('page unavailable before click');}};
+  const notClicked = await run(before);
+  assert.equal(notClicked.status, 'DOWNLOAD_NOT_CLICKED');
+  assert.equal(notClicked.click_requested, false);
+  assert.equal(notClicked.operation_completed, true);
+  assert.equal(notClicked.next_action, 'fix_cause_then_prepare_new_attempt');
+  assert.deepEqual(calls, []);
+  final.click = async () => {calls.push('click'); throw Error('click response lost');};
+  const uncertain = await run({...page, waitForEvent: async () => {throw Error('no event');}});
+  assert.equal(uncertain.status, 'DOWNLOAD_EVENT_NOT_RECEIVED');
+  assert.equal(uncertain.allow_new_export, false);
+  assert.deepEqual(calls, ['click']);
+  calls.length = 0;
+  final.click = async () => calls.push('click');
+  const saveFailure = await run({...page, waitForEvent: async () => ({saveAs: async () => {throw Error('save failed');}})});
+  assert.equal(saveFailure.status, 'DOWNLOAD_PATH_UNAVAILABLE');
+  assert.equal(saveFailure.allow_new_export, false);
+  assert.deepEqual(calls, ['click']);
+})().catch(error => {console.error(error);process.exitCode=1;});
+""", encoding='utf-8')
+        subprocess.run(['node', str(failure_cases)], check=True)
         try:
             build_code({"preload_sha256": "wrong"}, "sync", {"preload_sha256": "other"}, root / "x")
             raise AssertionError("Mismatched preflight accepted")
@@ -119,6 +144,13 @@ const page = {
             failed.upload = lambda *args: (_ for _ in ()).throw(RuntimeError('fixture failure'))
             result = run_sync(failed, website, {"preload_script": ""})
             assert result["recovery_confirmed"] and calls == ['code', 'discard']
+            assert result["editor_page_restored"] and result["recovery_scope"] == 'editor_page_only'
+            assert result["content_rollback_status"] == 'NOT_VERIFIED' and not result['ok']
+            calls.clear()
+            failed.discard = lambda url: {'url': url, 'editor': 0}
+            result = run_sync(failed, website, {"preload_script": ""})
+            assert result['recovery_attempted'] and not result['editor_page_restored']
+            assert not result['recovery_confirmed'] and result['content_rollback_status'] == 'NOT_VERIFIED'
             calls.clear()
             uncertain = FakeSession()
             original = uncertain.code
@@ -129,6 +161,8 @@ const page = {
             uncertain.code = fail_submit
             result = run_sync(uncertain, website, {"preload_script": ""})
             assert result["status"] == 'SUBMISSION_UNCERTAIN' and 'discard' not in calls
+            assert not result['recovery_attempted'] and not result['editor_page_restored']
+            assert result['content_rollback_status'] == 'NOT_VERIFIED'
             for item in files:
                 calls.clear()
                 item.write_bytes(b"changed after readiness")

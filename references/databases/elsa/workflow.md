@@ -4,7 +4,7 @@
 
 适用范围：通过 dbCodeBook 为 ELSA 发现候选、裁决研究口径、下载 raw、编写正式 R，并完成正式成果与机器闭环。
 
-本文件只保留 ELSA 特有规则。跨数据库的命名、公开 R、`Criteria`、摘要导读、小book提示、输出合同和机器检查，按 [共同规则索引](../../rules/common-materials.md) 进入对应环节，不重复定义；数据库身份和文件族见 [profile.md](profile.md)。不得从 CHARLS 流程复制题号、波次、编码、前缀或主题经验。
+本文件只保留 ELSA 特有规则。跨数据库要求直接读取当前环节：[来源命名与下载](../../rules/stages/02-download.md)、[文案](../../rules/stages/03-copy.md)、[公开R](../../rules/stages/04-public-r.md)、[成果生成](../../rules/stages/05-generate.md)、[结果验证](../../rules/stages/06-results.md)；不要求一次读完。数据库身份和文件族见 [profile.md](profile.md)。不得从 CHARLS 流程复制题号、波次、编码、前缀或主题经验。
 
 ## 1. 任务与目录
 
@@ -27,7 +27,7 @@
 4. 每个候选记录完整 `Variable (File)`、Wave、目录或数据家族、题义、取值、适用对象、raw/derived、跨 Wave 差异和纳入或排除理由。
 5. 不用旧代码、本地导出、底层数据库、Parquet、历史笔记或最终变量名反推候选和探索路径。
 
-从第一次网页操作起同时建立 `探索记录.md` 和 schema v7 `definition_search_record.json`，分别使用 [exploration-record.md](../../../templates/exploration-record.md) 和 [definition-search-record.json](../../../templates/definition-search-record.json)。前者用大白话同步记录每一步“做了什么、看到了什么、这说明什么、下一步为什么这样走”，直接供用户和后续复查者阅读；后者记录同一步骤的结构化身份，供机器对账。两者来自同一次真实探索，JSON 不高于、不替代大白话记录，也不能用于事后生成探索故事：
+从第一次网页操作起同时建立 `探索记录.md` 和 schema v7 `definition_search_record.json`，分别使用 [exploration-record.md](../../../templates/exploration-record.md) 和 [definition-search-record.json](../../../templates/definition-search-record.json)。记录内容、证据引用和写法按[第1步](../../rules/stages/01-source-plan.md#怎样保存方案)及上述模板执行；JSON保存同一步骤的结构化身份，供机器对账。两者来自同一次真实探索，JSON 不高于、不替代大白话记录，也不能用于事后生成探索故事：
 
 - `exploration_log` 按实际发生顺序记录目录进入、普通检索、页面观察、官方材料、Harmonised ELSA 和文献核对、下一步决定及理由，并用 `human_step_id` 指向 `探索记录.md` 中同号步骤。
 - `evidence_reviews` 记录实际查阅材料的标题、可定位位置、明确支持内容、没有说明的内容、对本轮决定的影响和对应探索步骤。
@@ -108,7 +108,7 @@
 
 ## 5. 正式 R 与用户材料
 
-- 通用包头、公开代码、mapping、xlsx、QA、runner、`Criteria`、摘要导读和小book提示均执行 [common-materials.md](../../rules/common-materials.md)；ELSA 不维护第二套语言或代码模板。
+- 文案执行[第3步](../../rules/stages/03-copy.md)，代码执行[第4步](../../rules/stages/04-public-r.md)，产物生成执行[第5步](../../rules/stages/05-generate.md)；ELSA 不维护第二套语言或代码模板。
 - 正式 R 只补 ELSA 必需背景：`Variable (File)` 身份、Wave、文件族、官方负值编码和本主题实际跨 Wave 变化。
 - mapping 必须追溯到完整 `Variable (File)`；内部证据和 QA 不得丢失 File。
 - 正式分类变量默认保留规范化英文或 ASCII 标签；只有 YES/NO 二分类默认使用 `1/0`。频率、等级和状态等多分类不为排序便利擅自改成数值等级。

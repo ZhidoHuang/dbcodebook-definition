@@ -1,4 +1,4 @@
-"""Verify author review and artifact identity before website synchronization."""
+"""Verify mechanical delivery conditions; preserve legacy author-review records."""
 
 from __future__ import annotations
 
@@ -15,8 +15,8 @@ from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_reader_copy import Document, validate_note, normalized, route_matches
-from writing_evidence import copy_execution_conclusions, scope_bindings, carry_copy_scopes
-from questionnaire_groups import period_keys, original_options
+from questionnaire_groups import period_keys, original_options, shared_question_info
+from questionnaire_display import display_question
 
 
 def is_question_instruction(attrs: dict) -> bool:
@@ -35,9 +35,11 @@ SOURCE_RECORD_NAME = "definition_search_record.json"
 PASS_STATUS = "FULL_TEXT_READABILITY_PASS"
 IMPACT_PASS_STATUS = "CHANGE_IMPACT_PASS"
 READER_REVIEW_PASS_STATUS = "READER_COMPREHENSION_PASS"
-AUDIT_SCHEMA_VERSION = 6
+AUDIT_SCHEMA_VERSION = 7
+ARTIFACT_STATUS = "ARTIFACTS_BOUND"
 REVIEW_POLICY = "execution_first_v1"
-IMPACT_SCHEMA_VERSION = 2
+IMPACT_SCHEMA_VERSION = 3
+IMPACT_SCOPE_STATUS = "CHANGE_SCOPE_RECORDED"
 READER_REVIEW_SCHEMA_VERSION = 2
 LEGACY_READER_REVIEW_SCHEMA_VERSION = 1
 REQUIRED_ARTIFACTS = (
@@ -261,7 +263,8 @@ def validate_questionnaire_rendering(
         ):
             fail(f"{field}.copy_locator still describes unfinished copy")
         question_id = str(item.get("question_id", "")).strip()
-        question_text = normalized_evidence_text(item.get("question_text", ""))
+        display_text, display_instructions = display_question(item, record)
+        question_text = normalized_evidence_text(display_text)
         periods = item.get("periods")
         if not question_id or not question_text or not isinstance(periods, list):
             fail(f"{field} lacks question id, question text, or periods")
@@ -286,10 +289,10 @@ def validate_questionnaire_rendering(
                         f"final note period {period} must contain exactly one "
                         "questionnaire design note"
                     )
-                if period_notes[0].get("title") != "问卷设计":
+                if period_notes[0].get("title") not in {"问卷设计", "问卷设计变化"}:
                     fail(
                         f"final note period {period} questionnaire design note "
-                        "must be titled 问卷设计"
+                        "must be titled 问卷设计 or 问卷设计变化"
                     )
                 validated_periods.add(section["period"])
             if any(
@@ -317,11 +320,18 @@ def validate_questionnaire_rendering(
             if len(matching_lines) > 1:
                 fail(f"final note period {period} renders question {question_id} more than once")
             line = matching_lines[0]
+            visible = normalized_evidence_text(line["text"] + " " + " ".join(n["text"] for n in section["period_notes"]))
+            for instruction in display_instructions:
+                if normalized_evidence_text(instruction) not in visible:
+                    fail(f"final note period {period} omits display instruction for {question_id}")
+            shared_options, shared_routes = shared_question_info(
+                section["period_notes"][0]["text"], question_id,
+                [qid for entry in section["lines"] for qid in entry["question_ids"]])
             if item.get("response_type") == "closed_options" and (
-                line["option_count"] < len(expected_options)
+                not shared_options and line["option_count"] < len(expected_options)
             ):
                 fail(f"final note period {period} omits options for {question_id}")
-            if expected_jumps and line["instruction_count"] < 1:
+            if expected_jumps and line["instruction_count"] < 1 and not shared_routes:
                 fail(f"final note period {period} omits jump instructions for {question_id}")
             period_nodes = list(document.find(lambda e: e.attrs.get("data-raw-source-period") == section["period"]))
             question_nodes = list(period_nodes[0].find(lambda e: e.attrs.get("data-summary-questionnaire-line") == "true"))
@@ -330,7 +340,9 @@ def validate_questionnaire_rendering(
                 for q in e.find(lambda q: q.attrs.get("data-summary-question-id") == "true")
             ))
             options = list(node.find(lambda e: e.attrs.get("data-summary-question-option") == "true"))
-            option_text = original_options([option.text() for option in options], section["period_notes"][0]["text"], period)
+            if shared_options and options:
+                fail(f"final note repeats common options for {question_id}")
+            option_text = shared_options or original_options([option.text() for option in options], section["period_notes"][0]["text"], period)
             if item.get("response_type") == "closed_options":
                 expected_text = [normalized(f"{option['value']} {option['label']}") for option in expected_options]
                 if [normalized(option) for option in option_text] != expected_text:
@@ -349,6 +361,7 @@ def validate_questionnaire_rendering(
                     descriptions = [e.text() for e in node.find(lambda e:
                         is_question_instruction(e.attrs))
                         if trigger in normalized(e.text())]
+                descriptions += [r["destination"] for r in shared_routes if normalized(r["when"]) == trigger]
                 if not any(route_matches(jump["destination"], text) for text in descriptions):
                     fail(f"final note period {period} route differs for {question_id}: {jump['when']} -> {jump['destination']}")
             rendered_pairs.add((question_id, str(period)))
@@ -391,35 +404,25 @@ def initialize_impact(
     impact_path = process_dir / IMPACT_NAME
     if impact_path.exists() and not overwrite:
         fail(f"{IMPACT_NAME} already exists; use --overwrite for a new change")
+    previous = json.loads(impact_path.read_text(encoding="utf-8-sig")) if impact_path.exists() else {}
     payload = {
         "schema_version": IMPACT_SCHEMA_VERSION,
         "topic_id": topic_id.zfill(3),
-        "status": "DRAFT",
-        "reviewed_at": "",
-        "reviewer": "",
+        "status": IMPACT_SCOPE_STATUS,
         "change_summary": "",
         "changed_dimensions": [],
         "question_groups": [],
         "question_groups_not_applicable_reason": "",
-        "surfaces": [
-            {
-                "name": name,
-                "label": label,
-                "result": "pending",
-                "evidence": "",
-            }
-            for name, label in REQUIRED_IMPACT_SURFACES
-        ],
-        "unresolved_issues": [],
+        "unresolved_issues": previous.get("unresolved_issues", []),
     }
     write_json(impact_path, payload)
-    for stale_name in (AUDIT_NAME, REPORT_NAME):
+    for stale_name in (REPORT_NAME,):
         stale_path = process_dir / stale_name
         if stale_path.exists():
             stale_path.unlink()
     return {
         "ok": True,
-        "status": "CHANGE_IMPACT_DRAFT_CREATED",
+        "status": "CHANGE_SCOPE_CREATED",
         "impact": str(impact_path),
     }
 
@@ -436,17 +439,19 @@ def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
     with impact_path.open("r", encoding="utf-8-sig") as handle:
         impact = json.load(handle)
     expected_topic = topic_id.zfill(3)
-    if impact.get("schema_version") != IMPACT_SCHEMA_VERSION:
+    if impact.get("schema_version") not in (2, IMPACT_SCHEMA_VERSION):
         fail(
             "definition change impact schema_version must be "
             f"{IMPACT_SCHEMA_VERSION}"
         )
     if str(impact.get("topic_id", "")).zfill(3) != expected_topic:
         fail(f"definition change impact topic_id must be {expected_topic}")
-    if impact.get("status") != IMPACT_PASS_STATUS:
-        fail(f"definition change impact status must be {IMPACT_PASS_STATUS}")
-    reviewed_at = validate_iso_datetime(impact.get("reviewed_at"))
-    reviewer = nonempty_text(impact.get("reviewer"), "impact reviewer", 3)
+    legacy_impact = impact.get("schema_version") == 2
+    expected_status = IMPACT_PASS_STATUS if legacy_impact else IMPACT_SCOPE_STATUS
+    if impact.get("status") != expected_status:
+        fail(f"definition change impact status must be {expected_status}")
+    reviewed_at = validate_iso_datetime(impact.get("reviewed_at")) if legacy_impact else None
+    reviewer = nonempty_text(impact.get("reviewer"), "impact reviewer", 3) if legacy_impact else None
     change_summary = nonempty_text(
         impact.get("change_summary"), "change_summary", 20
     )
@@ -464,7 +469,6 @@ def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
         "## 摘要导读",
         "## Criteria",
         "## 小book提示",
-        "## 参考资料说明",
     ):
         if heading not in copy_text:
             fail(f"reader copy is missing required heading: {heading}")
@@ -504,10 +508,10 @@ def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
             group.get("draft_location"), f"question group {index} draft_location", 4
         )
         mode = group.get("question_mode")
-        if mode not in ("verified_quote", "plain_paraphrase"):
+        if mode not in ("verified_quote", "verified_translation", "plain_paraphrase"):
             fail(
                 f"question group {index} question_mode must be verified_quote "
-                "or plain_paraphrase"
+                "or verified_translation or plain_paraphrase"
             )
         question_text = nonempty_text(
             group.get("question_text"), f"question group {index} question_text", 8
@@ -523,33 +527,34 @@ def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
                 f"question group {index} paraphrase_reason",
                 12,
             )
-        if group.get("result") != "pass":
+        if legacy_impact and group.get("result") != "pass":
             fail(f"question group {index} result must be pass")
 
-    surfaces = impact.get("surfaces")
-    if not isinstance(surfaces, list):
-        fail("impact surfaces must be a list")
-    surface_names = [item.get("name") for item in surfaces if isinstance(item, dict)]
-    required_names = [name for name, _ in REQUIRED_IMPACT_SURFACES]
-    if len(surface_names) != len(set(surface_names)) or set(surface_names) != set(
-        required_names
-    ):
-        fail("impact surfaces do not match the required change surfaces")
-    surface_evidence_owners: dict[str, str] = {}
-    for item in surfaces:
-        name = item["name"]
-        if item.get("result") != "pass":
-            fail(f"impact surface {name} result must be pass")
-        evidence_text = nonempty_text(
-            item.get("evidence"), f"impact surface {name} evidence", 20
-        )
-        normalized_evidence = normalized_visible_text(evidence_text)
-        if normalized_evidence in surface_evidence_owners:
-            fail(
-                f"impact surfaces {surface_evidence_owners[normalized_evidence]} "
-                f"and {name} reuse the same evidence"
+    if legacy_impact:
+        surfaces = impact.get("surfaces")
+        if not isinstance(surfaces, list):
+            fail("impact surfaces must be a list")
+        surface_names = [item.get("name") for item in surfaces if isinstance(item, dict)]
+        required_names = [name for name, _ in REQUIRED_IMPACT_SURFACES]
+        if len(surface_names) != len(set(surface_names)) or set(surface_names) != set(
+            required_names
+        ):
+            fail("impact surfaces do not match the required change surfaces")
+        surface_evidence_owners: dict[str, str] = {}
+        for item in surfaces:
+            name = item["name"]
+            if item.get("result") != "pass":
+                fail(f"impact surface {name} result must be pass")
+            evidence_text = nonempty_text(
+                item.get("evidence"), f"impact surface {name} evidence", 20
             )
-        surface_evidence_owners[normalized_evidence] = name
+            normalized_evidence = normalized_visible_text(evidence_text)
+            if normalized_evidence in surface_evidence_owners:
+                fail(
+                    f"impact surfaces {surface_evidence_owners[normalized_evidence]} "
+                    f"and {name} reuse the same evidence"
+                )
+            surface_evidence_owners[normalized_evidence] = name
     unresolved = impact.get("unresolved_issues")
     if not isinstance(unresolved, list):
         fail("impact unresolved_issues must be a list")
@@ -857,13 +862,13 @@ def initialize_reader_review(
         fail(f"{AUDIT_NAME} does not exist; the author review must be completed first")
     with audit_path.open("r", encoding="utf-8-sig") as handle:
         audit = json.load(handle)
-    if audit.get("schema_version") not in (5, AUDIT_SCHEMA_VERSION):
+    if audit.get("schema_version") not in (5, 6, AUDIT_SCHEMA_VERSION):
         fail(
             f"author review schema_version must be {AUDIT_SCHEMA_VERSION}; "
             "initialize a new author review first"
         )
-    if audit.get("status") != PASS_STATUS:
-        fail(f"author review status must be {PASS_STATUS} before reader review")
+    if audit.get("status") != (ARTIFACT_STATUS if audit.get("schema_version") == 7 else PASS_STATUS):
+        fail("artifact binding or historical author review must be completed before reader review")
 
     note_artifact = relative_artifact(formal_dir, note, "note")
     audited_note = audit.get("artifacts", {}).get("note", {})
@@ -1081,7 +1086,7 @@ def initialize_audit(
         if not audit_path.is_file():
             fail("preserving a reader review requires an existing author audit")
         previous = json.loads(audit_path.read_text(encoding="utf-8-sig"))
-        if previous.get("status") != PASS_STATUS:
+        if previous.get("status") != (ARTIFACT_STATUS if previous.get("schema_version") == 7 else PASS_STATUS):
             fail("preserving a reader review requires a passed author audit")
         validate_reader_review(
             formal_dir, process_dir, topic_id, artifacts["note"],
@@ -1092,9 +1097,7 @@ def initialize_audit(
         "review_policy": REVIEW_POLICY,
         "reader_review_required": reader_required,
         "topic_id": topic_id.zfill(3),
-        "status": "DRAFT",
-        "reviewer": "",
-        "review_scope": "",
+        "status": ARTIFACT_STATUS,
         "artifacts": artifacts,
         "change_impact": {
             "path": change_impact["path"],
@@ -1102,28 +1105,9 @@ def initialize_audit(
         },
         "reader_copy": change_impact["reader_copy"],
         "questionnaire_rendering": questionnaire_rendering,
-        "scopes": [
-            {
-                "name": name,
-                "label": label,
-                "result": "pending",
-                "evidence": "",
-                "findings": [],
-                **({"code_walkthrough": []} if name == "public_r_comments" else {}),
-            }
-            for name, label in REQUIRED_SCOPES
-        ],
-        "unresolved_issues": [],
+        "unresolved_issues": previous_audit.get("unresolved_issues", []),
     }
-    payload["copy_scope_bindings"] = scope_bindings(formal_dir, process_dir, artifacts)
-    payload["copy_execution_conclusions"] = copy_execution_conclusions(process_dir, formal_dir / READER_COPY_NAME)
-    payload["carried_copy_scopes"] = carry_copy_scopes(previous_audit, payload)
     write_json(audit_path, payload)
-    author_input_path = process_dir / "author_review_input.md"
-    author_input_path.write_text(
-        author_review_text((formal_dir / artifacts["note"]["path"]).read_text(encoding="utf-8-sig")),
-        encoding="utf-8",
-    )
     reader_review_path = process_dir / READER_REVIEW_NAME
     if reader_review_path.exists() and not preserve_reader:
         reader_review_path.unlink()
@@ -1135,9 +1119,8 @@ def initialize_audit(
         readiness_path.unlink()
     return {
         "ok": True,
-        "status": "DRAFT_CREATED",
+        "status": "ARTIFACTS_BOUND",
         "audit": str(audit_path),
-        "author_input": str(author_input_path),
         "artifacts": artifacts,
         "change_impact": change_impact,
         "questionnaire_rendering": questionnaire_rendering,
@@ -1174,29 +1157,35 @@ def validate_audit(
         audit = json.load(handle)
 
     expected_topic = topic_id.zfill(3)
-    if audit.get("schema_version") not in (5, AUDIT_SCHEMA_VERSION):
+    if audit.get("schema_version") not in (5, 6, AUDIT_SCHEMA_VERSION):
         fail(
             f"readability audit schema_version must be {AUDIT_SCHEMA_VERSION}; "
             "initialize a new audit for the current workflow"
         )
     if str(audit.get("topic_id", "")).zfill(3) != expected_topic:
         fail(f"readability audit topic_id must be {expected_topic}")
-    if audit.get("status") != PASS_STATUS:
-        fail(f"readability audit status must be {PASS_STATUS}")
-    reviewer = nonempty_text(audit.get("reviewer"), "reviewer", 3)
-    if audit.get("schema_version") == 5:
-        # Preserve the original claims in historical records; do not upgrade them.
-        review_record = {
-            "audited_at": validate_iso_datetime(audit.get("audited_at")),
-            "full_read_confirmation": nonempty_text(
-                audit.get("full_read_confirmation"), "full_read_confirmation", 20
-            ),
-        }
+    mechanical = audit.get("schema_version") == 7
+    if mechanical:
+        if audit.get("status") != ARTIFACT_STATUS:
+            fail(f"artifact binding status must be {ARTIFACT_STATUS}")
+        reviewer = ""
+        review_record = {"validation_basis": "mechanical_checks_only", "writing_quality": "NOT_ASSESSED"}
     else:
-        if "audited_at" in audit or "full_read_confirmation" in audit:
-            fail("new audits use review_scope; checked_at is recorded by the checker")
-        review_record = {"review_scope": nonempty_text(audit.get("review_scope"), "review_scope")}
-
+        if audit.get("status") != PASS_STATUS:
+            fail(f"readability audit status must be {PASS_STATUS}")
+        reviewer = nonempty_text(audit.get("reviewer"), "reviewer", 3)
+        if audit.get("schema_version") == 5:
+            # Preserve the original claims in historical records; do not upgrade them.
+            review_record = {
+                "audited_at": validate_iso_datetime(audit.get("audited_at")),
+                "full_read_confirmation": nonempty_text(
+                    audit.get("full_read_confirmation"), "full_read_confirmation", 20
+                ),
+            }
+        else:
+            if "audited_at" in audit or "full_read_confirmation" in audit:
+                fail("new audits use review_scope; checked_at is recorded by the checker")
+            review_record = {"review_scope": nonempty_text(audit.get("review_scope"), "review_scope")}
     current_impact = validate_impact(formal_dir, process_dir, expected_topic)
     recorded_impact = audit.get("change_impact")
     if not isinstance(recorded_impact, dict):
@@ -1242,7 +1231,7 @@ def validate_audit(
         if current_hash != expected_hash:
             fail(
                 f"readability audit is stale because {role} changed; "
-                "create a new DRAFT audit and read the final version again"
+                "initialize the current artifact binding again"
             )
         current_hashes[role] = {"path": relative, "sha256": current_hash}
 
@@ -1262,78 +1251,82 @@ def validate_audit(
             "final rendering changed"
         )
 
-    scopes = audit.get("scopes")
-    if not isinstance(scopes, list):
-        fail("scopes must be a list")
-    scope_names = [item.get("name") for item in scopes if isinstance(item, dict)]
-    required_names = [name for name, _ in REQUIRED_SCOPES]
-    if len(scope_names) != len(set(scope_names)):
-        fail("scopes contain duplicate names")
-    if set(scope_names) != set(required_names):
-        missing = sorted(set(required_names) - set(scope_names))
-        unexpected = sorted(set(scope_names) - set(required_names))
-        fail(f"readability scopes mismatch; missing={missing}, unexpected={unexpected}")
-
+    scopes = []
     finding_count = 0
-    scope_evidence_owners: dict[str, str] = {}
-    for item in scopes:
-        if not isinstance(item, dict):
-            fail("every readability scope must be an object")
-        name = item["name"]
-        if item.get("result") != "pass":
-            fail(f"scope {name} result must be pass")
-        evidence_text = nonempty_text(
-            item.get("evidence"), f"scope {name} evidence", 20
-        )
-        normalized_evidence = normalized_visible_text(evidence_text)
-        if normalized_evidence in scope_evidence_owners:
-            fail(
-                f"readability scopes {scope_evidence_owners[normalized_evidence]} "
-                f"and {name} reuse the same evidence"
-            )
-        scope_evidence_owners[normalized_evidence] = name
-        findings = item.get("findings")
-        if not isinstance(findings, list):
-            fail(f"scope {name} findings must be a list")
-        for index, finding in enumerate(findings, start=1):
-            if not isinstance(finding, dict):
-                fail(f"scope {name} finding {index} must be an object")
-            nonempty_text(finding.get("location"), f"{name} finding {index} location")
-            nonempty_text(finding.get("problem"), f"{name} finding {index} problem")
-            nonempty_text(
-                finding.get("resolution"), f"{name} finding {index} resolution"
-            )
-            finding_count += 1
+    if not mechanical:
+        scopes = audit.get("scopes")
+        if not isinstance(scopes, list):
+            fail("scopes must be a list")
+        scope_names = [item.get("name") for item in scopes if isinstance(item, dict)]
+        required_names = [name for name, _ in REQUIRED_SCOPES]
+        if len(scope_names) != len(set(scope_names)):
+            fail("scopes contain duplicate names")
+        if set(scope_names) != set(required_names):
+            missing = sorted(set(required_names) - set(scope_names))
+            unexpected = sorted(set(scope_names) - set(required_names))
+            fail(f"readability scopes mismatch; missing={missing}, unexpected={unexpected}")
 
-        if (
-            name == "public_r_comments"
-            and "public_r" in current_impact["changed_dimensions"]
-        ):
-            walkthrough = item.get("code_walkthrough")
-            if not isinstance(walkthrough, list) or not walkthrough:
+        finding_count = 0
+        scope_evidence_owners: dict[str, str] = {}
+        for item in scopes:
+            if not isinstance(item, dict):
+                fail("every readability scope must be an object")
+            name = item["name"]
+            if item.get("result") != "pass":
+                fail(f"scope {name} result must be pass")
+            evidence_text = nonempty_text(
+                item.get("evidence"), f"scope {name} evidence", 20
+            )
+            normalized_evidence = normalized_visible_text(evidence_text)
+            if normalized_evidence in scope_evidence_owners:
                 fail(
-                    "public R code walkthrough is required when public_r changed; "
-                    "comments-only review cannot pass"
+                    f"readability scopes {scope_evidence_owners[normalized_evidence]} "
+                    f"and {name} reuse the same evidence"
                 )
-            for index, block in enumerate(walkthrough, start=1):
-                if not isinstance(block, dict):
-                    fail(f"public R code walkthrough block {index} must be an object")
-                for field in (
-                    "location",
-                    "input",
-                    "action",
-                    "output",
-                    "plain_paraphrase",
-                ):
-                    nonempty_text(
-                        block.get(field),
-                        f"public R code walkthrough block {index} {field}",
-                        5,
-                    )
-                if block.get("result") != "pass":
+            scope_evidence_owners[normalized_evidence] = name
+            findings = item.get("findings")
+            if not isinstance(findings, list):
+                fail(f"scope {name} findings must be a list")
+            for index, finding in enumerate(findings, start=1):
+                if not isinstance(finding, dict):
+                    fail(f"scope {name} finding {index} must be an object")
+                nonempty_text(finding.get("location"), f"{name} finding {index} location")
+                nonempty_text(finding.get("problem"), f"{name} finding {index} problem")
+                nonempty_text(
+                    finding.get("resolution"), f"{name} finding {index} resolution"
+                )
+                finding_count += 1
+
+            if (
+                name == "public_r_comments"
+                and "public_r" in current_impact["changed_dimensions"]
+            ):
+                walkthrough = item.get("code_walkthrough")
+                if not isinstance(walkthrough, list) or not walkthrough:
                     fail(
-                        f"public R code walkthrough block {index} result must be pass"
+                        "public R code walkthrough is required when public_r changed; "
+                        "comments-only review cannot pass"
                     )
+                for index, block in enumerate(walkthrough, start=1):
+                    if not isinstance(block, dict):
+                        fail(f"public R code walkthrough block {index} must be an object")
+                    for field in (
+                        "location",
+                        "input",
+                        "action",
+                        "output",
+                        "plain_paraphrase",
+                    ):
+                        nonempty_text(
+                            block.get(field),
+                            f"public R code walkthrough block {index} {field}",
+                            5,
+                        )
+                    if block.get("result") != "pass":
+                        fail(
+                            f"public R code walkthrough block {index} result must be pass"
+                        )
+
 
     unresolved = audit.get("unresolved_issues")
     if not isinstance(unresolved, list):

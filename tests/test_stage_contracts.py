@@ -75,7 +75,7 @@ def main():
         note.write_text("Changed", encoding="utf-8")
         rejects(lambda: review.validate_result_check(formal, process, artifacts), "已变化")
 
-        questionnaire = read_questionnaire_copy((ROOT / "templates/questionnaire-copy.md").read_text(encoding="utf-8").split("## 原始问卷", 1)[1])
+        questionnaire = read_questionnaire_copy((ROOT / "tests/fixtures/writing-inputs/questionnaire-copy.md").read_text(encoding="utf-8").split("## 原始问卷", 1)[1])
         content = {"summary": "summary", "criteria": {}, "insight": "", "references": "ref", "questionnaire": questionnaire}
         assert compare_content(content, copy.deepcopy(content))["ok"]
         changed = copy.deepcopy(content)

@@ -31,9 +31,9 @@ check_public_raw_reads <- function(lines) {
     values <- as.list(classes)[-1]
     ids <- names(values)
     if (!length(values) || is.null(ids) || anyDuplicated(ids) ||
-        any(!ids %in% c("id", "householdid", "communityid")) ||
+        any(!ids %in% c("id", "householdid", "communityid", "HHID", "PN")) ||
         !all(vapply(values, identical, logical(1), "character"))) {
-      stop("Only id, householdid and communityid may be preserved as character")
+      stop("Only id, householdid, communityid, HHID and PN may be preserved as character")
     }
   }
   invisible(TRUE)

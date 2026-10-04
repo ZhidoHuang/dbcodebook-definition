@@ -140,6 +140,17 @@ def build_code(action: dict, mode: str, preflight: dict | None, download_target:
         script = helper + "\n" + action["run_script"]
     else:
         script = action["run_script"]
+    if mode == "download":
+        tracks_click = "dbCodeBookMarkDownloadClickRequested();" in script
+        script = (
+            "let downloadClickRequested = " + ("false" if tracks_click else "true") + ";\n"
+            "const dbCodeBookMarkDownloadClickRequested = () => {downloadClickRequested = true;};\n"
+            "try {\n" + script + "\n} catch (error) {\n"
+            "actionResult = {ok:false, status:downloadClickRequested ? 'DOWNLOAD_SUBMISSION_UNCERTAIN' : 'DOWNLOAD_NOT_CLICKED',\n"
+            "click_requested:downloadClickRequested, operation_completed:true, allow_new_export:false,\n"
+            "next_action:downloadClickRequested ? 'run_watch_command' : 'fix_cause_then_prepare_new_attempt',\n"
+            "attempt_id:" + json.dumps(action["attempt_id"]) + ", message:String(error)};\n}\n"
+        )
     return (
         "async (page) => {\n"
         + "const downloadTarget = " + json.dumps(str(download_target.resolve())) + ";\n"
@@ -278,12 +289,16 @@ def run_sync(session, action, preflight):
         result = {"ok": False, "status": "SUBMISSION_UNCERTAIN" if submitted else "SYNC_FAILED",
                   "error": str(exc), "phase": state["phase"],
                   "browser_elapsed_ms": round((time.monotonic() - started) * 1000),
-                  "recovery_attempted": False, "recovery_confirmed": False}
+                  "recovery_attempted": False, "recovery_confirmed": False,
+                  "recovery_scope": "editor_page_only",
+                  "editor_page_restored": False,
+                  "content_rollback_status": "NOT_VERIFIED"}
         if not submitted and state["phase"] != "prepare":
             result["recovery_attempted"] = True
             try:
                 restored = session.discard(payload["edit_url"])
                 result["recovery_confirmed"] = restored == {"url": payload["edit_url"], "editor": 1}
+                result["editor_page_restored"] = result["recovery_confirmed"]
             except Exception as recovery:
                 result["recovery_error"] = str(recovery)
         return result
@@ -294,7 +309,7 @@ def run_sync(session, action, preflight):
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--action", type=Path)
-    parser.add_argument("--mode", choices=["bind", "tab-code", "taxonomy-options", "login-status", "login-open", "select", "download", "preflight", "sync"], required=True)
+    parser.add_argument("--mode", choices=["bind", "tab-code", "source-read", "taxonomy-options", "login-status", "login-open", "select", "download", "preflight", "sync"], required=True)
     parser.add_argument("--database", choices=["charls", "elsa", "hrs"])
     parser.add_argument("--script", type=Path, help="tab-code: async page function restricted to the bound page")
     parser.add_argument("--tab-index", type=int, help="Observed tab-list index; only used to create a binding")
@@ -308,6 +323,23 @@ def main() -> None:
     config = load_config(args.config)
     command = playwright_command(config)
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    if args.mode == "source-read":
+        from source_read import browser_code
+        from skill_config import database_url
+        if not args.tab_id or not args.database or not args.action:
+            parser.error('source-read requires --tab-id, --database and --action')
+        try:
+            code = browser_code(read_action(args.action), database_url(config, args.database), args.database)
+        except ValueError as exc:
+            parser.error(str(exc))
+        try:
+            payload = Session(args.session, args.session_workdir,
+                              args.out.with_suffix('.browser.js'), config, args.tab_id).code(code)
+        except (RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
+            payload = {'ok': False, 'status': 'READ_INCOMPLETE', 'error': str(exc)}
+        args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+        print(json.dumps(payload, ensure_ascii=False))
+        raise SystemExit(0 if payload.get('ok') else 1)
     if args.mode in {"login-status", "login-open", "select"}:
         from prepare_source_selection import browser_code
         from skill_config import database_url

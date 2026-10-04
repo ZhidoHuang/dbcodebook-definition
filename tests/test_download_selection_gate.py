@@ -73,6 +73,7 @@ def main() -> int:
 
         # Different concepts may depend on the same input; download it once.
         record["source_groups"][1]["raw_variables"].append("raw_a")
+        record["candidate_decisions"].append({"selected_raw": ["raw_a"], "excluded_raw": []})
         record_path.write_text(json.dumps(record), encoding="utf-8")
         result = checker.validate_download_selection(record_path, selection_path, "037")
         assert result["variables"] == 5

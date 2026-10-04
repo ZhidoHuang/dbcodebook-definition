@@ -46,7 +46,20 @@ async (page, action, mode) => {
     await page.locator('#loading-overlay').waitFor({state: 'hidden', timeout: 10000});
     const count = await page.locator('#tag-area .tag').count();
     if (count !== action.aliases.length) return fail('SELECTION_COUNT_MISMATCH', {count});
-    return {ok: true, status: 'SELECTION_READY', count};
+    const selected = await page.locator('#tag-area .tag').evaluateAll(tags => tags.map(tag => ({
+      variable: tag.getAttribute('data-variable'), file: tag.getAttribute('data-file'),
+      alias: tag.getAttribute('data-display'), text: tag.querySelector('.tag-text')?.textContent?.trim()
+    })));
+    const expectedRows = action.input_text.split('\n').map(line => {
+      const [identity, alias] = line.split('=');
+      const match = identity.match(/^([^()\s]+)\s+\((.+)\)$/);
+      return {variable: match[1], file: match[2].trim(), alias};
+    });
+    const key = row => JSON.stringify([row.variable, row.file, row.alias]);
+    if (selected.some(row => !row.variable || !row.file || !row.alias || row.text !== row.alias) ||
+        JSON.stringify(selected.map(key).sort()) !== JSON.stringify(expectedRows.map(key).sort()))
+      return fail('SELECTION_CONTENT_MISMATCH', {expected: expectedRows, selected});
+    return {ok: true, status: 'SELECTION_READY', count, selected};
   } catch (error) {
     return fail('SELECTION_UNCERTAIN', {error: String(error)});
   }

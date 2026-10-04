@@ -31,7 +31,7 @@ assert summary_blocks(fenced) == summary_blocks(indented)
 
 with tempfile.TemporaryDirectory() as temp:
     folder = Path(temp)
-    original = (ROOT / "templates/reader-copy.md").read_text(encoding="utf-8")
+    original = (ROOT / "tests/fixtures/writing-inputs/reader-copy.md").read_text(encoding="utf-8")
     script = folder / "forward.R"
     script.write_text('''
 root <- Sys.getenv("DBCODEBOOK_DEFINITION_SKILL_ROOT")

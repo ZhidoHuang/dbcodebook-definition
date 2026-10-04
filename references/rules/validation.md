@@ -32,7 +32,7 @@
 
 ### 定义变更影响
 
-新主题，或新增、删除、重命名变量、改变对象、周期、问法、组成或缺失处理时，正式R前运行 `check_definition_readability.py init-impact` 并完成 `definition_change_impact.json`。按[填写说明](../../templates/change-impact.md)记录真实变更、题组证据及各成果影响；未受影响部分说明原因，不事后根据成品补写。记录未完成、必要原题未进入文案或定义未决时不得生成。
+新主题，或新增、删除、重命名变量、改变对象、周期、问法、组成或缺失处理时，正式R前运行 `check_definition_readability.py init-impact` 并完成 `definition_change_impact.json`。按[填写说明](../../templates/change-impact.md)记录真实变更范围、题组证据及未决问题，不逐栏评价写作质量，不事后根据成品补写。记录未完成、必要题文未进入文案或定义未决时不得生成。
 
 只改表达时记录实际影响，不写成定义事实变化；方案与R未变则保留原有效R复核，生成前用review-check确认仍适用。首次预检和R复核不等于每次改字都重做。
 
@@ -64,18 +64,18 @@
 - 默认：`GENERATED -> MACHINE_CHECK_PASS -> DELIVERY_CHECK -> PUBLISH_READY -> USER_REVIEW_PENDING -> COMPLETE`。
 - 额外验收：`GENERATED -> MACHINE_CHECK_PASS/BLOCKED -> SENT_FOR_VALIDATION -> VALIDATION_PASS -> DELIVERY_CHECK -> PUBLISH_READY -> USER_REVIEW_PENDING -> COMPLETE`。
 - machine closure登记机器报告及是否需额外验收；无额外验收写independent_validation_required=false，不另建过程卡。
-- MACHINE_CHECK_PASS仅表示机器检查；PUBLISH_READY表示当前成果与真实结论一致且无阻断，可提交；USER_REVIEW_PENDING表示已同步待用户阅读；只有用户确认才为COMPLETE。报告的completed不等于用户已验收，不把这些状态记成同一时点。
+- MACHINE_CHECK_PASS仅表示机器检查；PUBLISH_READY表示当前成果通过规定的机械检查且无阻断，可提交，不代表写作质量通过；USER_REVIEW_PENDING表示已同步待用户阅读；只有用户确认才为COMPLETE。报告的completed不等于用户已验收，不把这些状态记成同一时点。
 
 ## 5. 机器产物与写入入口
 
 | 产物 | 状态或有效性 | 生成/验证命令 | 下游 |
 | --- | --- | --- | --- |
-| definition_change_impact.json | init-impact 创建 DRAFT；完成真实影响判断后填写 CHANGE_IMPACT_PASS，再由 check-impact 验证 | check_definition_readability.py init-impact / check-impact | 正式生成 |
-| result_check.json | ok=true、scope=complete 且绑定当前文件 | check_definition_output.py --complete；默认位于 --process-dir | 成品审核初始化 |
-| readability_audit.json | 各 scope 保存真实判断，填写 FULL_TEXT_READABILITY_PASS 后由 check 验证 | check_definition_readability.py init / check | 当前发布许可 |
+| definition_change_impact.json | init-impact 创建CHANGE_SCOPE_RECORDED；填写实际变更范围与题组依据，再由check-impact验证，不填自评PASS | check_definition_readability.py init-impact / check-impact | 正式生成 |
+| result_check.json | ok=true、scope=complete 且绑定当前文件 | check_definition_output.py --complete；默认位于 --process-dir | 成品交接初始化 |
+| readability_audit.json | 新版由init自动绑定文件为ARTIFACTS_BOUND；check核验机械条件，不填自评PASS | check_definition_readability.py init / check | 当前发布许可 |
 | reader_comprehension_review.json | 仅实际发起时要求完整独立结论 | init-reader 后填写实际结论，再 check | 已发起的读者复核不得忽略 |
 | execution_report.json | running 到 completed / completed_with_issues / failed / stopped | execution_report.py init / stage-start / stage-finish / finish | 执行报告；不代替内容通过 |
 
-命令回执不是文件内状态：init-impact回执CHANGE_IMPACT_DRAFT_CREATED对应文件DRAFT；真实影响判断完成再填CHANGE_IMPACT_PASS并校验。其它记录同样先写依据、发现及未决项，再调用相应检查器，不能只改status。
+变更范围记录实际事实与未决问题；交接绑定由程序生成。两者均不要求写作自评或修改状态来声称合格。历史记录按原版本验证，不改写历史结论。
 
 结果检查失败时可用 `check_definition_readability.py preview --note <完整笔记路径>` 只读定位问题，不生成许可。不提供绕过数据、身份或来源失败的accept-known-issue通道。

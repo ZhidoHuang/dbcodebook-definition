@@ -41,6 +41,16 @@
 
 ## 仓库改动与安装副本
 
+### 迁移哪些文件
+
+优先从Git取得已提交版本，再在目标机配置环境。交付包含`SKILL.md`、`agents/`、`references/`（含全部数据库材料）、`templates/`、`scripts/`、`tests/`、`config.example.json`和Git配置文件。
+
+直接复制或打包工作目录时，同样按上述范围取文件，并排除`config.local.json`、`.playwright-cli/`、`test-results/`、`.idea/`、各层`__pycache__/`、`.pytest_cache/`、`*.pyc`、`*.pyo`、`.Rhistory`、`.RData`及空的`references/literature/`。不要整目录打包；`.gitignore`只控制Git忽略行为，不会替复制工具排除文件。普通文件包不包含`.git/`，版本历史通过Git获取。
+
+目标机保留自己的`config.local.json`；首次安装从`config.example.json`填写本机路径，不复制原机配置、浏览器会话或登录状态。交付前核对文件清单不含上述本机文件，运行`tests/test_portability.py`核对材料清单和引用；目标机再按本页运行环境预检。文件包注明对应提交及未提交改动，不能只标旧提交号。
+
+### 更新已有安装
+
 先检查 Git 状态并保存本地配置和未提交改动，不用 reset/覆盖安装清除现场。修改公共代码后运行 `tests/run_all.ps1 -Config $Config -SkillValidator $Validator`，登记验收矩阵中的实际覆盖和未测边界，再提交可追溯版本。推送、部署按用户授权执行。
 
 安装目录若为 junction/symlink，核实目标即维护仓库，修改已直接生效；独立克隆则在保留本机 config.local.json 后更新到同一提交，再运行本机环境预检。比较 `git rev-parse HEAD`，不要用“文件已复制”替代版本核对。目标机有未提交修改时先合并，不强制覆盖。

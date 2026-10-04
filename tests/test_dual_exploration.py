@@ -73,6 +73,8 @@ with tempfile.TemporaryDirectory() as temp:
     rejects(lambda: validate_exploration(report), "产出已变化")
     (root / "a.md").write_text("Distinct proposal a", encoding="utf-8")
     payload["questionnaire_evidence"][0].update(rendered_in_copy=True, copy_locator="copy/period")
+    payload["questionnaire_display_policy"] = "chinese_v1"
+    payload["questionnaire_evidence"][0]["display"] = {"question_text": "中文题文", "instructions": []}
     path = payload["questionnaire_path_closure"][0]
     path.update(all_observed_paths_mapped=True, structural_missing_explained=True)
     path["branches"][0].update(observed_count=10, unexplained_count=0)

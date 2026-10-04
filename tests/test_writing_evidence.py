@@ -17,7 +17,7 @@ with tempfile.TemporaryDirectory() as temp:
     formal = root / "formal"
     formal.mkdir()
     document = formal / "文案.md"
-    original = (ROOT / "templates/reader-copy.md").read_bytes()
+    original = (ROOT / "tests/fixtures/writing-inputs/reader-copy.md").read_bytes()
     document.write_bytes(original)
     script = ROOT / "scripts/execution_report.py"
 

@@ -10,7 +10,7 @@
 ./scripts/run_r_definition.ps1 -WorkDir $Formal -Script $RFile -LogPrefix $LogPrefix -ProcessDir $Process -Config $Config -Database $Database -PreflightOnly
 ```
 
-复核绑定稳定R、来源记录、raw_codebook、探索记录和必要证据；失败由原角色复核受影响修改，不再另派来源逻辑审核。正式运行前确认结论仍有效，运行自带检查，不再重复单跑预检。仅文案变化沿用未变R的有效结论；未完成独立复核不能以自查替代，可继续不依赖它的准备工作。RStudio全选运行不受runner过程记录检查限制。
+复核绑定稳定R、来源记录、raw_codebook、探索记录和必要证据；失败由原角色复核受影响修改，不再另派来源逻辑审核。正式运行前确认结论仍有效，运行自带检查，不再重复单跑预检。仅文案变化沿用未变R的有效结论；未完成独立复核不能以自查替代，可继续不依赖它的准备工作。公开R可由读者在RStudio全选运行，无需runner的过程记录；本流程正式运行前仍须完成上述独立复核。
 
 正式runner将实际脚本、来源记录和raw_codebook与复核绑定输入核对；审核了另一个文件不能放行本次运行。公开代码未变时，后台或文案修改仍可沿用有效复核。
 
@@ -21,6 +21,8 @@
 唯一 `# 输出` 之前为公开代码：环境、读取、必要依据展示、重编码、跨期合并、变量构造，以及map、add_mapping、字典和四份工作簿写出。之后为后台QA、标签扫描、哈希/覆盖检查、HTML、detail、笔记和可视化。不能把计算移到后台规避复核。
 
 每个分析变量通过 `add_mapping()` 登记全部参与定义的原始来源，由mapping生成codebook的original_vars、processed_vars及count，不直接手填。CHARLS保留模块身份，ELSA保留完整Variable (File)身份；来源别名不在R中修补。
+
+前置跳题补值按已定方案先识别完整路径，再给对应结果赋值；判定所用的前置变量也登记到mapping。多题共同决定的条件不能因忽略缺项而误判成立；不把不适用、普通未答或无法确认路径的空白一起补0。有效直接回答与前置路径冲突时，按方案已定处理，不静默覆盖。实现测试覆盖满足补值条件、条件不满足、前置题缺项及适用时期之外；有不适用或回答冲突的分支时一并覆盖。
 
 固定函数名、对象名和章节标记属于接口，不为改善措辞改名；在相邻注释解释含义。显示及后台生成接口见[成果生成](05-generate.md)。
 
@@ -49,7 +51,7 @@ data <- dt
 data[data == ""] <- NA
 ```
 
-- 正式公开 R 直接使用 `read.csv("raw_data.csv")` 和 `read.csv("raw_codebook.csv")`。若 `id`、`householdid` 或 `communityid` 的实际值含前导 0，可只为这些身份列追加 `colClasses = c(... = "character")`，并在读取前用一句注释说明目的；不追加 `fileEncoding`、`encoding`、`na.strings`、`col.names` 或 `check.names = FALSE`。
+- 正式公开 R 直接使用 `read.csv("raw_data.csv")` 和 `read.csv("raw_codebook.csv")`。若 `id`、`householdid` 或 `communityid` 的实际值含前导 0，可只为这些身份列追加 `colClasses = c(... = "character")`，并在读取前用一句注释说明目的；Full HRS的 `HHID` 和 `PN` 按字符型读取，也属于允许指定 `colClasses` 的身份列，在读取时保留前导0，不在读成数值后补救。不追加 `fileEncoding`、`encoding`、`na.strings`、`col.names` 或 `check.names = FALSE`。
 
 预检按 R 语法解析这两个读取赋值，空格、换行、引号样式及身份列顺序不影响结果；不要求为通过检查改成某个单行字符串。真正改变读取文件、额外参数或非身份列类型仍会被拒绝。
 - 不用 `names(dt)[1] <- "ID"`、`names(name_z)[1] <- "Easy.label"` 或按列位置重命名修补导出问题。来源别名必须已经按 [来源别名](02-download.md#12-来源别名必须在下载前确定) 在下载前确定，并由正式 raw 和 codebook 原样带入。
@@ -134,8 +136,9 @@ table(data$var, useNA = "ifany")
 
 ### yyds_coalesce： `yyds_coalesce()`
 
-- 来源别名和合并资格必须已经按 [来源别名](02-download.md#12-来源别名必须在下载前确定) 在下载前确定。`yyds_coalesce()` 只负责把已经确认属于同一研究概念、编码一致且调查时期互补的来源合并起来，不负责现场判断来源能否合并。
-- 列顺序就是合并优先级，调用前必须确认。保留原始列与否由 mapping、来源卡和重叠核对需要决定。
+- 来源别名和合并资格必须已经按 [来源别名](02-download.md#12-来源别名必须在下载前确定) 在下载前确定。合并时，各来源必须使用相同编码表达相同含义。原始编码不同时，按探索阶段确定的对应关系重编码后，再调用 `yyds_coalesce()`；仅把编码改成相同数字，不代表来源可以合并。
+- 函数按 `pattern` 和 `key_chr` 匹配列名，把去掉指定前缀或后缀等标记后同名的列分组，逐行取第一个非NA值；全部为NA时结果仍为NA。优先级按 `data` 中的实际列顺序，不按 `key_chr` 的排列；调用前把各来源列排成方案确定的顺序。多列同时有值时取靠前列，不自动判断冲突或校验合并资格。
+- 默认 `remove_original=TRUE` 会删除参与合并的来源列；仍需用于 mapping、来源卡或重叠核对时，显式设为FALSE。`valid_var` 用于按指定列展示合并前后的非缺失数量，不负责判定能否合并；当前已安装版本省略它会报错，应传入实际分组列，如时期列。
 - 调用处只用一句紧邻注释说明合并资格；各来源周期、优先级和特殊值在实际参与定义的位置说明。
 - 已经确认可以合并的来源，正式 R 直接调用 `yyds_coalesce()`；不得再按年份手写一组 `case_when()` 重做同一件事。
 

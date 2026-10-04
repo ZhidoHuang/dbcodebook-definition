@@ -29,8 +29,8 @@
 
 ### 1.2 来源别名必须在下载前确定
 
-- 先确认来源身份和研究关系，再决定别名。只有题义、编码和适用对象一致，并且在不同调查时期互相补充的直接来源，才使用同一词干和 `_1`、`_2` 等顺序后缀。顺序同时表示正式合并时的优先级，必须在下载前写清。
-- 预载、上一轮回答、代理回答、补充模块、外部派生或其它身份不同的来源使用能说明身份的语义后缀，不混入直接来源的顺序组。不同文件或模块中的同名变量必须设置能够区分来源的唯一别名；当前来源清单中没有重名冲突的变量保留原变量名，不额外添加文件或模块后缀。
+- 先确认来源身份和研究关系，再决定别名。只有题义和适用对象一致、合并时使用相同编码表达相同含义，并且在不同调查时期互相补充的直接来源，才使用同一词干和 `_1`、`_2` 等顺序后缀。原始编码不同时，在来源探索阶段确定能否统一及对应关系，R按方案重编码后再合并。顺序同时表示正式合并时的优先级，必须在下载前写清。
+- 预载、上一轮回答、代理回答、补充模块、外部派生或其它身份不同的来源使用能说明身份的语义后缀，不混入直接来源的顺序组。不同文件或模块中的同名变量必须设置能够区分来源的唯一别名；无需额外区分来源身份、且不受变量族统一命名约束的无重名变量，保留原变量名，不额外添加文件或模块后缀。
 - 按成员编号重复展开的变量按完整变量族处理。只要其中一个成员需要调查时期、模块或来源后缀，整组成员都使用同一后缀；不得只给发生重名的个别成员改名。完整别名模式和编号范围写入 `definition_search_record.json` 的 `alias_families`。
 - 最终别名在 dbCodeBook 页面选择变量时设置。重新下载后的 `raw_data.csv` 和 `raw_codebook.csv` 必须直接带有这些别名；不得下载后修改 CSV 表头，也不得在正式 R 中复制、改名或按列位置制造别名。
 - 正式 raw、codebook、公开 R、mapping 和完整定义链路保留每个来源的完整别名。面向读者的紧凑来源图可以把已经核实属于同一组的重复成员合并成范围标签，但该标签只用于展示，不能反向改变正式来源清单。
@@ -61,27 +61,27 @@ ztooth (health status and functioning)=ztooth
 
 ### 固定选择与别名输入
 
-来源和别名确定后，将网站完整身份与别名按 `Variable (File)=alias` 写入本任务 `source_selection.txt`，每行一项。完整身份来自已完成的来源探索，不从别名猜文件名，也不把旧记录中只有文件名的 `source_identities` 当作完整身份。该文件是批量输入载荷；研究依据仍保存在原来源记录中。
+从主线程已合并的 `READY` 来源记录生成选择清单：每个来源组的 `source_identities` 保存网站完整 `Variable (File)`，与 `raw_variables` 中的最终下载别名逐项对应。同一来源可被多个概念引用，程序按完整身份去重；同一身份出现不同别名、不同身份共用别名或对应项缺失时停止，不替执行者猜测。旧记录只有文件名时，先依据已取得的证据补全身份。
 
 先离线生成动作及下载别名清单，两者来自同一输入，不从网页再抄一份：
 
 ```powershell
-& $Python -X utf8 "$Skill/scripts/prepare_source_selection.py" --config $Config --database $Database --input "$Process/source_selection.txt" --action-file "$Process/selection_action.json" --expect-vars-file "$Process/download_selection.txt"
+& $Python -X utf8 "$Skill/scripts/prepare_source_selection.py" --config $Config --database $Database --record "$Process/definition_search_record.json" --action-file "$Process/selection_action.json" --expect-vars-file "$Process/download_selection.txt"
 & $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --config $Config --mode select --database $Database --action "$Process/selection_action.json" --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out "$Process/selection_result.json"
 ```
 
-固定动作只操作绑定页：检查页面和登录，打开批量输入框，填入完整清单，点击一次确认，读取网站返回的无效项并检查总数量及加载结束。别名由网站原有输入功能设置；不另写 `addTag`、直接请求验证接口或修改页面 DOM 的脚本，不预先清空旧选择，不逐项重复探索已确定的来源。
+固定动作只操作绑定页：检查页面和登录，打开批量输入框，填入完整清单，点击一次确认，核对网站返回的无效项，并确认页面最终已选来源的完整身份、别名及数量与本任务清单一致，且加载已经结束；不能仅凭数量相等认定选择完成。别名由网站原有输入功能设置；不另写 `addTag`、直接请求验证接口或修改页面 DOM 的脚本，不预先清空旧选择，不逐项重复探索已确定的来源。
 
 | 返回 | 处理 |
 | --- | --- |
 | `SELECTION_READY` | 选择完成，继续已有下载步骤；仍须通过原有包内来源核对 |
 | `LOGIN_REQUIRED` | 按共用登录步骤交还用户，登录后再执行选择 |
-| `SOURCE_REJECTED` / `SELECTION_COUNT_MISMATCH` | 不下载；只调查返回的缺项或数量差异，需要修改方案时返回来源探索 |
+| `SOURCE_REJECTED` / `SELECTION_COUNT_MISMATCH` / `SELECTION_CONTENT_MISMATCH` | 不下载；只调查返回的缺项、身份、别名或数量差异，需要修改方案时返回来源探索 |
 | `INPUT_DIALOG_ALREADY_OPEN` | 保留现场，确认是本任务未提交的输入后关闭，再运行固定动作 |
 | `WRONG_PAGE` / 控件变化 / 登录状态未知 | 核实绑定页或页面结构，不换页猜选项 |
 | `SELECTION_UNCERTAIN` / `SESSION_UNAVAILABLE_OR_UNCERTAIN` | 保存结果并检查原页是否仍在处理；未确认结束前不重发。已结束但状态不明时重新按完整清单选择，不触发下载 |
 
-此入口适用于 CHARLS、ELSA、Full HRS 的现有批量输入页面。来源含输入分隔符或页面不再支持此格式时明确报告，不静默删改身份。离线生成成功只证明输入格式成立，不证明来源存在或已登录。
+此入口适用于 CHARLS、ELSA、Full HRS 的现有批量输入页面。已有独立 `Variable (File)=alias` 清单仍可用兼容参数 `--input`，新流程不再另抄一份。来源含输入分隔符或页面不再支持此格式时明确报告，不静默删改身份。离线生成成功只证明输入格式成立，不证明来源存在、已登录或获准下载；原下载准备检查仍须通过。
 
 复用已记录的Chrome/Edge会话和本任务标签页，确认登录、来源清单和最终下载控件。`$Downloads`是执行入口保存动作结果及ZIP的目录，不猜测系统Downloads。新设备与绑定方法见[浏览器会话](../write-boundaries.md#浏览器会话)。
 
@@ -92,7 +92,7 @@ $Action = "$Process/download_action.json"
 & $Python -X utf8 scripts/recover_dbcodebook_export.py --prepare-download $Downloads --snapshot-file "$Process/download_before.json" --action-file $Action --database $Database --base-url $BaseUrl --out $Formal --expect-vars-file "$Process/download_selection.txt"
 ```
 
-2. 同一会话执行一次动作。入口在最终点击前等待下载事件，保存文件并返回实际路径；分派前原子登记尝试，连接丢失不允许重新分派同次付费动作：
+2. 同一会话执行一次动作。入口在最终点击前建立下载事件监听，点击后等待事件、保存文件并返回实际路径；分派前原子登记尝试，连接丢失不允许重新分派同次付费动作：
 
 ```powershell
 & $Python -X utf8 scripts/playwright_session_action.py --config $Config --mode download --action $Action --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $Result
@@ -119,6 +119,8 @@ $Action = "$Process/download_action.json"
 
 仅接受相对快照新增或变化、稳定且完整校验的包；旧包、临时文件及来源不符的包不作结果。分派前认领不能证明已点击，失败需根据原动作结果区分未点击、已提交和文件未取得。
 
+固定入口返回 `DOWNLOAD_NOT_CLICKED` 且 `operation_completed=true`、`click_requested=false` 时，表示本次动作已结束且尚未调用最终下载点击。保留原动作、快照、尝试记录和返回结果，修复原因后，在原有下载授权范围内以新的动作、快照和结果文件名重新运行第1步准备，建立新尝试；不重发原动作，不覆盖旧文件。已经调用点击、已提交或提交状态不明时，按观察、找回及付费重试规则处理；超时、连接中断或未发现文件不证明没有点击。
+
 没有文件时，在原浏览器按本次时间、数据库、来源及别名核对下载记录。已有对应记录且下载环境可用时才使用其找回入口，不重新导出。直接下载链接先建立 `page.waitForEvent("download")` 再点击已核实链接，以 `saveAs` 保存到本次目录，再走同一archive校验。页面显示“已找回”不代表落盘；仍无文件时保留事实，不消耗其它找回机会。
 
 只有确证浏览器关闭或崩溃导致失败时，先用 `tests/probe_browser_download.py --browser msedge --config $Config --out <独立测试目录>`（Chrome用chrome）做免费本地19MB下载测试；它仅关闭自己的临时会话，不访问网站。测试通过只证明测试环境可落盘，不证明生产会话恢复。生产会话确已关闭才用原配置恢复并重新绑定；不凭saveAs错误断言崩溃，不新建登录挤掉其它任务。
@@ -127,17 +129,17 @@ $Action = "$Process/download_action.json"
 
 ## 记录字段的阶段边界
 
-下载后某个实际取值涉及哪些时期，直接从逐期统计提取，再用于探索记录和R注释，不手写另一份时期清单。可运行 `scripts/observed_value_periods.py --raw <raw_data.csv> --variable <原列名> --value <完整原值> --period-column <时期列> --out <过程目录/取值时期.json>`；仅在已确认ID由“时期+分隔符+身份”组成时改传ID列并加 `--id-separator <分隔符>`。这只证明实际出现范围，不能反推问卷施测范围或缺失原因。
+下载后某个实际取值涉及哪些时期，直接从逐期统计提取，再用于探索记录和R注释，不手写另一份时期清单。可运行 `scripts/observed_value_periods.py --raw <raw_data.csv> --variable <raw_data.csv中的实际列名> --value <完整原值> --period-column <时期列> --out <过程目录/取值时期.json>`；仅在已确认ID由“时期+分隔符+身份”组成时改传ID列并加 `--id-separator <分隔符>`。这只证明实际出现范围，不能反推问卷施测范围或缺失原因。
 
 下表右列在各自环节完成：实际人数归下载后数据核实；问卷展示标记归文案完成。不能在下载结束时提前填文案已展示。
 
-| 字段 | 下载前 | 下载后、正式 R 前 |
+| 字段 | 下载前 | 后续要求与完成时点 |
 | --- | --- | --- |
 | status / logic_review.result | READY；clear 或 reported_and_resolved，未决问题不得掩盖 | 继续保留真实结论 |
 | directory_entries / discovery.value | 完整 UI 路径且 verified_in_ui=true；discovery 指向已登记条目 | 保留同一来源身份 |
 | 单期 source_group | handling_decision=single_period | 与实际时期核对 |
-| questionnaire_evidence | 官方完整题文、选项、路径；local_material_path 相对本数据库材料根 | rendered_in_copy=true、copy_locator 指向实际文案 |
-| questionnaire_path_closure | 真实进入/退出条件；未知人数和统计结论用 null | observed_count 为非负整数，unexplained_count=0，实际闭合有依据 |
+| questionnaire_evidence | 官方完整题文、选项、路径；local_material_path 相对本数据库材料根 | 文案完成后：rendered_in_copy=true、copy_locator 指向实际文案 |
+| questionnaire_path_closure | 真实进入/退出条件；未知人数和统计结论用 null | 下载后数据核实、正式 R 前：observed_count 为非负整数，unexplained_count=0，实际闭合有依据 |
 | human_record / evidence_steps | 探索记录存在同号 S001 等步骤标题 | 沿用可追溯步骤，不为过检查编造观察 |
 
 跨期复用同一 raw 列但题义变化时，按研究概念登记来源组，在各组列出准确单期与路由；组间可以共享该 raw，下载清单只保留一次。不能把不同题义合并成一个定义，也不在下载后复制列以绕过去重。

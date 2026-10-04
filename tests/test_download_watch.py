@@ -159,6 +159,10 @@ with tempfile.TemporaryDirectory() as temp:
     from execution_report import REVIEW_POLICY
     (source_path.parent / "execution_report.json").write_text(
         json.dumps({"review_policy": REVIEW_POLICY}), encoding="utf-8")
+    old_snapshot = prepare_snapshot
+    old_bytes = old_snapshot.read_bytes()
+    prepare_snapshot = work / "execution-first.json"
+    prepare_args[prepare_args.index('--snapshot-file') + 1] = str(prepare_snapshot)
     execution_first = subprocess.run(prepare_args + ["--overwrite"], capture_output=True,
                                     text=True, encoding="utf-8", env={**os.environ, "PYTHONUTF8": "1"})
     assert execution_first.returncode == 0, execution_first.stderr
@@ -186,10 +190,17 @@ with tempfile.TemporaryDirectory() as temp:
     prepared = json.loads(prepared_run.stdout)
     # The preferred handoff writes the payload directly, without model copying.
     action_file = work / "action.json"
+    previous_snapshot = prepare_snapshot
+    previous_bytes = previous_snapshot.read_bytes()
+    prepare_snapshot = work / "compact.json"
+    prepare_args[prepare_args.index('--snapshot-file') + 1] = str(prepare_snapshot)
     compact = subprocess.run(prepare_args + ["--overwrite", "--action-file", str(action_file)],
                              capture_output=True, text=True, encoding="utf-8",
                              env={**os.environ, "PYTHONUTF8": "1"})
     assert compact.returncode == 0, compact.stdout + compact.stderr
+    assert old_snapshot.read_bytes() == old_bytes
+    assert previous_snapshot.read_bytes() == previous_bytes
+    assert json.loads(previous_bytes)['attempt_id'] != json.loads(prepare_snapshot.read_bytes())['attempt_id']
     receipt = json.loads(compact.stdout)
     payload = json.loads(action_file.read_text(encoding="utf-8"))
     assert "browser_action" not in receipt and "run_script" not in compact.stdout
@@ -197,6 +208,8 @@ with tempfile.TemporaryDirectory() as temp:
     before = prepare_snapshot.read_bytes()
     repeated = subprocess.run(prepare_args + ["--overwrite", "--action-file", str(action_file)], capture_output=True)
     assert repeated.returncode != 0 and before == prepare_snapshot.read_bytes()
+    snapshot_reuse = subprocess.run(prepare_args + ['--overwrite'], capture_output=True)
+    assert snapshot_reuse.returncode != 0 and prepare_snapshot.read_bytes() == before
     prepared = payload
     assert prepared["next_action"] == "run_browser_action_once"
     browser_action = prepared["browser_action"]

@@ -125,6 +125,7 @@ async function triggerDbCodeBookExport(
   const downloadPromise = tab.playwright.waitForEvent("download", {{ timeoutMs: 30000 }});
   let clickWarning = "";
   try {{
+    if (typeof dbCodeBookMarkDownloadClickRequested === "function") dbCodeBookMarkDownloadClickRequested();
     await finalButton.click({{ timeoutMs: 10000 }});
   }} catch (error) {{
     clickWarning = String(error);
@@ -450,6 +451,8 @@ def prepare_download(args: argparse.Namespace) -> dict:
     if report.get("review_policy") != REVIEW_POLICY:
         validate_stage_review(report, "定义逻辑复核")
     check_output_replacement(args.out, args.overwrite)
+    if args.snapshot_file.exists():
+        raise ValueError("Snapshot file must be new; preserve the previous attempt and use a new snapshot filename.")
     snapshot = download_snapshot(args.prepare_download)
     snapshot["expected_vars"] = expected
     attempt_id = str(uuid.uuid4())

@@ -46,7 +46,7 @@ Before substantive production or shared-tool modification, start the existing [e
 
 ## Global Boundaries
 
-Execution owns completeness and readability. Do not create reviewers for each stage or writing requirement. Research uses two independent explorations followed by the primary agent’s evidence-based merge. A full topic retains one independent R implementation review against that settled plan after the stable R draft. Ordinary-reader review is optional for a specific unresolved readability concern or an explicit user request. Preserve deterministic checks and truthful evidence; self-check is not independent review.
+Execution owns completeness and readability. Do not create reviewers for each stage or writing requirement. Research uses two independent explorations followed by the primary agent’s evidence-based merge. A full topic retains one independent R implementation review against that settled plan after the stable R draft. Ordinary-reader review is optional for a specific unresolved readability concern or an explicit user request. Do not require a fixed writing self-review, per-section PASS statements, or an author reading declaration. Preserve deterministic checks, independent R implementation review, and truthful evidence.
 
 - Clear rules are requirements, not invitations to redesign. If any rule is unclear, conflicts with another, or appears to require a departure, report the exact uncertainty and impact before changing it. This applies to all rules, not only source mapping.
 - Keep authorized scope: no unrelated topics, website source changes, account changes, or promotional assets. Detailed write boundaries are in [write-boundaries.md](references/rules/write-boundaries.md).

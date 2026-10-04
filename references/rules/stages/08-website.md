@@ -14,6 +14,11 @@
 
 ```powershell
 & $Python scripts/execution_report.py website-prepare --process-dir $Process --database $Database --topic-id $Topic --topic-name $TopicName
+```
+
+在准备阶段完成登录核对、[当前标签选项读取与选择](#下拉选项与填写)，再生成预检载荷。标签的语义判断和选择计划均在准备计时内完成；两次verify-ready使用同一份确定的选择，按下文传入标签参数或taxonomy-plan。
+
+```powershell
 & $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl --website-title $WebsiteTitle | Set-Content -Encoding utf8 $Preflight
 ```
 
@@ -25,18 +30,18 @@
 
 ### 2. 执行同步
 
-本地与浏览器预检均通过后，启动提交计时，并立即执行固定入口：
+本地与浏览器预检均通过后，启动提交计时，并立即执行固定入口，不再补查或改选标签：
 
 ```powershell
 & $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --start-sync --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl --website-title $WebsiteTitle | Set-Content -Encoding utf8 $Action
 & $Python -X utf8 scripts/playwright_session_action.py --config $Config --mode sync --action $Action --preflight $Preflight --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $SyncResult
 ```
 
-沿用同份预检、会话和标签，程序校验helper哈希及尝试身份。`--start-sync`自动结束准备并开始提交；缺准备计时或启动后超过60秒才分派会被拒绝。不手工建阶段、不重置计时，也不直接运行旧run_script。固定入口不适用时停止报告，另修工具，不临场拼调用或改走粘贴。
+沿用同份预检、会话和标签，程序校验helper哈希及尝试身份。`--start-sync`自动结束准备并开始提交；缺准备计时会被拒绝。分派有效期为启动后60秒，以首次进入固定浏览器动作为准；固定同步执行从程序开始执行起另有60秒运行限时，两者分别计时。不手工建阶段、不重置计时，也不直接运行旧run_script。固定入口不适用时停止报告，另修工具，不临场拼调用或改走粘贴。
 
 ### 3. 导入结果与收口
 
-仅成功时执行：
+仅同步成功且不存在未解决问题时执行。下方completed仅用于本次没有问题记录的成功情况；本次存在已解决问题时改用completed_with_issues。失败或提交结果不明时，不执行成功收口：
 
 ```powershell
 & $Python scripts/execution_report.py website-finish --process-dir $Process --result $SyncResult
@@ -79,10 +84,12 @@
 | 状态 | 处理 |
 | --- | --- |
 | 预检失败、未确认文章身份 | 停止写入，报告具体问题；不自动清除身份不明的草稿 |
-| 已进入确认的编辑页、尚未提交时失败 | 固定程序恢复本任务编辑页；记录是否尝试、是否确认恢复，未确认不能写恢复成功 |
-| 提交已开始但响应不明 | 保留SUBMISSION_UNCERTAIN；不重载、不丢弃、不自动再次提交，先核对同次结果 |
+| 已进入确认的编辑页、尚未提交时失败 | 固定程序重新打开本任务原编辑地址，只确认URL及编辑器存在；这不证明正文和附件已回滚。记录页面恢复是否尝试、是否确认，以及内容回滚未验证；恢复不包含再次提交 |
+| 提交已开始但响应不明 | 保留SUBMISSION_UNCERTAIN；不重载、不丢弃、不自动再次提交。先核对本次动作已经返回的结果及现有记录，不因此新增浏览器操作；需要核实网页保存状态时，按下段用户授权条件执行 |
 | 明确失败结束 | 保留失败证据；新一次同步须有用户指令，不循环重连或消耗尝试 |
+
+失败结果中的 `editor_page_restored` 只表示编辑页恢复，`content_rollback_status=NOT_VERIFIED` 表示正文和附件回滚未验证；兼容字段 `recovery_confirmed` 与前者同义。页面恢复、内容回滚与同步成功分别判断，不能相互代替。
 
 用户授权核对不确定提交时，只读检查同次返回文章的身份、已保存正文和实际附件，另存确认依据；保留原始失败结果，不补造成功回执，也不通过重新发布来确认旧提交。
 
-文件为空、格式或读取失败、正文/附件不完整、连接中断和标签失效均不能带病提交。固定动作有60秒运行限时；耗时目标不能代替成功检查，也不能因超时在可能已提交后重新操作。人工点击没有系统弹窗不是绑定入口失败的判据。禁止坐标猜测、另写上传器、切换共享当前页、临时API探索和绕过固定程序。
+文件为空、格式或读取失败、正文/附件不完整、连接中断和标签失效均不能带病提交。固定动作有上述独立的60秒运行限时；提交前失败后的页面恢复另行执行，不受这60秒截止时间约束，整个失败处理可能超过60秒。耗时目标不能代替成功检查，也不能因超时在可能已提交后重新操作。人工点击没有系统弹窗不是绑定入口失败的判据。禁止坐标猜测、另写上传器、切换共享当前页、临时API探索和绕过固定程序。

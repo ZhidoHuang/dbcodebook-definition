@@ -4,7 +4,7 @@
 
 适用范围：通过 dbCodeBook 为 CHARLS 检索、裁决和定义分析变量，并生成正式数据、字典、QA、HTML、笔记和日志。
 
-跨数据库代码与用户材料统一遵守 [common-materials.md](../../rules/common-materials.md)。本流程只补充 CHARLS 的探索、年份、来源身份、特殊编码和执行边界，不维护第二套通用规则。
+跨数据库要求直接读取当前环节：[选择与下载](../../rules/stages/02-download.md)、[文案](../../rules/stages/03-copy.md)、[公开R](../../rules/stages/04-public-r.md)、[成果生成](../../rules/stages/05-generate.md)。本流程只补充 CHARLS 的探索、年份、来源身份、特殊编码和执行边界，不维护第二套通用规则。
 
 正式源：本文件是 Skill 仓库中的 CHARLS 工作流；数据库稳定事实见 [profile.md](profile.md)。
 
@@ -97,7 +97,7 @@ dbCodeBook 仍是变量发现入口。本地官方材料用于候选发现后的
 
 已有主题保持用户已经核对的历史边界，不补写虚构探索史，也不事后伪造旧版检索记录。新主题及实质改动问卷范围、原题、选项或跳题呈现的既有主题，从第一次网页探索或本轮重新核对开始，同时建立 `探索记录.md` 和 schema v7 `definition_search_record.json`，分别使用 [exploration-record.md](../../../templates/exploration-record.md) 和 [definition-search-record.json](../../../templates/definition-search-record.json)。
 
-`探索记录.md` 是直接给用户和后续复查者阅读的真实过程记录。每一步都用大白话同步写明“做了什么 → 看到了什么 → 这说明什么 → 下一步为什么这样走”，并使用 `S001`、`S002`……连续编号。它不是探索结束后的摘要，不得根据 JSON、最终 raw、正式 R 或成品笔记事后生成。
+`探索记录.md` 的内容、证据引用和写法按[第1步](../../rules/stages/01-source-plan.md#怎样保存方案)及上述模板执行，使用 `S001`、`S002`……与JSON同号对应。不得根据最终 raw、正式 R 或成品笔记事后生成探索过程。
 
 `definition_search_record.json` 是同一次探索的结构化机器记录。它不高于、不替代大白话记录，也不能作为事后生成大白话记录的事实源：
 

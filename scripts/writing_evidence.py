@@ -24,7 +24,7 @@ def skill_version(root=ROOT):
     for folder in ("scripts", "templates", "references/rules", "references/databases"):
         candidates.extend(p for p in (root / folder).rglob("*")
                           if p.is_file() and p.suffix.lower() in {".py", ".r", ".ps1", ".js", ".md", ".json"}
-                          and "official-materials" not in p.parts and "__pycache__" not in p.parts)
+                          and "__pycache__" not in p.parts)
     files = {p.relative_to(root).as_posix(): digest(p.read_bytes()) for p in sorted(set(candidates)) if p.is_file()}
     return {"id": digest(files), "files": files}
 
@@ -83,7 +83,7 @@ def scope_bindings(formal_dir, process_dir, artifacts):
     common = {"source": digest(source.read_bytes()) if source.is_file() else None,
               "artifacts": {k: v["sha256"] for k, v in artifacts.items() if k != "note"},
               "writing_rules": {name: digest((ROOT / name).read_bytes()) for name in (
-                  "references/rules/stages/03-copy.md", "references/rules/copy-examples.md", "templates/reader-copy.md")}}
+                  "references/rules/stages/03-copy.md", "templates/reader-copy.md")}}
     title = path.read_text(encoding="utf-8-sig").splitlines()[0]
     note_path = artifacts.get("note", {}).get("path")
     note_title = None

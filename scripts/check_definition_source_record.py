@@ -49,9 +49,11 @@ QUESTION_SKIP_STATUSES = {"recorded", "none"}
 QUESTION_COVERAGE_STATUSES = {"questionnaire", "not_applicable"}
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 LOCAL_EVIDENCE_ROOTS = {
-    "CHARLS": SKILL_ROOT / "references" / "source-materials" / "charls",
-    "ELSA": SKILL_ROOT / "references" / "databases" / "elsa" / "official-materials",
-    "HRS": SKILL_ROOT / "references" / "source-materials" / "hrs",
+    database.upper(): SKILL_ROOT / route["source_materials"]
+    for database, route in json.loads(
+        (SKILL_ROOT / "references" / "database-routing.json").read_text(encoding="utf-8-sig")
+    )["databases"].items()
+    if route.get("source_materials")
 }
 CANDIDATE_DECISIONS = {"include", "exclude", "partial"}
 SOURCE_HANDLING_DECISIONS = {"merge", "keep_separate", "single_period"}
@@ -792,12 +794,13 @@ def validate_download_selection(
             values = item.get("selected_raw")
             if not isinstance(values, list):
                 fail(f"candidate_decisions[{index}].selected_raw must be a list")
+            if len(values) != len(set(values)):
+                fail(f"candidate_decisions[{index}] repeats a raw variable within one concept")
             decided_selected.extend(
                 nonempty_text(value, f"candidate_decisions[{index}].selected_raw")
                 for value in values
             )
-        if len(decided_selected) != len(set(decided_selected)):
-            fail("candidate_decisions select duplicate raw variables")
+        # Different concepts may use the same source. The download list remains unique.
         missing_decision = sorted(set(selected) - set(decided_selected))
         extra_decision = sorted(set(decided_selected) - set(selected))
         if missing_decision or extra_decision:
@@ -1212,6 +1215,8 @@ def validate_record(
             excluded = [
                 nonempty_text(value, "excluded candidate raw") for value in excluded
             ]
+            if len(selected) != len(set(selected)) or len(excluded) != len(set(excluded)):
+                fail(f"candidate_decisions[{index}] repeats a raw variable within one concept")
             if decision == "include" and not selected:
                 fail(f"candidate_decisions[{index}] include decision selects no raw")
             if decision == "exclude" and selected:
@@ -1227,8 +1232,7 @@ def validate_record(
                     f"candidate_decisions[{index}] references an unknown exploration step"
                 )
             selected_candidates.extend(selected)
-        if len(selected_candidates) != len(set(selected_candidates)):
-            fail("candidate_decisions select duplicate raw variables")
+        # Check the union, not exclusive ownership of a source by one concept.
         if not set(raw_vars).issubset(selected_candidates) or not set(
             selected_candidates
         ).issubset(set(raw_vars) | exported_identity_vars):

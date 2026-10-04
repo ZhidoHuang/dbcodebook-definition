@@ -63,6 +63,8 @@ def complete_impact(checker, formal: Path, process: Path) -> None:
     )
     impact_path = process / checker.IMPACT_NAME
     impact = checker.json.loads(impact_path.read_text(encoding="utf-8"))
+    impact["schema_version"] = 2
+    impact["surfaces"] = [{"name": n, "label": label} for n, label in checker.REQUIRED_IMPACT_SURFACES]
     impact["status"] = checker.IMPACT_PASS_STATUS
     impact["reviewed_at"] = "2026-08-12T03:00:00+08:00"
     impact["reviewer"] = "definition change reviewer"
@@ -108,7 +110,16 @@ def initialize_fixture_audit(checker, formal, process, topic, files, **kwargs):
         "source_sha256": checker.sha256_file(source),
         "checker_sha256": checker.sha256_file(REPO_ROOT / "scripts/check_definition_output.py"),
     })
-    return checker.initialize_audit(formal, process, topic, files, **kwargs)
+    result = checker.initialize_audit(formal, process, topic, files, **kwargs)
+    audit_path = process / checker.AUDIT_NAME
+    audit = json.loads(audit_path.read_text(encoding="utf-8"))
+    audit.update(schema_version=6, status="DRAFT", reviewer="", review_scope="", unresolved_issues=[], scopes=[
+        {"name": name, "label": label, "result": "pending", "evidence": "", "findings": [],
+         **({"code_walkthrough": []} if name == "public_r_comments" else {})}
+        for name, label in checker.REQUIRED_SCOPES
+    ])
+    checker.write_json(audit_path, audit)
+    return result
 
 
 def complete_audit(checker, audit_path: Path) -> None:
@@ -936,6 +947,8 @@ async function run(initial, previousResult, changes = {}) {
         bad_impact = checker.json.loads(
             bad_impact_path.read_text(encoding="utf-8")
         )
+        bad_impact["schema_version"] = 2
+        bad_impact["surfaces"] = [{"name": n, "label": label} for n, label in checker.REQUIRED_IMPACT_SURFACES]
         bad_impact["status"] = checker.IMPACT_PASS_STATUS
         bad_impact["reviewed_at"] = "2026-08-12T05:00:00+08:00"
         bad_impact["reviewer"] = "definition change reviewer"

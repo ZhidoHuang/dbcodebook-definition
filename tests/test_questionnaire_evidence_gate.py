@@ -291,6 +291,7 @@ def main() -> int:
         assert checker.validate_download_selection(record_path, selection_path, "001")["ok"]
 
         shared = copy.deepcopy(download_record)
+        shared["candidate_decisions"].append({**copy.deepcopy(shared["candidate_decisions"][0]), "concept": "shared_work_source"})
         shared["source_groups"].append({**copy.deepcopy(shared["source_groups"][0]), "concept": "shared_work_source"})
         for question in download_record["questionnaire_evidence"]:
             shared["questionnaire_evidence"].append({**copy.deepcopy(question),
@@ -301,6 +302,16 @@ def main() -> int:
                 "evidence_ids": [value + "_shared" for value in coverage.get("evidence_ids", [])]})
         record_path.write_text(json.dumps(shared), encoding="utf-8")
         assert checker.validate_download_selection(record_path, selection_path, "001")["variables"] == 2
+
+        duplicate = copy.deepcopy(shared)
+        duplicate["candidate_decisions"][0]["selected_raw"] *= 2
+        record_path.write_text(json.dumps(duplicate), encoding="utf-8")
+        try:
+            checker.validate_download_selection(record_path, selection_path, "001")
+        except ValueError as error:
+            assert "within one concept" in str(error)
+        else:
+            raise AssertionError("Within-concept duplicates were accepted")
 
         invalid_action = copy.deepcopy(download_record)
         invalid_action["exploration_log"][0]["action"] = "normal_search_and_detail"

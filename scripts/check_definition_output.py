@@ -559,11 +559,11 @@ def check_summary_prose(note_text: str, results: list[dict]) -> None:
         body_text = visible_text(body)
         has_period_note = 'data-summary-period-note="true"' in body
         if period_index == 0:
-            expected_titles = {"问卷设计", "构建数据库"}
+            expected_titles = {"问卷设计", "问卷设计变化", "构建数据库"}
         elif period_style == "constructed":
             expected_titles = {"构建数据库变化"}
         else:
-            expected_titles = {"问卷设计"}
+            expected_titles = {"问卷设计", "问卷设计变化"}
         title_match = re.search(
             r'(?s)<[^>]*data-summary-period-note-title="true"[^>]*>(.*?)</[^>]+>',
             body,
@@ -571,7 +571,7 @@ def check_summary_prose(note_text: str, results: list[dict]) -> None:
         actual_title = visible_text(title_match.group(1)) if title_match else ""
         if period_index == 0 and actual_title == "构建数据库":
             period_style = "constructed"
-        elif period_index == 0 and actual_title == "问卷设计":
+        elif period_index == 0 and actual_title in {"问卷设计", "问卷设计变化"}:
             period_style = "questionnaire"
         if not has_period_note or actual_title not in expected_titles or len(body_text) < 80:
             period_issues.append(html.unescape(label))

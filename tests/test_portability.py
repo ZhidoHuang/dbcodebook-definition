@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 
@@ -20,6 +21,18 @@ def main() -> int:
     assert module.validate_manifest()["source_materials"] >= 22
     assert module.validate_portability()["text_files"] > 20
     assert module.validate_markdown_links()["markdown_links"] >= 20
+    source_spec = importlib.util.spec_from_file_location(
+        "source_checker", REPO_ROOT / "scripts" / "check_definition_source_record.py")
+    source_module = importlib.util.module_from_spec(source_spec)
+    source_spec.loader.exec_module(source_module)
+    config = json.loads((REPO_ROOT / "references/database-routing.json").read_text(encoding="utf-8-sig"))
+    for database, route in config["databases"].items():
+        assert source_module.LOCAL_EVIDENCE_ROOTS[database.upper()] == REPO_ROOT / route["source_materials"]
+    elsa = source_module.LOCAL_EVIDENCE_ROOTS["ELSA"]
+    assert elsa == REPO_ROOT / "references/source-materials/elsa"
+    assert (elsa / "材料索引.md").is_file()
+    assert not (REPO_ROOT / "references/databases/elsa/official-materials").exists()
+    assert not (REPO_ROOT / "references/rules/copy-examples.md").exists()
     print("skill portability fixtures PASS")
     return 0
 

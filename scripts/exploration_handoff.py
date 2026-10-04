@@ -15,10 +15,10 @@ ROLES = {"a": "独立探索 A", "b": "独立探索 B"}
 def plan_hash(path):
     data = json.loads(Path(path).read_text(encoding="utf-8-sig"))
     # Execution observations and copy locations are added after the source plan.
-    for key in ("status", "logic_review", "exploration_log", "searched_at"):
+    for key in ("status", "logic_review", "exploration_log", "searched_at", "questionnaire_display_policy"):
         data.pop(key, None)
     for item in data.get("questionnaire_evidence", []):
-        for key in ("rendered_in_copy", "copy_locator"):
+        for key in ("rendered_in_copy", "copy_locator", "display"):
             item.pop(key, None)
     for item in data.get("questionnaire_path_closure", []):
         for key in ("observed_count", "unexplained_count", "closed", "all_observed_paths_mapped", "structural_missing_explained"):
