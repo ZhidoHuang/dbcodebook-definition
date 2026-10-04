@@ -702,3 +702,5 @@
 2026-10-05 公开R易读规则及ADL迁移：优先逐项构造，避免为少量变量引入矩阵与动态命名；保留单用途标签函数。ADL全量96137行新旧结果、类型、缺失及分析字典一致（正式过程目录readable_r_equivalence.json），独立角色267组合成边界通过。Skill结构校验通过。此为当前ADL实现验证，不代表其它主题或新模型首稿通过。
 
 2026-10-05 GitHub发布前回归：tests/run_all.ps1含官方SkillValidator全套通过。首次运行时，runner最小配置测试误用Windows商店Python占位入口，在来源检查前退出；将本次测试进程PATH指向已配置Python后全套通过，未改业务程序。日志存于正式ADL过程目录github_release_tests_20261005.log。本次发布不新增首稿质量或其它数据库验收结论。
+
+2026-10-05 右侧汇合关系树：03-copy说明按显示宽度对齐，reader-copy补词语回忆汇合实例。网站实际DOM测量发现原中间连接点偏左14.4px；增加两个半角空格后，三个连接点横坐标均301.6px。只修原文与示例，未改网站或渲染器。完整tests/run_all.ps1含SkillValidator通过，日志及tree_alignment_preview.json保存在ELSA/006_Word_Recall过程目录；本次只证明当前渲染环境对齐，不外推所有字体。
