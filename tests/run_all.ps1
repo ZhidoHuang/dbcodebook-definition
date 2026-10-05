@@ -73,6 +73,8 @@ if (-not [string]::IsNullOrWhiteSpace($rscript)) {
     if ($LASTEXITCODE -ne 0) { throw "test_share_renderer.R failed." }
     & $rscript --vanilla --encoding=UTF-8 'tests/test_knhanes_renderer.R'
     if ($LASTEXITCODE -ne 0) { throw "test_knhanes_renderer.R failed." }
+    & $rscript --vanilla --encoding=UTF-8 'tests/test_chns_renderer.R'
+    if ($LASTEXITCODE -ne 0) { throw "test_chns_renderer.R failed." }
   } finally { Pop-Location }
 } else {
   Write-Output "R_TESTS_SKIP: Rscript is not configured or on PATH"

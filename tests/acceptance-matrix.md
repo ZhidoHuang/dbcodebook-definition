@@ -778,3 +778,11 @@
 2026-10-05 原文章与编辑编号分离：verify-ready新增--edit-id，仅指定已从原文编辑按钮核实的编辑页面，成功仍绑定原post-id；新建不允许传edit-id，非法ID拒绝。专项及完整tests/run_all.ps1含SkillValidator通过；首次测试因PATH命中商店Python而失败，改用配置Python后全套通过，两次日志均保留在CHARLS/009_IADL执行目录。真实同步ADL132→编辑335、IADL134→编辑337均返回原文章编号；不代表任意网站编号关系已经验证。
 
 2026-10-05 摘要文字限于定义内容和变量数量：03-copy及reader-copy三个实例同步，关系树与Criteria等原有职责保留。完整tests/run_all.ps1含SkillValidator通过；首次环境PATH命中非配置Python导致runner测试失败，使用配置Python重跑通过。日志：Skill维护/20261005-复杂分支实现/summary-release-tests-configured.log。本次为规则及模板修订，未声称新模型首稿已验证。
+
+2026-10-05 CHNS候选生成接口：公共renderer识别ID/IDind/WAVE与十期年份，只在渲染副本投影year；公开读取检查保留主表与静态表字符个人键。test_chns_adapter.py调用实际output checker，验证静态sex无需进入主raw、分文件错置拒绝及分析身份保真；test_chns_renderer.R验证十期身份、静态显式读取、many-to-one连接、未匹配缺失、原raw不加列与完整静态来源卡。完整tests/run_all.ps1含官方SkillValidator通过，日志为本次Codex工作目录chns-adapter-tests-20261005-final.log。首个R专项因继承不适用的LC_ALL=C.UTF-8失败，清除LC_ALL/LANG/LC_CTYPE后通过；一次日志目标目录不存在导致未启动回归，改用存在的工作目录后完成。补跑独立SkillValidator时未传UTF-8而触发GBK解码错误，最终全套使用PYTHONUTF8=1通过。未验证CHNS真实下载、全量结果、完整笔记生成或网站同步；不将本次fixture视为生产验收。
+
+2026-10-05 CHNS真实包只读年份校核：真实ZIP主表180711行、静态表44453行，十期整数型WAVE文本、主个人—年键、静态个人键及全部主个人在静态表中的对应均已逐行校核；三个静态别名与选择回执失配，包仍为FAILED_STATIC_ALIASES，未安装或重写。公共合同、renderer及analysis身份检查允许1989.0等整数等值年份文本，保留IDind原字符串；fixture拒绝分数、科学计数、非法年份及1989/1989.0混用造成的重复个人—年。完整回归含官方SkillValidator通过，证据在CHNS/001_人口学过程目录chns-wave-readonly-audit.json和chns-wave-adapter-tests.log。网站只读根因定位与候选patch在过程目录，未据此宣称网站修复或真实下载合同通过；全量定义/完整笔记生成仍未验收。
+
+2026-10-06 连续年份问卷与分期题号：共享解析器支持显式年份范围、按时期选择题号别名（含数字题号的Q展示前缀）、题内编码对应及编码顺序列表、就近适用对象与分期跳题目标。每个声明的年份和题目仍须有来源证据，拒绝未核年份、重叠别名、伪题号及错误去向。test_questionnaire_year_aliases.py覆盖copy及rendered两端正反例；现有Wave回归和完整tests/run_all.ps1含官方SkillValidator通过。真实KNHANES文案检查通过；真实稿生成的小样本覆盖21期2268记录，不能替代全量计算验证。日志和根因证据在KNHANES/001_人口学过程目录questionnaire-parser-regression-final.log、questionnaire-parser-diagnosis.json、generation-probe.log。另发现runner仍强制参考资料标题，与规则允许省略不一致；当前主题有实际使用的收入分类依据，不影响本次交付，该遗留未扩修。
+
+2026-10-06 KNHANES Core data人口学真实全流程：16来源、21期（1998、2001、2005、2007–2024）、251455条记录、15结果；实际一次下载包验证、正式R完整生成与独立实现复核、4274735身份及结果单元逐行对照0差异、完整成果和36个问卷题目时期展示检查通过。正文及analysis_db/analysis_codebook一次同步成功。执行证据位于KNHANES/001_人口学过程目录，最终文章local-394。独立R首轮发现1项冲突分支问题并经同角色修复复查；不以末轮通过冒充首稿无问题。此范围不涵盖重复文件、其它主题或未来年份。

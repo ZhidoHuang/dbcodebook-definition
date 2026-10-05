@@ -83,7 +83,7 @@ def referenced_jump_options(question_id, entries):
 
 
 def period_keys(label):
-    """Expand explicit Wave ranges or period lists; never infer intervening survey years."""
+    """Expand declared ranges; evidence checks must separately verify every period."""
     # Module titles are reader-facing labels, not additional period evidence.
     label = re.split(r"[:：]", label, maxsplit=1)[0]
     result = []
@@ -95,11 +95,64 @@ def period_keys(label):
             if not 0 < start <= end <= 100:
                 raise ValueError("Invalid questionnaire Wave range: " + part)
             result.extend("wave" + str(i) for i in range(start, end + 1))
+        elif re.fullmatch(r"\d{4}\s*年?\s*[–—-]\s*\d{4}\s*年?", part):
+            start, end = map(int, re.findall(r"\d{4}", part))
+            if not 1000 <= start <= end <= 9999:
+                raise ValueError("Invalid questionnaire year range: " + part)
+            result.extend(str(i) for i in range(start, end + 1))
         elif part:
             result.append(period_key(part))
     if len(result) != len(set(result)):
         raise ValueError("Duplicate questionnaire period: " + label)
     return result
+
+
+def question_identifiers(title, period=None):
+    """Resolve visible question aliases only inside their explicitly declared scope."""
+    title = re.split(r"[:：]", str(title), maxsplit=1)[0].strip()
+    if not re.search(r"[（(].*\d{4}.*[）)]", title):
+        return [re.sub(r"\s|`", "", title)]
+    result, covered = [], set()
+    for part in re.split(r"[／/]", title):
+        match = re.fullmatch(r"\s*([A-Za-z0-9_][A-Za-z0-9_.-]*)\s*[（(]([^）)]+)[）)]\s*", part)
+        if not match:
+            raise ValueError("Invalid scoped questionnaire question id: " + title)
+        identifier, scope = match.groups()
+        keys = period_keys(scope)
+        if any(not re.fullmatch(r"\d{4}", key) for key in keys) or not keys:
+            raise ValueError("Question id scope must name explicit years: " + title)
+        if covered.intersection(keys):
+            raise ValueError("Overlapping questionnaire question id scopes: " + title)
+        covered.update(keys)
+        if period is None or period_key(period) in keys:
+            result.append(identifier)
+    return result
+
+
+def question_matches(title, identifier, period):
+    # Q is a conventional displayed prefix for numeric questionnaire IDs.
+    canonical = lambda value: re.sub(r"^Q(?=\d+(?:-\d+)*$)", "", str(value))
+    return canonical(identifier) in [canonical(value) for value in question_identifiers(title, period)]
+
+
+def unverified_question_periods(label, identifiers, evidence, module=""):
+    """A declared continuous year block cannot add periods absent from source evidence."""
+    if not re.search(r"\d{4}\s*年?\s*[–—-]\s*\d{4}", label):
+        return []
+    errors = []
+    declared = set(period_keys(label))
+    for title in identifiers:
+        alias_scopes = re.findall(r"[（(]([^）)]*\d{4}[^）)]*)[）)]", re.split(r"[:：]", title, maxsplit=1)[0])
+        if any(not set(period_keys(scope)) <= declared for scope in alias_scopes):
+            errors.append(f"{title}: question id scope extends outside its questionnaire period")
+    for period in period_keys(label):
+        for title in identifiers:
+            if not any(period_key(period) in {period_key(p) for p in item.get("periods", [])}
+                       and question_matches(title, item.get("question_id", ""), period)
+                       and (not item.get("questionnaire_module") or item["questionnaire_module"] == module)
+                       for item in evidence):
+                errors.append(f"{period}/{title}: declared questionnaire period has no matching source evidence")
+    return errors
 
 
 def original_options(actual, design, period):
@@ -114,11 +167,17 @@ def original_options(actual, design, period):
         if period_key(period) not in period_keys(scope):
             continue
         pairs = []
-        for entry in re.split(r"[；;]", body):
-            pair = entry.strip().split("=", 1)
-            if len(pair) != 2 or not all(p.strip() for p in pair):
-                raise ValueError("Invalid original option legend: " + entry)
-            pairs.append(tuple(p.strip() for p in pair))
+        if "=" not in body:
+            codes = [entry.strip() for entry in body.split("、")]
+            if len(codes) != len(actual) or any(not re.fullmatch(r"[^\s；;=、]+", code) for code in codes):
+                raise ValueError("Original option code list must match the displayed option order/count")
+            pairs = list(zip(codes, [s.strip() for s in actual]))
+        else:
+            for entry in re.split(r"[；;]", body):
+                pair = entry.strip().split("=", 1)
+                if len(pair) != 2 or not all(p.strip() for p in pair):
+                    raise ValueError("Invalid original option legend: " + entry)
+                pairs.append(tuple(p.strip() for p in pair))
         if [label for _, label in pairs] == [s.strip() for s in actual]:
             matches.append([code + " " + label for code, label in pairs])
     if len(matches) > 1:

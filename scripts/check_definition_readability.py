@@ -15,7 +15,7 @@ from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_reader_copy import Document, validate_note, normalized, route_matches
-from questionnaire_groups import period_keys, original_options
+from questionnaire_groups import period_keys, original_options, question_matches, unverified_question_periods
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
     rendered_when_matches, jump_descriptions)
@@ -243,6 +243,10 @@ def validate_questionnaire_rendering(
     document = Document(note_text).root
     sections: dict[str, list[dict]] = {}
     for section in parser.sections:
+        scope_errors = unverified_question_periods(section["label"],
+            [identifier for line in section["lines"] for identifier in line["question_ids"]], evidence, section.get("module", ""))
+        if scope_errors:
+            fail(scope_errors[0])
         keys = {
             normalized_period(value)
             for value in (section["period"], section["label"])
@@ -289,7 +293,7 @@ def validate_questionnaire_rendering(
         for period in periods:
             period_key = normalized_period(period)
             matches = [s for s in sections.get(period_key, [])
-                       if any(question_id in line["question_ids"] for line in s["lines"])
+                       if any(question_matches(identifier, question_id, period) for line in s["lines"] for identifier in line["question_ids"])
                        and (not item.get("questionnaire_module") or s.get("module") == item["questionnaire_module"])]
             if not matches:
                 if sections.get(period_key):
@@ -322,7 +326,7 @@ def validate_questionnaire_rendering(
             question_lines = [
                 line
                 for line in section["lines"]
-                if question_id in line["question_ids"]
+                if any(question_matches(identifier, question_id, period) for identifier in line["question_ids"])
             ]
             if not question_lines:
                 fail(f"final note period {period} does not render question {question_id}")
@@ -346,7 +350,7 @@ def validate_questionnaire_rendering(
             period_nodes = list(document.find(lambda e: e.attrs.get("data-raw-source-period") == section["period"]))
             question_nodes = list(period_nodes[0].find(lambda e: e.attrs.get("data-summary-questionnaire-line") == "true"))
             node = next(e for e in question_nodes if any(
-                normalized(q.text()) == normalized(question_id)
+                question_matches(q.text(), question_id, period)
                 for q in e.find(lambda q: q.attrs.get("data-summary-question-id") == "true")
             ))
             options = list(node.find(lambda e: e.attrs.get("data-summary-question-option") == "true"))
@@ -380,19 +384,19 @@ def validate_questionnaire_rendering(
                 fail(f"final note period {period} omits options for {question_id}")
             if shared_options and options:
                 fail(f"final note repeats common options for {question_id}")
-            option_text = cross_options or shared_options or original_options(referenced or [option.text() for option in options], section["period_notes"][0]["text"], period)
+            option_text = cross_options or shared_options or original_options(referenced or [option.text() for option in options], section["period_notes"][0]["text"] + "\n" + node.text(), period)
             if item.get("response_type") == "closed_options":
                 expected_text = [normalized(f"{option['value']} {option['label']}") for option in expected_options]
                 if [normalized(option) for option in option_text] != expected_text:
                     fail(f"final note period {period} option values/labels/order differ for {question_id}; expected={expected_text!r}; actual={[normalized(option.text()) for option in options]!r}")
             for jump in expected_jumps:
-                own_rows = next((rows for identifier, rows, _ in jump_entries if normalized(identifier) == normalized(question_id)), [])
+                own_rows = next((rows for identifier, rows, _ in jump_entries if question_matches(identifier, question_id, period)), [])
                 rows = [{"text": raw, "jump": row["jump"]} for row, raw in zip(own_rows, option_text)]
                 instructions = [e.text() for e in node.find(lambda e: is_question_instruction(e.attrs))]
                 descriptions = jump_descriptions(jump["when"], rows, instructions)
                 descriptions += [r["destination"] for r in shared_routes if rendered_when_matches(jump["when"], r["when"])]
                 descriptions += jump_descriptions(jump["when"], inherited_jumps, [])
-                if not any(route_matches(jump["destination"], text) for text in descriptions):
+                if not any(route_matches(jump["destination"], text, period) for text in descriptions):
                     fail(f"final note period {period} route differs for {question_id}: {jump['when']} -> {jump['destination']}")
             rendered_pairs.add((question_id, str(period)))
 

@@ -1,3 +1,25 @@
+chns_year_values <- function(values) {
+  text <- as.character(values)
+  if (anyNA(text) || any(!grepl("^[0-9]{4}(\\.0+)?$", text))) stop("Invalid CHNS integer survey year.")
+  sub("\\.0+$", "", text)
+}
+
+validate_chns_render_inputs <- function(frames, cycle_order) {
+  supported <- c("1989", "1991", "1993", "1997", "2000", "2004", "2006", "2009", "2011", "2015")
+  if (!length(cycle_order) || anyNA(cycle_order) || any(!cycle_order %in% supported) ||
+      anyDuplicated(cycle_order) || is.unsorted(match(cycle_order, supported))) stop("Invalid CHNS year order.")
+  for (frame in frames) {
+    keys <- c("ID", "IDind", "WAVE")
+    if (!all(keys %in% names(frame))) stop("CHNS requires ID, IDind and WAVE.")
+    if (!all(vapply(frame[c("ID", "IDind")], is.character, logical(1)))) stop("CHNS ID and IDind must remain character.")
+    if (anyNA(frame[keys]) || any(vapply(frame[keys], function(x) any(!nzchar(trimws(as.character(x)))), logical(1)))) stop("CHNS identities must be nonempty.")
+    years <- chns_year_values(frame$WAVE)
+    if (anyDuplicated(frame$ID) || anyDuplicated(data.frame(IDind=frame$IDind, WAVE=years))) stop("Duplicate CHNS person-period identity.")
+    if (any(!years %in% cycle_order)) stop("Observed CHNS WAVE outside declared cycle_order.")
+  }
+  invisible(TRUE)
+}
+
 validate_knhanes_render_inputs <- function(frames, cycle_order) {
   supported <- c("1998", "2001", "2005", as.character(2007:2024))
   if (!is.character(cycle_order) || !length(cycle_order) || anyNA(cycle_order) ||
@@ -477,7 +499,15 @@ render_definition_bundle <- function(
     language = NULL,
     definition_basis = "") {
   database <- toupper(database)
-  if (!database %in% c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "KLOSA")) stop("Unsupported definition database: ", database)
+  if (!database %in% c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "KLOSA", "CHNS")) stop("Unsupported definition database: ", database)
+  if (database == "CHNS") {
+    if (missing(cycle_order)) stop("CHNS requires explicit, evidence-based cycle_order.")
+    validate_chns_render_inputs(list(data, db_data, analysis_data), cycle_order)
+    # Local rendering copies only; retain exported WAVE and opaque personal identities.
+    data$year <- chns_year_values(data$WAVE)
+    db_data$year <- chns_year_values(db_data$WAVE)
+    analysis_data$year <- chns_year_values(analysis_data$WAVE)
+  }
   if (database == "KNHANES") {
     if (missing(cycle_order)) stop("KNHANES requires explicit, evidence-based cycle_order.")
     validate_knhanes_render_inputs(list(data, db_data, analysis_data), cycle_order)
@@ -694,6 +724,9 @@ render_definition_bundle <- function(
         grep("^intid[ .(]", names(detail_data), value = TRUE)), names(detail_data)))
   }
   if (database == "KLOSA") identity_columns <- union(identity_columns, c("Harmonized_id", "Wave_id"))
+  if (database == "CHNS") identity_columns <- union(identity_columns, intersect(
+    c("IDind", "WAVE", "hhid", "COMMID", "Household_ID", "Community_ID",
+      grep("^(IDind|WAVE|hhid|COMMID|Household_ID|Community_ID)[ .(]", names(detail_data), value = TRUE)), names(detail_data)))
   z <- detail_data[, setdiff(names(detail_data), identity_columns), drop = FALSE]
   count_data <- definition_period_counts(z)
   wide_data <- pivot_wider(

@@ -60,7 +60,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--language', choices=['en', 'ko'])
     parser.add_argument(
         "--db",
-        choices=["charls", "elsa", "hrs", "share", "knhanes", "klosa"],
+        choices=["charls", "elsa", "hrs", "share", "knhanes", "klosa", "chns"],
         default="charls",
         help="Database identity mode. Defaults to charls for backward compatibility.",
     )
@@ -150,6 +150,8 @@ def read_codebook_vars(path: Path) -> list[str]:
 
 
 def expected_raw_header(db: str, raw_vars: list[str]) -> list[str]:
+    if db == "chns":
+        return ["ID", "IDind", "WAVE", *raw_vars]
     if db == "klosa":
         return ["ID", "Harmonized_id", "Wave_id", *raw_vars]
     if db == "elsa":
@@ -323,7 +325,16 @@ def check_identity_values(
                for row in analysis_rows[1:] for name in ["ID", "id"]):
             fail(results, "analysis identity values", "KNHANES ID and id must remain string cells")
             return
-    if db == "share":
+    if db == "chns":
+        identity_columns = ["ID", "IDind", "WAVE"]
+        if not all(name in raw_header and name in analysis_header for name in identity_columns):
+            fail(results, "analysis identity values", "CHNS requires ID, IDind and WAVE in raw and analysis")
+            return
+        if any(len(row) <= analysis_header.index(name) or not isinstance(row[analysis_header.index(name)], str)
+               for row in analysis_rows[1:] for name in ["ID", "IDind"]):
+            fail(results, "analysis identity values", "CHNS ID and IDind must remain string cells")
+            return
+    elif db == "share":
         identity_columns = ["ID", "Wave_id", "mergeid"]
         if not all(name in raw_header and name in analysis_header for name in identity_columns):
             fail(results, "analysis identity values", "SHARE requires ID, Wave_id, mergeid in raw and analysis")
@@ -349,10 +360,18 @@ def check_identity_values(
     analysis_indexes = [analysis_header.index(name) for name in identity_columns]
 
     def identity(row: list[object], indexes: list[int]) -> tuple[str, ...]:
-        return tuple(
+        values = [
             "" if index >= len(row) or row[index] is None else str(row[index])
             for index in indexes
-        )
+        ]
+        if db == "chns":
+            from chns_export_contract import normalize_year
+            try:
+                values[2] = normalize_year(values[2])
+            except ValueError:
+                # Invalid periods retain their text and fail the identity/package comparison.
+                pass
+        return tuple(values)
 
     raw_identities: Counter[tuple[str, ...]] = Counter()
     with raw_path.open("r", encoding="utf-8-sig", newline="") as handle:
@@ -1369,6 +1388,22 @@ def main() -> int:
             except ValueError as exc:
                 fail(results, "KLoSA package contract", str(exc))
         header = read_csv_header(raw_data)
+        chns_header_matches = False
+        if args.db == "chns":
+            try:
+                from chns_export_contract import validate_person_package
+                members = [p.name for p in formal_dir.glob("raw_data*.csv")]
+                contract = validate_person_package(formal_dir, members, raw_vars)
+                if "raw_data.csv" not in contract:
+                    raise ValueError("CHNS definition requires a personal-period main file")
+                if args.complete:
+                    omitted = set(contract) - set(expected_files)
+                    if omitted:
+                        raise ValueError("CHNS complete artifact scope omits source files: " + ", ".join(sorted(omitted)))
+                chns_header_matches = True
+                ok(results, "CHNS personal/static file contract", contract)
+            except (OSError, ValueError) as exc:
+                fail(results, "CHNS personal/static file contract", str(exc))
         if args.db == "knhanes":
             try:
                 from knhanes_export import validate_bundle, validate_person_frame
@@ -1404,7 +1439,7 @@ def main() -> int:
                                   and len(header[3:]) == len(raw_vars) and set(header[3:]) == set(raw_vars))
         klosa_header_matches = (args.db == "klosa" and header[:3] == ["ID", "Harmonized_id", "Wave_id"]
             and len(header[3:]) == len(raw_vars) and set(header[3:]) == set(raw_vars))
-        if (args.db != "share" and (header in layered_headers or hrs_header_matches or klosa_header_matches)) or share_header_matches or knhanes_header_matches:
+        if (args.db not in {"share", "chns"} and (header in layered_headers or hrs_header_matches or klosa_header_matches)) or share_header_matches or knhanes_header_matches or chns_header_matches:
             ok(results, "raw_data header", header)
         elif args.db == "charls" and header == ["ID", "year", *raw_vars]:
             identifier_check = check_charls_household_identifier(raw_data)

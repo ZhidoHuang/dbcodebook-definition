@@ -344,7 +344,7 @@ if (length(missing)) {
   ))
 }
 "@
-  if ($Database -ieq "CHARLS" -or $Database -ieq "SHARE" -or $Database -ieq "KNHANES" -or $Database -ieq "KLOSA") {
+  if ($Database -ieq "CHARLS" -or $Database -ieq "SHARE" -or $Database -ieq "KNHANES" -or $Database -ieq "KLOSA" -or $Database -ieq "CHNS") {
     $rawReadHelper = ConvertTo-Json -InputObject (Join-Path $PSScriptRoot "check_public_raw_reads.R") -Compress
     $rawReadScript = ConvertTo-Json -InputObject $resolvedScript -Compress
     $rawReadDatabase = ConvertTo-Json -InputObject $Database.ToUpperInvariant() -Compress

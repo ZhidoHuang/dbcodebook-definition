@@ -8,7 +8,7 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
-from questionnaire_groups import period_keys, original_options
+from questionnaire_groups import period_keys, original_options, question_matches, question_identifiers, unverified_question_periods
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
     rendered_when_matches, jump_descriptions)
@@ -80,7 +80,7 @@ def normalized(text):
 
 
 
-def route_matches(destination, description):
+def route_matches(destination, description, period=None):
     # Ignore presentation whitespace symmetrically while retaining identifier
     # boundaries: DA002 must never match DA0020 or XDA002.
     target = normalized(destination)
@@ -91,6 +91,12 @@ def route_matches(destination, description):
     description = re.sub(r"`([^`]+)`", r"\1", str(description))
     description = re.sub(r"\*\*(.*?)\*\*", r"\1", description)
     pattern = r"(?<![A-Za-z0-9_])" + r"\s*".join(re.escape(c) for c in target) + r"(?![A-Za-z0-9_])"
+    if period is not None:
+        # A visibly scoped target may carry a different question number in another year.
+        target_id = re.fullmatch(r"([A-Za-z0-9_][A-Za-z0-9_.-]*)(?:[（(][^）)]+[）)])?", str(destination).strip())
+        scoped = re.search(r"([A-Za-z0-9_][A-Za-z0-9_.-]*\s*[（(]\d{4}[^）)]*[）)](?:\s*[／/]\s*[A-Za-z0-9_][A-Za-z0-9_.-]*\s*[（(][^）)]+[）)])*)", description)
+        if target_id and scoped:
+            return question_matches(scoped[1], target_id[1], period)
     return re.search(pattern, description) is not None
 
 
@@ -254,6 +260,7 @@ def read_questionnaire_copy(text):
             else:
                 question_blocks.append((title, content, ""))
         for question_id, content, group in question_blocks:
+            question_identifiers(question_id)  # Validate explicit alias scopes before comparison.
             question = {"id": question_id, "text": "", "condition": "", "options": [], "instructions": []}
             flows = re.findall(r"(?ms)^```(?:text)?[ \t]*\n(.*?)\n```[ \t]*$", content)
             if flows:
@@ -508,6 +515,10 @@ def questionnaire_copy_errors(copy, record):
         for key in period_keys(period["label"]):
             periods.setdefault(key, []).append(period)
     errors = []
+    displayed_evidence = [item for item in evidence if item.get("display_required", True) is not False]
+    for block in copy.get("questionnaire", {}).values():
+        errors.extend(unverified_question_periods(block["label"], [q["id"] for q in block["questions"]],
+                                                 displayed_evidence, block.get("module", "")))
     cross_periods = [(p["label"], [(q["id"], [o["text"] for o in q["options"]]) for q in p["questions"]], p["design"], p.get("module", ""))
                      for p in copy.get("questionnaire", {}).values()]
     for item in evidence:
@@ -527,12 +538,12 @@ def questionnaire_copy_errors(copy, record):
         for period in item["periods"]:
             label = f"{period}/{question_id}"
             matches = [p for p in periods.get(normalized_period(period), [])
-                       if any(normalized(q["id"]) == normalized(question_id) for q in p["questions"])
+                       if any(question_matches(q["id"], question_id, period) for q in p["questions"])
                        and (not item.get("questionnaire_module") or p.get("module") == item["questionnaire_module"])]
             if len(matches) != 1:
                 errors.append(f"{label}: expected one questionnaire period")
                 continue
-            questions = [q for q in matches[0]["questions"] if normalized(q["id"]) == normalized(question_id)]
+            questions = [q for q in matches[0]["questions"] if question_matches(q["id"], question_id, period)]
             if len(questions) != 1:
                 errors.append(f"{label}: expected one question")
                 continue
@@ -541,7 +552,7 @@ def questionnaire_copy_errors(copy, record):
                 errors.append(f"{label}: incomplete or different question text")
             if text in normalized_evidence_text(matches[0]["design"]):
                 errors.append(f"{label}: question duplicated in design note")
-            visible = normalized_evidence_text(question["text"] + " " + matches[0]["design"] + " " + " ".join(question["instructions"]))
+            visible = normalized_evidence_text(question["text"] + " " + question["condition"] + " " + matches[0]["design"] + " " + " ".join(question["instructions"]))
             for instruction in display_instructions:
                 if normalized_evidence_text(instruction) not in visible:
                     errors.append(f"{label}: missing display instruction")
@@ -552,7 +563,7 @@ def questionnaire_copy_errors(copy, record):
             shared_options, shared_routes = shared_question_info(shared_text, question_id)
             referenced = referenced_options("\n".join(question["instructions"]), question_id,
                 [(q["id"], [o["text"] for o in q["options"]], "\n".join(q["instructions"])) for q in matches[0]["questions"]])
-            option_text = shared_options or original_options(referenced or [o["text"] for o in options], matches[0]["design"], period)
+            option_text = shared_options or original_options(referenced or [o["text"] for o in options], matches[0]["design"] + "\n" + question["text"], period)
             try:
                 cross_options = cross_period_options(question["text"] + "\n" + "\n".join(question["instructions"]),
                                                      matches[0]["label"], question_id,
@@ -575,7 +586,7 @@ def questionnaire_copy_errors(copy, record):
                 descriptions = jump_descriptions(jump["when"], rows, question["instructions"])
                 descriptions += [r["destination"] for r in shared_routes if rendered_when_matches(jump["when"], r["when"])]
                 descriptions += jump_descriptions(jump["when"], inherited_jumps, [])
-                if not any(route_matches(jump["destination"], s) for s in descriptions):
+                if not any(route_matches(jump["destination"], s, period) for s in descriptions):
                     errors.append(f"{label}: route differs: {jump['when']} -> {jump['destination']}")
     return errors
 

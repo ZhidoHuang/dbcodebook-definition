@@ -7,6 +7,17 @@ YEARS = {'1989', '1991', '1993', '1997', '2000', '2004', '2006', '2009', '2011',
 MAIN_IDS = {'ID', 'IDind', 'WAVE', 'hhid', 'COMMID', 'Household_ID', 'Community_ID'}
 
 
+def normalize_year(value):
+    """Compare integer-equivalent exported WAVE text without rewriting source cells."""
+    text = str(value)
+    if not re.fullmatch(r'\d{4}(?:\.0+)?', text):
+        raise ValueError('CHNS invalid year: expected an integer survey year')
+    year = text.split('.', 1)[0]
+    if year not in YEARS:
+        raise ValueError('CHNS invalid year outside supported survey periods')
+    return year
+
+
 def rows_at(path):
     with Path(path).open(encoding='utf-8-sig', newline='') as handle:
         reader = csv.DictReader(handle)
@@ -65,8 +76,8 @@ def validate_person_package(directory, members, expected):
                 raise ValueError('CHNS duplicate personal identity')
             seen.add(identity)
             if not static:
-                pair = (row['IDind'], row['WAVE'])
-                if row['WAVE'] not in YEARS or pair in person_period:
+                pair = (row['IDind'], normalize_year(row['WAVE']))
+                if pair in person_period:
                     raise ValueError('CHNS invalid year or duplicate person-period')
                 person_period.add(pair)
         reports[member] = {'rows': len(rows), 'header': columns,
