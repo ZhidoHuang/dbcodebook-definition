@@ -293,7 +293,7 @@ def validate_questionnaire_rendering(
         for period in periods:
             period_key = normalized_period(period)
             matches = [s for s in sections.get(period_key, [])
-                       if any(question_matches(identifier, question_id, period) for line in s["lines"] for identifier in line["question_ids"])
+                       if any(question_matches(identifier, question_id, period, item) for line in s["lines"] for identifier in line["question_ids"])
                        and (not item.get("questionnaire_module") or s.get("module") == item["questionnaire_module"])]
             if not matches:
                 if sections.get(period_key):
@@ -326,7 +326,7 @@ def validate_questionnaire_rendering(
             question_lines = [
                 line
                 for line in section["lines"]
-                if any(question_matches(identifier, question_id, period) for identifier in line["question_ids"])
+                if any(question_matches(identifier, question_id, period, item) for identifier in line["question_ids"])
             ]
             if not question_lines:
                 fail(f"final note period {period} does not render question {question_id}")
@@ -350,7 +350,7 @@ def validate_questionnaire_rendering(
             period_nodes = list(document.find(lambda e: e.attrs.get("data-raw-source-period") == section["period"]))
             question_nodes = list(period_nodes[0].find(lambda e: e.attrs.get("data-summary-questionnaire-line") == "true"))
             node = next(e for e in question_nodes if any(
-                question_matches(q.text(), question_id, period)
+                question_matches(q.text(), question_id, period, item)
                 for q in e.find(lambda q: q.attrs.get("data-summary-question-id") == "true")
             ))
             options = list(node.find(lambda e: e.attrs.get("data-summary-question-option") == "true"))
@@ -360,7 +360,8 @@ def validate_questionnaire_rendering(
                 if entry_ids:
                     entries.append((entry_ids[0].text().strip(), [o.text() for o in entry.find(
                         lambda e: e.attrs.get("data-summary-question-option") == "true")], entry.text()))
-            referenced = referenced_options(node.text(), question_id, entries)
+            visible_id = next(q.text().strip() for q in node.find(lambda q: q.attrs.get("data-summary-question-id") == "true"))
+            referenced = referenced_options(node.text(), visible_id, entries)
             jump_entries = []
             for entry in question_nodes:
                 entry_ids = list(entry.find(lambda e: e.attrs.get("data-summary-question-id") == "true"))
@@ -371,7 +372,7 @@ def validate_questionnaire_rendering(
                             e.text() for e in row.find(lambda e: is_question_instruction(e.attrs)))})
                 if entry_ids:
                     jump_entries.append((entry_ids[0].text().strip(), option_rows, entry.text()))
-            inherited_jumps = referenced_jump_options(question_id, jump_entries)
+            inherited_jumps = referenced_jump_options(visible_id, jump_entries)
             cross_options = cross_period_options(node.text(), section["label"], question_id,
                                                  [p[:3] for p in cross_periods if p[3] == section.get("module", "")])
             if cross_options and (options or referenced or shared_options):
@@ -390,7 +391,7 @@ def validate_questionnaire_rendering(
                 if [normalized(option) for option in option_text] != expected_text:
                     fail(f"final note period {period} option values/labels/order differ for {question_id}; expected={expected_text!r}; actual={[normalized(option.text()) for option in options]!r}")
             for jump in expected_jumps:
-                own_rows = next((rows for identifier, rows, _ in jump_entries if question_matches(identifier, question_id, period)), [])
+                own_rows = next((rows for identifier, rows, _ in jump_entries if question_matches(identifier, question_id, period, item)), [])
                 rows = [{"text": raw, "jump": row["jump"]} for row, raw in zip(own_rows, option_text)]
                 instructions = [e.text() for e in node.find(lambda e: is_question_instruction(e.attrs))]
                 descriptions = jump_descriptions(jump["when"], rows, instructions)

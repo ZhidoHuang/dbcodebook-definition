@@ -786,3 +786,5 @@
 2026-10-06 连续年份问卷与分期题号：共享解析器支持显式年份范围、按时期选择题号别名（含数字题号的Q展示前缀）、题内编码对应及编码顺序列表、就近适用对象与分期跳题目标。每个声明的年份和题目仍须有来源证据，拒绝未核年份、重叠别名、伪题号及错误去向。test_questionnaire_year_aliases.py覆盖copy及rendered两端正反例；现有Wave回归和完整tests/run_all.ps1含官方SkillValidator通过。真实KNHANES文案检查通过；真实稿生成的小样本覆盖21期2268记录，不能替代全量计算验证。日志和根因证据在KNHANES/001_人口学过程目录questionnaire-parser-regression-final.log、questionnaire-parser-diagnosis.json、generation-probe.log。另发现runner仍强制参考资料标题，与规则允许省略不一致；当前主题有实际使用的收入分类依据，不影响本次交付，该遗留未扩修。
 
 2026-10-06 KNHANES Core data人口学真实全流程：16来源、21期（1998、2001、2005、2007–2024）、251455条记录、15结果；实际一次下载包验证、正式R完整生成与独立实现复核、4274735身份及结果单元逐行对照0差异、完整成果和36个问卷题目时期展示检查通过。正文及analysis_db/analysis_codebook一次同步成功。执行证据位于KNHANES/001_人口学过程目录，最终文章local-394。独立R首轮发现1项冲突分支问题并经同角色修复复查；不以末轮通过冒充首稿无问题。此范围不涵盖重复文件、其它主题或未来年份。
+
+2026-10-06 问卷变量名与写作规则对齐：题目标题优先原问卷变量名，标题不用行内代码；摘要简单关系归Criteria，CES-D选项编码示例移入题目。questionnaire_evidence可用question_variable和既有locator登记题号—原变量名对应，文稿与成品两检查入口据本期证据匹配，旧题号兼容保留。test_questionnaire_variable_names.py覆盖正确对应、无对应、错误变量、缺定位及超出时期的拒绝；完整tests/run_all.ps1含SkillValidator通过。首次回归因已提交材料索引的manifest旧哈希中止；核实原文未改后只更新该项哈希与字节数。日志保留在Skill维护/20261006_问卷标识与写作规则对齐。此为程序fixture和规则对齐，未重跑真实主题或验证新模型首次写作质量。

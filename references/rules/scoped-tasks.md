@@ -46,7 +46,7 @@ This reuses the completion checks without saving or updating the report. Report 
 本节是文案阶段的程序操作，正文写法与模板统一见[03-copy](stages/03-copy.md)。不安排固定内容自查，不填写逐栏目PASS或通读声明。
 
 1. **确定修改范围。** 新主题或定义事实变化时，在正式R前按[变更范围](../../templates/change-impact.md)填写已有definition_change_impact.json。只改表达则沿用未变的方案、来源和R复核；只改某栏不顺手修改其它内容。未决事实回来源方案；主题过大时按独立研究问题拆分，不拆散同一变量链或删掉必要原题。
-2. **登记问卷展示。** 来源记录question_text保留原文，逐期证据不因合并展示而删除。写作时设置questionnaire_display_policy="chinese_v1"；需要展示的证据用display.question_text填完整中文题干，display.instructions填必要中文访员/测验说明，无则空列表。共同说明可以放在该组设计段。原始选项编码与标签保留；数据解码方式只在影响对应关系时说明。原文、题意或时期有缺口，回到实际材料解决，不反向编造证据。
+2. **登记问卷展示。** 来源记录question_text保留原文，逐期证据不因合并展示而删除。原问卷题号与变量名不同时，question_id保留题号，question_variable登记已核实的原始变量名，locator注明对应依据；对应随时期变化时分期登记。两个问卷检查入口据此匹配正文标题，不从下载别名或题义猜测对应。写作时设置questionnaire_display_policy="chinese_v1"；需要展示的证据用display.question_text填完整中文题干，display.instructions填必要中文访员/测验说明，无则空列表。共同说明可以放在该组设计段。原始选项编码与标签保留；数据解码方式只在影响对应关系时说明。原文、题意或时期有缺口，回到实际材料解决，不反向编造证据。
 3. **保存完整稿并运行机械检查。** 执行`check_reader_copy.py --copy <文案> --record <来源记录> --process-dir <过程目录>`；当前copy环节须在运行中，程序先保存完整稿，再检查，即使失败也保留真正首稿。未启动报告的只读检查省略process-dir。处理结构、变量顺序、题文与格式差异；程序不判断表达质量、翻译准确或官方证据是否完整。
 4. **交接。** 使用`stage-finish --stage-id copy --copy <文案.md> --summary <实际完成内容>`记录真实结果，同次同内容不重复保存快照。事实缺口回方案，发现表达错误直接修；不把保存快照当作质量通过。生成器读取这份文案，R不另写一份正文。结果检查后按[成品交接](stages/07-review.md)取得机械发布许可。
 

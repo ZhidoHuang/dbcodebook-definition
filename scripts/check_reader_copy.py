@@ -538,12 +538,12 @@ def questionnaire_copy_errors(copy, record):
         for period in item["periods"]:
             label = f"{period}/{question_id}"
             matches = [p for p in periods.get(normalized_period(period), [])
-                       if any(question_matches(q["id"], question_id, period) for q in p["questions"])
+                       if any(question_matches(q["id"], question_id, period, item) for q in p["questions"])
                        and (not item.get("questionnaire_module") or p.get("module") == item["questionnaire_module"])]
             if len(matches) != 1:
                 errors.append(f"{label}: expected one questionnaire period")
                 continue
-            questions = [q for q in matches[0]["questions"] if question_matches(q["id"], question_id, period)]
+            questions = [q for q in matches[0]["questions"] if question_matches(q["id"], question_id, period, item)]
             if len(questions) != 1:
                 errors.append(f"{label}: expected one question")
                 continue
@@ -557,11 +557,11 @@ def questionnaire_copy_errors(copy, record):
                 if normalized_evidence_text(instruction) not in visible:
                     errors.append(f"{label}: missing display instruction")
             options = question["options"]
-            inherited_jumps = referenced_jump_options(question_id,
+            inherited_jumps = referenced_jump_options(question["id"],
                 [(q["id"], q["options"], "\n".join(q["instructions"])) for q in matches[0]["questions"]])
             shared_text = matches[0]["design"] + "\n" + "\n".join(s for q in matches[0]["questions"] for s in q["instructions"] if s.startswith("共同跳题（"))
             shared_options, shared_routes = shared_question_info(shared_text, question_id)
-            referenced = referenced_options("\n".join(question["instructions"]), question_id,
+            referenced = referenced_options("\n".join(question["instructions"]), question["id"],
                 [(q["id"], [o["text"] for o in q["options"]], "\n".join(q["instructions"])) for q in matches[0]["questions"]])
             option_text = shared_options or original_options(referenced or [o["text"] for o in options], matches[0]["design"] + "\n" + question["text"], period)
             try:

@@ -129,10 +129,25 @@ def question_identifiers(title, period=None):
     return result
 
 
-def question_matches(title, identifier, period):
-    # Q is a conventional displayed prefix for numeric questionnaire IDs.
+def question_matches(title, identifier, period, evidence=None):
+    """Match source IDs or explicitly evidenced variable names within a period."""
     canonical = lambda value: re.sub(r"^Q(?=\d+(?:-\d+)*$)", "", str(value))
-    return canonical(identifier) in [canonical(value) for value in question_identifiers(title, period)]
+    variable = ""
+    if evidence is not None and evidence.get("question_variable") is not None:
+        variable = evidence["question_variable"]
+        if not isinstance(variable, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*", variable):
+            raise ValueError("question_variable must be a verified original variable name")
+        if not str(evidence.get("locator", "")).strip():
+            raise ValueError("question_variable requires its evidence locator")
+        if period_key(period) not in {period_key(p) for p in evidence.get("periods", [])}:
+            return False
+    # Numeric-only originals may show their separately verified variable in parentheses.
+    annotated = re.fullmatch(r"(?:第\s*)?(\d+(?:-\d+)*)(?:\s*题)?\s*[（(]变量\s*`?([A-Za-z_][A-Za-z0-9_.]*)`?[）)]", str(title).strip())
+    if annotated:
+        return bool(variable and annotated[2] == variable and canonical(annotated[1]) == canonical(identifier))
+    identifiers = question_identifiers(title, period)
+    return any(canonical(value) == canonical(identifier) or (variable and value == variable)
+               for value in identifiers)
 
 
 def unverified_question_periods(label, identifiers, evidence, module=""):
@@ -148,7 +163,7 @@ def unverified_question_periods(label, identifiers, evidence, module=""):
     for period in period_keys(label):
         for title in identifiers:
             if not any(period_key(period) in {period_key(p) for p in item.get("periods", [])}
-                       and question_matches(title, item.get("question_id", ""), period)
+                       and question_matches(title, item.get("question_id", ""), period, item)
                        and (not item.get("questionnaire_module") or item["questionnaire_module"] == module)
                        for item in evidence):
                 errors.append(f"{period}/{title}: declared questionnaire period has no matching source evidence")
