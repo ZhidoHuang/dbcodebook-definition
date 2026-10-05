@@ -42,6 +42,13 @@ const wrapPage = p => ({
     waitForLoadState: ({state, ...options}) => p.waitForLoadState(state, convertOptions(options)),
     waitForURL: (url, options) => p.waitForURL(url, convertOptions(options)),
     waitForEvent: async (name, options) => {
+      if (name === "download" && typeof downloadAttemptId !== 'undefined') {
+        const record = downloadCapture(p, downloadAttemptId, downloadTarget);
+        await record.wait(convertOptions(options).timeout);
+        if (record.state === 'ready') return {path: async () => record.target};
+        // The receiver remains attached. A later CLI call observes this attempt without clicking.
+        throw new Error('DOWNLOAD_RECEIVER_PENDING: ' + record.state);
+      }
       const event = await p.waitForEvent(name, convertOptions(options));
       if (name !== "download") return event;
       return {path: async () => {
@@ -162,7 +169,10 @@ def build_code(action: dict, mode: str, preflight: dict | None, download_target:
         script = (
             "let downloadClickRequested = " + ("false" if tracks_click else "true") + ";\n"
             "const dbCodeBookMarkDownloadClickRequested = () => {downloadClickRequested = true;};\n"
-            "try {\n" + script + "\n} catch (error) {\n"
+            "try {\n"
+            "const earlier = page[Symbol.for('dbCodeBook.downloadCapture')];\n"
+            "if (earlier && ['waiting','saving'].includes(earlier.state)) throw new Error('Earlier download receiver still pending; observe the original attempt');\n"
+            + script + "\n} catch (error) {\n"
             "actionResult = {ok:false, status:downloadClickRequested ? 'DOWNLOAD_SUBMISSION_UNCERTAIN' : 'DOWNLOAD_NOT_CLICKED',\n"
             "click_requested:downloadClickRequested, operation_completed:true, allow_new_export:false,\n"
             "next_action:downloadClickRequested ? 'run_watch_command' : 'fix_cause_then_prepare_new_attempt',\n"
@@ -171,8 +181,14 @@ def build_code(action: dict, mode: str, preflight: dict | None, download_target:
     return (
         "async (page) => {\n"
         + "const downloadTarget = " + json.dumps(str(download_target.resolve())) + ";\n"
+        + ((Path(__file__).with_name('download_capture.js').read_text(encoding='utf-8')
+            + "\nconst downloadAttemptId = " + json.dumps(action['attempt_id']) + ";\n") if mode == 'download' else '')
         + "const dbCodeBookAttemptClaimed = " + str(mode == "download").lower() + ";\n"
-        + ADAPTER + "\n" + script + "\nreturn actionResult;\n}\n"
+        + ADAPTER + "\n" + script
+        + ("\nif (downloadClickRequested && actionResult && !actionResult.ok) {\n"
+           " const observed = await observeDownload(page, downloadAttemptId, 0);\n"
+           " actionResult = {...actionResult, ...observed, click_requested:true};\n}\n" if mode == 'download' else '')
+        + "\nreturn actionResult;\n}\n"
     )
 
 
@@ -327,7 +343,7 @@ def run_sync(session, action, preflight):
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--action", type=Path)
-    parser.add_argument("--mode", choices=["bind", "tab-code", "source-read", "website-prepare", "taxonomy-options", "login-status", "login-open", "select", "download", "preflight", "sync"], required=True)
+    parser.add_argument("--mode", choices=["bind", "tab-code", "source-read", "website-prepare", "taxonomy-options", "login-status", "login-open", "select", "download", "download-observe", "preflight", "sync"], required=True)
     parser.add_argument("--database", choices=['charls', 'elsa', 'hrs', 'share', 'chns', 'knhanes', 'klosa'])
     parser.add_argument("--script", type=Path, help="tab-code: async page function restricted to the bound page")
     parser.add_argument("--tab-index", type=int, help="Observed tab-list index; only used to create a binding")
@@ -342,6 +358,21 @@ def main() -> None:
     config = load_config(args.config)
     command = playwright_command(config)
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    if args.mode == 'download-observe':
+        if not args.tab_id or not args.action:
+            parser.error('download-observe requires the original --action and --tab-id')
+        action = read_action(args.action)
+        helper = Path(__file__).with_name('download_capture.js').read_text(encoding='utf-8')
+        code = 'async page => {\n' + helper + '\nreturn observeDownload(page, ' + json.dumps(action['attempt_id']) + ');}'
+        try:
+            payload = Session(args.session, args.session_workdir,
+                              args.out.with_suffix('.browser.js'), config, args.tab_id).code(code)
+        except (RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
+            payload = {'ok': False, 'status': 'DOWNLOAD_RECEIVER_UNAVAILABLE',
+                       'allow_new_export': False, 'next_action': 'run_watch_command', 'error': str(exc)}
+        args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+        print(json.dumps(payload, ensure_ascii=False))
+        raise SystemExit(0 if payload.get('ok') else 1)
     if args.mode == "website-prepare":
         from prepare_website import browser_code
         if not args.tab_id or not args.action:

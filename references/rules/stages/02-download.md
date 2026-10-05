@@ -106,7 +106,15 @@ $Action = "$Process/download_action.json"
 & $Python -X utf8 scripts/recover_dbcodebook_export.py --archive $Archive --database $Database --out $Formal --expect-vars-file "$Process/download_selection.txt"
 ```
 
-有意替换现有正式raw时才加 `--overwrite`。返回 `run_watch_command` 时运行原快照对应的观察命令；观察器已安装文件则不重复安装。变量清单及包内CSV通过校验才算成功，点击返回或尝试已登记不等于文件已到达。
+有意替换现有正式raw时才加 `--overwrite`。返回 `observe_same_attempt` 时，保留原标签，用原 `$Action` 继续接收同一次下载，结果另存，不覆盖首次记录：
+
+```powershell
+& $Python -X utf8 scripts/playwright_session_action.py --config $Config --mode download-observe --action $Action --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $ObserveResult
+```
+
+`DOWNLOAD_EVENT_PENDING` 表示尚未收到浏览器下载事件，不证明服务器未生成；`DOWNLOAD_FILE_SAVING` 表示已收到事件、文件正在保存。首次等待30秒后接收器仍保留，后续每次观察最多等20秒，不点击、不重新导出，也不导航原标签。等待事件超过10分钟、标签关闭或接收器丢失时，转入原快照文件观察及同次下载记录核对；过期不授权重下。
+
+返回 `run_watch_command` 时运行原快照对应的观察命令；观察器已安装文件则不重复安装。变量清单及包内CSV通过校验才算成功，点击返回或尝试已登记不等于文件已到达。
 
 正常导出验收必须证明本次选择页的新包完整落盘，不能用找回测试替代。包安装核验结束下载计时；下载后实际取值、路径人数与方案修订另记sources工作或返工段。
 

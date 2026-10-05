@@ -63,12 +63,18 @@ def main():
         fixture = r'''
 const assert = require('node:assert/strict');
 const calls = [];
-const final = {count: async () => 1, click: async options => {assert.equal(options.timeout,10000); calls.push('click');}};
+const handlers = {};
+const realTimer = globalThis.setTimeout;
+globalThis.setTimeout = (fn, ms) => realTimer(fn, ms === 30000 ? 5 : ms);
+const event = {saveAs: async path => {assert.ok(path.endsWith('download.zip')); calls.push('save');}};
+const final = {count: async () => 1, click: async options => {assert.equal(options.timeout,10000); calls.push('click'); handlers.download(event);}};
 const modal = {getAttribute: async () => 'display: block', waitFor: async () => {}, locator: () => final};
 const page = {
   evaluate: async (fn, arg) => fn(arg),
   url: () => 'http://localhost:8000/home/charls/',
   locator: selector => selector === '#tag-area .tag' ? {count: async () => 2} : selector === '#download-modal' ? modal : {count: async () => 1},
+  on: (name, fn) => {handlers[name]=fn; if(name==='download')calls.push('wait');},
+  off: (name) => {delete handlers[name];},
   waitForEvent: async (name, options) => {
     assert.equal(name, 'download'); assert.equal(options.timeout, 30000); calls.push('wait');
     return {saveAs: async path => {assert.ok(path.endsWith('download.zip')); calls.push('save');}};
@@ -93,17 +99,22 @@ const page = {
   assert.equal(notClicked.operation_completed, true);
   assert.equal(notClicked.next_action, 'fix_cause_then_prepare_new_attempt');
   assert.deepEqual(calls, []);
+  const busy = {...page, [Symbol.for('dbCodeBook.downloadCapture')]: {attempt_id:'earlier',state:'waiting'}};
+  const blocked = await run(busy);
+  assert.equal(blocked.status, 'DOWNLOAD_NOT_CLICKED');
+  assert.equal(blocked.click_requested, false);
+  assert.deepEqual(calls, []);
   final.click = async () => {calls.push('click'); throw Error('click response lost');};
   const uncertain = await run({...page, waitForEvent: async () => {throw Error('no event');}});
-  assert.equal(uncertain.status, 'DOWNLOAD_EVENT_NOT_RECEIVED');
+  assert.equal(uncertain.status, 'DOWNLOAD_EVENT_PENDING');
   assert.equal(uncertain.allow_new_export, false);
-  assert.deepEqual(calls, ['click']);
+  assert.deepEqual(calls, ['wait','click']);
   calls.length = 0;
-  final.click = async () => calls.push('click');
-  const saveFailure = await run({...page, waitForEvent: async () => ({saveAs: async () => {throw Error('save failed');}})});
+  final.click = async () => {calls.push('click'); handlers.download({saveAs:async()=>{throw Error('save failed');}});};
+  const saveFailure = await run({...page});
   assert.equal(saveFailure.status, 'DOWNLOAD_PATH_UNAVAILABLE');
   assert.equal(saveFailure.allow_new_export, false);
-  assert.deepEqual(calls, ['click']);
+  assert.deepEqual(calls, ['wait','click']);
 })().catch(error => {console.error(error);process.exitCode=1;});
 """, encoding='utf-8')
         subprocess.run(['node', str(failure_cases)], check=True)
