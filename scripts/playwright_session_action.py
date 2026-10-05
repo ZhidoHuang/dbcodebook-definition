@@ -327,7 +327,7 @@ def run_sync(session, action, preflight):
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--action", type=Path)
-    parser.add_argument("--mode", choices=["bind", "tab-code", "source-read", "taxonomy-options", "login-status", "login-open", "select", "download", "preflight", "sync"], required=True)
+    parser.add_argument("--mode", choices=["bind", "tab-code", "source-read", "website-prepare", "taxonomy-options", "login-status", "login-open", "select", "download", "preflight", "sync"], required=True)
     parser.add_argument("--database", choices=['charls', 'elsa', 'hrs', 'share', 'chns', 'knhanes', 'klosa'])
     parser.add_argument("--script", type=Path, help="tab-code: async page function restricted to the bound page")
     parser.add_argument("--tab-index", type=int, help="Observed tab-list index; only used to create a binding")
@@ -342,6 +342,22 @@ def main() -> None:
     config = load_config(args.config)
     command = playwright_command(config)
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    if args.mode == "website-prepare":
+        from prepare_website import browser_code
+        if not args.tab_id or not args.action:
+            parser.error('website-prepare requires --tab-id and --action')
+        try:
+            code = browser_code(read_action(args.action))
+        except ValueError as exc:
+            parser.error(str(exc))
+        try:
+            payload = Session(args.session, args.session_workdir,
+                              args.out.with_suffix('.browser.js'), config, args.tab_id).code(code)
+        except (RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
+            payload = {'ok': False, 'status': 'WEBSITE_PREPARE_INCOMPLETE', 'error': str(exc)}
+        args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+        print(json.dumps(payload, ensure_ascii=False))
+        raise SystemExit(0 if payload.get('ok') else 1)
     if args.mode == "source-read":
         from source_read import browser_code
         if not args.tab_id or not args.database or not args.action:

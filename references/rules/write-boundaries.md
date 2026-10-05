@@ -59,7 +59,7 @@ $TabId = $Binding.tab_id
 
 绑定结果的url必须是本任务刚观察到的页面。绑定只读取浏览器target ID，不写网站属性、Cookie或会话。标签关闭后明确停止，不悄悄替换成另一页。探索时用同一入口的 `--mode tab-code --tab-id $TabId --script <本地JS文件>`；脚本为 `async page => {...}`，page即绑定页，只对它执行导航、读取DOM、点击和填写，返回JSON。用 `page.locator('body').ariaSnapshot()` 读取本页可见结构；不得在脚本内另选context.pages()、切换当前页或关闭context。并发中禁止裸用CLI的click、fill、upload、goto、tab-select、open及close等共享当前页命令。
 
-在本数据库选择页，用固定入口检查登录；它只读取页面公开的登录布尔状态，不读取密码、验证码或 Cookie：
+网站同步直接使用[第8步的网站准备入口](stages/08-website.md#1-准备与预检)检查登录及编辑页，不另做目录操作。以下 login-status/login-open 仅用于本数据库选择页；它只读取页面公开的登录布尔状态，不读取密码、验证码或 Cookie：
 
 ```powershell
 & $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --config $Config --mode login-status --database $Database --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out "$Process/login_result.json"

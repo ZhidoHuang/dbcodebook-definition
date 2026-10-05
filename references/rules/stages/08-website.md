@@ -16,13 +16,27 @@
 & $Python scripts/execution_report.py website-prepare --process-dir $Process --database $Database --topic-id $Topic --topic-name $TopicName
 ```
 
-在准备阶段完成登录核对、[当前标签选项读取与选择](#下拉选项与填写)，再生成预检载荷。标签的语义判断和选择计划均在准备计时内完成；两次verify-ready使用同一份确定的选择，按下文传入标签参数或taxonomy-plan。
+在准备阶段运行网站准备入口，完成登录核对、文章身份确认、打开编辑页和等待内容加载。把以下 JSON 保存为过程目录中的 `$WebsitePrepareAction`，地址和身份来自本任务记录：
+
+```json
+{"base_url":"http://localhost:8000","post_id":"local-395","identity_title_parts":["CHNS","人口学"],"open_login":true}
+```
+
+```powershell
+& $Python -X utf8 scripts/playwright_session_action.py --config $Config --mode website-prepare --action $WebsitePrepareAction --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $WebsitePrepareResult
+```
+
+既有文章从实际“编辑”按钮取得编辑编号；返回 `WEBSITE_EDITOR_READY` 后，把返回的 `edit_id` 传给后面两次 verify-ready 的 `--edit-id`。已在本任务编辑页时，准备 JSON 也传入此前核实的 `edit_id`，不重新加载。新建时 JSON 使用 `{"base_url":"http://localhost:8000","create":true,"open_login":true}`，不传文章编号；固定入口打开 `/nodes/edit/` 并确认空白表单，不创建占位文章。
+
+`LOGIN_REQUIRED` 表示需要用户完成登录，之后重跑准备入口；其它失败先处理返回的具体原因。已打开其它编辑页或新建页有内容时，保留现场，不覆盖或绕过。网站准备只导航和读取，不填写、上传或提交。不要把查询页专用的 login-status/login-open 用于文章页。
+
+返回的 `fields` 已包含[当前标签选项](#下拉选项与填写)。完成语义判断和选择后再生成预检载荷；这些均在准备计时内完成。两次verify-ready使用同一份确定的选择，按下文传入标签参数或taxonomy-plan。
 
 ```powershell
 & $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl --website-title $WebsiteTitle | Set-Content -Encoding utf8 $Preflight
 ```
 
-准备计时从本地检查和登录核对前开始。确认目标页已打开且登录有效，沿用该任务观察并绑定的 `$TabId`。未登录时在尚未改动的页面完成登录后继续。预检只读，不导航、导入或提交：
+准备计时从本地检查和登录核对前开始。网站准备成功后沿用同一 `$TabId`。以下预检只读，不导航、导入或提交：
 
 ```powershell
 & $Python -X utf8 scripts/playwright_session_action.py --config $Config --mode preflight --action $Preflight --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $PreflightResult
@@ -62,7 +76,7 @@
 
 ## 下拉选项与填写
 
-在已确认身份的编辑页，用同一绑定会话运行 `playwright_session_action.py --mode taxonomy-options --tab-id $TabId`（其余会话、配置、out参数同预检），只读取得两个字段的当前值和完整选项。主执行者结合本主题含义选择已有项；匹配有歧义时先查清，不让机械程序按字面猜含义。
+使用网站准备结果的 `fields`，不重复读取；只有页面选项已变化时，才在同一已确认编辑页运行 `playwright_session_action.py --mode taxonomy-options --tab-id $TabId`（其余会话、配置、out参数同预检）。主执行者结合本主题含义选择已有项；匹配有歧义时先查清，不让机械程序按字面猜含义。
 
 已有项可通过 `--directory-tag`、`--cross-database-topic` 传入其原名；新建文章两项都要确定，未传跨库主题时程序只尝试匹配主题名称，不自动新建。需要新建时，两个verify-ready命令均传同一 `--taxonomy-plan <本次选择JSON>`，字段为 `directory_tag` 和/或 `cross_database_topic`：
 
