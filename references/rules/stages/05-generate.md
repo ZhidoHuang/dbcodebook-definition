@@ -32,7 +32,7 @@ ELSA调用公共render_definition_bundle并设置database="ELSA"、cycle_order�
 
 SHARE、KLoSA与KNHANES的生成接口须显式指定database及cycle_order，身份与文件层级按[SHARE流程](../../databases/share/workflow.md)、[KLoSA流程](../../databases/klosa/workflow.md)、[KNHANES流程](../../databases/knhanes/workflow.md)执行。SHARE普通Wave1–9人口学已完成真实完整流程；KNHANES的Core data人口学21期已完成真实完整流程，其它来源和主题不据此视为通过；KLoSA仍按其workflow所列边界。KLoSA还须显式传入与来源方案相同的language，目录入口沿用该语言。程序可运行不代表所有来源或主题已验收。
 
-CHNS同样须显式指定database及cycle_order；生成前在公开R工作对象中接入静态个人来源，生成器只检查个人—年身份并投影WAVE为本地年份。分文件完整检查与当前候选验收边界见[CHNS接口](../../databases/chns/profile.md)。
+CHNS同样须显式指定database及cycle_order；静态来源已由网站并入主表时直接使用；仍为独立文件时，生成前在公开R工作对象中接入，生成器只检查个人—年身份并投影WAVE为本地年份。分文件完整检查与当前候选验收边界见[CHNS接口](../../databases/chns/profile.md)。
 
 summary_source提供已核实的目录路径，生成器从正式来源清单自动取得原始变量数量，衔接为：“以上问卷问题在数据中对应 N 个原始变量，可从 dbCodeBook 的目录［目录路径］进入检索和查看。”数量取raw_vars在raw_codebook中的完整来源身份，按数据库、文件及原变量名去重；包含必要前置题，同一来源跨期不重复计数，不统计最终变量、下载别名数量或网页搜索结果总数。来源身份缺失或无法对应时返回来源清单修正，不省略数量或猜数。
 

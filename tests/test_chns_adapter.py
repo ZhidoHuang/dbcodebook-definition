@@ -88,6 +88,20 @@ def main():
         write(root / members[1], [['IDind', 'sex'], ['001', 'Female'], ['001', 'Male']])
         rejected(check, 'duplicate personal identity')
         write(root / members[1], [['IDind', 'sex'], ['001', 'Female']])
+        # Current exports attach static fields to the main person-period file.
+        (root / members[1]).unlink()
+        members[:] = ['raw_data.csv']
+        write(root / 'raw_data.csv', [[*header, 'sex'], [*values[0], 'Female'], [*values[1], 'Female']])
+        assert check()['raw_data.csv']['merged_static_vars'] == ['sex']
+        with zipfile.ZipFile(archive, 'w') as output:
+            for name in [*members, 'raw_codebook.csv']:
+                output.write(root / name, name)
+        assert inspect_archive(archive, ['age', 'sex'], 'chns')['data']['raw_data.csv']['rows'] == 2
+        write(root / 'raw_data.csv', [[*header, 'sex'], [*values[0], 'Female'], [*values[1], 'Male']])
+        rejected(check, 'static values vary')
+        write(root / 'raw_data.csv', [header, *values])
+        rejected(check, 'business columns differ')
+        write(root / 'raw_data.csv', [[*header, 'sex'], [*values[0], 'Female'], [*values[1], 'Female']])
         dictionary[2][2] = 'relationID'
         write(root / 'raw_codebook.csv', dictionary)
         rejected(check, 'record level')

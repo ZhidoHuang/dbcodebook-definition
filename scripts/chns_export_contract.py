@@ -36,6 +36,7 @@ def validate_person_package(directory, members, expected):
     if not {'Variable', 'newname', 'File type'}.issubset(header):
         raise ValueError('CHNS dictionary requires full source identity, alias and file type')
     files, aliases, identities = {}, set(), set()
+    has_person_period = any(row.get("File type") == "uniqID" for row in dictionary)
     for row in dictionary:
         match = re.fullmatch(r'([^()\s]+) \(([^/\\]+)\)', row['Variable'])
         alias, kind = row['newname'], row['File type']
@@ -45,9 +46,15 @@ def validate_person_package(directory, members, expected):
         if kind not in {'uniqID', 'personID'}:
             raise ValueError('CHNS personal adapter does not support this record level')
         member = 'raw_data.csv' if kind == 'uniqID' else f'raw_data_{source}.csv'
-        item = files.setdefault(member, {'kind': kind, 'sources': set(), 'aliases': set()})
-        if item['kind'] != kind:
+        merged_static = kind == 'personID' and member not in members and has_person_period
+        if merged_static:
+            member = 'raw_data.csv'
+        output_kind = 'uniqID' if member == 'raw_data.csv' else kind
+        item = files.setdefault(member, {'kind': output_kind, 'sources': set(), 'aliases': set(), 'static_aliases': set()})
+        if item['kind'] != output_kind:
             raise ValueError('CHNS source file types conflict')
+        if merged_static:
+            item['static_aliases'].add(alias)
         item['sources'].add(source)
         item['aliases'].add(alias)
         aliases.add(alias)
@@ -68,6 +75,7 @@ def validate_person_package(directory, members, expected):
         if spec['aliases'] & allowed or set(columns) - allowed != spec['aliases']:
             raise ValueError('CHNS business columns differ from their dictionary file')
         seen, person_period = set(), set()
+        static_values = {}
         for row in rows:
             if any(not row[key].strip() for key in keys):
                 raise ValueError('CHNS personal identity is empty')
@@ -80,7 +88,13 @@ def validate_person_package(directory, members, expected):
                 if pair in person_period:
                     raise ValueError('CHNS invalid year or duplicate person-period')
                 person_period.add(pair)
+                if spec['static_aliases']:
+                    values = tuple(row[name] for name in sorted(spec['static_aliases']))
+                    previous = static_values.setdefault(row['IDind'], values)
+                    if previous != values:
+                        raise ValueError('CHNS merged static values vary across personal periods')
         reports[member] = {'rows': len(rows), 'header': columns,
                            'identity_columns': [c for c in columns if c in allowed],
-                           'data_vars': sorted(spec['aliases']), 'record_level': spec['kind']}
+                           'data_vars': sorted(spec['aliases']), 'record_level': spec['kind'],
+                           'merged_static_vars': sorted(spec['static_aliases'])}
     return reports
