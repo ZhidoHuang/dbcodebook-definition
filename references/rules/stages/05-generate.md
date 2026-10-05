@@ -18,7 +18,9 @@
 
 ## 文案读取与展示
 
-后台调用 `copy <- read_definition_copy(analysis_vars)`，把criteria、criteria_intro、summary_entry、summary_insight_items、reference_lines、summary_selection传给现有生成器。新文案从首个变量直接开始，criteria_intro为空，不生成定义表前的共同说明；该参数仅保留旧稿兼容。没有参考资料时reference_lines为空，不生成空标题。definition_data$Criteria、定义HTML和笔记使用同份文案，不能另写一份或覆盖copy$summary_selection。
+第3步规定了独立“定义依据”及“题组 → 时期”问卷结构。使用这些结构前，确认文案读取器保留定义依据的全部内容，生成器为每个题组分别生成时期标签，问卷检查按题组和时期定位证据。旧的全局时期结构通过回归不证明新结构可用；不得把成分名称当作时期、静默丢弃定义依据，或为了适配旧程序把文稿改回整篇合并时期。同一时期的题号在多个题组重复时，在对应questionnaire_evidence中用questionnaire_module填写文案题组名称；无歧义的旧记录可省略。不能由检查器猜选其中一组。当前已测范围见[验收矩阵](../../../tests/acceptance-matrix.md)。
+
+后台调用 `copy <- read_definition_copy(analysis_vars)`，把criteria、criteria_intro、summary_entry、summary_insight_items、reference_lines、summary_selection、definition_basis传给现有生成器。新文案从首个变量直接开始，criteria_intro为空，不生成定义表前的共同说明；该参数仅保留旧稿兼容。没有参考资料时reference_lines为空，不生成空标题。definition_data$Criteria、定义HTML和笔记使用同份文案，不能另写一份或覆盖copy$summary_selection。
 
 新主题或本次修改问卷展示时，按第3步选定需要展示的题组，写入文案并删除R中的重复文字；不需要展示时，summary_selection为空，不生成空问卷块。旧主题仅改其它内容、问卷未变时允许沿用既有R问卷。仅核实题意、未取得完整原题且确需展示时，保留已明确标注的题意概括和原因说明。内容要求和输入格式见[文案写作](03-copy.md)，模板与实例见[reader-copy](../../../templates/reader-copy.md)。
 
@@ -43,6 +45,7 @@ summary_groups <- c(defined_a = "研究概念一", defined_b = "研究概念二"
 # 按需传给 render_definition_bundle：
 # summary_meanings = summary_meanings, summary_groups = summary_groups,
 # summary_selection = copy$summary_selection,
+# definition_basis = copy$definition_basis,
 # hist_mode = "linear"（默认）或有依据的 "zero_plus_log"
 # hist_binwidth：仅在正式业务分组宽度已明确时传入；
 # 未明确时省略，使用自动分箱。宽度已确定为1时才传入1；

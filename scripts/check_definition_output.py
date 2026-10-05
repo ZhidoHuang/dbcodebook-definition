@@ -567,6 +567,8 @@ def check_summary_prose(note_text: str, results: list[dict]) -> None:
             position
             for marker in (
                 '<div class="raw-source-structure"',
+                '<div data-questionnaire-module=',
+                '## 定义依据',
                 '<!-- summary-insight-card:start -->',
                 '<div class="raw-source-link"',
             )

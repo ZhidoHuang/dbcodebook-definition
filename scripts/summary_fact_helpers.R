@@ -693,6 +693,14 @@ render_summary_selection_paragraph <- function(selection, theme_color) {
   # Record-based topics may have no single questionnaire block. In that case
   # the reader copy omits the section and the renderer emits no placeholder.
   if (is.null(selection)) return("")
+  if (!is.null(selection$modules)) {
+    labels <- vapply(selection$modules, function(module) module$label, character(1))
+    if (!length(labels) || any(!nzchar(labels)) || anyDuplicated(labels)) stop("问卷题组名称须非空且唯一。")
+    return(paste0(vapply(selection$modules, function(module) paste0(
+      '<div data-questionnaire-module="', summary_escape_html(module$label), '">',
+      '<h3 data-questionnaire-module-title="true">', summary_escape_html(module$label), '</h3>',
+      render_summary_selection_paragraph(module, theme_color), '</div>'), character(1)), collapse = ""))
+  }
   wrap_source_structure <- function(content) {
     class_name <- selection$class
     if (is.null(class_name) || !nzchar(class_name)) {
@@ -721,6 +729,10 @@ render_summary_selection_paragraph <- function(selection, theme_color) {
     }
     rendered <- vapply(seq_along(lines), function(line_index) {
       line <- lines[[line_index]]
+      if (is.list(line) && identical(line$type, "questionnaire_flow")) {
+        return(paste0('<pre data-questionnaire-flow="true" style="white-space:pre;overflow-x:auto;">',
+                      summary_escape_html(line$text), '</pre>'))
+      }
       if (is.list(line) && identical(line$type, "period_note")) {
         if (length(line$title) != 1 || !nzchar(line$title) ||
             !is.list(line$lines) || length(line$lines) == 0) {
@@ -843,7 +855,9 @@ render_summary_selection_paragraph <- function(selection, theme_color) {
       }
       paste0(
         '<section class="raw-source-period" data-raw-source-period="', summary_escape_html(period),
-        '" data-label="', summary_escape_html(label), '" style="font-size:0.92em;">',
+        '" data-label="', summary_escape_html(label), '"',
+        if (!is.null(group$module)) paste0(' data-questionnaire-module="', summary_escape_html(group$module), '"') else "",
+        ' style="font-size:0.92em;">',
         '<div class="raw-source-period-label">', summary_escape_html(label), '</div>',
         render_selection_lines(group$lines),
         '</section>'
@@ -960,13 +974,15 @@ render_summary_note_section <- function(entry,
                                         theme_color,
                                         insight_items = NULL,
                                         insight_variant = c("standard", "compact"),
-                                        summary_source = NULL) {
+                                        summary_source = NULL,
+                                        definition_basis = "") {
   insight_variant <- match.arg(insight_variant)
   lines <- c(
     "## 摘要导读",
     "",
     render_summary_entry_paragraph(entry, theme_color),
     "",
+    if (nzchar(trimws(definition_basis))) c("## 定义依据", "", definition_basis, "", "<!-- definition-basis:end -->", "") else character(),
     render_summary_selection_paragraph(selection, theme_color)
   )
   if (!is.null(insight_items)) {

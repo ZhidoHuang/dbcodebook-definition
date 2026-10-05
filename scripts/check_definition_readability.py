@@ -124,6 +124,7 @@ class QuestionnaireMarkupParser(HTMLParser):
                 self.current_section = {
                     "period": values["data-raw-source-period"],
                     "label": values.get("data-label", ""),
+                    "module": values.get("data-questionnaire-module", ""),
                     "lines": [],
                     "period_notes": [],
                 }
@@ -262,7 +263,8 @@ def validate_questionnaire_rendering(
                 entries.append((ids[0].text().strip(), [o.text() for o in question_node.find(
                     lambda e: e.attrs.get("data-summary-question-option") == "true")]))
         design = "\n".join(n.text() for n in period_node.find(lambda e: e.attrs.get("data-summary-period-note") == "true"))
-        cross_periods.append((period_node.attrs.get("data-label", period_node.attrs["data-raw-source-period"]), entries, design))
+        cross_periods.append((period_node.attrs.get("data-label", period_node.attrs["data-raw-source-period"]), entries, design,
+                              period_node.attrs.get("data-questionnaire-module", "")))
     for index, item in enumerate(evidence, start=1):
         field = f"questionnaire_evidence[{index}]"
         if item.get("rendered_in_copy") is not True:
@@ -287,7 +289,8 @@ def validate_questionnaire_rendering(
         for period in periods:
             period_key = normalized_period(period)
             matches = [s for s in sections.get(period_key, [])
-                       if any(question_id in line["question_ids"] for line in s["lines"])]
+                       if any(question_id in line["question_ids"] for line in s["lines"])
+                       and (not item.get("questionnaire_module") or s.get("module") == item["questionnaire_module"])]
             if not matches:
                 if sections.get(period_key):
                     fail(f"final note period {period} does not render question {question_id}")
@@ -365,7 +368,8 @@ def validate_questionnaire_rendering(
                 if entry_ids:
                     jump_entries.append((entry_ids[0].text().strip(), option_rows, entry.text()))
             inherited_jumps = referenced_jump_options(question_id, jump_entries)
-            cross_options = cross_period_options(node.text(), section["label"], question_id, cross_periods)
+            cross_options = cross_period_options(node.text(), section["label"], question_id,
+                                                 [p[:3] for p in cross_periods if p[3] == section.get("module", "")])
             if cross_options and (options or referenced or shared_options):
                 fail(f"final note period {period} repeats or ambiguously references cross-period options for {question_id}")
             if expected_jumps and line["instruction_count"] < 1 and not (shared_routes or inherited_jumps):

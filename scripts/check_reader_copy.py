@@ -199,6 +199,7 @@ def read_copy(path, expected_vars=None):
     result = {"summary": parts["摘要导读"], "criteria": criteria,
               "criteria_intro": re.split(r"(?m)^### ", parts["Criteria"], maxsplit=1)[0].strip(),
               "insight": insight, "references": parts.get("参考资料说明", "")}
+    result["definition_basis"] = parts.get("定义依据", "")
     result["summary_blocks"] = summary_blocks(result["summary"])
     if "原始问卷" in parts:
         result["questionnaire"] = read_questionnaire_copy(parts["原始问卷"])
@@ -206,6 +207,27 @@ def read_copy(path, expected_vars=None):
 
 
 def read_questionnaire_copy(text):
+    top = sections(text, 3)
+    # A module contains fourth-level periods, not fourth-level design/questions.
+    nested = [bool(re.search(r"(?m)^##### 问卷设计(?:变化)?\s*$", body)) for body in top.values()]
+    if any(nested):
+        if not all(nested):
+            raise ValueError("原始问卷不能混用题组内时期与全局时期结构")
+        result = {}
+        for module, body in top.items():
+            if re.split(r"(?m)^#### ", body, maxsplit=1)[0].strip():
+                raise ValueError("题组说明应写在对应时期的问卷设计中：" + module)
+            module_key = re.sub(r"[^A-Za-z0-9\u3400-\u9fff]+", "_", module).strip("_")
+            if not module_key:
+                raise ValueError("问卷题组名称为空")
+            lowered = re.sub(r"(?m)^(#{4,6})(?= )", lambda m: m[0][1:], body)
+            for key, period in read_questionnaire_copy(lowered).items():
+                combined = module_key + "__" + key
+                if combined in result:
+                    raise ValueError("问卷题组和时期标识重复：" + combined)
+                period["module"] = module
+                result[combined] = period
+        return result
     periods = {}
     for label, body in sections(text, 3).items():
         # Explicit colon titles distinguish multiple legal modules in one Wave.
@@ -233,6 +255,10 @@ def read_questionnaire_copy(text):
                 question_blocks.append((title, content, ""))
         for question_id, content, group in question_blocks:
             question = {"id": question_id, "text": "", "condition": "", "options": [], "instructions": []}
+            flows = re.findall(r"(?ms)^```(?:text)?[ \t]*\n(.*?)\n```[ \t]*$", content)
+            if flows:
+                question["flows"] = flows
+                content = re.sub(r"(?ms)^```(?:text)?[ \t]*\n.*?\n```[ \t]*$", "", content)
             if group:
                 question["group"] = group
             text_lines = []
@@ -285,6 +311,8 @@ def read_questionnaire_copy(text):
 
 def questionnaire_text(period):
     parts = [period["label"], period.get("design_title", "问卷设计"), period["design"]]
+    if period.get("module"):
+        parts.insert(0, period["module"])
     previous_group = None
     for question in period["questions"]:
         group = question.get("group")
@@ -296,17 +324,26 @@ def questionnaire_text(period):
             parts.append("（" + question["condition"] + "）")
         parts.extend(option["text"] + option["jump"] for option in question["options"])
         parts.extend(question["instructions"])
+        parts.extend(question.get("flows", []))
     return "\n".join(parts)
 
 
 def questionnaire_content(markup):
     root = Document(markup).root
+    for module in root.find(lambda e: e.tag == "div" and bool(e.attrs.get("data-questionnaire-module"))):
+        headings = list(module.find(lambda e: e.attrs.get("data-questionnaire-module-title") == "true"))
+        if len(headings) != 1 or headings[0].text() != module.attrs["data-questionnaire-module"]:
+            raise ValueError("问卷题组标题缺失或与分组不一致")
+        for period in module.find(lambda e: bool(e.attrs.get("data-raw-source-period"))):
+            if period.attrs.get("data-questionnaire-module") != module.attrs["data-questionnaire-module"]:
+                raise ValueError("问卷时期放入了错误题组")
     periods = {}
     for element in root.find(lambda e: bool(e.attrs.get("data-raw-source-period"))):
         key = element.attrs["data-raw-source-period"]
         if key in periods:
             raise ValueError("成品有重复的原始问卷时期：" + key)
-        periods[key] = element.text()
+        prefix = element.attrs.get("data-questionnaire-module", "")
+        periods[key] = (prefix + "\n" if prefix else "") + element.text()
     return periods
 
 
@@ -347,7 +384,7 @@ def compare_content(copy, actual, *, source=False):
         actual_trees = [b["text"] for b in summary_blocks(actual["summary"]) if b["type"] == "code_tree"]
     if expected_trees != actual_trees:
         raise ValueError("summary 代码树的节点、顺序、换行或缩进与文案不一致")
-    for field in ("summary", "insight", "references", "criteria_intro"):
+    for field in ("summary", "insight", "references", "criteria_intro", "definition_basis"):
         value = actual.get(field, "")
         if source:
             value = visible_markup(value)
@@ -375,6 +412,13 @@ def compare_content(copy, actual, *, source=False):
         for period, value in copy["questionnaire"].items():
             actual_text = questionnaire_text(rendered[period]) if isinstance(rendered[period], dict) else rendered[period]
             require_equal(questionnaire_text(value), actual_text, "原始问卷/" + period)
+        expected_flows = [flow for p in copy["questionnaire"].values() for q in p["questions"] for flow in q.get("flows", [])]
+        if isinstance(actual.get("questionnaire"), str):
+            actual_flows = [e.text() for e in Document(actual["questionnaire"]).root.find(lambda e: e.attrs.get("data-questionnaire-flow") == "true")]
+            if expected_flows != actual_flows:
+                raise ValueError("问卷流程图的内容、顺序或缩进与文案不一致")
+        elif "questionnaire_flows" in actual and expected_flows != actual["questionnaire_flows"]:
+            raise ValueError("问卷流程图的内容、顺序或缩进与文案不一致")
     return {"ok": True, "variables": list(copy["criteria"]), "checked": ["summary", "criteria", "insight", "references"]}
 
 
@@ -382,7 +426,7 @@ def note_content(text):
     text = re.sub(r"(?ms)^```.*?^```\s*$", "", text)
     parts = sections(text, 2)
     summary = parts.get("摘要导读", "")
-    summary = re.split(r'<div\s+class="raw-source-structure"|<!-- summary-insight-card:start -->|<div\s+class="raw-source-link"', summary, maxsplit=1)[0]
+    summary = re.split(r'<div\s+class="raw-source-structure"|<div\s+data-questionnaire-module=|<!-- summary-insight-card:start -->|<div\s+class="raw-source-link"', summary, maxsplit=1)[0]
     root = Document(text).root
     insight = list(root.find(lambda e: e.attrs.get("data-summary-insight-body") == "true"))
     if len(insight) > 1:
@@ -404,14 +448,16 @@ def note_content(text):
             raise ValueError(f"成品定义表重复变量：{variable}")
         criteria[variable] = criteria_fields(cells[1])
     references = parts.get("参考资料说明", "")
+    basis = parts.get("定义依据", "").split("<!-- definition-basis:end -->", 1)[0].strip()
     # Generated detail HTML is not part of the reference prose.
     references = re.split(r"<style\b|<table\b", references, maxsplit=1, flags=re.I)[0]
     intros = list(root.find(lambda e: e.attrs.get("data-criteria-intro") == "true"))
     if len(intros) > 1:
         raise ValueError("成品有重复的Criteria共同说明")
-    return {"summary": visible_markup(summary), "criteria": criteria,
+    return {"summary": visible_markup(summary), "criteria": criteria, "definition_basis": visible_markup(basis),
             "criteria_intro": intros[0].text() if intros else "",
             "summary_trees": rendered_summary_trees(summary),
+            "questionnaire_flows": [e.text() for e in root.find(lambda e: e.attrs.get("data-questionnaire-flow") == "true")],
             "insight": insight[0].text() if insight else "", "references": visible_markup(references),
             "questionnaire": questionnaire_content(text)}
 
@@ -430,7 +476,7 @@ def validate_note(copy_path, note_path, codebook_path=None):
     if errors:
         raise ValueError("；".join(errors))
     summary = sections(text, 2).get("摘要导读", "")
-    opening = re.split(r'<div\s+class="raw-source-structure"|<!-- summary-insight-card:start -->|<div\s+class="raw-source-link"', summary, maxsplit=1)[0]
+    opening = re.split(r'<div\s+class="raw-source-structure"|<div\s+data-questionnaire-module=|<!-- summary-insight-card:start -->|<div\s+class="raw-source-link"', summary, maxsplit=1)[0]
     validate_summary_marks(copy["summary"], opening)
     return result
 
@@ -462,7 +508,7 @@ def questionnaire_copy_errors(copy, record):
         for key in period_keys(period["label"]):
             periods.setdefault(key, []).append(period)
     errors = []
-    cross_periods = [(p["label"], [(q["id"], [o["text"] for o in q["options"]]) for q in p["questions"]], p["design"])
+    cross_periods = [(p["label"], [(q["id"], [o["text"] for o in q["options"]]) for q in p["questions"]], p["design"], p.get("module", ""))
                      for p in copy.get("questionnaire", {}).values()]
     for item in evidence:
         question_id = str(item.get("question_id", ""))
@@ -481,7 +527,8 @@ def questionnaire_copy_errors(copy, record):
         for period in item["periods"]:
             label = f"{period}/{question_id}"
             matches = [p for p in periods.get(normalized_period(period), [])
-                       if any(normalized(q["id"]) == normalized(question_id) for q in p["questions"])]
+                       if any(normalized(q["id"]) == normalized(question_id) for q in p["questions"])
+                       and (not item.get("questionnaire_module") or p.get("module") == item["questionnaire_module"])]
             if len(matches) != 1:
                 errors.append(f"{label}: expected one questionnaire period")
                 continue
@@ -508,7 +555,8 @@ def questionnaire_copy_errors(copy, record):
             option_text = shared_options or original_options(referenced or [o["text"] for o in options], matches[0]["design"], period)
             try:
                 cross_options = cross_period_options(question["text"] + "\n" + "\n".join(question["instructions"]),
-                                                     matches[0]["label"], question_id, cross_periods)
+                                                     matches[0]["label"], question_id,
+                                                     [p[:3] for p in cross_periods if p[3] == matches[0].get("module", "")])
             except ValueError as error:
                 errors.append(f"{label}: {error}")
                 continue

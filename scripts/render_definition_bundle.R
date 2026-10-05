@@ -181,6 +181,7 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
   result <- list(
     criteria = criteria,
     criteria_intro = copy$criteria_intro,
+    definition_basis = if (is.null(copy$definition_basis)) "" else copy$definition_basis,
     summary_entry = list(paragraphs = lapply(copy$summary_blocks, function(block) {
       if (identical(block$type, "code_tree")) return(block)
       list(parts = inline_parts(block$text))
@@ -205,9 +206,18 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
               options = lapply(question$options, function(option) {
                 summary_questionnaire_option(option$text, option$jump)
               }), after = unlist(question$instructions, use.names = FALSE))))
+            for (flow in question$flows) lines <- c(lines, list(list(type = "questionnaire_flow", text = flow)))
         }
-        list(period = period, label = block$label, lines = lines)
+        list(period = period, label = block$label, module = block$module, lines = lines)
       }))
+    modules <- vapply(copy$questionnaire, function(block) if (is.null(block$module)) "" else block$module, character(1))
+    if (all(nzchar(modules))) {
+      groups <- result$summary_selection$groups
+      result$summary_selection <- list(modules = lapply(unique(modules), function(name) {
+        list(label = name, class = "raw-source-structure", display = "period-tabs",
+             groups = unname(groups[modules == name]))
+      }))
+    }
   }
   result
 }
@@ -464,7 +474,8 @@ render_definition_bundle <- function(
     summary_extra_lines = character(),
     database = "CHARLS",
     criteria_intro = "",
-    language = NULL) {
+    language = NULL,
+    definition_basis = "") {
   database <- toupper(database)
   if (!database %in% c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "KLOSA")) stop("Unsupported definition database: ", database)
   if (database == "KNHANES") {
@@ -550,6 +561,7 @@ render_definition_bundle <- function(
     summary = render_summary_entry_paragraph(summary_entry, theme_color),
     criteria = as.list(criteria[analysis_vars]),
     criteria_intro = paste(render_criteria_intro(criteria_intro), collapse = ""),
+    definition_basis = definition_basis,
     insight = paste(summary_insight_items, collapse = "\n\n"),
     references = paste(reference_lines[!grepl("^## 参考资料说明$", reference_lines)], collapse = "\n"),
     questionnaire = if (missing(summary_selection)) "" else render_summary_selection_paragraph(summary_selection, theme_color)
@@ -827,7 +839,8 @@ render_definition_bundle <- function(
     theme_color = theme_color,
     insight_items = summary_insight_items,
     insight_variant = "compact",
-    summary_source = summary_source
+    summary_source = summary_source,
+    definition_basis = definition_basis
   )
   note_lines <- compose_definition_note_lines(
     summary_section,
