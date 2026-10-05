@@ -12,8 +12,13 @@ POLICY = "dual_exploration_v1"
 ROLES = {"a": "独立探索 A", "b": "独立探索 B"}
 
 
-def plan_hash(path):
+def plan_hash(path, version=1):
     data = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+    if version == 2:
+        from source_record_binding import research_record
+        data = research_record(data)
+    elif version != 1:
+        raise ValueError("Unknown exploration fingerprint version")
     # Execution observations and copy locations are added after the source plan.
     for key in ("status", "logic_review", "exploration_log", "searched_at", "questionnaire_display_policy"):
         data.pop(key, None)
@@ -79,7 +84,7 @@ def validate_exploration(report, record=None):
         raise ValueError("主线程合并依据已变化")
     if record and str(Path(record).resolve()) != merge["record"]:
         raise ValueError("合并方案与当前来源记录不是同一文件")
-    if plan_hash(merge["record"]) != merge["plan_hash"]:
+    if plan_hash(merge["record"], merge.get("hash_version", 1)) != merge["plan_hash"]:
         raise ValueError("来源方案已变化，须更新受影响探索与合并结论")
     return merge
 
@@ -192,7 +197,7 @@ def command_exploration(args):
         if exploration.get("merge"):
             exploration.setdefault("merge_history", []).append(deepcopy(exploration["merge"]))
         exploration["merge"] = {"status": args.result, "unresolved": args.unresolved or [],
-            "decision": input_hashes([decision]), "record": str(record), "plan_hash": plan_hash(record), "merged_at": iso()}
+            "decision": input_hashes([decision]), "record": str(record), "plan_hash": plan_hash(record, 2), "hash_version": 2, "merged_at": iso()}
         if args.result == "ready":
             validate_exploration(report, record)
     save(report_path, markdown, report)

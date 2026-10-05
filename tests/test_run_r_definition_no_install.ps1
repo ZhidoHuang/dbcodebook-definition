@@ -86,8 +86,6 @@ cat("RUN_OK\n")
 ## 小book提示
 说明会影响整个主题的使用边界。
 
-## 参考资料说明
-说明材料分别支持哪些事实。
 '@
   [System.IO.File]::WriteAllText(
     (Join-Path $tempDir "文案.md"),

@@ -16,7 +16,7 @@ This repository is the canonical source for rules, evidence, scripts, and tests.
 | Prepare download files offline | [Scoped tasks](references/rules/scoped-tasks.md#offline-download) | Generate the local action and snapshot; no browser, login, network or download |
 | Check historical stage registration | [Scoped tasks](references/rules/scoped-tasks.md#historical-report) | Run the read-only report check; do not recreate production or alter history |
 | Create, remake, or change sources | [1. Source plan](references/rules/stages/01-source-plan.md) | Follow the stages below; source or alias changes require a fresh full download |
-| Review or change copy | [3. Reader copy](references/rules/stages/03-copy.md) | Read the complete 文案.md; regenerate and validate affected outputs, then perform authorized sync |
+| Review or change copy | [3. Reader copy](references/rules/stages/03-copy.md); existing-topic wording/display changes use [copy update](references/rules/scoped-tasks.md#copy-update) | Read the complete 文案.md; regenerate and validate affected outputs, then perform authorized sync |
 | Change R or calculation | [4. Public R](references/rules/stages/04-public-r.md) | Reuse unchanged sources; revise affected copy before generation |
 | Upload reviewed outputs | [8. Website sync](references/rules/stages/08-website.md) only | Do not load discovery, questionnaire, R or writing rules; do not rebuild the topic |
 | Edit this Skill | [Rule ownership](references/rules/index.md) and the requested scope | Do not run a topic or change the website merely to maintain the Skill |

@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from writing_evidence import capture_copy, skill_version
+from source_record_binding import research_record, SOURCE_SCOPE
 from exploration_handoff import POLICY as EXPLORATION_POLICY, validate_exploration, add_commands
 
 
@@ -352,6 +353,31 @@ def command_review_import(args: argparse.Namespace) -> dict[str, Any]:
     if report["status"] != "running":
         raise SystemExit("任务报告已经结束；历史审核复盘应登记到当前复盘报告。")
     review = read_review_log(args.log, args.role)
+    all_rounds = review["rounds"]
+    selected_ids = getattr(args, "turn_id", None)
+    start = parse_time(report["started_at"])
+    end = now()
+    rounds = [item for item in all_rounds if start <= parse_time(item["started_at"]) <= end]
+    if selected_ids:
+        if len(set(selected_ids)) != len(selected_ids):
+            raise ValueError("重复的复核轮次")
+        rounds = [item for item in rounds if item["turn_id"] in selected_ids]
+        if {item["turn_id"] for item in rounds} != set(selected_ids):
+            raise ValueError("指定复核轮次不存在或不属于本次报告时间范围")
+    if not rounds:
+        raise ValueError("本次任务没有复核轮次；历史结论请沿用，不重新导入为本次工作")
+    if all_rounds[-1].get("finished_at") is None and all_rounds[-1] not in rounds:
+        raise ValueError("代理仍有未结束轮次，不能通过筛选隐藏")
+    for index, item in enumerate(rounds):
+        item["gap_before_seconds"] = (elapsed_seconds(rounds[index - 1]["finished_at"], item["started_at"])
+                                     if index and rounds[index - 1]["finished_at"] else 0)
+    review.update(rounds=rounds, turn_count=len(rounds),
+                  running_seconds=round(sum(item["elapsed_seconds"] or 0 for item in rounds), 3),
+                  between_rounds_seconds=round(sum(item["gap_before_seconds"] for item in rounds), 3),
+                  unfinished_turns=sum(item["finished_at"] is None for item in rounds),
+                  excluded_turn_count=len(all_rounds) - len(rounds),
+                  timing_scope={"started_at": report["started_at"], "through": iso(end),
+                                "turn_ids": [item["turn_id"] for item in rounds]})
     if args.closed and review["unfinished_turns"]:
         raise SystemExit("审核日志仍有未结束轮次，不能登记为已关闭。")
     limitation = getattr(args, "close_unavailable", None)
@@ -359,8 +385,9 @@ def command_review_import(args: argparse.Namespace) -> dict[str, Any]:
         raise SystemExit("缺少关闭工具的例外只适用于日志确认已完成的审核，并须说明工具限制。")
     reviews = report.setdefault("reviews", [])
     prior = next((item for item in reviews if item["agent_id"] == review["agent_id"]), None)
-    review["closed"] = bool(args.closed or (prior and prior.get("closed")))
-    review["close_unavailable"] = limitation or (prior or {}).get("close_unavailable")
+    same_rounds = prior and [r["turn_id"] for r in prior.get("rounds", [])] == [r["turn_id"] for r in rounds]
+    review["closed"] = bool(args.closed or (same_rounds and prior.get("closed")))
+    review["close_unavailable"] = limitation or ((prior or {}).get("close_unavailable") if same_rounds else None)
     if review["unfinished_turns"]:
         review["closed"] = False
     review["created_during_run"] = parse_time(review["created_at"]) >= parse_time(report["started_at"])
@@ -374,7 +401,7 @@ def command_review_import(args: argparse.Namespace) -> dict[str, Any]:
             "between_rounds_seconds": review["between_rounds_seconds"], "closed": review["closed"]}
 
 
-def input_hashes(paths, r_scope="full"):
+def input_hashes(paths, r_scope="full", source_scope="legacy"):
     result = {}
     for value in paths:
         path = Path(value).resolve(strict=True)
@@ -391,6 +418,10 @@ def input_hashes(paths, r_scope="full"):
             plan = json.loads(content.decode("utf-8-sig"))
             # Recording the review verdict does not change its source-plan input.
             plan.pop("logic_review", None)
+            if source_scope == SOURCE_SCOPE:
+                plan = research_record(plan)
+            elif source_scope != "legacy":
+                raise ValueError("Unknown source binding scope")
             content = json.dumps(plan, sort_keys=True, ensure_ascii=False).encode("utf-8")
         result[str(path)] = hashlib.sha256(content).hexdigest()
     if not result:
@@ -402,10 +433,10 @@ def validate_stage_review(report, role, required_inputs=None):
     review = report.get("stage_reviews", {}).get(role)
     if not review or review.get("status") != "pass" or not review.get("evidence", "").strip():
         raise ValueError("本环节审核尚未通过：" + role)
-    if input_hashes(review["inputs"], review.get("r_scope", "full")) != review["inputs"]:
+    if input_hashes(review["inputs"], review.get("r_scope", "full"), review.get("source_scope", "legacy")) != review["inputs"]:
         raise ValueError("审核输入已变化，须复核受影响部分：" + role)
     if required_inputs:
-        expected = input_hashes(required_inputs, review.get("r_scope", "full"))
+        expected = input_hashes(required_inputs, review.get("r_scope", "full"), review.get("source_scope", "legacy"))
         bound = {Path(path): digest for path, digest in review["inputs"].items()}
         if any(bound.get(Path(path)) != digest for path, digest in expected.items()):
             raise ValueError("实际运行输入未绑定到本次审核：" + role)
@@ -456,16 +487,16 @@ def command_review_stage(args):
     reviews = report.setdefault("stage_reviews", {})
     if args.command == "review-start":
         scope = getattr(args, "r_scope", "full")
-        inputs = input_hashes(args.input, scope)
+        inputs = input_hashes(args.input, scope, SOURCE_SCOPE)
         previous = reviews.get(args.role)
         if previous:
             report.setdefault("stage_review_history", {}).setdefault(args.role, []).append(dict(previous))
-        reviews[args.role] = {"status": "pending", "started_at": iso(), "inputs": inputs, "r_scope": scope}
+        reviews[args.role] = {"status": "pending", "started_at": iso(), "inputs": inputs, "r_scope": scope, "source_scope": SOURCE_SCOPE}
         if previous and any(not f["resolved"] for f in previous.get("findings", [])):
             reviews[args.role]["findings"] = [dict(f) for f in previous["findings"] if not f["resolved"]]
     else:
         prior = reviews.get(args.role)
-        if not prior or input_hashes(prior["inputs"], prior.get("r_scope", "full")) != prior["inputs"]:
+        if not prior or input_hashes(prior["inputs"], prior.get("r_scope", "full"), prior.get("source_scope", "legacy")) != prior["inputs"]:
             raise ValueError("先绑定稳定输入；审核期间发生变化则重新发起受影响复核")
         if not args.evidence.strip():
             raise ValueError("必须保留审核者的具体发现与结论")
@@ -1153,6 +1184,7 @@ def build_parser() -> argparse.ArgumentParser:
     review_parser.add_argument("--process-dir", required=True)
     review_parser.add_argument("--log", required=True, type=Path)
     review_parser.add_argument("--role", required=True)
+    review_parser.add_argument("--turn-id", action="append", help="Exact task turns when an agent served multiple tasks; repeat as needed.")
     review_parser.add_argument("--closed", action="store_true",
                                help="Use only after the agent close tool succeeded.")
     review_parser.add_argument("--close-unavailable", help="Actual host/tool limitation; requires a completed final review turn.")

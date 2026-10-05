@@ -34,7 +34,7 @@
 
 新主题，或新增、删除、重命名变量、改变对象、周期、问法、组成或缺失处理时，正式R前运行 `check_definition_readability.py init-impact` 并完成 `definition_change_impact.json`。按[填写说明](../../templates/change-impact.md)记录真实变更范围、题组证据及未决问题，不逐栏评价写作质量，不事后根据成品补写。记录未完成、必要题文未进入文案或定义未决时不得生成。
 
-只改表达时记录实际影响，不写成定义事实变化；方案与R未变则保留原有效R复核，生成前用review-check确认仍适用。首次预检和R复核不等于每次改字都重做。
+只改表达时使用[局部文案更新入口](scoped-tasks.md#copy-update)，不写成定义事实变化；方案与R未变则保留原有效R复核。首次预检和R复核不等于每次改字都重做。
 
 ### 原始回答冲突
 

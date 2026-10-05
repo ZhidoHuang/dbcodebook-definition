@@ -309,7 +309,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
     root = Path(temp_dir)
     log = root / "review.jsonl"
     events = [
-        {"type": "session_meta", "payload": {"id": "agent-1", "timestamp": "2026-01-01T00:00:00+00:00",
+        {"type": "session_meta", "payload": {"id": "agent-1", "timestamp": "2025-12-31T23:59:59+00:00",
          "source": {"subagent": {"thread_spawn": {"parent_thread_id": "parent", "agent_nickname": "Reviewer"}}}}},
         {"type": "turn_context", "payload": {"model": "fixture-model", "effort": "high", "turn_id": "one"}},
         {"timestamp": "2026-01-01T00:00:00+00:00", "type": "event_msg",
@@ -324,6 +324,11 @@ with tempfile.TemporaryDirectory() as temp_dir:
     log.write_text("\n".join(json.dumps(event) for event in events) + "\n", encoding="utf-8")
     run("init", "--process-dir", temp_dir, "--database", "CHARLS", "--topic-id", "040",
         "--topic-name", "review", "--task", "review fixture", "--workflow", "general")
+    # Synthetic task interval contains the synthetic review turns.
+    report_path = root / "execution_report.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report["started_at"] = "2026-01-01T00:00:00+00:00"
+    report_path.write_text(json.dumps(report), encoding="utf-8")
     for _ in range(2):
         imported = json.loads(run("review-import", "--process-dir", temp_dir,
                                   "--log", str(log), "--role", "logic").stdout)
@@ -346,6 +351,9 @@ with tempfile.TemporaryDirectory() as temp_dir:
     assert "新建 0 个" in markdown and "15秒" in markdown and "1分0秒" in markdown
     run("init", "--process-dir", temp_dir, "--database", "CHARLS", "--topic-id", "040",
         "--topic-name", "review", "--task", "unfinished fixture", "--workflow", "general")
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report["started_at"] = "2026-01-01T00:00:00+00:00"
+    report_path.write_text(json.dumps(report), encoding="utf-8")
     log.write_text("\n".join(json.dumps(event) for event in events[:-1]) + "\n", encoding="utf-8")
     assert "未结束轮次" in run("review-import", "--process-dir", temp_dir,
                             "--log", str(log), "--role", "logic", "--closed", ok=False).stderr

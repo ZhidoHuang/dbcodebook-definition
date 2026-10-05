@@ -37,6 +37,21 @@ For a finished full-definition report, run:
 This reuses the completion checks without saving or updating the report. Report missing registration or failed checks as found. A pass establishes registration completeness under the recorded policy, not that historical research, calculations or reviews were substantively correct. No production rerun or fabricated timing is needed. Non-full-definition or unfinished reports are outside this command's scope; report that limitation rather than assigning completion.
 
 
+## Copy-update
+
+已有主题只改措辞或展示时，先保存修改前的有效依据，再改文案。不重新探索或重审未变的R。来源、补值条件、公式、变量范围或R需要变化时，返回对应环节，不使用这个入口。
+
+```powershell
+# 修改文件前运行；程序核对当前成果和既有研究、R复核，保存原稿及数据基线。
+& $Python -X utf8 scripts/update_reader_copy.py prepare --formal-dir $Formal --process-dir $Process --reason "本次具体修改内容，以及研究方案和计算保持不变的范围"
+# 修改文案.md；需要改问卷译文或位置时同步相应展示字段。
+& $Python -X utf8 scripts/update_reader_copy.py run --formal-dir $Formal --process-dir $Process --config $Config
+```
+
+已按用户要求删除整节问卷时，第二条加 `--omit-questionnaire "本主题省略问卷展示的具体原因，研究证据和必要定义条件仍保留"`，程序同步展示标记及变更范围。局部题目取舍仍按下方Copy-operations登记。PowerShell 7不在PATH时传入实际 `--pwsh` 路径。
+
+程序沿用修改前已核实的研究及R结论，运行正式生成、核对数据未变、保留内容未变的工作簿并取得当前发布许可；记录在原过程目录，不创建另一套审核。它只完成本地更新，不下载或发布。已授权同步时接第8步；失败保留日志，按具体问题修正，不用重派代理或重建记录绕过失败。已修改而没有修改前基线时，先核实已有版本，不能把当前稿冒充修改前稿。
+
 ## Copy-operations
 
 问卷展示取舍按第3步。现有questionnaire_evidence中，不展示的题目填写display_required=false、display_omission_reason（本题为何无需展示），rendered_in_copy=false，copy_locator写“不展示：”及理由；原题证据、来源覆盖和路径核验仍保留。需要展示的沿用原字段，缺省display_required=true以兼容旧记录。检查器只跳过明确省略项的正文匹配，不跳过其研究证据校验，也不替执行者判断省略是否合理。

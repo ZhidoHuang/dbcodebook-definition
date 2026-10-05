@@ -305,8 +305,7 @@ $readerCopyText = [System.IO.File]::ReadAllText(
 $requiredReaderCopyHeadings = @(
   "## 摘要导读",
   "## Criteria",
-  "## 小book提示",
-  "## 参考资料说明"
+  "## 小book提示"
 )
 foreach ($heading in $requiredReaderCopyHeadings) {
   if (-not $readerCopyText.Contains($heading)) {
