@@ -1,6 +1,7 @@
 """Synthetic role records test gating; they are not evidence of real agents."""
 import copy
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -88,7 +89,8 @@ with tempfile.TemporaryDirectory() as temp:
     script = ROOT / "scripts/execution_report.py"
     process = root / "process"
     def cli(*args, ok=True):
-        result = subprocess.run([sys.executable, str(script), *map(str, args)], capture_output=True, text=True, encoding="utf-8")
+        result = subprocess.run([sys.executable, "-X", "utf8", str(script), *map(str, args)], capture_output=True, text=True, encoding="utf-8",
+                                env={**os.environ, "CODEX_THREAD_ID": "primary-test"})
         assert (result.returncode == 0) == ok, result.stdout + result.stderr
         return result
     cli("init", "--process-dir", process, "--database", "test", "--topic-id", "001", "--topic-name", "fixture", "--task", "test")
@@ -126,9 +128,85 @@ with tempfile.TemporaryDirectory() as temp:
         "--decision", decision, "--result", "ready")
     cli("exploration-check", "--process-dir", process, "--record", plan)
     assert json.loads(saved.read_text(encoding="utf-8"))["exploration"]["merge_history"][0]["status"] == "blocked"
+    # A separate continuation explicitly reuses frozen evidence, never its merge.
+    source = root / "prior-report.json"
+    source.write_bytes(saved.read_bytes())
+    original_bytes = source.read_bytes()
+    original = json.loads(original_bytes)
+    continued = root / "continued"
+    cli("init", "--process-dir", continued, "--database", "test", "--topic-id", "001",
+        "--topic-name", "fixture", "--task", "continuation")
+    continued_path = continued / "execution_report.json"
+    def reuse(ok=True, *extra):
+        before = continued_path.read_bytes()
+        result = cli("exploration-reuse", "--process-dir", continued, "--from-report", source,
+                     "--input", request, *extra, ok=ok)
+        if not ok:
+            assert continued_path.read_bytes() == before
+        assert source.read_bytes() == original_bytes
+        return result
+    # Different declared scope and invalid original evidence cannot be inherited.
+    before = continued_path.read_bytes()
+    cli("exploration-reuse", "--process-dir", continued, "--from-report", source,
+        "--input", decision, ok=False)
+    assert continued_path.read_bytes() == before
+    for change in (
+        lambda bad: bad.update(database="another"),
+        lambda bad: bad["reviews"][0].update(unfinished_turns=1),
+        lambda bad: bad["reviews"][0]["rounds"][0].update(outcome="aborted"),
+        lambda bad: bad["stage_reviews"][ROLES["a"]].update(agent_id="primary-test"),
+        lambda bad: bad["exploration"]["branches"]["b"].update(agent_id="a"),
+    ):
+        bad = copy.deepcopy(original); change(bad)
+        source.write_text(json.dumps(bad), encoding="utf-8")
+        cli("exploration-reuse", "--process-dir", continued, "--from-report", source,
+            "--input", request, ok=False)
+        assert continued_path.read_bytes() == before
+    source.write_bytes(original_bytes)
+    (root / "a.md").write_text("Changed first output", encoding="utf-8")
+    reuse(False)
+    (root / "a.md").write_text("Distinct proposal a", encoding="utf-8")
+    request.write_text("Changed research scope", encoding="utf-8")
+    reuse(False)
+    request.write_text("Explore the provided data and possible definitions.", encoding="utf-8")
+    # A historical branch agent cannot become the new primary agent.
+    collision = subprocess.run([sys.executable, "-X", "utf8", str(script), "exploration-reuse", "--process-dir", str(continued),
+        "--from-report", str(source), "--input", str(request)], capture_output=True, text=True, encoding="utf-8",
+        env={**os.environ, "CODEX_THREAD_ID": "a"})
+    assert collision.returncode != 0 and "当前主线程身份" in collision.stderr
+    assert continued_path.read_bytes() == before
+    # Failed pending registration needs a reason, and its history remains intact.
+    cli("exploration-start", "--process-dir", continued, "--input", request)
+    pending_bytes = continued_path.read_bytes()
+    pending = json.loads(pending_bytes)
+    reuse(False)
+    active = copy.deepcopy(pending)
+    active["reviews"] = copy.deepcopy(original["reviews"])
+    continued_path.write_text(json.dumps(active), encoding="utf-8")
+    reuse(False, "--replace-reason", "failed pending registration")
+    continued_path.write_bytes(pending_bytes)
+    reuse(True, "--replace-reason", "failed pending registration")
+    inherited = json.loads(continued_path.read_bytes())
+    assert inherited["exploration"]["started_at"] == original["exploration"]["started_at"]
+    assert inherited["exploration"]["branches"] == original["exploration"]["branches"]
+    assert inherited["exploration"]["from_report"] == str(source.resolve())
+    assert inherited["exploration"]["from_report_hash"] and inherited["exploration"]["reused_at"]
+    assert inherited["exploration_history"][-1] == pending["exploration"]
+    assert "merge" not in inherited["exploration"]
+    for role in ROLES.values():
+        for field in ("started_at", "finished_at", "inputs", "agent_id"):
+            assert inherited["stage_reviews"][role][field] == original["stage_reviews"][role][field]
+    cli("exploration-check", "--process-dir", continued, ok=False)
+    reuse(False, "--replace-reason", "cannot overwrite completed branches")
+    cli("exploration-merge", "--process-dir", continued, "--record", plan,
+        "--decision", decision, "--result", "ready")
+    cli("exploration-check", "--process-dir", continued, "--record", plan)
+    source.write_bytes(original_bytes + b"\n")
+    cli("exploration-check", "--process-dir", continued, ok=False)
+    source.write_bytes(original_bytes)
     # Updating a branch clears the ready verdict, preserving the earlier decision.
     cli("exploration-result", "--process-dir", process, "--branch", "a", "--agent-id", "a",
         "--output", root / "a.md", "--evidence", "Updated fixture result")
     cli("exploration-check", "--process-dir", process, ok=False)
 
-print("DUAL_EXPLORATION_TESTS_PASS: independent completion, stale inputs/results/plan, dynamic observations, legacy, truthful CLI")
+print("DUAL_EXPLORATION_TESTS_PASS: independent completion, stale inputs/results/plan, dynamic observations, legacy, truthful CLI, explicit frozen reuse and conflicts")

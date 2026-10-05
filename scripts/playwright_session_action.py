@@ -11,7 +11,7 @@ import subprocess
 import re
 import time
 import uuid
-from skill_config import load_config, playwright_command
+from skill_config import load_config, playwright_command, database_url
 
 
 ADAPTER = r'''
@@ -69,20 +69,34 @@ const nodeRepl = {write: value => {actionResult = JSON.parse(value);}};
 '''
 
 
-def bind_code(code, tab_id, receipt_id=None):
+def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None):
     if not tab_id:
         return code
     return """async defaultPage => {
       let selected;
+      const bindingWarnings = [];
+      const targetKey = Symbol.for('dbCodeBook.targetId');
       for (const candidate of defaultPage.context().pages()) {
         if (candidate.isClosed()) continue;
-        const cdp = await defaultPage.context().newCDPSession(candidate);
-        let target;
-        try { target = await cdp.send('Target.getTargetInfo'); }
-        finally { await cdp.detach(); }
-        if (target.targetInfo.targetId === %s) { selected = candidate; break; }
+        if (!candidate[targetKey]) {
+          const cdp = await defaultPage.context().newCDPSession(candidate);
+          try { candidate[targetKey] = (await cdp.send('Target.getTargetInfo')).targetInfo.targetId; }
+          finally {
+            let timer;
+            try {
+              await Promise.race([cdp.detach(), new Promise((_, reject) => {
+                timer = setTimeout(() => reject(new Error('CDP detach timed out')), 2000);
+              })]);
+            } catch (error) {
+              bindingWarnings.push({target_id: candidate[targetKey] || null, cleanup_error: String(error)});
+            } finally { clearTimeout(timer); }
+          }
+        }
+        if (candidate[targetKey] === %s) { selected = candidate; break; }
       }
       if (!selected) throw new Error('Bound tab is closed or unavailable; do not select another tab');
+      const expiresAt = %s;
+      if (expiresAt && Date.now() >= expiresAt) throw new Error('Bound action expired before execution; action was not started');
       const dbCodeBookBoundPage = selected;
       const cancellations = [], pending = [];
       const onDialog = dialog => {
@@ -97,6 +111,9 @@ def bind_code(code, tab_id, receipt_id=None):
         const result = await (%s)(selected);
         await Promise.all(pending);
         if (cancellations.some(item => !item.confirmed)) throw new Error('Native dialog cancellation failed: ' + JSON.stringify(cancellations));
+        if (bindingWarnings.length && result && typeof result === 'object' && !Array.isArray(result)) {
+          result.binding_cleanup_warnings = bindingWarnings;
+        }
         if (!cancellations.length) return result;
         return result && typeof result === 'object' && !Array.isArray(result)
           ? {...result, native_dialogs: cancellations} : {result, native_dialogs: cancellations};
@@ -104,7 +121,7 @@ def bind_code(code, tab_id, receipt_id=None):
       const receiptId = %s;
       if (receiptId) selected[Symbol.for('dbCodeBook.boundAction')] = {id:receiptId, operation};
       return await operation;
-    }""" % (json.dumps(tab_id), code, json.dumps(receipt_id))
+    }""" % (json.dumps(tab_id), json.dumps(expires_at_ms), code, json.dumps(receipt_id))
 
 
 def read_action(path: Path) -> dict:
@@ -180,7 +197,8 @@ class Session:
 
     def code(self, code):
         receipt_id = uuid.uuid4().hex
-        self.code_path.write_text(bind_code(code, self.tab_id, receipt_id), encoding="utf-8")
+        self.code_path.write_text(bind_code(code, self.tab_id, receipt_id,
+                                           int((time.time() + 40) * 1000)), encoding="utf-8")
         output = self.call("--raw", "run-code", "--filename", str(self.code_path.resolve()))
         # The CLI returns early when its selected tab opens a dialog, even if
         # our bound handler dismisses it. Retrieve that same operation only;
@@ -310,7 +328,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--action", type=Path)
     parser.add_argument("--mode", choices=["bind", "tab-code", "source-read", "taxonomy-options", "login-status", "login-open", "select", "download", "preflight", "sync"], required=True)
-    parser.add_argument("--database", choices=["charls", "elsa", "hrs"])
+    parser.add_argument("--database", choices=['charls', 'elsa', 'hrs', 'share', 'chns', 'knhanes', 'klosa'])
     parser.add_argument("--script", type=Path, help="tab-code: async page function restricted to the bound page")
     parser.add_argument("--tab-index", type=int, help="Observed tab-list index; only used to create a binding")
     parser.add_argument("--tab-id", help="Stable Chromium target id from mode bind; never an index")
@@ -319,17 +337,21 @@ def main() -> None:
     parser.add_argument("--session-workdir", required=True, type=Path)
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--config", type=Path)
+    parser.add_argument('--language', choices=['en', 'ko'])
     args = parser.parse_args()
     config = load_config(args.config)
     command = playwright_command(config)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     if args.mode == "source-read":
         from source_read import browser_code
-        from skill_config import database_url
         if not args.tab_id or not args.database or not args.action:
             parser.error('source-read requires --tab-id, --database and --action')
         try:
-            code = browser_code(read_action(args.action), database_url(config, args.database), args.database)
+            action = read_action(args.action)
+            if args.database == "klosa":
+                from klosa_adapter_contract import require_context
+                require_context(action, args.language)
+            code = browser_code(action, database_url(config, args.database, args.language), args.database)
         except ValueError as exc:
             parser.error(str(exc))
         try:
@@ -342,11 +364,13 @@ def main() -> None:
         raise SystemExit(0 if payload.get('ok') else 1)
     if args.mode in {"login-status", "login-open", "select"}:
         from prepare_source_selection import browser_code
-        from skill_config import database_url
         if not args.tab_id or not args.database:
             parser.error('login/selection requires --tab-id and --database')
         action = read_action(args.action) if args.action else {}
-        url = database_url(config, args.database)
+        url = database_url(config, args.database, args.language)
+        if args.database == "klosa" and args.mode == "select":
+            from klosa_adapter_contract import require_context
+            require_context(action, args.language, url)
         if args.mode == 'select':
             if action.get('url') != url:
                 parser.error('selection action must match the configured database URL')
@@ -399,6 +423,9 @@ def main() -> None:
     if not args.action:
         parser.error('--action is required for browser actions')
     action = read_action(args.action)
+    if args.mode == "download" and action.get("database") == "klosa":
+        from klosa_adapter_contract import require_context
+        require_context(action, args.language, database_url(config, "klosa", args.language))
     preflight = read_action(args.preflight) if args.preflight else None
     target = args.out.parent / ("download-" + action.get("attempt_id", "unused") + ".zip")
     if args.mode == "sync":

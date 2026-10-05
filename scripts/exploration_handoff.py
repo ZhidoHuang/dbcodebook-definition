@@ -36,6 +36,10 @@ def validate_branches(report):
         raise ValueError("双路探索尚未登记")
     if input_hashes(exploration["inputs"]) != exploration["inputs"]:
         raise ValueError("探索共同输入已变化")
+    if exploration.get("from_report"):
+        source = Path(exploration["from_report"])
+        if hashlib.sha256(source.read_bytes()).hexdigest() != exploration.get("from_report_hash"):
+            raise ValueError("沿用的原探索报告已变化")
     ids = []
     outputs = set()
     for branch, role in ROLES.items():
@@ -49,7 +53,7 @@ def validate_branches(report):
             raise ValueError("探索必须独立完成并使用相同输入")
         if not review.get("agent_id") or review.get("agent_id") == report.get("primary_agent_id"):
             raise ValueError("探索代理身份必须独立于主线程")
-        agent = next((a for a in report.get("reviews", []) if a.get("agent_id") == review["agent_id"]), {})
+        agent = review.get("prior_agent_record") or next((a for a in report.get("reviews", []) if a.get("agent_id") == review["agent_id"]), {})
         if not review_lifecycle_complete(agent):
             raise ValueError("探索代理尚未完成或未登记关闭限制")
         if input_hashes(item["outputs"]) != item["outputs"]:
@@ -82,7 +86,7 @@ def validate_exploration(report, record=None):
 
 def command_exploration(args):
     import os
-    from execution_report import paths, load, save, input_hashes, iso, validate_stage_review
+    from execution_report import paths, load, save, input_hashes, iso, parse_time, validate_stage_review
     report_path, markdown = paths(args.process_dir)
     report = load(report_path)
     if args.command == "exploration-check":
@@ -102,6 +106,61 @@ def command_exploration(args):
             if role in reviews:
                 report.setdefault("stage_review_history", {}).setdefault(role, []).append(deepcopy(reviews[role]))
             reviews[role] = {"status": "pending", "started_at": iso(), "inputs": inputs, "r_scope": "full"}
+    elif args.command == "exploration-reuse":
+        source_path = Path(args.from_report).resolve(strict=True)
+        if source_path == report_path.resolve():
+            raise ValueError("沿用须明确指定另一份原探索报告")
+        source_bytes = source_path.read_bytes()
+        previous = json.loads(source_bytes.decode("utf-8-sig"))
+        if previous.get("exploration_policy") != POLICY:
+            raise ValueError("原报告未登记双路探索策略")
+        if any(previous.get(key) != report.get(key) for key in ("database", "topic_id")):
+            raise ValueError("原探索报告与当前数据库或主题不同")
+        original = validate_branches(previous)
+        inputs = input_hashes(args.input)
+        if inputs != original["inputs"]:
+            raise ValueError("声明的共同输入与原探索不一致")
+        primary = os.environ.get("CODEX_THREAD_ID", "").strip()
+        if not primary or primary in {item["agent_id"] for item in original["branches"].values()}:
+            raise ValueError("沿用须有独立于历史分支的当前主线程身份")
+        current = report.get("exploration")
+        if current:
+            # Only an empty failed/pending registration may be replaced. Real
+            # investigation or an existing decision needs an explicit new round.
+            if current.get("branches") or current.get("merge") or current.get("inputs") != inputs:
+                raise ValueError("当前探索与沿用冲突，不能替换已有结果、合并或不同输入")
+            for role in ROLES.values():
+                pending = report.get("stage_reviews", {}).get(role, {})
+                if pending.get("status") != "pending" or pending.get("inputs") != inputs:
+                    raise ValueError("只能替换同输入的空pending探索登记")
+                for agent in report.get("reviews", []):
+                    if agent.get("role") == role and (agent.get("unfinished_turns") or any(
+                            parse_time(turn["started_at"]) >= parse_time(pending["started_at"])
+                            for turn in agent.get("rounds", []))):
+                        raise ValueError("当前探索已有实际代理轮次，不能用历史探索替换")
+            if not (args.replace_reason or "").strip():
+                raise ValueError("替换失败pending登记须提供--replace-reason")
+            report.setdefault("exploration_history", []).append(deepcopy(current))
+        reused_at = iso()
+        report["exploration_policy"] = POLICY
+        report["primary_agent_id"] = primary
+        report["exploration"] = {
+            "started_at": original["started_at"], "inputs": deepcopy(inputs),
+            "branches": deepcopy(original["branches"]), "from_report": str(source_path),
+            "from_report_hash": hashlib.sha256(source_bytes).hexdigest(), "reused_at": reused_at,
+        }
+        if current:
+            report["exploration"]["replacement_reason"] = args.replace_reason.strip()
+        for role in ROLES.values():
+            reviews = report.setdefault("stage_reviews", {})
+            if role in reviews:
+                report.setdefault("stage_review_history", {}).setdefault(role, []).append(deepcopy(reviews[role]))
+            prior = previous["stage_reviews"][role]
+            agent = prior.get("prior_agent_record") or next(
+                item for item in previous.get("reviews", []) if item.get("agent_id") == prior["agent_id"])
+            reviews[role] = {**deepcopy(prior), "reused_from": str(source_path),
+                             "prior_agent_record": deepcopy(agent)}
+        validate_branches(report)
     elif args.command == "exploration-result":
         exploration = report.get("exploration")
         if not exploration or input_hashes(exploration["inputs"]) != exploration["inputs"]:
@@ -141,11 +200,15 @@ def command_exploration(args):
 
 
 def add_commands(subparsers):
-    for command in ("exploration-start", "exploration-result", "exploration-merge", "exploration-check"):
+    for command in ("exploration-start", "exploration-reuse", "exploration-result", "exploration-merge", "exploration-check"):
         parser = subparsers.add_parser(command)
         parser.add_argument("--process-dir", required=True)
         if command == "exploration-start":
             parser.add_argument("--input", action="append", required=True)
+        elif command == "exploration-reuse":
+            parser.add_argument("--from-report", required=True)
+            parser.add_argument("--input", action="append", required=True)
+            parser.add_argument("--replace-reason")
         elif command == "exploration-result":
             parser.add_argument("--branch", choices=tuple(ROLES), required=True)
             parser.add_argument("--agent-id", required=True)

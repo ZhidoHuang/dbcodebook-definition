@@ -140,7 +140,7 @@ $Action = "$Process/download_action.json"
 | status / logic_review.result | READY；clear 或 reported_and_resolved，未决问题不得掩盖 | 继续保留真实结论 |
 | directory_entries / discovery.value | 完整 UI 路径且 verified_in_ui=true；discovery 指向已登记条目 | 保留同一来源身份 |
 | 单期 source_group | handling_decision=single_period | 与实际时期核对 |
-| questionnaire_evidence | 官方完整题文、选项、路径；local_material_path 相对本数据库材料根 | 文案完成后：rendered_in_copy=true、copy_locator 指向实际文案 |
+| questionnaire_evidence | 官方完整题文、选项、路径；local_material_path 相对本数据库材料根 | 文案完成后：需展示项的rendered_in_copy=true、copy_locator指向实际文案；省略项按[文案程序操作](../scoped-tasks.md#copy-operations)登记，研究证据仍保留 |
 | questionnaire_path_closure | 真实进入/退出条件；未知人数和统计结论用 null | 下载后数据核实、正式 R 前：observed_count 为非负整数，unexplained_count=0，实际闭合有依据 |
 | human_record / evidence_steps | 探索记录存在同号 S001 等步骤标题 | 沿用可追溯步骤，不为过检查编造观察 |
 

@@ -16,8 +16,8 @@ def main() -> int:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     routes = module.validate_routes()
-    assert routes["databases"] == ["charls", "elsa", "hrs"]
-    assert routes["database_themes"] == ["CHARLS", "ELSA", "HRS"]
+    assert routes["databases"] == ["charls", "elsa", "hrs", "klosa", "knhanes", "share"]
+    assert routes["database_themes"] == ["CHARLS", "ELSA", "HRS", "KLOSA", "KNHANES", "SHARE"]
     assert module.validate_manifest()["source_materials"] >= 22
     assert module.validate_portability()["text_files"] > 20
     assert module.validate_markdown_links()["markdown_links"] >= 20
@@ -26,8 +26,17 @@ def main() -> int:
     source_module = importlib.util.module_from_spec(source_spec)
     source_spec.loader.exec_module(source_module)
     config = json.loads((REPO_ROOT / "references/database-routing.json").read_text(encoding="utf-8-sig"))
-    for database, route in config["databases"].items():
-        assert source_module.LOCAL_EVIDENCE_ROOTS[database.upper()] == REPO_ROOT / route["source_materials"]
+    for group in ("databases", "reference_materials"):
+        for database, route in config[group].items():
+            root = source_module.LOCAL_EVIDENCE_ROOTS[database.upper()]
+            assert root == REPO_ROOT / route["source_materials"]
+            if group == "reference_materials":
+                assert (REPO_ROOT / route["index"]).is_file()
+    # Evidence access must not silently declare a production route supported.
+    assert "chns" not in config["databases"]
+    assert source_module.resolve_material_path(
+        "材料索引.md", "CHNS", source_module.LOCAL_EVIDENCE_ROOTS["CHNS"]
+    ).is_file()
     elsa = source_module.LOCAL_EVIDENCE_ROOTS["ELSA"]
     assert elsa == REPO_ROOT / "references/source-materials/elsa"
     assert (elsa / "材料索引.md").is_file()

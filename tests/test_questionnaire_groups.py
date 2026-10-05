@@ -61,4 +61,8 @@ changed['questionnaire_evidence'][1]['question_text'] = '过去一个月感到�
 check(questionnaire, changed, False)
 assert period_keys('2011年；2015年') == ['2011', '2015']
 assert period_keys('Wave 1–11') == ['wave' + str(i) for i in range(1, 12)]
+assert period_keys('Wave 1、Wave 2、Wave 4–9：出生国与国籍的共同问题') == ['wave1','wave2'] + ['wave'+str(i) for i in range(4,10)]
+assert period_keys('Wave 4–5：模块说明含 Wave 9') == ['wave4','wave5']
+assert period_keys('Wave 2：全日制教育年数') == ['wave2']
+assert period_keys('Wave 1、Wave 4–5: 不连续时期') == ['wave1','wave4','wave5']
 print('GROUPED_QUESTIONNAIRE_PASS: copy/rendered scope, text, codes, labels, overlap and real differences')

@@ -119,11 +119,14 @@ def playwright_command(config: dict[str, Any] | None = None) -> list[str]:
     return [npx, "--offline", "--yes", "--package", "@playwright/cli", "playwright-cli"]
 
 
-def database_url(config: dict[str, Any], database: str) -> str:
+def database_url(config: dict[str, Any], database: str, language: str | None = None) -> str:
     website = config.get("website", {})
     if not isinstance(website, dict):
         raise ValueError("configuration website must be an object")
     base = str(website.get("base_url", "")).rstrip("/")
+    if database.lower() == "klosa":
+        from klosa_adapter_contract import page_url
+        return page_url(base, language)
     paths = website.get("database_paths", {})
     if not base or not isinstance(paths, dict) or database.lower() not in paths:
         raise ValueError(f"website route is not configured for {database}")
@@ -135,6 +138,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Resolve dbcodebook-definition settings.")
     parser.add_argument("--config", type=Path)
     parser.add_argument("--database")
+    parser.add_argument("--language", choices=["en", "ko"])
     parser.add_argument("--browser-cli", action="store_true")
     args = parser.parse_args()
     try:
@@ -148,7 +152,7 @@ def main() -> int:
         }
         if args.database:
             result["database"] = database_config(config, args.database)
-            result["website_url"] = database_url(config, args.database)
+            result["website_url"] = database_url(config, args.database, args.language)
         if args.browser_cli:
             result["browser_cli"] = playwright_command(config)
     except (OSError, ValueError, json.JSONDecodeError) as error:

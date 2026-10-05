@@ -51,7 +51,7 @@ data <- dt
 data[data == ""] <- NA
 ```
 
-- 正式公开 R 直接使用 `read.csv("raw_data.csv")` 和 `read.csv("raw_codebook.csv")`。若 `id`、`householdid` 或 `communityid` 的实际值含前导 0，可只为这些身份列追加 `colClasses = c(... = "character")`，并在读取前用一句注释说明目的；Full HRS的 `HHID` 和 `PN` 按字符型读取，也属于允许指定 `colClasses` 的身份列，在读取时保留前导0，不在读成数值后补救。不追加 `fileEncoding`、`encoding`、`na.strings`、`col.names` 或 `check.names = FALSE`。
+- 正式公开 R 直接使用 `read.csv("raw_data.csv")` 和 `read.csv("raw_codebook.csv")`。若 `id`、`householdid` 或 `communityid` 的实际值含前导 0，可只为这些身份列追加 `colClasses = c(... = "character")`，并在读取前用一句注释说明目的；Full HRS的 `HHID` 和 `PN` 按字符型读取，也属于允许指定 `colClasses` 的身份列，在读取时保留前导0，不在读成数值后补救。SHARE 普通 Wave 个人唯一文件的 `ID`、`Wave_id`、`mergeid`、`hhid`、`country`、`intid`、`intidwX`、`Record_id` 及经字典来源文件核实的 `intid (File)` 自动身份列也允许按字符读取；这项许可只适用于 SHARE，不允许改写业务列类型。KLoSA 的 `ID`、`Harmonized_id`、`Wave_id` 按字符读取；KNHANES 的 `id` 必须按字符读取，必要时 `ID`、`year` 也可按字符读取，均不改变业务列类型。不追加 `fileEncoding`、`encoding`、`na.strings`、`col.names` 或 `check.names = FALSE`。
 
 预检按 R 语法解析这两个读取赋值，空格、换行、引号样式及身份列顺序不影响结果；不要求为通过检查改成某个单行字符串。真正改变读取文件、额外参数或非身份列类型仍会被拒绝。
 - 不用 `names(dt)[1] <- "ID"`、`names(name_z)[1] <- "Easy.label"` 或按列位置重命名修补导出问题。来源别名必须已经按 [来源别名](02-download.md#12-来源别名必须在下载前确定) 在下载前确定，并由正式 raw 和 codebook 原样带入。

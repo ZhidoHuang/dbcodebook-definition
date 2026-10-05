@@ -1,3 +1,21 @@
+validate_knhanes_render_inputs <- function(frames, cycle_order) {
+  supported <- c("1998", "2001", "2005", as.character(2007:2024))
+  if (!is.character(cycle_order) || !length(cycle_order) || anyNA(cycle_order) ||
+      anyDuplicated(cycle_order) || any(!cycle_order %in% supported) ||
+      is.unsorted(match(cycle_order, supported))) stop("Invalid KNHANES year order.")
+  for (frame in frames) {
+    if (!all(c("ID", "id", "year") %in% names(frame))) stop("KNHANES requires ID, id and year.")
+    if (!is.character(frame$id) || !is.character(frame$ID)) stop("KNHANES ID and id must remain character.")
+    respondent <- trimws(frame$id)
+    year <- trimws(as.character(frame$year))
+    if (anyNA(respondent) || any(!nzchar(respondent)) || anyNA(year) ||
+        any(!year %in% cycle_order) || anyNA(frame$ID) ||
+        any(frame$ID != paste(year, respondent, sep="_"))) stop("Invalid KNHANES respondent-year identity.")
+    if (anyDuplicated(frame$ID)) stop("KNHANES renderer needs unique respondent-year rows; aggregate repeat files explicitly before rendering.")
+  }
+  invisible(TRUE)
+}
+
 criteria_value <- function(x) {
   value <- as.character(x)
   if (anyNA(value) || any(!nzchar(value))) {
@@ -367,7 +385,7 @@ definition_source_count <- function(raw_vars, raw_codebook, database) {
   length(unique(paste(toupper(database), identities, sep = "::")))
 }
 
-definition_source_entry <- function(value, database = "CHARLS", source_count = NULL) {
+definition_source_entry <- function(value, database = "CHARLS", source_count = NULL, questionnaire_shown = TRUE) {
   if (is.null(value)) return(NULL)
   if (is.character(value)) value <- list(path = value)
   if (is.list(value) && !is.null(value$path)) {
@@ -387,16 +405,18 @@ definition_source_entry <- function(value, database = "CHARLS", source_count = N
       stop("summary_source variable_count differs from the actual source identities.")
     }
     count <- if (is.null(source_count)) value$variable_count else source_count
+    subject <- if (questionnaire_shown) "以上问卷问题" else "本主题"
     prefix <- if (is.null(count)) {
-      list("以上问卷问题对应的原始变量，可从 dbCodeBook 的目录 ")
+      list(paste0(subject, "对应的原始变量，可从 dbCodeBook 的目录 "))
     } else {
-      c(list(paste0("以上问卷问题在数据中对应 ", count, " 个")),
+      c(list(paste0(subject, "在数据中对应 ", count, " 个")),
         list(if (length(paths) == 1L) "原始变量，可从 dbCodeBook 的目录 " else "原始变量，可分别从 dbCodeBook 的目录 "))
     }
     links <- list()
     for (path in paths) {
       if (length(links)) links <- c(links, list("、"))
-      links <- c(links, list(list(type = "source_link", value = path, database = database)))
+      links <- c(links, list(list(type = "source_link", value = path, database = database,
+                                 language = value$language)))
     }
     note <- sub("^[；;]", "", trimws(note))
     return(list(class = "raw-source-link", lines = list(list(parts = c(prefix, links,
@@ -443,10 +463,39 @@ render_definition_bundle <- function(
     reference_lines = character(),
     summary_extra_lines = character(),
     database = "CHARLS",
-    criteria_intro = "") {
+    criteria_intro = "",
+    language = NULL) {
   database <- toupper(database)
-  if (!database %in% c("CHARLS", "ELSA", "HRS")) stop("Unsupported definition database: ", database)
-  period_col <- if (database == "ELSA") "Wave" else "year"
+  if (!database %in% c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "KLOSA")) stop("Unsupported definition database: ", database)
+  if (database == "KNHANES") {
+    if (missing(cycle_order)) stop("KNHANES requires explicit, evidence-based cycle_order.")
+    validate_knhanes_render_inputs(list(data, db_data, analysis_data), cycle_order)
+  }
+  period_col <- if (database %in% c("ELSA", "KLOSA")) "Wave" else if (database == "SHARE") "Wave_id" else "year"
+  if (database == "KLOSA") {
+    if (is.null(language) || length(language) != 1L || !language %in% c("en", "ko")) stop("KLoSA requires language=en or ko.")
+    if (missing(cycle_order) || !length(cycle_order) || anyNA(cycle_order)) stop("KLoSA requires explicit nonempty cycle_order.")
+    wave_numbers <- suppressWarnings(as.integer(sub("^Wave ", "", cycle_order)))
+    if (anyNA(wave_numbers) || !identical(as.character(cycle_order), paste("Wave", wave_numbers)) ||
+        any(wave_numbers < 1L | wave_numbers > if (language == "ko") 10L else 9L) ||
+        anyDuplicated(wave_numbers) || is.unsorted(wave_numbers)) stop("Invalid KLoSA declared Wave order.")
+    expected <- as.character(cycle_order)
+    project <- function(frame) {
+      if (!all(c("ID", "Harmonized_id", "Wave_id") %in% names(frame))) stop("KLoSA export identities missing.")
+      for (key in c("ID", "Harmonized_id")) {
+        if (!is.character(frame[[key]]) || anyNA(frame[[key]]) || any(!nzchar(trimws(frame[[key]])))) stop("KLoSA personal identifiers must remain nonempty character values.")
+      }
+      if (anyNA(frame$ID) || anyDuplicated(frame$ID)) stop("KLoSA renderer supports ordinary unique-ID data only.")
+      wave <- as.character(frame$Wave_id)
+      if (anyNA(wave) || any(!grepl("^(Wave )?([1-9]|10)$", wave))) stop("Invalid KLoSA Wave_id.")
+      wave <- paste("Wave", as.integer(sub("^Wave ", "", wave)))
+      if (any(!wave %in% expected)) stop("KLoSA Wave_id outside language coverage.")
+      if (anyDuplicated(data.frame(person=frame$Harmonized_id, wave=wave))) stop("Duplicate KLoSA person-wave identity.")
+      frame$Wave <- wave; frame$year <- wave
+      frame
+    }
+    data <- project(data); db_data <- project(db_data); analysis_data <- project(analysis_data)
+  }
   if (database == "ELSA" && missing(cycle_order)) stop("ELSA requires explicit, evidence-based cycle_order.")
   if (database == "ELSA") {
     wave_numbers <- suppressWarnings(as.integer(sub("^Wave ", "", cycle_order)))
@@ -461,6 +510,24 @@ render_definition_bundle <- function(
     db_data$year <- db_data$Wave
     analysis_data$year <- analysis_data$Wave
   }
+  if (database == "SHARE") {
+    if (missing(cycle_order)) stop("SHARE requires explicit, evidence-based cycle_order.")
+    wave_numbers <- suppressWarnings(as.integer(sub("^Wave ", "", cycle_order)))
+    if (anyNA(wave_numbers) || any(!wave_numbers %in% 1:9) ||
+        !identical(as.character(cycle_order), paste("Wave", wave_numbers)) ||
+        anyDuplicated(wave_numbers) || is.unsorted(wave_numbers)) stop("Invalid SHARE ordinary Wave order.")
+    for (frame in list(data, db_data, analysis_data)) {
+      keys <- c("ID", "Wave_id", "mergeid")
+      if (!all(keys %in% names(frame))) stop("SHARE requires ID, Wave_id and mergeid.")
+      if (!all(vapply(frame[keys], is.character, logical(1)))) stop("SHARE identities must remain character.")
+      if (anyNA(frame[keys]) || any(vapply(frame[keys], function(x) any(!nzchar(x)), logical(1)))) stop("SHARE identities must be nonempty.")
+      if (anyDuplicated(frame$ID) || anyDuplicated(frame[c("Wave_id", "mergeid")])) stop("Duplicate SHARE personal identity.")
+      if (any(!frame$Wave_id %in% cycle_order)) stop("Observed SHARE Wave outside declared cycle_order.")
+    }
+    # Rendering copies only. Never rewrite raw, infer Wave from ID, or alter mergeid.
+    db_data$year <- db_data$Wave_id
+    analysis_data$year <- analysis_data$Wave_id
+  }
   if (database == "HRS") {
     if (missing(cycle_order)) stop("HRS requires explicit, evidence-based cycle_order.")
     hrs_years <- suppressWarnings(as.integer(cycle_order))
@@ -472,7 +539,10 @@ render_definition_bundle <- function(
       if (any(!is.na(frame$year) & !as.character(frame$year) %in% cycle_order)) stop("Observed year outside declared cycle_order.")
     }
   }
+  if (database == "KLOSA" && !is.null(summary_source) &&
+      (!is.list(summary_source) || !identical(summary_source$language, language))) stop("KLoSA source link language must match renderer language.")
   summary_source <- definition_source_entry(summary_source, database,
+    questionnaire_shown = !missing(summary_selection) && nzchar(paste(render_summary_selection_paragraph(summary_selection, theme_color), collapse = "")),
     source_count = if (is.null(summary_source)) NULL else definition_source_count(raw_vars, raw_codebook, database))
   # Validate source structure before any output files are written.
   if (!is.null(summary_source)) render_summary_selection_paragraph(summary_source, theme_color)
@@ -606,6 +676,12 @@ render_definition_bundle <- function(
     c("ID", "id", "idauniq", "HHID", "PN", "HHIDPN", "RAHHIDPN", "Wave", "householdid", "communityid"),
     names(detail_data)
   )
+  if (database == "SHARE") {
+    identity_columns <- union(identity_columns, intersect(
+      c("Wave_id", "mergeid", "hhid", "country", "intid", "intidwX", "Record_id",
+        grep("^intid[ .(]", names(detail_data), value = TRUE)), names(detail_data)))
+  }
+  if (database == "KLOSA") identity_columns <- union(identity_columns, c("Harmonized_id", "Wave_id"))
   z <- detail_data[, setdiff(names(detail_data), identity_columns), drop = FALSE]
   count_data <- definition_period_counts(z)
   wide_data <- pivot_wider(

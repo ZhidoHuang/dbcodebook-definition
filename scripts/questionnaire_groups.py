@@ -84,6 +84,8 @@ def referenced_jump_options(question_id, entries):
 
 def period_keys(label):
     """Expand explicit Wave ranges or period lists; never infer intervening survey years."""
+    # Module titles are reader-facing labels, not additional period evidence.
+    label = re.split(r"[:：]", label, maxsplit=1)[0]
     result = []
     for part in re.split(r"[；;、]", label):
         part = part.strip()

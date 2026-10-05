@@ -8,8 +8,10 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
-from questionnaire_groups import period_keys, original_options, shared_question_info, referenced_options, referenced_jump_options
-from questionnaire_display import display_question
+from questionnaire_groups import period_keys, original_options
+from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
+    shared_question_info, referenced_options, referenced_jump_options,
+    rendered_when_matches, jump_descriptions)
 
 
 NO_INSIGHT = "本主题没有需要单独提示的主题级边界"
@@ -84,8 +86,12 @@ def route_matches(destination, description):
     target = normalized(destination)
     if not target:
         return False
+    # Strip the same Markdown presentation as normalized(), but keep spaces
+    # here so an English word before DN005 does not become an identifier prefix.
+    description = re.sub(r"`([^`]+)`", r"\1", str(description))
+    description = re.sub(r"\*\*(.*?)\*\*", r"\1", description)
     pattern = r"(?<![A-Za-z0-9_])" + r"\s*".join(re.escape(c) for c in target) + r"(?![A-Za-z0-9_])"
-    return re.search(pattern, str(description)) is not None
+    return re.search(pattern, description) is not None
 
 
 def sections(text, level):
@@ -202,7 +208,9 @@ def read_copy(path, expected_vars=None):
 def read_questionnaire_copy(text):
     periods = {}
     for label, body in sections(text, 3).items():
-        period = re.sub(r"[^A-Za-z0-9]+", "_", label).strip("_")
+        # Explicit colon titles distinguish multiple legal modules in one Wave.
+        key_pattern = r"[^A-Za-z0-9\u3400-\u9fff]+" if re.search(r"[:：]", label) else r"[^A-Za-z0-9]+"
+        period = re.sub(key_pattern, "_", label).strip("_")
         if not period or period in periods:
             raise ValueError("原始问卷时期标识为空或重复：" + label)
         # Read the authored heading as a title, separately from its body.
@@ -454,10 +462,15 @@ def questionnaire_copy_errors(copy, record):
         for key in period_keys(period["label"]):
             periods.setdefault(key, []).append(period)
     errors = []
+    cross_periods = [(p["label"], [(q["id"], [o["text"] for o in q["options"]]) for q in p["questions"]], p["design"])
+                     for p in copy.get("questionnaire", {}).values()]
     for item in evidence:
         question_id = str(item.get("question_id", ""))
         try:
+            if not requires_questionnaire_display(item):
+                continue
             display_text, display_instructions = display_question(item, record)
+            expected_options, expected_jumps = display_answers(item, record)
         except ValueError as error:
             errors.append(str(error))
             continue
@@ -493,21 +506,27 @@ def questionnaire_copy_errors(copy, record):
             referenced = referenced_options("\n".join(question["instructions"]), question_id,
                 [(q["id"], [o["text"] for o in q["options"]], "\n".join(q["instructions"])) for q in matches[0]["questions"]])
             option_text = shared_options or original_options(referenced or [o["text"] for o in options], matches[0]["design"], period)
+            try:
+                cross_options = cross_period_options(question["text"] + "\n" + "\n".join(question["instructions"]),
+                                                     matches[0]["label"], question_id, cross_periods)
+            except ValueError as error:
+                errors.append(f"{label}: {error}")
+                continue
+            if cross_options:
+                if options or referenced or shared_options:
+                    errors.append(f"{label}: cross-period options repeated or ambiguous")
+                    continue
+                option_text = cross_options
             if item.get("response_type") == "closed_options":
-                expected = [normalized(f"{o['value']} {o['label']}") for o in item.get("options", [])]
+                expected = [normalized(f"{o['value']} {o['label']}") for o in expected_options]
                 if [normalized(o) for o in option_text] != expected:
                     errors.append(f"{label}: option values/labels/order differ; expected={expected!r}; actual={[normalized(o['text']) for o in options]!r}")
-            for jump in item.get("skip_logic", []):
-                trigger = normalized(jump["when"])
-                matching = [o for o, raw in zip(options, option_text) if normalized(raw) == trigger]
-                if matching:
-                    descriptions = [o["jump"] for o in matching]
-                else:
-                    descriptions = [s for s in question["instructions"] if not s.startswith("共同跳题（") and trigger in normalized(s)]
-                    descriptions += [o["jump"] for o in options if trigger in normalized(o["jump"])]
-                descriptions += [r["destination"] for r in shared_routes if normalized(r["when"]) == trigger]
-                descriptions += [o["jump"] for o in inherited_jumps
-                    if normalized(o["text"]) == trigger or trigger in normalized(o["jump"])]
+            for jump in expected_jumps:
+                # Legends may restore source codes to label-only rendered rows.
+                rows = [{"text": raw, "jump": option["jump"]} for option, raw in zip(options, option_text)]
+                descriptions = jump_descriptions(jump["when"], rows, question["instructions"])
+                descriptions += [r["destination"] for r in shared_routes if rendered_when_matches(jump["when"], r["when"])]
+                descriptions += jump_descriptions(jump["when"], inherited_jumps, [])
                 if not any(route_matches(jump["destination"], s) for s in descriptions):
                     errors.append(f"{label}: route differs: {jump['when']} -> {jump['destination']}")
     return errors

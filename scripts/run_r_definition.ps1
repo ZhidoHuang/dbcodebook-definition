@@ -1,4 +1,4 @@
-#requires -Version 7.0
+﻿#requires -Version 7.0
 param(
   [Parameter(Mandatory = $true)]
   [string]$WorkDir,
@@ -344,10 +344,11 @@ if (length(missing)) {
   ))
 }
 "@
-  if ($Database -ieq "CHARLS") {
+  if ($Database -ieq "CHARLS" -or $Database -ieq "SHARE" -or $Database -ieq "KNHANES" -or $Database -ieq "KLOSA") {
     $rawReadHelper = ConvertTo-Json -InputObject (Join-Path $PSScriptRoot "check_public_raw_reads.R") -Compress
     $rawReadScript = ConvertTo-Json -InputObject $resolvedScript -Compress
-    $packageCheckExpression += "`nsource($rawReadHelper, encoding='UTF-8')`ncheck_public_raw_reads(readLines($rawReadScript, encoding='UTF-8', warn=FALSE))`n"
+    $rawReadDatabase = ConvertTo-Json -InputObject $Database.ToUpperInvariant() -Compress
+    $packageCheckExpression += "`nsource($rawReadHelper, encoding='UTF-8')`ncheck_public_raw_reads(readLines($rawReadScript, encoding='UTF-8', warn=FALSE), database=$rawReadDatabase)`n"
   }
   Invoke-RCode `
     -RscriptPath $resolvedRscript `

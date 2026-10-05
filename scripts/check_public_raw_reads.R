@@ -1,5 +1,11 @@
 # Inspect expressions without executing the user's definition.
-check_public_raw_reads <- function(lines) {
+check_public_raw_reads <- function(lines, database = "CHARLS") {
+  identity_names <- c("id", "householdid", "communityid", "HHID", "PN")
+  if (toupper(database) == "SHARE") {
+    identity_names <- c("ID", "Wave_id", "mergeid", "hhid", "country", "intid", "intidwX", "Record_id")
+  }
+  if (toupper(database) == "KNHANES") identity_names <- c("ID", "id", "year")
+  if (toupper(database) == "KLOSA") identity_names <- c("ID", "Harmonized_id", "Wave_id")
   boundary <- grep("^# 输出\\s*$", lines)
   if (length(boundary)) lines <- head(lines, boundary[[1]] - 1L)
   expressions <- parse(text = lines, keep.source = FALSE)
@@ -20,7 +26,10 @@ check_public_raw_reads <- function(lines) {
         !labels[[1]] %in% c("", "file")) {
       stop(target, " must read ", targets[[target]])
     }
-    if (length(args) == 1L) next
+    if (length(args) == 1L) {
+      if (target == "dt" && toupper(database) == "KNHANES") stop("KNHANES must preserve id as character at read time")
+      next
+    }
     if (target != "dt" || length(args) != 2L || labels[[2]] != "colClasses") {
       stop(target, ": only identity colClasses may be added to the raw-data read")
     }
@@ -30,10 +39,11 @@ check_public_raw_reads <- function(lines) {
     }
     values <- as.list(classes)[-1]
     ids <- names(values)
+    if (toupper(database) == "KNHANES" && !"id" %in% ids) stop("KNHANES must preserve id as character at read time")
     if (!length(values) || is.null(ids) || anyDuplicated(ids) ||
-        any(!ids %in% c("id", "householdid", "communityid", "HHID", "PN")) ||
+        any(!(ids %in% identity_names | (toupper(database) == "SHARE" & grepl("^intid \\(.+\\)$", ids)))) ||
         !all(vapply(values, identical, logical(1), "character"))) {
-      stop("Only id, householdid, communityid, HHID and PN may be preserved as character")
+      stop("Only declared ", toupper(database), " identity columns may be preserved as character")
     }
   }
   invisible(TRUE)

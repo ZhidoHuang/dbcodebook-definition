@@ -57,9 +57,10 @@ def normalize_var(value: str) -> str:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Check definition output artifacts.")
+    parser.add_argument('--language', choices=['en', 'ko'])
     parser.add_argument(
         "--db",
-        choices=["charls", "elsa", "hrs"],
+        choices=["charls", "elsa", "hrs", "share", "knhanes", "klosa"],
         default="charls",
         help="Database identity mode. Defaults to charls for backward compatibility.",
     )
@@ -149,10 +150,16 @@ def read_codebook_vars(path: Path) -> list[str]:
 
 
 def expected_raw_header(db: str, raw_vars: list[str]) -> list[str]:
+    if db == "klosa":
+        return ["ID", "Harmonized_id", "Wave_id", *raw_vars]
     if db == "elsa":
         return ["ID", "idauniq", *raw_vars]
+    if db == "share":
+        return ["ID", "Wave_id", "mergeid", *raw_vars]
     if db == "hrs":
         return ["ID", "HHID", "PN", "Wave_id", *raw_vars]
+    if db == "knhanes":
+        return ["ID", "id", "year", *raw_vars]
     return ["ID", "id", "year", *raw_vars]
 
 
@@ -307,7 +314,26 @@ def check_identity_values(
         "communityid",
         "idauniq",
     ]
-    if db == "hrs":
+    if db == "knhanes":
+        required = ["ID", "id", "year"]
+        if any(name not in raw_header or name not in analysis_header for name in required):
+            fail(results, "analysis identity values", "KNHANES requires ID,id,year in raw and analysis")
+            return
+        if any(len(row) <= analysis_header.index(name) or not isinstance(row[analysis_header.index(name)], str)
+               for row in analysis_rows[1:] for name in ["ID", "id"]):
+            fail(results, "analysis identity values", "KNHANES ID and id must remain string cells")
+            return
+    if db == "share":
+        identity_columns = ["ID", "Wave_id", "mergeid"]
+        if not all(name in raw_header and name in analysis_header for name in identity_columns):
+            fail(results, "analysis identity values", "SHARE requires ID, Wave_id, mergeid in raw and analysis")
+            return
+    elif db == "klosa":
+        identity_columns = ["ID", "Harmonized_id", "Wave_id"]
+        if not set(identity_columns).issubset(raw_header) or not set(identity_columns).issubset(analysis_header):
+            fail(results, "analysis identity values", "KLoSA identities must all be preserved")
+            return
+    elif db == "hrs":
         identity_columns = [name for name in ["HHID", "PN"] if name in raw_header and name in analysis_header]
     else:
         identity_columns = [
@@ -1333,7 +1359,22 @@ def main() -> int:
         raw_data = formal_dir / "raw_data.csv"
         raw_codebook = formal_dir / "raw_codebook.csv"
         expected_header = expected_raw_header(args.db, raw_vars)
+        if args.db == "klosa":
+            from klosa_adapter_contract import validate_package
+            try:
+                validate_package(formal_dir, [p.name for p in formal_dir.glob("raw_data*.csv")], raw_vars, args.language)
+                ok(results, "KLoSA package contract")
+            except ValueError as exc:
+                fail(results, "KLoSA package contract", str(exc))
         header = read_csv_header(raw_data)
+        if args.db == "knhanes":
+            try:
+                from knhanes_export import validate_bundle, validate_person_frame
+                members = [p.name for p in formal_dir.glob("raw_data*.csv")]
+                validate_bundle(formal_dir, members, raw_vars)
+                ok(results, "KNHANES respondent-year contract", validate_person_frame(raw_data))
+            except (OSError, ValueError) as exc:
+                fail(results, "KNHANES respondent-year contract", str(exc))
         layered_headers = (
             charls_layered_raw_headers(raw_vars)
             if args.db == "charls"
@@ -1345,7 +1386,23 @@ def main() -> int:
             and len(header[4:]) == len(raw_vars)
             and set(header[4:]) == set(raw_vars)
         )
-        if header in layered_headers or hrs_header_matches:
+        share_header_matches = False
+        if args.db == "share":
+            try:
+                from share_export_contract import read_unique_codebook, validate_unique_csv
+                aliases, identities = read_unique_codebook(raw_codebook)
+                if set(aliases) != set(raw_vars) or len(aliases) != len(raw_vars):
+                    raise ValueError("SHARE codebook aliases differ from expected raw vars")
+                share_contract = validate_unique_csv(raw_data, raw_vars, identities)
+                share_header_matches = True
+                ok(results, "SHARE personal key contract", share_contract)
+            except ValueError as exc:
+                fail(results, "SHARE personal key contract", str(exc))
+        knhanes_header_matches = (args.db == "knhanes" and header[:3] == ["ID", "id", "year"]
+                                  and len(header[3:]) == len(raw_vars) and set(header[3:]) == set(raw_vars))
+        klosa_header_matches = (args.db == "klosa" and header[:3] == ["ID", "Harmonized_id", "Wave_id"]
+            and len(header[3:]) == len(raw_vars) and set(header[3:]) == set(raw_vars))
+        if (args.db != "share" and (header in layered_headers or hrs_header_matches or klosa_header_matches)) or share_header_matches or knhanes_header_matches:
             ok(results, "raw_data header", header)
         elif args.db == "charls" and header == ["ID", "year", *raw_vars]:
             identifier_check = check_charls_household_identifier(raw_data)
@@ -1454,6 +1511,10 @@ def main() -> int:
         record = load_json(args.process_dir / "definition_search_record.json")
         if record.get("approved_analysis_vars") != split_csv(args.analysis_vars):
             fail(results, "approved result scope", "analysis vars differ from the settled source plan")
+        if args.db == "klosa":
+            from klosa_adapter_contract import require_context
+            try: require_context(record, args.language)
+            except ValueError as exc: fail(results, "approved language", str(exc))
         if str(record.get("database", "")).lower() != args.db:
             fail(results, "approved database", "database differs from the source plan")
     check_required_user_text(formal_dir, required_user_text, results)

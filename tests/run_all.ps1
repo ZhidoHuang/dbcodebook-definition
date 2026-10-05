@@ -1,4 +1,4 @@
-param([string]$Config = "", [string]$SkillValidator = "")
+﻿param([string]$Config = "", [string]$SkillValidator = "")
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
@@ -65,6 +65,15 @@ if (-not [string]::IsNullOrWhiteSpace($rscript)) {
   if ($LASTEXITCODE -ne 0) { throw "test_summary_fact_helpers.R failed." }
   & $rscript --vanilla --encoding=UTF-8 (Join-Path $PSScriptRoot "test_hrs_renderer.R")
   if ($LASTEXITCODE -ne 0) { throw "test_hrs_renderer.R failed." }
+  Push-Location $repoRoot
+  try {
+    & $rscript --vanilla --encoding=UTF-8 'tests/test_klosa_renderer.R'
+    if ($LASTEXITCODE -ne 0) { throw "test_klosa_renderer.R failed." }
+    & $rscript --vanilla --encoding=UTF-8 'tests/test_share_renderer.R'
+    if ($LASTEXITCODE -ne 0) { throw "test_share_renderer.R failed." }
+    & $rscript --vanilla --encoding=UTF-8 'tests/test_knhanes_renderer.R'
+    if ($LASTEXITCODE -ne 0) { throw "test_knhanes_renderer.R failed." }
+  } finally { Pop-Location }
 } else {
   Write-Output "R_TESTS_SKIP: Rscript is not configured or on PATH"
 }

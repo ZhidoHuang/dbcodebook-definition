@@ -14,25 +14,32 @@ def main():
     code = bind_code('async page => {await page.trigger(); return {ok:true};}', 'A')
     fixture = r'''
 const assert = require('node:assert/strict');
-let calls=[], message='是否清空所有标签？', type='confirm', fail=false;
+let calls=[], attachments=0, message='是否清空所有标签？', type='confirm', fail=false;
 const pages=['B','A'].map(id=>({id,isClosed:()=>false,url:()=>id,context:()=>context,
   handlers:new Set(),on:(event,handler)=>{assert.equal(id,'A');pages[1].handlers.add(handler);},
   off:(event,handler)=>pages[1].handlers.delete(handler),
   trigger:async()=>{for(const fn of pages[1].handlers) fn({type:()=>type,message:()=>message,
     dismiss:async()=>{calls.push(id);if(fail)throw new Error('dismiss failed');}});}
 }));
-const context={pages:()=>pages,newCDPSession:async page=>({
+const context={pages:()=>pages,newCDPSession:async page=>{attachments++;return ({
   send:async (name,args)=>{
     if(name==='Target.getTargetInfo') return {targetInfo:{targetId:page.id}};
     throw new Error('unexpected command');
-  },detach:async()=>{}
-})};
+  },detach:async()=>{if(page.id==='B') return new Promise(()=>{});}
+});}};
 '''
     fixture += '\nconst run=' + code + ';\n'
+    fixture += '\nconst expired=' + bind_code('async page => {throw new Error("must not run");}', 'A', expires_at_ms=1) + ';\n'
     fixture += '''(async()=>{
-assert.equal((await run(pages[0])).native_dialogs[0].confirmed,true);
+const first=await run(pages[0]);
+assert.equal(first.native_dialogs[0].confirmed,true);
+assert.equal(first.binding_cleanup_warnings[0].target_id,'B');
+assert.match(first.binding_cleanup_warnings[0].cleanup_error,/detach timed out/);
+assert.equal(attachments,2);
+await assert.rejects(expired(pages[0]),/expired before execution/);
 assert.equal(pages[1].handlers.size,0); assert.equal(pages[0].handlers.size,0);
 message='确定发布文章？'; assert.equal((await run(pages[0])).native_dialogs,undefined);
+assert.equal(attachments,2); // Reuse verified target identities, not another detach.
 message='是否清空所有标签？';type='prompt'; assert.equal((await run(pages[0])).native_dialogs,undefined);
 type='confirm';fail=true;await assert.rejects(run(pages[0]),/cancellation failed/);
 assert.equal(pages[1].handlers.size,0);

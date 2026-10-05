@@ -23,7 +23,10 @@ MANAGED_REPORT = "recover_dbcodebook_export_QA.json"
 PARTIAL_SUFFIXES = {".crdownload", ".part", ".download"}
 
 
-def database_page_url(base_url: str, database: str) -> str:
+def database_page_url(base_url: str, database: str, language=None) -> str:
+    if database == "klosa":
+        from klosa_adapter_contract import page_url
+        return page_url(base_url, language)
     base_url = base_url.strip().rstrip("/")
     parsed = urlsplit(base_url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
@@ -37,8 +40,9 @@ def build_download_browser_action(
     attempt_id: str,
     expected_variable_count: int,
     attempt_file: Path,
+    language=None,
 ) -> dict:
-    page_url = database_page_url(base_url, database)
+    page_url = database_page_url(base_url, database, language)
     page_url_json = json.dumps(page_url, ensure_ascii=False)
     attempt_id_json = json.dumps(attempt_id, ensure_ascii=False)
     attempt_file_json = json.dumps(str(attempt_file.resolve()), ensure_ascii=False)
@@ -198,6 +202,8 @@ var dbCodeBookDownloadResult = await triggerDbCodeBookExport(
 nodeRepl.write(JSON.stringify(dbCodeBookDownloadResult));'''
     return {
         "existing_tab_path": page_url,
+        "database": database,
+        "language": language,
         "timeout_ms": 165000,
         "attempt_id": attempt_id,
         "attempt_file": str(attempt_file.resolve()),
@@ -403,11 +409,31 @@ def validate_codebook(out_dir: Path, expected_vars: list[str]) -> dict[str, obje
     return {"rows": len(aliases), "aliases": aliases}
 
 
-def inspect_archive(archive_path: Path, expected: list[str]) -> dict:
+def inspect_archive(archive_path: Path, expected: list[str], database: str | None = None, language=None) -> dict:
     # Validate outside the destination so a bad download cannot replace good raw.
     with tempfile.TemporaryDirectory(prefix="dbcodebook_check_") as temp:
         staging = Path(temp)
         names, members = install_archive(archive_path, staging)
+        if database == "knhanes":
+            from knhanes_export import validate_bundle
+            return {"zip_members": names, **validate_bundle(staging, members, expected)}
+        if database == "chns":
+            from chns_export_contract import validate_person_package
+            return {"zip_members": names,
+                    "codebook": validate_codebook(staging, expected),
+                    "data": validate_person_package(staging, members, expected)}
+        if database == "share":
+            from share_export_contract import validate_unique_package
+            contract = validate_unique_package(staging, members, expected)
+            # The SHARE-specific contract checked identifiers, exact business fields,
+            # key uniqueness and dictionary scope before installation.
+            header = read_csv_header(staging / "raw_data.csv")
+            return {"zip_members": names, "codebook": validate_codebook(staging, expected),
+                    "data": {"raw_data.csv": {"header": header, "cols": len(header),
+                        "data_vars": [v for v in header if v in expected], **contract}}}
+        if database == "klosa":
+            from klosa_adapter_contract import validate_package
+            return {"zip_members": names, **validate_package(staging, members, expected, language)}
         return {
             "zip_members": names,
             "codebook": validate_codebook(staging, expected),
@@ -437,6 +463,7 @@ def download_snapshot(directory: Path) -> dict:
 
 
 def prepare_download(args: argparse.Namespace) -> dict:
+    language = getattr(args, "language", None)
     expected = read_expected_vars_file(args.expect_vars_file)
     from check_definition_source_record import load_json, validate_download_selection
     record_path = args.expect_vars_file.parent / "definition_search_record.json"
@@ -450,12 +477,16 @@ def prepare_download(args: argparse.Namespace) -> dict:
     validate_exploration(report, record_path)
     if report.get("review_policy") != REVIEW_POLICY:
         validate_stage_review(report, "定义逻辑复核")
+    if args.database == "klosa":
+        from klosa_adapter_contract import require_context
+        require_context(record, language)
     check_output_replacement(args.out, args.overwrite)
     if args.snapshot_file.exists():
         raise ValueError("Snapshot file must be new; preserve the previous attempt and use a new snapshot filename.")
     args.prepare_download.mkdir(parents=True, exist_ok=True)
     snapshot = download_snapshot(args.prepare_download)
     snapshot["expected_vars"] = expected
+    snapshot.update(database=args.database, language=language)
     attempt_id = str(uuid.uuid4())
     snapshot["attempt_id"] = attempt_id
     args.snapshot_file.parent.mkdir(parents=True, exist_ok=True)
@@ -466,25 +497,32 @@ def prepare_download(args: argparse.Namespace) -> dict:
                "--database", args.database, "--out", str(args.out.resolve()),
                "--expect-vars-file", str(args.expect_vars_file.resolve()),
                "--wait-seconds", str(args.wait_seconds)]
+    if language:
+        command.extend(["--language", language])
     if args.overwrite:
         command.append("--overwrite")
     return {"ok": True, "next_action": "run_browser_action_once",
             "snapshot_file": str(args.snapshot_file.resolve()),
             "browser_action": build_download_browser_action(
                 args.base_url, args.database, attempt_id, len(expected),
-                args.snapshot_file.with_name(f"download_attempt_{attempt_id}.json"),
+                args.snapshot_file.with_name(f"download_attempt_{attempt_id}.json"), language,
             ),
             "watch_command": "& " + " ".join("'" + arg.replace("'", "''") + "'" for arg in command)}
 
 
 def wait_for_download(directory: Path, baseline: dict, expected: list[str],
-                      timeout: float, poll_interval: float = 0.25) -> dict:
+                      timeout: float, poll_interval: float = 0.25, database: str | None = None, language=None) -> dict:
     if str(directory.resolve(strict=True)) != baseline["directory"]:
         raise ValueError("download directory differs from the saved snapshot")
     if timeout < 0 or poll_interval <= 0:
         raise ValueError("download wait must be nonnegative and polling must be positive")
     if "expected_vars" in baseline and baseline["expected_vars"] != expected:
         raise ValueError("selection changed after download preparation")
+    if baseline.get("database") is not None and baseline["database"] != database:
+        raise ValueError("database changed after download preparation")
+    if database == "klosa":
+        from klosa_adapter_contract import require_context
+        require_context(baseline, language)
     started = time.monotonic()
     previous = {}
     checked = {}
@@ -504,7 +542,7 @@ def wait_for_download(directory: Path, baseline: dict, expected: list[str],
             if key not in checked:
                 try:
                     with contextlib.redirect_stderr(io.StringIO()):
-                        report = inspect_archive(directory / name, expected)
+                        report = (inspect_archive(directory / name, expected, database, language) if database else inspect_archive(directory / name, expected))
                     # A concurrent write invalidates this inspection.
                     after = (directory / name).stat()
                     if [after.st_size, after.st_mtime_ns] != stat:
@@ -557,8 +595,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--action-file", type=Path,
                         help="Save the prepared CLI payload and print a compact receipt (prepare only).")
     parser.add_argument("--wait-seconds", type=float, default=20)
-    parser.add_argument("--database", type=str.lower, choices=("charls", "elsa", "hrs"))
+    parser.add_argument("--database", type=str.lower, choices=("charls", "elsa", "hrs", "share", "chns", "knhanes", "klosa"))
     parser.add_argument("--base-url")
+    parser.add_argument('--language', choices=['en', 'ko'])
     parser.add_argument("--out", type=Path)
     parser.add_argument("--expect-vars-file", type=Path)
     parser.add_argument("--overwrite", action="store_true")
@@ -571,6 +610,10 @@ def parse_args() -> argparse.Namespace:
         parser.error("install and watch modes require --database, --out and --expect-vars-file")
     if args.prepare_download and not args.base_url:
         parser.error("--prepare-download requires --base-url")
+    if args.database == "klosa":
+        from klosa_adapter_contract import language
+        try: language(args.language)
+        except ValueError as exc: parser.error(str(exc))
     if args.wait_seconds < 0:
         parser.error("--wait-seconds must be nonnegative")
     return args
@@ -606,7 +649,7 @@ def main() -> int:
         archive_path = args.archive
         if args.watch_downloads:
             baseline = json.loads(args.snapshot_file.read_text(encoding="utf-8"))
-            observation = wait_for_download(args.watch_downloads, baseline, expected, args.wait_seconds)
+            observation = wait_for_download(args.watch_downloads, baseline, expected, args.wait_seconds, database=args.database, language=args.language)
             args.snapshot_file.with_name(args.snapshot_file.stem + "_result.json").write_text(
                 json.dumps(observation, ensure_ascii=False, indent=2), encoding="utf-8")
             if not observation["ok"]:
@@ -614,7 +657,7 @@ def main() -> int:
                 return 1
             archive_path = Path(observation["archive_source"])
         validated = ({key: observation[key] for key in ("zip_members", "codebook", "data")}
-                     if args.watch_downloads else inspect_archive(archive_path, expected))
+                     if args.watch_downloads else inspect_archive(archive_path, expected, args.database, args.language))
         if archive_path.resolve() == (args.out / "bookapp_download.zip").resolve():
             raise ValueError("archive must be outside the managed output files")
         prepare_output_dir(args.out, args.overwrite)
@@ -625,6 +668,7 @@ def main() -> int:
             "next_action": "continue_definition",
             "allow_new_export": False,
             "database": args.database,
+            "language": args.language,
             "archive_source": str(archive_path.resolve()),
             **validated,
         }

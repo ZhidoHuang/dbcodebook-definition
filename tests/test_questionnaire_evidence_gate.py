@@ -113,6 +113,15 @@ def main() -> int:
         )
         assert result == {"questions": 1, "covered_periods": 2}
 
+        omitted = copy.deepcopy(record)
+        omitted['questionnaire_evidence'][0].update(display_required=False,
+            display_omission_reason='直接保留已发布结果，定义逻辑已足以解释。',
+            rendered_in_copy=False, copy_locator='不展示：直接保留已发布结果')
+        assert checker.validate_questionnaire_evidence(omitted, exploration_log, source_periods,
+            require_rendered=True) == result
+        omitted['questionnaire_evidence'][0]['question_text'] = ''
+        expect_failure(checker, omitted, exploration_log, source_periods, 'question_text', require_rendered=True)
+
         lexical_codes = copy.deepcopy(record)
         lexical_question = lexical_codes["questionnaire_evidence"][0]
         lexical_question["options"] = [{"value": "01", "label": "是"}, {"value": "02", "label": "否"}]

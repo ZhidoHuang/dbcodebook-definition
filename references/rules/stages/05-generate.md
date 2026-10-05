@@ -4,7 +4,9 @@
 
 本步stage_id为generate。输入为已通过预检及公开R复核的唯一正式脚本、当前raw、定稿文案和变更影响；只读所选数据库workflow的正式输出部分。保持已经裁决的定义，不在生成时重新研究或改写文案。
 
-先按下方“文案读取与展示”接入输入、确认数据库参数，再在Skill根目录运行：
+先按下方“文案读取与展示”接入输入、确认数据库参数。新库首次接入或修改公共生成接口时，先在过程目录用覆盖实际时期、身份和结果类型的小样本及定稿文案，调用同一个公共生成器，确认笔记、定义表、图表和QA都能完整产出，再运行全量。样本不替换正式raw或成果，不另写业务算法；已有适用的完整生成证据时沿用，不要求每个普通主题重复。小样本只验证生成衔接，全量结果仍按第6步验证。
+
+在Skill根目录运行：
 
 ```powershell
 ./scripts/run_r_definition.ps1 -WorkDir $Formal -Script $RFile -LogPrefix $LogPrefix -ProcessDir $Process -Config $Config -Database $Database
@@ -18,11 +20,15 @@
 
 后台调用 `copy <- read_definition_copy(analysis_vars)`，把criteria、criteria_intro、summary_entry、summary_insight_items、reference_lines、summary_selection传给现有生成器。新文案从首个变量直接开始，criteria_intro为空，不生成定义表前的共同说明；该参数仅保留旧稿兼容。没有参考资料时reference_lines为空，不生成空标题。definition_data$Criteria、定义HTML和笔记使用同份文案，不能另写一份或覆盖copy$summary_selection。
 
-新主题或本次修改问卷展示时，将问卷迁入文案并删除R中的重复文字；旧主题仅改其它内容、问卷未变时允许沿用既有R问卷。没有已核实的问卷展示内容时，不传问卷展示；仅核实题意、未取得完整原题的，仍按第3步保留已明确标注的题意概括和原因说明。内容要求和输入格式见[文案写作](03-copy.md)，模板与实例见[reader-copy](../../../templates/reader-copy.md)。
+新主题或本次修改问卷展示时，按第3步选定需要展示的题组，写入文案并删除R中的重复文字；不需要展示时，summary_selection为空，不生成空问卷块。旧主题仅改其它内容、问卷未变时允许沿用既有R问卷。仅核实题意、未取得完整原题且确需展示时，保留已明确标注的题意概括和原因说明。内容要求和输入格式见[文案写作](03-copy.md)，模板与实例见[reader-copy](../../../templates/reader-copy.md)。
+
+没有问卷展示时，目录衔接句由生成器改为“本主题在数据中对应 N 个原始变量，可从 dbCodeBook 的目录［目录路径］进入检索和查看。”有问卷时保持下述原句，数量和链接样式不变。
 
 ## 数据库适配边界
 
 ELSA调用公共render_definition_bundle并设置database="ELSA"、cycle_order为已核实时期顺序，输入保留ID/idauniq/Wave。Full HRS用database="HRS"及本轮核实年份，保留字符型HHID/PN和year；不在主题复制渲染器。顺序取自证据，不从非缺失行反推；概览和文件前缀随参数生成。
+
+SHARE、KLoSA与KNHANES的生成接口须显式指定database及cycle_order，身份与文件层级按[SHARE流程](../../databases/share/workflow.md)、[KLoSA流程](../../databases/klosa/workflow.md)、[KNHANES流程](../../databases/knhanes/workflow.md)执行。SHARE普通Wave1–9人口学已完成真实完整流程；KLoSA与KNHANES仍为候选接口。KLoSA还须显式传入与来源方案相同的language，目录入口沿用该语言。程序可运行不代表所有来源或主题已验收。
 
 summary_source提供已核实的目录路径，生成器从正式来源清单自动取得原始变量数量，衔接为：“以上问卷问题在数据中对应 N 个原始变量，可从 dbCodeBook 的目录［目录路径］进入检索和查看。”数量取raw_vars在raw_codebook中的完整来源身份，按数据库、文件及原变量名去重；包含必要前置题，同一来源跨期不重复计数，不统计最终变量、下载别名数量或网页搜索结果总数。来源身份缺失或无法对应时返回来源清单修正，不省略数量或猜数。
 

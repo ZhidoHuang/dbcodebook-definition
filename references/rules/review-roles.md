@@ -58,8 +58,10 @@ review-result 可加 `--findings-file <JSON文件>`，内容为实际发现数�
 & $Python scripts/execution_report.py exploration-check --process-dir $Process --record <definition_search_record.json>
 ```
 
+当前报告已结束时，先在同一过程目录执行init，保留原workflow并自动归档旧报告，建立本次running记录；不改旧报告的状态或时间。分段续办且共同输入、两路产出未变时，使用 `exploration-reuse --process-dir $Process --from-report <原execution_report.json> --input <原共同任务说明文件>`，不要先用exploration-start把历史完成时间变成本轮绑定。入口核验原报告、输入、产出、不同代理身份及完成证据，保留原时间，记录原报告路径/哈希和本次reused_at；当前主线程必须独立于历史两路。原合并不沿用，主线程仍须保存本次比较判断并执行exploration-merge。已有当前探索只允许同输入、没有结果/合并且未启动新代理轮次的空pending登记，加 `--replace-reason <失败登记的实际替换理由>` 后替换并留存history；其它冲突拒绝替换。原报告随后变化会使沿用失效。
+
 有关闭工具时实际关闭后用--closed，不照抄关闭限制；代理日志读取、身份与结束状态沿用本页规则。exploration-result只登记实际探索完成，不认可该路方案。两路都须独立完成；主线程比较后才可ready。有影响当前方案的未决问题使用--result blocked并逐项--unresolved，不能用两路相同结论掩盖共同缺口。
 
 合并结论文件属于本次探索记录，可引用既有证据，不新建审核表；保存后不把后续无关流水写入该绑定文件。程序绑定共同输入、两份输出、合并结论和方案；身份必须不同，隔离自查不可替代。程序只证明记录和输入有效，不能判断研究结论充分。来源/定义实质变更要更新受影响的探索与合并；仅补实际路径人数、展示定位不使方案失效。局部调查重新exploration-start时保留历史，说明影响范围与沿用决定，不要求重查整个主题。
 
-新full_definition报告要求本次双路探索。一般返修只有存在研究问题时才exploration-start；只改表达、生成或同步沿用已有已确定方案，不自动增派探索。旧报告不回填虚构代理。R实现复核仍沿用“公开 R 复核”接口；新报告在调用它的review-check时同时检查探索合并有效性，不能靠更新R复核绕过失效方案。
+新full_definition报告要求有效的双路探索绑定；分段续办可按上面的显式入口沿用未变证据，并重新合并。一般返修只有存在研究问题时才exploration-start；只改表达、生成或同步沿用已有已确定方案，不自动增派探索。旧报告不回填虚构代理。R实现复核仍沿用“公开 R 复核”接口；新报告在调用它的review-check时同时检查探索合并有效性，不能靠更新R复核绕过失效方案。

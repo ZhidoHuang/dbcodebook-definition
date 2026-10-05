@@ -78,18 +78,18 @@ build_summary_facts <- function(analysis_db,
   if (!period_col %in% names(analysis_db)) stop("analysis_db 缺少周期列。")
   expected_prefix <- if (identical(period_col, "year")) {
     ""
-  } else if (period_col %in% c("wave", "Wave")) {
+  } else if (period_col %in% c("wave", "Wave", "Wave_id")) {
     "Wave"
   } else {
     NULL
   }
-  if (is.null(expected_prefix)) stop("摘要周期列必须是 year、wave 或 Wave。")
+  if (is.null(expected_prefix)) stop("摘要周期列必须是 year、wave、Wave 或 Wave_id。")
   if (is.null(period_prefix)) period_prefix <- expected_prefix
   if (!identical(period_prefix, expected_prefix)) {
     expected_display <- if (nzchar(expected_prefix)) expected_prefix else "直接年份"
     stop("摘要周期术语与周期列不一致：", period_col, " 必须使用 ", expected_display, "。")
   }
-  period_values <- if (identical(period_col, "Wave")) {
+  period_values <- if (period_col %in% c("Wave", "Wave_id")) {
     as.integer(sub("^Wave[[:space:]]+", "", as.character(analysis_db[[period_col]])))
   } else {
     as.integer(analysis_db[[period_col]])
@@ -99,7 +99,7 @@ build_summary_facts <- function(analysis_db,
   if (is.null(expected_periods)) {
     expected_periods <- observed_periods
   } else {
-    expected_periods <- if (identical(period_col, "Wave")) {
+    expected_periods <- if (period_col %in% c("Wave", "Wave_id")) {
       as.integer(sub("^Wave[[:space:]]+", "", as.character(expected_periods)))
     } else {
       as.integer(expected_periods)
@@ -262,7 +262,9 @@ summary_validate_insight_inline_code <- function(items) {
         perl = TRUE
       )
     )[[1]]
-    hits[nzchar(hits)]
+    # These exact names identify classification standards, not variable IDs.
+    # Keep fields such as isced2011_r subject to the ordinary code-span rule.
+    hits[nzchar(hits) & !hits %in% c("ISCED1997", "ISCED2011")]
   }), use.names = FALSE))
 
   if (length(unmarked) > 0) {
@@ -553,11 +555,16 @@ summary_render_parts <- function(parts, theme_color) {
           grepl("[\r\n]", path)) {
         stop("summary_source path must contain only the directory; put explanatory text in note.")
       }
-      if (length(database) != 1L || !database %in% c("charls", "elsa", "hrs")) stop("Invalid source-link database.")
+      if (length(database) != 1L || !database %in% c("charls", "elsa", "hrs", "share", "klosa", "knhanes", "chns")) stop("Invalid source-link database.")
+      route <- paste0('/home/', database, '/')
+      if (database == "klosa") {
+        if (length(part$language) != 1L || !part$language %in% c("en", "ko")) stop("KLoSA source link requires explicit language.")
+        route <- paste0(route, part$language, '/')
+      }
       # The URL uses only the path, never the adjacent explanatory note.
       nav <- gsub("\\s*>\\s*", ">", trimws(path), perl = TRUE)
-      return(paste0('<a data-summary-path="true" href="/home/', database,
-        '/?nav=', utils::URLencode(enc2utf8(nav), reserved = TRUE), '">',
+      return(paste0('<a data-summary-path="true" href="', route,
+        '?nav=', utils::URLencode(enc2utf8(nav), reserved = TRUE), '">',
         summary_escape_html(path), '</a>'))
     }
     if (identical(part$type, "search")) {
@@ -825,14 +832,17 @@ render_summary_selection_paragraph <- function(selection, theme_color) {
       }
       period <- as.character(group$period)
       label <- as.character(group$label)
-      if (length(period) != 1 || !grepl("^[A-Za-z0-9_-]+$", period)) {
+      # Match the reader's controlled module key alphabet; punctuation remains
+      # forbidden, while Chinese module titles distinguish same-Wave groups.
+      if (length(period) != 1 || is.na(period) ||
+          !grepl("^[A-Za-z0-9_\u3400-\u9fff-]+\\z", period, perl = TRUE)) {
         stop("来源分组的 period 必须是单个安全标识。")
       }
       if (length(label) != 1 || !nzchar(label)) {
         stop("来源分组的 label 必须是非空文本。")
       }
       paste0(
-        '<section class="raw-source-period" data-raw-source-period="', period,
+        '<section class="raw-source-period" data-raw-source-period="', summary_escape_html(period),
         '" data-label="', summary_escape_html(label), '" style="font-size:0.92em;">',
         '<div class="raw-source-period-label">', summary_escape_html(label), '</div>',
         render_selection_lines(group$lines),

@@ -11,6 +11,8 @@ import sys
 import zipfile
 from itertools import zip_longest
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from questionnaire_display import requires_questionnaire_display
 
 
 READY_STATUS = "READY"
@@ -60,11 +62,14 @@ QUESTION_RESPONSE_TYPES = {
 QUESTION_SKIP_STATUSES = {"recorded", "none"}
 QUESTION_COVERAGE_STATUSES = {"questionnaire", "not_applicable"}
 SKILL_ROOT = Path(__file__).resolve().parents[1]
+DATABASE_ROUTING = json.loads(
+    (SKILL_ROOT / "references" / "database-routing.json").read_text(encoding="utf-8-sig")
+)
+# Material evidence is usable before a database has a production workflow.
 LOCAL_EVIDENCE_ROOTS = {
     database.upper(): SKILL_ROOT / route["source_materials"]
-    for database, route in json.loads(
-        (SKILL_ROOT / "references" / "database-routing.json").read_text(encoding="utf-8-sig")
-    )["databases"].items()
+    for group in ("reference_materials", "databases")
+    for database, route in DATABASE_ROUTING.get(group, {}).items()
     if route.get("source_materials")
 }
 CANDIDATE_DECISIONS = {"include", "exclude", "partial"}
@@ -415,14 +420,15 @@ def validate_questionnaire_evidence(
                 f"invalid={wrong_actions}"
             )
         rendered_in_copy = item.get("rendered_in_copy")
+        display_required = requires_questionnaire_display(item)
         if not isinstance(rendered_in_copy, bool):
             fail(f"{field}.rendered_in_copy must be true or false")
         copy_locator = nonempty_text(
             item.get("copy_locator"), f"{field}.copy_locator"
         )
-        if require_rendered and rendered_in_copy is not True:
+        if require_rendered and display_required and rendered_in_copy is not True:
             fail(f"{field}.rendered_in_copy must be true before final validation")
-        if require_rendered and re.search(
+        if require_rendered and display_required and re.search(
             r"待写入|待补|尚未写入|未写入|\bTODO\b|\bTBD\b|\bpending\b",
             copy_locator,
             re.IGNORECASE,
@@ -977,6 +983,34 @@ def validate_exploration_log(record: dict) -> set[int]:
     return steps
 
 
+def validate_directory_entries(directories, database):
+    # New database hierarchies use their actual UI paths, not an invented common root.
+    if not isinstance(directories, list) or not directories:
+        fail("directory_entries must contain at least one verified directory")
+    directory_paths: set[str] = set()
+    database = database.upper()
+    directory_prefixes = {
+        "HRS": ("Full HRS >",),
+        "CHARLS": ("Core data >",),
+        "ELSA": ("Core data >",),
+    }.get(database)
+    for index, item in enumerate(directories, start=1):
+        if not isinstance(item, dict):
+            fail(f"directory_entries[{index}] must be an object")
+        full_path = nonempty_text(
+            item.get("full_path"), f"directory_entries[{index}].full_path"
+        )
+        if directory_prefixes and not full_path.startswith(directory_prefixes):
+            fail(
+                f"directory_entries[{index}].full_path is not a full {database} data path"
+            )
+        if item.get("verified_in_ui") is not True:
+            fail(f"directory_entries[{index}] was not verified in the website UI")
+        nonempty_text(item.get("purpose"), f"directory_entries[{index}].purpose")
+        directory_paths.add(full_path)
+    return directory_paths
+
+
 def validate_record(
     record_path: Path,
     r_script_path: Path | None,
@@ -1014,28 +1048,8 @@ def validate_record(
         else:
             evidence_reviews = []
 
-    directories = record.get("directory_entries")
-    if not isinstance(directories, list) or not directories:
-        fail("directory_entries must contain at least one verified directory")
-    directory_paths: set[str] = set()
     database = nonempty_text(record.get("database"), "database").upper()
-    directory_prefixes = {
-        "HRS": ("Full HRS >",),
-    }.get(database, ("Core data >",))
-    for index, item in enumerate(directories, start=1):
-        if not isinstance(item, dict):
-            fail(f"directory_entries[{index}] must be an object")
-        full_path = nonempty_text(
-            item.get("full_path"), f"directory_entries[{index}].full_path"
-        )
-        if not full_path.startswith(directory_prefixes):
-            fail(
-                f"directory_entries[{index}].full_path is not a full {database} data path"
-            )
-        if item.get("verified_in_ui") is not True:
-            fail(f"directory_entries[{index}] was not verified in the website UI")
-        nonempty_text(item.get("purpose"), f"directory_entries[{index}].purpose")
-        directory_paths.add(full_path)
+    directory_paths = validate_directory_entries(record.get("directory_entries"), database)
 
     searches = record.get("normal_searches")
     if not isinstance(searches, list) or not searches:

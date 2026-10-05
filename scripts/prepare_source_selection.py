@@ -75,6 +75,10 @@ def build_record_action(record, url):
 def browser_code(action, mode):
     if mode == 'select':
         rebuilt = build_action(action['input_text'], action['url'])
+        if action.get('database') == 'klosa':
+            from klosa_adapter_contract import require_wave_source_identities
+            require_wave_source_identities(action, action.get('language'))
+            rebuilt.update(database='klosa', language=action['language'])
         if action != rebuilt:
             raise ValueError('Selection action is inconsistent; regenerate from the source list')
     source = Path(__file__).with_name('source_selection.js').read_text(encoding='utf-8')
@@ -86,15 +90,16 @@ def main():
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument('--input', type=Path, help='Legacy explicit full-identity list')
     source.add_argument('--record', type=Path, help='Primary merged READY source record')
-    parser.add_argument('--database', required=True, choices=['charls', 'elsa', 'hrs'])
+    parser.add_argument('--database', required=True, choices=['charls', 'elsa', 'hrs', 'share', 'chns', 'knhanes', 'klosa'])
     parser.add_argument('--config', type=Path)
+    parser.add_argument('--language', choices=['en', 'ko'])
     parser.add_argument('--action-file', required=True, type=Path)
     parser.add_argument('--expect-vars-file', required=True, type=Path)
     args = parser.parse_args()
     paths = [p.resolve() for p in (args.record or args.input, args.action_file, args.expect_vars_file)]
     if len(set(paths)) != 3:
         parser.error('Input, action and alias output must be distinct files')
-    url = database_url(load_config(args.config), args.database)
+    url = database_url(load_config(args.config), args.database, args.language)
     if args.record:
         record = json.loads(args.record.read_text(encoding='utf-8-sig'))
         if str(record.get('database', '')).lower() != args.database:
@@ -102,6 +107,13 @@ def main():
         action = build_record_action(record, url)
     else:
         action = build_action(args.input.read_text(encoding='utf-8-sig'), url)
+    if args.database == "klosa":
+        from klosa_adapter_contract import require_context, require_wave_source_identities
+        if not args.record:
+            raise ValueError("KLoSA selection requires the merged record with explicit language")
+        require_context(record, args.language)
+        action.update(database="klosa", language=args.language)
+        require_wave_source_identities(action, args.language)
     for path in (args.action_file, args.expect_vars_file):
         path.parent.mkdir(parents=True, exist_ok=True)
     args.action_file.write_text(json.dumps(action, ensure_ascii=False, indent=2), encoding='utf-8')

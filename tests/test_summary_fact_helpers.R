@@ -40,6 +40,11 @@ expect_identical(
   render_summary_selection_paragraph(NULL, "#005A9C"),
   ""
 )
+stopifnot(isTRUE(summary_validate_insight_inline_code("ISCED1997 与 ISCED2011 是两套教育分类标准。")))
+expect_error_contains("real ISCED field still requires code span",
+  summary_validate_insight_inline_code("isced2011_r 是原始变量。"), "isced2011_r")
+expect_error_contains("uppercase numeric variable is not generally exempt",
+  summary_validate_insight_inline_code("CF018 是原始变量。"), "CF018")
 
 charls_periods <- c(2011L, 2013L, 2015L, 2018L, 2020L)
 mixed_charls <- data.frame(
@@ -79,6 +84,26 @@ object_override_fixture <- build_summary_facts(
   expected_periods = c(2011L, 2013L),
   object_overrides = c(test_var = "家庭指标（个人行）")
 )
+
+# SHARE uses Wave_id in the real bundle, not its local calendar-year alias.
+share_summary_fixture <- function(period_col, values, expected = c("Wave 1", "Wave 2"), prefix = NULL) {
+  sample <- data.frame(test_var = c(1, 2))
+  sample[[period_col]] <- values
+  build_summary_facts(sample,
+    data.frame(Variable = "test_var", original_vars = "raw_var", Label = "Test variable"),
+    meanings = c(test_var = "测试变量"), groups = c(test_var = "Test"),
+    meaning_reviewed = c(test_var = TRUE), period_col = period_col,
+    expected_periods = expected, period_prefix = prefix)
+}
+stopifnot(identical(
+  share_summary_fixture("Wave_id", c("Wave 1", "Wave 2")),
+  share_summary_fixture("Wave", c("Wave 1", "Wave 2"))))
+expect_error_contains("SHARE Wave_id rejects calendar terminology",
+  share_summary_fixture("Wave_id", c("Wave 1", "Wave 2"), prefix = ""), "周期术语")
+expect_error_contains("SHARE Wave_id rejects unknown period",
+  suppressWarnings(share_summary_fixture("Wave_id", c("Wave 1", "unknown"))), "无法识别")
+expect_error_contains("SHARE Wave_id rejects extra wave",
+  share_summary_fixture("Wave_id", c("Wave 1", "Wave 3")), "目标周期之外")
 
 note_order_fixture <- compose_definition_note_lines(
   summary_section = "SUMMARY",
@@ -166,6 +191,23 @@ summary_period_tabs_fixture <- render_summary_selection_paragraph(
   ),
   "#A33842"
 )
+module_period <- "Wave_1_Wave_2_Wave_4_9_出生国与国籍的共同问题"
+module_label <- "Wave 1、Wave 2、Wave 4–9：出生国与国籍的共同问题"
+module_selection <- list(groups = list(list(period = module_period, label = module_label, lines = list("模块内容。"))))
+module_html <- render_summary_selection_paragraph(module_selection, "#A33842")
+stopifnot(grepl(paste0('data-raw-source-period="', module_period, '"'), module_html, fixed = TRUE),
+          grepl(paste0('data-label="', module_label, '"'), module_html, fixed = TRUE),
+          grepl(module_label, module_html, fixed = TRUE))
+for (bad_period in c('Wave_1" onclick="bad', 'Wave_1<svg>', 'Wave 1', 'Wave_1\n模块', 'Wave_1\n', 'Wave_1=bad')) {
+  bad_module <- module_selection
+  bad_module$groups[[1]]$period <- bad_period
+  expect_error_contains("unsafe module identifier rejected", render_summary_selection_paragraph(bad_module, "#A33842"), "安全标识")
+}
+escaped_module <- module_selection
+escaped_module$groups[[1]]$label <- '模块 "quoted" <b> & 内容'
+escaped_html <- render_summary_selection_paragraph(escaped_module, "#A33842")
+stopifnot(grepl('&quot;quoted&quot; &lt;b&gt; &amp;', escaped_html, fixed = TRUE),
+          !grepl('data-label="模块 "quoted"', escaped_html, fixed = TRUE))
 summary_questionnaire_fixture <- render_summary_selection_paragraph(
   list(lines = list(
     summary_period_heading_line("门诊原始问卷"),
@@ -673,7 +715,7 @@ for (periods in list(2011L, c(2011L, 2013L))) {
 }
 cat("single/multiple period and variable count fixtures PASS\n")
 
-for (database in c("CHARLS", "ELSA", "HRS")) {
+for (database in c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "CHNS")) {
   source_fixture <- render_summary_selection_paragraph(definition_source_entry(
     list(path = "Core data > Social isolation/loneliness", note = "；另用 pscede。"), database), "#005A9C")
   expected_href <- paste0('/home/', tolower(database), '/?nav=Core%20data%3ESocial%20isolation%2Floneliness')
@@ -682,6 +724,13 @@ for (database in c("CHARLS", "ELSA", "HRS")) {
   stopifnot(!grepl('nav=[^"]*pscede', source_fixture))
 }
 punctuated_path <- "Core data > Disabilities: activities. aids used; sources of help; who pays"
+for (language in c("en", "ko")) {
+  linked_klosa <- render_summary_selection_paragraph(definition_source_entry(
+    list(path="Core data > Demographics", language=language), "KLoSA"), "#CE7095")
+  stopifnot(grepl(paste0('/home/klosa/', language, '/?nav='), linked_klosa, fixed=TRUE))
+}
+expect_error_contains("KLoSA language cannot be guessed", render_summary_selection_paragraph(
+  definition_source_entry("Core data > Demographics", "KLoSA"), "#CE7095"), "explicit language")
 linked <- render_summary_selection_paragraph(definition_source_entry(
   list(path = punctuated_path, note = "；另用其它来源。"), "CHARLS"), "#005A9C")
 stopifnot(grepl("%3B", linked, fixed = TRUE), grepl("</a> 进入检索和查看。另用其它来源。", linked, fixed = TRUE))
@@ -720,6 +769,11 @@ stopifnot(grepl('对应 2 个原始变量', auto_source, fixed = TRUE),
 legacy_source <- definition_source_entry(list(lines = list("既有来源说明")), "CHARLS", source_n)
 stopifnot(length(legacy_source$lines) == 2L)
 cat("source path and note separation PASS\n")
+
+no_question_source <- render_summary_selection_paragraph(definition_source_entry(
+  "Core data > Demographics", "CHARLS", 2, questionnaire_shown = FALSE), "#005A9C")
+stopifnot(grepl("本主题在数据中对应 2 个原始变量", no_question_source, fixed = TRUE),
+          !grepl("以上问卷", no_question_source, fixed = TRUE))
 
 report <- list(ok = TRUE, checks = checks, questionnaire_html = question_layout_fixture)
 args <- commandArgs(trailingOnly = TRUE)

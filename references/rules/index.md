@@ -44,6 +44,8 @@ validation负责何时返回或复核及状态含义；review-roles负责复核�
 | [ELSA profile](../databases/elsa/profile.md) | ELSA 稳定身份、文件族、Wave、分析单位和编码边界 | 流程步骤和主题裁决 |
 | [HRS profile](../databases/hrs/profile.md) | Full HRS 原始产品身份、文件族、变量命名、分析单位和时期边界 | RAND HRS/Harmonized HRS 事实、流程步骤和主题裁决 |
 
+新库候选接口的使用范围见[SHARE](../databases/share/workflow.md)、[KLoSA](../databases/klosa/workflow.md)、[KNHANES](../databases/knhanes/workflow.md)；[CHNS](../databases/chns/profile.md)目前仅接包检查，尚未接完整生成。材料存在或接口测试通过，不代表真实主题已验收。
+
 ## 记录模板
 
 下面的模板保存录入格式和可执行示例；内容取舍仍由对应环节决定。填写依据本次真实事实，不能从占位文字反推研究口径。
