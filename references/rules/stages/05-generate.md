@@ -119,7 +119,7 @@ eval(parse(
 | 选项与跳转 | 逐行缩进；选项独立0.8em、#888888；题干后进入条件用全角括号，条件及跳转独立0.72em、正文深色。同一行选项与跳转为同级元素，不嵌套相乘字号，外层只管换行缩进 |
 | 间距 | 时期首个分组标题无额外上间距；后续题组及相邻问题保留轻量间距 |
 | Criteria | 结构、颜色和缩进由公共helper生成；仅多条判定共同依赖的跨期组成、适用对象或解释前提使用criteria_context()浅底背景，普通含义、清单、赋值及公式不加底色 |
-| 小book | 正文外层14px；首段顶格，其后自然段首行缩进2em；编号项不缩进，不在子段重复缩放 |
+| 小book | 正文外层14px；每条首句用数据库主题色，不加粗，解释用正文色。编号与正文分列，续行与正文起点对齐；单条无编号时顶格。不在子段重复缩放 |
 | 其它 | dbCodeBook普通样式，完整目录使用目录标记；数字与量词使用不可断开容器，百分号紧贴数字；关系树保留前导空格和树线 |
 
 问卷沿用 `summary_questionnaire_line()`。语义标记对应：设计问题为 `.summary-period-question[data-summary-period-question="true"]`；原题为 `.summary-question[data-summary-question="true"]`；进入条件为 `.summary-question-condition[data-summary-question-condition="true"]` 或结构化题块的 `[data-summary-question-detail-role="instruction"][data-summary-question-position="before"]`；选项为 `[data-summary-question-option="true"]` 或 `[data-summary-question-detail-role="option"]`；选项后跳转为 `[data-summary-question-instruction="true"]`。结构化题块使用 `.summary-questionnaire-line`。变量代码由成对反引号转换，不手写code标签。
