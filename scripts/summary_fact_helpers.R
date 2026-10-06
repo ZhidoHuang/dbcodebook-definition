@@ -916,19 +916,25 @@ render_summary_insight_card <- function(items,
   items <- as.character(items)
   if (length(items) == 0 || any(!nzchar(items))) stop("小book提示文案不能为空。")
   summary_validate_insight_inline_code(items)
-  rendered_items <- summary_render_inline_code(items)
-  itemized <- grepl(
-    "^\\s*(?:[①②③④⑤⑥⑦⑧⑨⑩]|[0-9]+[、.)．])",
-    items,
-    perl = TRUE
-  )
+  marker_pattern <- "^\\s*(?:[①②③④⑤⑥⑦⑧⑨⑩]|[0-9]+[、.)．])\\s*"
   body <- paste0(
-    vapply(seq_along(rendered_items), function(index) {
-      text_indent <- if (index == 1L || itemized[[index]]) "0" else "2em"
+    vapply(items, function(item) {
+      numbered <- grepl(marker_pattern, item, perl = TRUE)
+      marker <- if (numbered) trimws(regmatches(item, regexpr(marker_pattern, item, perl = TRUE))) else ""
+      content <- sub(marker_pattern, "", item, perl = TRUE)
+      # First sentence states the point; plain Markdown needs no styling markup.
+      sentence_end <- regexpr("。", content, fixed = TRUE)[[1]]
+      lead <- if (sentence_end > 0L) substr(content, 1L, sentence_end) else content
+      explanation <- if (sentence_end > 0L) substring(content, sentence_end + 1L) else ""
+      text <- paste0('<span class="summary-insight-point" style="color:', theme_color,
+                     ';font-weight:400;">', summary_render_inline_code(lead), '</span>',
+                     summary_render_inline_code(explanation))
       paste0(
         '<div class="summary-insight-paragraph" data-summary-insight-paragraph="true" ',
-        'style="margin:0;text-indent:', text_indent, ';">',
-        rendered_items[[index]],
+        'style="margin:0 0 8px;text-indent:0;',
+        if (numbered) 'display:flex;align-items:baseline;gap:0.5em;' else '', '">',
+        if (numbered) paste0('<span class="summary-insight-number" style="flex:0 0 1.5em;text-align:right;font-weight:400;">', marker, '</span>') else '',
+        '<span class="summary-insight-text" style="min-width:0;flex:1;">', text, '</span>',
         '</div>'
       )
     }, character(1)),

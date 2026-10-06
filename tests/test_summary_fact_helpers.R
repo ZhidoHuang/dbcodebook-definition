@@ -390,13 +390,13 @@ checks <- list(
   ),
   expect_identical(
     "insight first paragraph is not indented",
-    grepl('text-indent:0;">第一段不缩进。', summary_insight_fixture, fixed = TRUE),
+    grepl('font-weight:400;">第一段不缩进。</span>', summary_insight_fixture, fixed = TRUE),
     TRUE
   ),
   expect_identical(
-    "insight later paragraphs are indented",
-    grepl('text-indent:2em;">第二段开始缩进。', summary_insight_fixture, fixed = TRUE),
-    TRUE
+    "insight paragraphs do not add first-line indentation",
+    grepl('text-indent:2em', summary_insight_fixture, fixed = TRUE),
+    FALSE
   ),
   expect_identical(
     "insight paragraphs do not use br separators",
@@ -404,8 +404,8 @@ checks <- list(
     FALSE
   ),
   expect_identical(
-    "insight numbered items are not indented",
-    grepl('text-indent:0;">2. 第二项。', summary_itemized_insight_fixture, fixed = TRUE),
+    "insight number is separate from wrapping text",
+    grepl('text-align:right;font-weight:400;">2.</span><span class="summary-insight-text"', summary_itemized_insight_fixture, fixed = TRUE),
     TRUE
   ),
   expect_identical(
