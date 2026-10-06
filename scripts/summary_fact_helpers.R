@@ -698,7 +698,7 @@ render_summary_selection_paragraph <- function(selection, theme_color) {
     if (!length(labels) || any(!nzchar(labels)) || anyDuplicated(labels)) stop("问卷题组名称须非空且唯一。")
     return(paste0(vapply(selection$modules, function(module) paste0(
       '<div data-questionnaire-module="', summary_escape_html(module$label), '">',
-      '<h3 data-questionnaire-module-title="true">', summary_escape_html(module$label), '</h3>',
+      '<div data-questionnaire-module-title="true" style="font-size:inherit;font-weight:400;margin:0 0 8px;">', summary_escape_html(module$label), '</div>',
       render_summary_selection_paragraph(module, theme_color), '</div>'), character(1)), collapse = ""))
   }
   wrap_source_structure <- function(content) {

@@ -1,5 +1,12 @@
 # Skill 验收矩阵
 
+## 2026-10-07 问卷主题标签的普通文本显示
+
+- 模块名称由 h3 改为普通 div，继承正文字号、正常字重；保留 data-questionnaire-module-title、模块容器及时期结构。文章标题规则和示例恢复原样；未增加检查器或测试。
+- 既有 Python 测试全部通过，包括复杂问卷 Python→R→笔记链路；正式 CHARLS 052 重新生成和成果检查通过，13 个模块名均为 div、无标题标签，13 个时期容器保留，数据未变。
+- run_all.ps1 在既有 test_run_r_definition_no_install.ps1:105 停止，故不声明全套回归通过。另行执行的 6 项 R 测试和 Skill 结构校验通过；未修复该 runner 测试失败。回归日志见定义/_执行线程/CHARLS/052_内在能力/literature_revision_20261006/questionnaire_topic_tests_20261007.log。覆盖不代表其他主题均重新发布或全部浏览器视觉验收。
+- 提交前复跑：清除本次进程继承的 LC_ALL、LC_CTYPE、LANG 后，原有 tests/run_all.ps1（含 SkillValidator）全套通过，未修改测试或 runner。日志：C:/Users/admin/Documents/Codex/2026-09-22/051-x20/skill-submit-recheck.log；该结果不抹去上次失败，也不单凭复跑推定其原因。
+
 ## 2026-10-06 CHNS 静态来源合入主表及人口学真实流程
 
 - 下载合同同时接受既有独立静态文件及当前网站将personID字段合入uniqID主表的结构，仍逐项验证完整来源、别名、身份和时期；合并静态字段必须在同一人的各期保持一致。test_chns_adapter.py新增合并包、真实ZIP读取、缺列和静态冲突拒绝，旧分文件测试保留。
