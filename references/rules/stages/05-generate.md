@@ -115,14 +115,14 @@ eval(parse(
 | 内容 | 展示要求 |
 | --- | --- |
 | 摘要结果、共享维度及数量 | 保留名称的中文双引号；只有引号内概念和数字使用主题色，不染整句、连接词及标点。核对实际名称与标记，不用固定高亮数验收 |
-| 问卷主题标签 | 各模块的名称（如握力、视力，网站称 questionnaire-topic）使用普通文本容器，继承正文字号、正常字重，不使用 h1–h6 或标题样式。保留 data-questionnaire-module-title 标记、模块分组和各自的时期标签。文案中的三级题组标题仍用于结构解析，不代表生成后采用标题外观；文章标题、问卷内的题目标题不受此要求影响 |
+| 问卷主题标签 | 一个题组也显示话题标签，不省略。各模块的名称（如握力、视力，网站称 questionnaire-topic）使用普通文本容器，继承正文字号、正常字重，不使用 h1–h6 或标题样式。保留 data-questionnaire-module-title 标记、模块分组和各自的时期标签。文案中的三级题组标题仍用于结构解析，不代表生成后采用标题外观；文章标题、问卷内的题目标题不受此要求影响 |
 | 题目分组与选项引用 | 按文案显示题目分组标题，包括上游／原始问题及实际模块名称；共用选项只展开一次并保留适用题号说明。各题跳转保留在对应题目下，整组检查点保留在组末；不因选项相同而复制跳转，不把跳转移到首题或设计说明中 |
 | 时期正文与设计说明 | 时期内容统一为正文0.92em；问卷设计首段顶格，其后自然段首行缩进。说明中引号内核心问题用主题色，引号及其它文字普通色 |
 | 原题题块 | 分组标题主题色加粗，题目标题（原问卷变量名或题号）加粗且不用行内代码样式；标题和问题顶格。中文题干不加引号；题目标题、题干、填写及访员说明继承正文颜色 |
 | 选项与跳转 | 逐行缩进；选项独立0.8em、#888888；题干后进入条件用全角括号，条件及跳转独立0.72em、正文深色。同一行选项与跳转为同级元素，不嵌套相乘字号，外层只管换行缩进 |
 | 间距 | 时期首个分组标题无额外上间距；后续题组及相邻问题保留轻量间距 |
 | Criteria | 结构、颜色和缩进由公共helper生成；仅多条判定共同依赖的跨期组成、适用对象或解释前提使用criteria_context()浅底背景，普通含义、清单、赋值及公式不加底色 |
-| 小book | 正文外层14px；每条首句用数据库主题色，不加粗，解释用正文色。编号与正文分列，续行与正文起点对齐；单条无编号时顶格。不在子段重复缩放 |
+| 小book | 正文外层14px；每条首句用数据库主题色，不加粗，解释用正文色。每条均显示编号，只有一条也显示；编号与正文分列，续行与正文起点对齐。不在子段重复缩放 |
 | 其它 | dbCodeBook普通样式，完整目录使用目录标记；数字与量词使用不可断开容器，百分号紧贴数字；关系树保留前导空格和树线 |
 
 问卷沿用 `summary_questionnaire_line()`。语义标记对应：设计问题为 `.summary-period-question[data-summary-period-question="true"]`；原题为 `.summary-question[data-summary-question="true"]`；进入条件为 `.summary-question-condition[data-summary-question-condition="true"]` 或结构化题块的 `[data-summary-question-detail-role="instruction"][data-summary-question-position="before"]`；选项为 `[data-summary-question-option="true"]` 或 `[data-summary-question-detail-role="option"]`；选项后跳转为 `[data-summary-question-instruction="true"]`。结构化题块使用 `.summary-questionnaire-line`。变量代码由成对反引号转换，不手写code标签。
