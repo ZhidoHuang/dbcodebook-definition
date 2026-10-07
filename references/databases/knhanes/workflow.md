@@ -1,4 +1,6 @@
-# KNHANES 工作流
+# KNHANES 数据库差异说明
+
+通用流程按[公共规则](../../rules/validation.md)执行。下方只列 KNHANES 的接口差异及验证范围，调查设计和身份结构见 [profile](profile.md)。
 
 ## 选择和下载
 

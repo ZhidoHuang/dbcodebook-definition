@@ -1,134 +1,31 @@
-# ELSA 变量定义标准流程
+# ELSA 数据库差异说明
 
-版本日期：2026-08-27
+通用流程按[公共规则](../../rules/validation.md)执行。本页只补充当前环节涉及的 ELSA 差异；稳定身份、文件族、对象和编码见 [profile](profile.md)，材料从[统一材料索引](../../source-materials/材料索引.md)进入。
 
-适用范围：通过 dbCodeBook 为 ELSA 发现候选、裁决研究口径、下载 raw、编写正式 R，并完成正式成果与机器闭环。
+## 来源探索
 
-本文件只保留 ELSA 特有规则。跨数据库要求直接读取当前环节：[来源命名与下载](../../rules/stages/02-download.md)、[文案](../../rules/stages/03-copy.md)、[公开R](../../rules/stages/04-public-r.md)、[成果生成](../../rules/stages/05-generate.md)、[结果验证](../../rules/stages/06-results.md)；不要求一次读完。数据库身份和文件族见 [profile.md](profile.md)。不得从 CHARLS 流程复制题号、波次、编码、前缀或主题经验。
+- 页面由配置中的 `website.database_paths.elsa` 确定。读取页面 Label，记录完整 `Variable (File)`、Wave、文件族及对象。
+- 同名来源跨 File 分开识别，例如 `palevel (Core data)` 与 `palevel (Derived Variables)`。Core、COVID、Wave 0、Nurse、Life History、End of Life、HCAP、Nutrition、Pension Grid 和 Harmonised ELSA 的边界见 profile。
+- 核实 core member、partner、proxy、copied value、refreshment sample 及访谈 outcome 的含义；是否纳入由本次方案决定。权重核实其对象、Wave及横断面或纵向用途。
+- Harmonised ELSA 和官方派生说明可用于理解方法。来源取舍、文献探索和未决问题处理按[第1步](../../rules/stages/01-source-plan.md)，不因出现多个候选就固定停下来等待用户。
 
-## 1. 任务与目录
+## 选择与下载
 
-- 正式数据库根：外部配置中的 `paths.formal_root/ELSA`。
-- 过程证据根：外部配置中的 `paths.process_root/ELSA`。
-- 正式主题目录：`paths.formal_root/ELSA/<编号_主题>`，只在候选和口径确认后创建。
-- ELSA 在本数据库内独立连续编号；开始前先查正式目录、主题索引和验收台账。
-- 过程目录只保存本轮确有用途的截图、检索记录、recover 报告、核对报告和机器闭环 JSON；不强制创建 `current_task.md`、复盘包或重复叙述型过程卡。
-- 新主题或改变 raw、`Variable (File)`、文件族、分析单位、权重、编码、Wave 含义、transaction 时，走完整流程。只改文字或展示且正式事实不变时，可从当前正式 R、raw、codebook 和已确认裁决重建；发现证据不足时立即回到候选阶段。
+使用[第2步固定入口](../../rules/stages/02-download.md)，数据库参数为 `elsa`。
 
-## 2. 候选发现与研究口径
+- 预览核对 File/Wave 覆盖、记录数和文件分组。普通个人来源 raw header 按 `ID, idauniq, <selected variables...>` 核实，不套用 CHARLS 的 `id/year`。
+- codebook 同时保留 `Variable (File)` 与 `newname`；恢复结果保留 variable、file、transaction 和文件列表，不去掉 File 后用裸变量对账。
+- Nutrition detail、Pension Grid 等重复明细不能套用普通个人表的 header 或唯一键，先按实际文件结构及支持范围确认。
 
-### 2.1 从真实页面开始
+## R 与生成
 
-页面：外部配置中的 `website.base_url + website.database_paths.elsa`。
+- 正式个人—Wave对象保留 `ID, idauniq, Wave`；`Wave` 从平台 `ID` 提取，使用 `Wave 1`、`Wave 2` 等文本，raw 不变。无法解析的 ID 不猜写时期。
+- `idauniq` 跨 Wave 重复属于纵向记录；同一时期多行时核实附加键和每行对象。household id 可能随 Wave 变化，不能当稳定家庭键。
+- 每个来源的负值按 File、Wave 和官方材料解释，不套用全库统一负值字典。
+- mapping 保留完整 `Variable (File)`。公共生成器使用 `database="ELSA"` 和已核实的 `cycle_order`，detail 周期列使用 `Wave 1`、`Wave 2` 等名称。
 
-1. 先从目录进入相关节点；目录面板筛选词只用于定位目录。
-2. 需要发现跨目录候选时，再做普通检索，并分别记录关键词、结果和后续决定；0 结果也是证据。
-3. 启用页面 `Label`，核对题目、Wave、取值和适用对象；Easy label 只作入口。
-4. 每个候选记录完整 `Variable (File)`、Wave、目录或数据家族、题义、取值、适用对象、raw/derived、跨 Wave 差异和纳入或排除理由。
-5. 不用旧代码、本地导出、底层数据库、Parquet、历史笔记或最终变量名反推候选和探索路径。
+## 结果验证与支持范围
 
-从第一次网页操作起同时建立 `探索记录.md` 和 schema v7 `definition_search_record.json`，分别使用 [exploration-record.md](../../../templates/exploration-record.md) 和 [definition-search-record.json](../../../templates/definition-search-record.json)。记录内容、证据引用和写法按[第1步](../../rules/stages/01-source-plan.md#怎样保存方案)及上述模板执行；JSON保存同一步骤的结构化身份，供机器对账。两者来自同一次真实探索，JSON 不高于、不替代大白话记录，也不能用于事后生成探索故事：
+在[第6步](../../rules/stages/06-results.md)中核对完整 File 身份、个人—Wave键、特殊文件族、负值解释及覆盖范围。部分 Wave 来源重叠时，按[公共来源重叠核对](../../rules/stages/06-results.md#来源重叠核对)处理，不另设一套暂停条件。
 
-- `exploration_log` 按实际发生顺序记录目录进入、普通检索、页面观察、官方材料、Harmonised ELSA 和文献核对、下一步决定及理由，并用 `human_step_id` 指向 `探索记录.md` 中同号步骤。
-- `evidence_reviews` 记录实际查阅材料的标题、可定位位置、明确支持内容、没有说明的内容、对本轮决定的影响和对应探索步骤。
-- `questionnaire_evidence` 逐题记录各 Wave 正文实际呈现的官方题号、完整题干、完整选项、跳题条件与真实去向，以及本地材料路径和定位；`questionnaire_coverage` 必须覆盖每个来源组的每个 Wave。非问卷构造来源要明确标为不适用并说明理由。本地缺件时先记录实际查找范围和缺口，才能补用官方网站。
-- `candidate_decisions` 记录每个候选的纳入、排除及对应发现步骤。
-- 每个最终 raw 必须能回到真实页面来源和纳入理由；记录不完整时不得下载。
-
-### 2.2 文献与官方材料
-
-完成页面探索和官方题目详情核对后、下载前，进行与研究概念相称的定向调研：
-
-1. dbCodeBook 题目详情、实际 raw 和 `raw_codebook.csv`。
-2. ELSA 官方问卷、用户指南、技术文档、派生变量说明和可定位构造过程的 Harmonised ELSA 代码本。
-3. 原始量表、方法文献、正式指南、共识或主管机构文件。
-4. 明确报告 ELSA 题项、Wave、raw、公式或计分的高质量同行评议研究。
-5. 一般应用研究只作使用实例，不替代直接证据。
-
-简单单题至少确认是否存在不同常见口径；量表、认知测验、指数、总分、复合变量、跨 Wave 项目变化或计分歧义必须实质调研。记录来源明确说了什么、可直接核实什么、本轮拟采用什么；未报告的细节写“未报告”，不得反推。证据冲突或存在多个合理口径时，形成候选方案交用户裁决。
-
-每次官方材料、Harmonised ELSA 或文献核对都作为真实探索步骤，按发生顺序写入 `探索记录.md` 的 `Sxxx`，并在 `definition_search_record.json.evidence_reviews` 登记同号步骤。记录直接说明“材料写了什么、没有写什么、因此本轮怎样决定”，不能在笔记完成后根据最终文案反向补造调研记录。
-
-### 2.3 研究性与 Wave 完整性
-
-正式命名和下载前必须完成：
-
-- **成果查重**：比较研究含义、`Variable (File)`、构造和实际取值；同义等值变量复用，简单重分组优先并回原主题。
-- **主题边界**：一个候选包含多个独立概念时，说明合并或拆分理由。
-- **命名系列**：遵守通用命名规则并检查 ELSA 既有系列；不机械套用 CHARLS 前缀或历史名称。
-- **Wave 完整性**：列出预期 Wave、实际来源和题义。前后有来源而中间断开，必须回到目录和普通检索核查；不得用 `coalesce` 掩盖未解释断层。
-- **逐 Wave 可用性**：报告适用对象、非缺失人数和覆盖率，不用合并后总人次代替。
-
-候选结论使用 `NEW`、`MERGE`、`REUSE` 或 `DEFER`。只有 `NEW` 且口径已确认，才进入正式下载。
-
-### 2.4 ELSA 身份闸门
-
-- 候选、判重、mapping、下载和 QA 的身份键是 `Variable + File`。
-- 同名 Variable 跨 File 必须拆开，例如 `palevel (Core data)` 与 `palevel (Derived Variables)`。
-- Core、COVID、Wave 0、Nurse、Life History、End of Life、HCAP、Nutrition、Pension Grid 和 Harmonised ELSA 不能只按裸 Variable 拼接。
-- 出现 raw 与官方 derived 二选一、core member/partner/proxy/copied value/refreshment sample、非个人-Wave单位、同一 `idauniq` 多行、权重或负值编码歧义、特殊文件族是否纳入等问题时，必须先裁决。
-
-探索交付沿用共同双路机制，两路结果和主线程合并依据包含：`探索记录.md`、`definition_search_record.json`、候选矩阵、关键官方或文献证据、主题与命名判断、Wave 完整性和逐 Wave 可用性、方案比较及待裁决问题。未裁决前不下载 raw、不创建正式主题目录、不写正式 R。
-
-## 3. 下载与恢复
-
-主线程合并方案、解决影响下载的未决问题后直接继续；只有需要用户作研究选择时才等待用户裁决：
-
-1. 固定 `Variable (File)`、分析对象、Wave、权重和编码边界；来源别名、周期互补组和完整变量族按公共规范第 1.2 节确定，并写入 `definition_search_record.json`。
-2. 用[固定选择入口](../../rules/stages/02-download.md#固定选择与别名输入)设置已定来源和最终别名，再按本节查看预览、header、记录数和文件分组；正式 raw 和 codebook 必须直接带有最终别名。
-3. 保存本轮确有判定价值的选择列表、File/Wave 覆盖和预览证据；截图必须真实存在、非空且可解码。
-4. 页面下载生成本次 transaction。
-5. 下载完成后，使用 `<skill-root>/scripts/recover_dbcodebook_export.py --archive <本次下载包> --database elsa --out <正式主题目录> --expect-vars-file <download_selection.txt>` 保存并核对本次 zip/raw。
-6. recover 必须拆分并保留 `Variable (File)` 的 variable 与 file；核对 transaction、header、codebook 和文件列表。
-7. raw header 按 `ID, idauniq, <selected variables...>` 精确核验，不伪造 CHARLS 的 `id/year`。
-8. codebook 同时核验 `Variable (File)` 和 `newname`；不得去掉 File 后用裸 Variable 对账。
-9. `newname` 为空、重复、缺少预期变量或出现意外变量时，恢复失败。
-
-只要最终来源清单中的变量、Wave、File、来源身份或最终别名发生变化，就必须按改变后的完整清单重新从网站一次下载；不得筛选旧包或拼接补充下载。来源清单没有变化时，不因文案、展示、注释、主题编号或同一批 raw 上的实现调整重复下载。
-
-确认以上事实后，才创建正式主题目录、写唯一正式 R 并运行。
-
-## 4. 分析单位与来源一致性
-
-正式定义前确认：
-
-- `idauniq` 是否唯一；不唯一时写清附加 key 及每行代表什么。
-- 正式 db/analysis 身份列为 `ID, idauniq, Wave`；raw 保持下载原貌。
-- `Wave` 从 `ID` 提取并保留 `Wave 1`、`Wave 2`……文本；所有 ID 均须成功解析，正式范围按本轮来源核对。
-- `idauniq` 可跨 Wave 重复，这是纵向记录，不按 `idauniq` 去重。
-- 是否混入 COVID、Wave 0、2023 等特殊期。
-- household id 是否波次化，以及 core member、partner、proxy/copy、访谈 outcome、refreshment sample 的角色。
-- Nutrition detail、Pension Grid、respondent/informant 等文件是否造成一人多行。
-- 权重对应的对象、Wave、横断面或纵向用途。
-- 每个 raw 的全部负值及官方解释；不套用 CHARLS 特殊码。
-
-任一项会改变研究对象或口径时，暂停裁决。
-
-当多个 `Variable (File)` 在部分 Wave 重叠而正式路线只采用一个来源时，必须在重叠 Wave 逐项逐行比较。每项记录总行数、双方非空可比行、双方同时缺失、缺失模式 mismatch、有效值 mismatch 和来源选择理由。mismatch 大于 0 时暂停裁决，不用优先级或 `coalesce` 静默覆盖。
-
-## 5. 正式 R 与用户材料
-
-- 文案执行[第3步](../../rules/stages/03-copy.md)，代码执行[第4步](../../rules/stages/04-public-r.md)，产物生成执行[第5步](../../rules/stages/05-generate.md)；ELSA 不维护第二套语言或代码模板。
-- 正式 R 只补 ELSA 必需背景：`Variable (File)` 身份、Wave、文件族、官方负值编码和本主题实际跨 Wave 变化。
-- mapping 必须追溯到完整 `Variable (File)`；内部证据和 QA 不得丢失 File。
-- 正式分类变量默认保留规范化英文或 ASCII 标签；只有 YES/NO 二分类默认使用 `1/0`。频率、等级和状态等多分类不为排序便利擅自改成数值等级。
-- 用户可见主题色从 [database-themes.json](../../database-themes.json) 的 ELSA 配置读取，不逐主题手填。
-- detail 或组分概览的周期列显式命名为 `Wave 1`、`Wave 2`……，再交给生成器。
-- 用户材料只写研究对象、变量语义、来源或 Wave 变化及分析影响，不写 transaction、recover、检查器或内部执行史。
-
-## 6. 正式输出与机器闭环
-
-正式目录只保留标准成果：
-
-- 唯一正式 R 和唯一成功日志。
-- raw 三件套。
-- db、codebook、analysis_db、analysis_codebook 四表。
-- QA、definition HTML、detail HTML 和定义笔记。
-
-通用执行、审核、返修范围和发布状态统一见 [验收流程](../../rules/validation.md)。ELSA 的结果检查显式使用 --db elsa；不能继承 CHARLS 的默认参数。
-
-ELSA 另需保留已有证据清单和机器闭环记录：实际引用的截图、原始包恢复报告、成功日志、关键核对报告的存在与可读性；transaction、raw/analysis 行数、变量顺序、完整 File 身份、Wave 覆盖、负值和重叠来源比较。结果不明时回到对应研究口径，不强行合并。
-
-生成器适配边界见 [成果生成](../../rules/stages/05-generate.md#数据库适配边界)。最终笔记未变时是否保留读者审核，完全按共同修正规则；不因附件或 R 后台变化无条件重做两轮。
-
-机器闭环只报告真实证据，不要求另写叙述型过程卡或历史复盘。具体主题问题不自动写成公共规则。
+生成接口和边界见[第5步](../../rules/stages/05-generate.md#数据库适配边界)，既有验证证据见[验收矩阵](../../../tests/acceptance-matrix.md)。

@@ -12,9 +12,9 @@
 | [stages/](stages/01-source-plan.md) | 八个环节各自的探索/明确执行/机械操作、交接和失败返回范围；按 validation 表读取对应文件 | 其他环节的完整规则、数据库专门事实 |
 | [evidence-and-literature.md](evidence-and-literature.md) | 权威材料使用、文献支持与方法依据 | 主题裁决、下载操作 |
 | [review-roles.md](review-roles.md) | 只读角色生命周期与模型配置 | 代替各环节的具体验收标准 |
-| [CHARLS workflow](../databases/charls/workflow.md) | CHARLS 特有的网页探索、年份、来源身份、选择与下载、特殊编码及输出事实 | 重新定义跨数据库命名、文案、函数或网站发布操作 |
-| [ELSA workflow](../databases/elsa/workflow.md) | ELSA 特有的 `Variable (File)`、Wave、文件族、选择与恢复、负值和分析单位 | 复制 CHARLS 规则或另写一套共同文案和代码规范 |
-| [HRS workflow](../databases/hrs/workflow.md) | Full HRS 原始库的 Tracker、Core、Cross-Wave 文件、时期映射、选择和下载验收边界 | 把 RAND HRS/Harmonized HRS 当作正式 raw 或混用数据库身份 |
+| [CHARLS 差异说明](../databases/charls/workflow.md) | CHARLS 特有的网页探索、年份、来源身份、选择与下载、特殊编码及输出事实 | 重新定义跨数据库命名、文案、函数或网站发布操作 |
+| [ELSA 差异说明](../databases/elsa/workflow.md) | ELSA 特有的 `Variable (File)`、Wave、文件族、选择与恢复、负值和分析单位 | 复制 CHARLS 规则或另写一套共同文案和代码规范 |
+| [HRS 差异说明](../databases/hrs/workflow.md) | Full HRS 原始库的 Tracker、Core、Cross-Wave 文件、时期映射、选择和下载验收边界 | 把 RAND HRS/Harmonized HRS 当作正式 raw 或混用数据库身份 |
 | [write-boundaries.md](write-boundaries.md) | 任务权限、来源缺口和共用浏览器会话 | 下载或发布的逐步操作、变量定义、独立验收触发 |
 | [validation.md](validation.md) | 唯一环节顺序、修正后的复核范围、独立验收触发条件和状态含义 | 网站控件操作、数据库特有事实、主题公式 |
 | [execution-report.md](execution-report.md) | 主题执行过程、环节耗时、角色、模型、Bug 与异常的自动记录 | 主题定义、读者文案和网站正文 |
@@ -36,7 +36,7 @@ validation负责何时返回或复核及状态含义；review-roles负责复核�
 
 ## 数据库事实与配置
 
-`databases/<数据库>/`保存数据库专门规则；`source-materials/<数据库>/`保存问卷、指南等原始材料，统一从[材料索引](../source-materials/材料索引.md)进入。[database-routing.json](../database-routing.json)指定各库规则和材料路径，程序读取同一份路由，不另维护材料位置。
+`databases/<数据库>/`只保存数据库事实、接口差异及验证范围，不另写完整流程。现有 `profile.md` 保存稳定事实，`workflow.md` 保存各环节如何使用这些差异；保留原文件名以兼容路由，CHNS沿用一份profile。公共流程要求由 stages、validation、write-boundaries 等负责，数据库文件只引用；`source-materials/<数据库>/`保存问卷、指南等原始材料，统一从[材料索引](../source-materials/材料索引.md)进入。[database-routing.json](../database-routing.json)指定各库规则和材料路径，程序读取同一份路由，不另维护材料位置。
 
 | 材料 | 唯一职责 | 不负责 |
 | --- | --- | --- |
@@ -44,7 +44,7 @@ validation负责何时返回或复核及状态含义；review-roles负责复核�
 | [ELSA profile](../databases/elsa/profile.md) | ELSA 稳定身份、文件族、Wave、分析单位和编码边界 | 流程步骤和主题裁决 |
 | [HRS profile](../databases/hrs/profile.md) | Full HRS 原始产品身份、文件族、变量命名、分析单位和时期边界 | RAND HRS/Harmonized HRS 事实、流程步骤和主题裁决 |
 
-各库接口的使用及验收范围见[SHARE](../databases/share/workflow.md)、[KLoSA](../databases/klosa/workflow.md)、[KNHANES](../databases/knhanes/workflow.md)及[CHNS](../databases/chns/profile.md)。CHNS十期人口学已完成真实下载、完整生成、独立复算及发布；其它来源层级和主题不据此视为通过。材料存在或接口测试通过，不代表真实主题已验收。
+各库差异说明中的接口及验证范围见[SHARE](../databases/share/workflow.md)、[KLoSA](../databases/klosa/workflow.md)、[KNHANES](../databases/knhanes/workflow.md)及[CHNS](../databases/chns/profile.md)。CHNS十期人口学已完成真实下载、完整生成、独立复算及发布；其它来源层级和主题不据此视为通过。材料存在或接口测试通过，不代表真实主题已验收。
 
 ## 记录模板
 
