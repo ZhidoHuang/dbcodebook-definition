@@ -10,7 +10,14 @@ async (page, action) => {
   const fail = (status, extra = {}) => ({ok:false, status, phase,
     diagnostics:{...diagnostics, elapsed_ms:Date.now()-started}, ...extra});
   const stop = code => { const error = new Error(code); error.code = code; throw error; };
+  // Occluded headed Chrome can render at 1 fps; allow its actionability checks to settle.
+  // Network/content checks keep their separate bounds, and actions are never replayed.
   const norm = s => String(s ?? '').replace(/\s+/g, ' ').trim();
+  const family = ['hrs','klosa'].includes(action.database);
+  const identityKey = family ? 'Base_Variable' : 'Variable';
+  const requestedVariable = family ? action.base_variable : action.variable;
+  // Summary delimiters differ across pages; category names and counts must still match.
+  const summaryText = s => norm(s).replace(/\(\s*(\d+)\s*\)\s*,?\s*/g, '($1) ').trim();
   try {
     const expected = new URL(action.url), actual = new URL(page.url());
     if (actual.origin !== expected.origin || actual.pathname !== expected.pathname) return fail('WRONG_PAGE');
@@ -18,6 +25,10 @@ async (page, action) => {
     if (auth !== true) return fail(auth === false ? 'LOGIN_REQUIRED' : 'LOGIN_STATE_UNKNOWN');
     const table = page.locator('#results-table');
     if (await table.count() !== 1) return fail('READ_CONTROL_CHANGED');
+    const closeDirectory = async () => {
+      const toggle = page.locator('.side-nav.active .nav-toggle');
+      if (await toggle.count() === 1) await toggle.click({timeout:7000});
+    };
 
     // Listen before a normal UI action. Never send an API request ourselves.
     const search = async (query, click) => {
@@ -76,9 +87,23 @@ async (page, action) => {
       if (!data || data.status === 'fail' || !Array.isArray(data.data)) stop('SEARCH_REJECTED');
       const rows = data.data;
       observed.result_rows = rows.length;
+      // These pages initially hide File; the display controls appear after the first result.
+      if (family && rows.length) {
+        if (await table.locator('thead th[data-column="File"]').count() === 0) {
+          await closeDirectory();
+          phase = 'display_columns';
+          await page.locator('.filter-select-header').click({timeout:7000});
+          const fileOption = page.locator('.filter-option-checkbox[value="File"]');
+          if (!await fileOption.isChecked()) {
+            const id = await fileOption.getAttribute('id');
+            await page.locator(`label[for="${id}"]`).click({timeout:7000});
+          }
+          await page.locator('.filter-select-header').click({timeout:7000});
+        }
+      }
       phase = 'search_table';
       // Match fresh response identities AND period counts against the visible table.
-      await page.waitForFunction(rows => {
+      await page.waitForFunction(({rows,identityKey}) => {
         const clean = s => String(s ?? '').replace(/\s+/g, ' ').trim();
         const table = document.querySelector('#results-table');
         const displayed = [...table.querySelectorAll('tbody tr')];
@@ -86,14 +111,14 @@ async (page, action) => {
         if (!rows.length) return displayed.length === 0 ||
           (displayed.length === 1 && displayed[0].querySelector('td[colspan]') !== null);
         const heads = [...table.querySelectorAll('thead th')].map(x => x.getAttribute?.('data-column') || x.innerText.trim().split(/\s/)[0]);
-        const vi = heads.indexOf('Variable'), fi = heads.indexOf('File');
+        const vi = heads.indexOf(identityKey), fi = heads.indexOf('File');
         if (vi < 0 || fi < 0) return false;
         return displayed.length === rows.length && rows.every((r, i) => {
           const cells = displayed[i].querySelectorAll('td');
-          return clean(cells[vi]?.innerText) === clean(r.Variable) && clean(cells[fi]?.innerText) === clean(r.File) &&
-            heads.every((h, j) => !/^\d{4}$|^Wave \d+$|^Corona Survey \d+$|^Cross-wave$/.test(h) || clean(cells[j]?.innerText) === clean(r[h]));
+          return clean(cells[vi]?.innerText) === clean(r[identityKey]) && clean(cells[fi]?.innerText) === clean(r.File) &&
+            heads.every((h, j) => !Object.hasOwn(r,h+'_summary') || clean(cells[j]?.innerText) === clean(r[h]));
         });
-      }, rows, {timeout:8000});
+      }, {rows,identityKey}, {timeout:8000});
       return {total_results:data.total_results, total_pages:data.total_pages,
         page:response.request().postDataJSON().page, rows};
       } finally {
@@ -104,12 +129,13 @@ async (page, action) => {
     };
     const submit = async query => {
       phase = 'search_fill';
-      await page.locator('#search').fill(query, {timeout:3000});
-      return search(query, () => page.getByRole('button', {name:'\uf002', exact:true}).click({timeout:3000}));
+      await page.locator('#search').fill(query, {timeout:7000});
+      return search(query, () => page.getByRole('button', {name:'\uf002', exact:true}).click({timeout:7000}));
     };
     const summarize = result => ({...result, rows:result.rows.map(r => ({
-      variable:r.Variable, file:r.File, label:r.Label,
-      periods:Object.fromEntries(Object.entries(r).filter(([k]) => /^\d{4}$|^Wave \d+$|^Corona Survey \d+$|^Cross-wave$/.test(k)))
+      variable:r.Variable, base_variable:r.Base_Variable, file:r.File,
+      label:r.Label ?? r['Label中文'], source_row:r,
+      periods:Object.fromEntries(Object.keys(r).filter(k=>k.endsWith('_summary')).map(k=>[k.slice(0,-8),r[k.slice(0,-8)]]))
     }))});
 
     if (action.kind === 'directory') {
@@ -121,6 +147,8 @@ async (page, action) => {
       const path = action.path || [];
       for (let i = 0; i < path.length; i++) {
         phase = 'directory';
+        const toggle = page.locator('.side-nav:not(.active) .nav-toggle');
+        if (await toggle.count() === 1) await toggle.click({timeout:7000});
         const titles = container.locator(':scope > .nav-item > .nav-item-title');
         const names = await titles.evaluateAll(es => es.map(e => e.querySelector('span')?.textContent?.trim()));
         const matches = names.flatMap((name, index) => name === path[i] ? [index] : []);
@@ -131,10 +159,10 @@ async (page, action) => {
         const parent = state.split(/\s+/).includes('parent-item');
         const expanded = state.split(/\s+/).includes('expanded');
         if ((parent && !expanded) || !parent) {
-          if (i === 0 && parent) await title.click({timeout:3000});
+          if (i === 0 && parent) await title.click({timeout:7000});
           else {
             const query = path.slice(0,i+1).map((x,j) => `section${j+1}[${x}]`).join(' AND ');
-            result = await search(query, () => title.click({timeout:3000}));
+            result = await search(query, () => title.click({timeout:7000}));
           }
         } else if (i === path.length - 1 && i > 0) {
           result = await submit(path.map((x,j) => `section${j+1}[${x}]`).join(' AND '));
@@ -148,31 +176,51 @@ async (page, action) => {
     if (action.kind === 'search') return {ok:true, status:'SEARCH_READ', query:action.query.trim(), ...summarize(await submit(action.query.trim()))};
 
     // One variable per action bounds execution time and preserves each completed receipt.
-    const query = `Variable[${action.variable}] AND File[${action.file}]`;
+    const query = `${identityKey}[${requestedVariable}] AND File[${action.file}]`;
     const result = await submit(query);
-    const matches = result.rows.map((r,i) => ({r,i})).filter(x => x.r.Variable === action.variable && x.r.File === action.file);
+    const matches = result.rows.map((r,i) => ({r,i})).filter(x => x.r[identityKey] === requestedVariable && x.r.File === action.file);
     if (matches.length !== 1) return fail('SOURCE_AMBIGUOUS_OR_NOT_ON_PAGE', {query, ...summarize(result)});
     phase = 'detail';
     const {r, i} = matches[0];
-    const heads = await table.locator('thead th').evaluateAll(es => es.map(x => x.getAttribute?.('data-column') || x.innerText.trim().split(/\s/)[0]));
+    const readHeads = () => table.locator('thead th').evaluateAll(es => es.map(x => x.getAttribute?.('data-column') || x.innerText.trim().split(/\s/)[0]));
+    let heads = await readHeads();
     const details = [];
     for (const period of action.periods) {
       phase = 'detail';
-      diagnostics.detail = {variable:action.variable, file:action.file, period,
-        completed_periods:details.map(d => d.period), click_timeout_ms:3000, card_timeout_ms:3000};
+      diagnostics.detail = {variable:requestedVariable, file:action.file, period,
+        completed_periods:details.map(d => d.period), click_timeout_ms:7000, card_timeout_ms:3000};
+      if (!heads.includes(period) && Object.hasOwn(r,period+'_summary')) {
+        const expand = page.locator('#year-window-expand');
+        if (await expand.count() === 1 && await expand.getAttribute('aria-pressed') === 'false') {
+          await expand.click({timeout:7000});
+          heads = await readHeads();
+        }
+      }
       const col = heads.indexOf(period);
       if (col < 0) return fail('PERIOD_COLUMN_MISSING', {period, details});
       if (r[period] == null || r[period] === '' || r[period] === 0 || r[period] === '0') {
         details.push({period, status:'NO_RECORDS', count:r[period] ?? null}); continue;
       }
-      const identity = `${action.variable} (${action.file})`;
-      if (action.database === 'share') {
-        // SHARE displays a transient tooltip rather than CHARLS' persistent detail cards.
-        // Compare all published categories, including refusal/DK; do not infer a count denominator.
-        await page.locator('#search').click({timeout:3000});
-        await table.locator('tbody tr').nth(i).locator('td').nth(col).click({timeout:3000});
-        const target = {variable:action.variable, label:r[`${period}_label`] ?? r.Label,
-          summary:r[`${period}_summary`]};
+      const variable = family ? r[`${period}_variable`] : requestedVariable;
+      if (!variable) return fail('PERIOD_VARIABLE_MISSING', {period, details, source_row:r});
+      const identity = `${variable} (${action.file})`;
+      if (action.database !== 'charls') {
+        // Hover opens the shared tooltip; clicking HRS/KLoSA cells closes it.
+        await closeDirectory();
+        await page.locator('#search').click({timeout:7000});
+        await page.waitForFunction(() => ![...document.querySelectorAll('.tooltip-content')].some(e=>e.getClientRects().length), null, {timeout:3000});
+        phase = 'detail_hover';
+        let hoverError = null;
+        try {
+          await table.locator('tbody tr').nth(i).locator('td').nth(col).hover({timeout:7000});
+        } catch (error) {
+          if (error.name !== 'TimeoutError') throw error;
+          // A tooltip can cover its cell before Playwright reports completion.
+          // Inspect that same tooltip below; never replay the hover or accept stale content.
+          hoverError = String(error);
+        }
+        const target = {variable, label:r[`${period}_label`] ?? '',
+          summary:r[`${period}_summary`] ?? '', description:r[`${period}_description`] ?? ''};
         phase = 'detail_card';
         await page.waitForFunction(target => {
           const clean = s => String(s ?? '').replace(/\s+/g,' ').trim();
@@ -182,7 +230,9 @@ async (page, action) => {
         }, target, {timeout:3000});
         const cards = await page.locator('.tooltip-content:visible').evaluateAll(es=>es.map(e=>({
           variable:e.querySelector('.tooltip-title')?.textContent?.trim(),
-          label:e.querySelector('.tooltip-item.label')?.textContent?.trim(),
+          label:e.querySelector('.tooltip-item.label')?.textContent?.trim() ?? '',
+          description:e.querySelector('.tooltip-item.description')?.textContent?.trim() ?? '',
+          summary_text:e.querySelector('.tooltip-item.code')?.textContent?.trim() ?? '',
           text:e.innerText,
           distribution:[...e.querySelectorAll('.code-table tr')].map(row=>({
             label:row.querySelector('.code-cell')?.textContent?.trim(),
@@ -190,13 +240,19 @@ async (page, action) => {
           }))
         })));
         const card = cards[0];
-        if (cards.length === 1 && !card.distribution.length)
-          return fail('DETAIL_LAYOUT_UNSUPPORTED', {period, details, source_row:r, cards});
-        if (cards.length !== 1 ||
-            norm(card.distribution.map(x=>`${x.label} ( ${x.count} )`).join(', ')) !== norm(target.summary))
+        const displayedSummary = card?.distribution.length ?
+          card.distribution.map(x=>`${x.label} ( ${x.count} )`).join(', ') : card?.summary_text;
+        if (cards.length !== 1 || summaryText(displayedSummary) !== summaryText(target.summary) ||
+            norm(card.description) !== norm(target.description))
           return fail('DETAIL_CONTENT_MISMATCH', {period, details, source_row:r, cards});
+        const summaryKind = /^Range:/i.test(target.summary.trim()) ? 'range' :
+          /^Top10:/i.test(target.summary.trim()) ? 'top10' : card.distribution.length ? 'categories' : target.summary ? 'text' : 'not_available';
+        if (summaryKind === 'top10' && card.distribution.length)
+          card.distribution[0].label = card.distribution[0].label.replace(/^Top10:\s*/i,'');
         details.push({...card, identity, period, status:'DETAIL_READ', count:r[period],
-          summary:target.summary, source:r[`${period}_text`] ?? '', source_row:r});
+          base_variable:r.Base_Variable, summary_kind:summaryKind,
+          summary:target.summary, source:r[`${period}_text`] ?? target.description, source_row:r,
+          ...(hoverError ? {hover_timeout: true, hover_error:hoverError} : {})});
         continue;
       }
       const boxes = page.locator('#display-content .content-box');
@@ -212,8 +268,9 @@ async (page, action) => {
       }, {identity, period});
       let cards = await read();
       if (!cards.length) {
+        await closeDirectory();
         phase = 'detail_click';
-        await table.locator('tbody tr').nth(i).locator('td').nth(col).click({timeout:3000});
+        await table.locator('tbody tr').nth(i).locator('td').nth(col).click({timeout:7000});
         phase = 'detail_card';
         // Detail cards are produced synchronously by the cell handler; wait on their identity.
         await page.waitForFunction(target => [...document.querySelectorAll('#display-content .content-box')].some(e =>
@@ -226,7 +283,7 @@ async (page, action) => {
         return fail('DETAIL_CONTENT_MISMATCH', {period, details});
       details.push({...cards[0], status:'DETAIL_READ', count:r[period]});
     }
-    return {ok:true, status:'SOURCE_READ', variable:action.variable, file:action.file, details};
+    return {ok:true, status:'SOURCE_READ', variable:action.variable, base_variable:action.base_variable, file:action.file, details};
   } catch (error) {
     const code = error.code || `${phase.toUpperCase()}_${error.name === 'TimeoutError' ? 'TIMEOUT' : 'FAILED'}`;
     const messages = {
@@ -240,6 +297,7 @@ async (page, action) => {
       SEARCH_TABLE_TIMEOUT:'已收到搜索结果，但页面表格未在时限内通过对应核对。',
       SEARCH_CLICK_TIMEOUT:'搜索点击未在时限内完成，具体控件状态见原始错误。',
       DETAIL_CLICK_TIMEOUT:'详情单元格点击未在时限内完成，变量和年份见 detail。',
+      DETAIL_HOVER_TIMEOUT:'详情单元格悬停未在时限内完成，检查是否被目录或其他控件遮挡。',
       DETAIL_CARD_TIMEOUT:'点击后未在时限内找到对应变量和年份的详情。'
     };
     return fail('READ_INCOMPLETE', {error_code:code,

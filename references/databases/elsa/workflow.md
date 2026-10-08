@@ -5,6 +5,7 @@
 
 ## 来源探索
 
+- 目录、搜索和详情使用[固定来源读取入口](../../rules/stages/01-source-plan.md#网页取证固定入口)，传 `--database elsa`。
 - 页面由配置中的 `website.database_paths.elsa` 确定。读取页面 Label，记录完整 `Variable (File)`、Wave、文件族及对象。
 - 同名来源跨 File 分开识别，例如 `palevel (Core data)` 与 `palevel (Derived Variables)`。
 - Core、COVID、Wave 0、Nurse、Life History、End of Life、HCAP、Nutrition、Pension Grid 和 Harmonised ELSA 的边界见 profile。

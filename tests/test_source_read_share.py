@@ -25,7 +25,7 @@ async function scenario(stale=false, noDistribution=false) {
   const header=heads.map(innerText=>({innerText,getAttribute:()=>innerText}));
   let visible=false, query='', resolve;
   const card={innerText:'complete tooltip', getClientRects:()=>visible?[{}]:[],
-    querySelector:s=>({textContent:s==='.tooltip-title'?'euro1':'Depression'}),
+    querySelector:s=>s==='.tooltip-title'?{textContent:'euro1'}:s==='.tooltip-item.label'?{textContent:'Depression'}:null,
     querySelectorAll:()=>noDistribution?[]:dist.map(([label,count])=>({querySelector:s=>({textContent:s==='.code-cell'?label:String(count)})}))};
   const tableDOM={querySelectorAll:s=>s==='thead th'?header:[{querySelectorAll:()=>cells}]};
   global.document={querySelector:()=>tableDOM,querySelectorAll:()=>[card]};
@@ -38,8 +38,8 @@ async function scenario(stale=false, noDistribution=false) {
     getByRole:()=>({click:async()=>{calls.push('search');listeners.get('request')(request);resolve(response)}}),
     locator:s=>s==='#search'?{fill:async x=>query=x,click:async()=>{visible=false}}:
       s==='#results-table'?{count:async()=>1,locator:s=>s==='thead th'?{evaluateAll:async fn=>fn(header)}:
-        {nth:()=>({locator:()=>({nth:()=>({click:async()=>{calls.push('detail');visible=true}})})})}}:
-      {evaluateAll:async fn=>fn([card])}};
+        {nth:()=>({locator:()=>({nth:()=>({hover:async()=>{calls.push('detail');visible=true}})})})}}:
+      {count:async()=>0,evaluateAll:async fn=>fn([card])}};
   const result=await run(page);
   assert.equal(listeners.size,0);
   assert.deepEqual(calls,['search','detail']);
@@ -52,7 +52,7 @@ async function scenario(stale=false, noDistribution=false) {
   assert.equal(good.details[0].distribution.reduce((n,x)=>n+Number(x.count),0),8);
   assert.equal(good.details[0].source_row['Wave 1_summary'],good.details[0].summary);
   assert.equal((await scenario(true)).status,'DETAIL_CONTENT_MISMATCH');
-  assert.equal((await scenario(false,true)).status,'DETAIL_LAYOUT_UNSUPPORTED');
+  assert.equal((await scenario(false,true)).status,'DETAIL_CONTENT_MISMATCH');
   // First read is genuinely in flight while the second reaches the same page.
   let release, authCalls=0;
   const page={url:()=>url,evaluate:()=>{authCalls++;return new Promise(r=>release=r)}};

@@ -7,8 +7,15 @@ import uuid
 
 
 def browser_code(action, url, database):
-    if database not in {"charls", "share"}:
-        raise ValueError("source-read supports CHARLS and SHARE; other databases are not verified")
+    if database not in {"charls", "share", "elsa", "hrs", "klosa", "chns", "knhanes"}:
+        raise ValueError("Unsupported source-read database")
+    if database == "klosa":
+        from klosa_adapter_contract import require_context, page_url
+        from urllib.parse import urlsplit
+        require_context(action, action.get("language"))
+        origin = urlsplit(url)
+        if url != page_url(f"{origin.scheme}://{origin.netloc}", action["language"]):
+            raise ValueError("KLoSA URL and language differ")
     kind = action.get("kind")
     if kind not in {"directory", "search", "detail"}:
         raise ValueError("kind must be directory, search or detail")
@@ -20,7 +27,11 @@ def browser_code(action, url, database):
         if not isinstance(action.get("query"), str) or len(action["query"].strip()) < 2:
             raise ValueError("query must contain at least two characters")
     else:
-        for key in ("variable", "file"):
+        identity_key = "base_variable" if database in {"hrs", "klosa"} else "variable"
+        other_key = "variable" if identity_key == "base_variable" else "base_variable"
+        if other_key in action:
+            raise ValueError(f"{database} detail uses {identity_key} from the search result")
+        for key in (identity_key, "file"):
             if not isinstance(action.get(key), str) or not action[key].strip() or any(c in action[key] for c in "[]"):
                 raise ValueError(f"detail requires an unambiguous {key}")
         periods = action.get("periods")
@@ -127,7 +138,8 @@ def run_read(session, action, url, database, out, resume=None):
             return state
     state.update(ok=True, status={"detail":"SOURCE_READ", "directory":"DIRECTORY_READ", "search":"SEARCH_READ"}[action["kind"]])
     if action["kind"] == "detail":
-        state.update(variable=action["variable"], file=action["file"], details=[])
+        identity_key = "base_variable" if database in {"hrs", "klosa"} else "variable"
+        state.update({identity_key:action[identity_key], "file":action["file"], "details":[]})
         for item in state["completed"]:
             state["details"].extend(json.loads(Path(item["receipt"]).read_text(encoding="utf-8"))["details"])
     else:

@@ -5,6 +5,7 @@
 
 ## 来源探索
 
+- 目录、搜索和详情使用[固定来源读取入口](../../rules/stages/01-source-plan.md#网页取证固定入口)，传 `--database hrs`；详情动作使用 `base_variable`，结果保留各时期实际变量名。
 - 正式入口为 `/home/hrs/`，页面数据库类型为 `RAW_HRS`；RAND HRS、Harmonized HRS 不是这一路线。
 - 记录 `Base_Variable`、`File`、Label、各时期实际变量名及对象层级。
 - 稳定信息通常来自 Tracker，时变回答来自 Core，地区与城乡来自 Cross-Wave Geographic；仍按主题需要核实，不把这些例子当固定清单。

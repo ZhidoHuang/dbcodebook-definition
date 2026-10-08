@@ -92,10 +92,10 @@
 
 每路保留自己的输出，交付建议范围与候选取舍、具体来源及时期/对象/用途、结果含义与构造方法及依据、未决问题及影响。代理完成探索不等于其建议已获采纳。
 
-### CHARLS网页取证固定入口
+### 网页取证固定入口
 
 - 浏览器及标签先按[会话规则](../write-boundaries.md#浏览器会话)绑定。
-- CHARLS、SHARE 的目录、普通搜索和单来源逐期详情使用 `source-read`，不在主题中另编目录定位、等待刷新或详情解析脚本。数据库支持范围见本节末尾。
+- CHARLS、ELSA、HRS、SHARE、KLoSA、CHNS、KNHANES 的目录、普通搜索和单来源逐期详情使用同一 `source-read` 入口。不在主题中另编目录定位、等待刷新或详情解析脚本。
 - 研究者决定查什么，固定入口负责读对页面并保存原文。
 
 在本分支保存一个动作JSON，按需要选择一种：
@@ -106,6 +106,14 @@
 
 - 空路径列出顶层目录；之后将返回的目录名称按层级填入`path`，例如`["Core data","Health status & functioning"]`。
 - 普通搜索用`{"kind":"search","query":"dressing"}`；详情用`{"kind":"detail","variable":"db010","file":"health status and functioning","periods":["2011","2013"]}`，身份和时期取自本次页面结果，不照抄示例。
+
+| 页面来源形式 | 详情动作怎样填写 |
+| --- | --- |
+| CHARLS、ELSA、SHARE、CHNS、KNHANES 的 `Variable` 行 | 使用 `variable`、`file`、`periods` |
+| HRS、KLoSA 的 `Base_Variable` 行 | 使用 `base_variable`、`file`、`periods`；返回结果同时保留变量族和每期实际变量名，不自行推算波次前缀 |
+| KLoSA 英文或韩文入口 | 所有动作另带 `database="klosa"`、`language="en"` 或 `"ko"`；命令同时传相同的 `--language` |
+
+时期使用页面原名，包括年份、Wave、跨年区间或 `Default` 等；`Default` 是静态资料列，不是调查年份。
 
 ```powershell
 & $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --config $Config --mode source-read --database $Database --action $Action --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $Receipt
@@ -122,8 +130,9 @@
 - “未观察到请求”不等于已经证明网站没有发出请求。
 - 原因处理后，使用同一动作、会话、标签和程序版本，追加 `--resume $PreviousReceipt`，并将 `--out` 改为新路径。程序复用已完成结果，只继续未完成时期；不重新读取已完成部分。
 - 原调用是否结束不明时，续办先观察原调用。仍在执行或无法确认状态时停止，不重放；原调用已结束但失败时先保存失败结果，再按原因处理后续办。
-- CHARLS 沿用详情卡核对。SHARE 已接入普通页面的目录、搜索和分类分布浮窗：按完整来源、时期及本次响应核对，不要求浮窗所有选项人数之和等于表格记录数。未支持的详情布局返回失败，不猜测解析。
-- ELSA/HRS 及其他库仍按各库规则使用绑定标签入口，不据此声称已经适配。
+- 程序负责收起遮挡详情的目录、显示 HRS/KLoSA 的文件列，以及展开带年份展开控件的隐藏时期列。CHARLS 核对详情卡；其他库通过悬停读取浮窗，不点击单元格添加选择标签。
+- 详情保留原始统计文本；浮窗结果另标明分类频数、`Top10`、`Range` 或其他文本。`Top10` 不是完整分布；`Range` 不提供各选项人数。不得补算页面未提供的统计，也不要求浮窗各选项人数之和等于表格记录数。
+- 新页面布局、缺少实际变量名或内容不匹配时返回具体失败，不猜测解析。各库真实读取及未验证范围见[验收矩阵](../../../tests/acceptance-matrix.md)；网页读取通过不代表下载、定义或发布通过。
 
 ### 主线程怎样合并
 

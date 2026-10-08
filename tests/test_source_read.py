@@ -22,7 +22,7 @@ def main():
         else:
             raise AssertionError(invalid)
     try:
-        browser_code(action, url, 'elsa')
+        browser_code(action, url, 'unknown')
     except ValueError:
         pass
     else:
@@ -55,7 +55,7 @@ async function scenario(o={}, runner=run) {
  const cell={click:async()=>{calls.push('detail');if(o.clickUnstable)throw timeout('element is not stable');cardVisible=!o.missingCard;}};
  const table={count:async()=>1,locator:s=>s==='thead th'?{evaluateAll:async fn=>fn(heads.map(innerText=>({innerText})))}:
    {nth:()=>({locator:()=>({nth:()=>cell})})}};
- const boxes={evaluateAll:async(fn,arg)=>fn(cardVisible?[card]:[],arg)};
+ const boxes={count:async()=>0,evaluateAll:async(fn,arg)=>fn(cardVisible?[card]:[],arg)};
  const handlers=new Map();
  const page={on:(event,fn)=>handlers.set(event,fn),off:(event,fn)=>{assert.equal(handlers.get(event),fn);handlers.delete(event)},
    url:()=>o.wrongPage?'http://localhost:8000/home/elsa/':SITE_URL,
