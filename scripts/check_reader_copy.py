@@ -11,7 +11,7 @@ import re
 from questionnaire_groups import period_keys, original_options, question_matches, question_identifiers, unverified_question_periods
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
-    rendered_when_matches, jump_descriptions)
+    rendered_when_matches, jump_descriptions, is_plain_paraphrase, validate_paraphrase_display)
 
 
 NO_INSIGHT = "本主题没有需要单独提示的主题级边界"
@@ -525,6 +525,9 @@ def questionnaire_copy_errors(copy, record):
         question_id = str(item.get("question_id", ""))
         try:
             if not requires_questionnaire_display(item):
+                continue
+            if is_plain_paraphrase(item):
+                validate_paraphrase_display(item, list(copy.get("questionnaire", {}).values()), normalized_evidence_text, displayed_evidence)
                 continue
             display_text, display_instructions = display_question(item, record)
             expected_options, expected_jumps = display_answers(item, record)

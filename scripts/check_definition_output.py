@@ -297,6 +297,80 @@ def read_xlsx_rows(path: Path) -> list[list[object]]:
     return rows
 
 
+def check_long_table(rows, header, results, db=""):
+    keys = {
+        "charls": ["id", "year"], "elsa": ["idauniq", "Wave"],
+        "hrs": ["HHID", "PN", "year"], "share": ["mergeid", "Wave_id"],
+        "klosa": ["Harmonized_id", "Wave_id"], "chns": ["IDind", "WAVE"],
+        "knhanes": ["id", "year"],
+    }[(db or "charls").lower()]
+    if any(key not in header for key in keys):
+        fail(results, "analysis person-period rows", {"required_keys": keys, "actual": header})
+        return False
+    indexes = [header.index(key) for key in keys]
+    seen = set()
+    for number, row in enumerate(rows[1:], 2):
+        if any(index >= len(row) or not is_nonmissing(row[index]) for index in indexes):
+            fail(results, "analysis person-period rows", {"row": number, "reason": "missing person or period"})
+            return False
+        key = tuple(str(row[index]) for index in indexes)
+        # Numeric-equivalent period spellings do not create additional periods.
+        period = re.sub(r"^Wave\s+", "", key[-1])
+        period = re.sub(r"\.0+$", "", period)
+        key = (*key[:-1], period)
+        if key in seen:
+            fail(results, "analysis person-period rows", {"row": number, "reason": "duplicate person-period", "key": key})
+            return False
+        seen.add(key)
+    ok(results, "analysis person-period rows", {"keys": keys, "rows": len(rows) - 1})
+    return True
+
+
+def check_workbook_contract(formal, expected_files, analysis_db, analysis_codebook, raw_vars, analysis_vars, results):
+    """Compare actual cells, not file existence or declared argument lists."""
+    full = [n for n in expected_files if n.startswith("db_") and n.endswith(".xlsx")]
+    dictionaries = [n for n in expected_files if n.startswith("codebook_") and n.endswith(".xlsx")]
+    if len(full) != 1 or len(dictionaries) != 1:
+        fail(results, "four workbook contents", "expected one full table and one full dictionary")
+        return
+    files = [full[0], dictionaries[0], analysis_db, analysis_codebook]
+    if any(not name or not (formal / name).is_file() for name in files):
+        fail(results, "four workbook contents", "missing workbook")
+        return
+    full_rows, dictionary, analysis_rows, analysis_dictionary = [read_xlsx_rows(formal / n) for n in files]
+    if not all((full_rows, dictionary, analysis_rows, analysis_dictionary)):
+        fail(results, "four workbook contents", "empty workbook")
+        return
+    full_header, analysis_header = full_rows[0], analysis_rows[0]
+    identities = [name for name in analysis_header if name not in analysis_vars]
+    expected = set(identities) | set(raw_vars) | set(analysis_vars)
+    if len(full_header) != len(set(full_header)) or set(full_header) != expected:
+        fail(results, "four workbook contents", {"expected_full_columns": sorted(expected), "actual": full_header})
+        return
+    if analysis_header != identities + analysis_vars:
+        fail(results, "four workbook contents", "analysis table must contain identities followed by final results")
+        return
+    if len(full_rows) != len(analysis_rows):
+        fail(results, "four workbook contents", "full and analysis tables have different row counts")
+        return
+    indexes = [full_header.index(name) for name in analysis_header]
+    if [[row[i] if i < len(row) else None for i in indexes] for row in full_rows[1:]] != analysis_rows[1:]:
+        fail(results, "four workbook contents", "shared identities/results or row order differ")
+        return
+    for name, rows, expected_variables in ((dictionaries[0], dictionary, full_header),
+                                           (analysis_codebook, analysis_dictionary, analysis_vars)):
+        if "Variable" not in rows[0]:
+            fail(results, "four workbook contents", name + " lacks Variable")
+            return
+        index = rows[0].index("Variable")
+        variables = [row[index] if index < len(row) else None for row in rows[1:]]
+        if variables != expected_variables:
+            fail(results, "four workbook contents", {"dictionary": name, "expected": expected_variables, "actual": variables})
+            return
+    ok(results, "four workbook contents", {"rows": len(analysis_rows) - 1, "source_columns": raw_vars,
+                                           "result_columns": analysis_vars})
+
+
 def check_identity_values(
     raw_path: Path,
     raw_header: list[str],
@@ -305,6 +379,8 @@ def check_identity_values(
     results: list[dict],
     db: str = "",
 ) -> None:
+    if not check_long_table(analysis_rows, analysis_header, results, db):
+        return
     identity_candidates = [
         "ID",
         "id",
@@ -1529,6 +1605,10 @@ def main() -> int:
             fail(results, "analysis_codebook vars", {"expected": expected_vars, "actual": variables})
         else:
             ok(results, "analysis_codebook vars", variables)
+
+    if args.complete:
+        check_workbook_contract(formal_dir, expected_files, args.analysis_db, args.analysis_codebook,
+                                raw_vars, split_csv(args.analysis_vars), results)
 
     if args.check_summary_facts:
         r_names = [name for name in expected_files if name.lower().endswith('.r')]

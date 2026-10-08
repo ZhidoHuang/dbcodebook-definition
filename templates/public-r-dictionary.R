@@ -27,8 +27,27 @@ codebook <- lapply(seq_len(nrow(map)), function(i) {
 })
 analysis_codebook <- bind_rows(codebook)
 
+# 以下为 CHARLS 身份列示例；按实际数据库替换身份、来源及其标签。
+identity_vars <- c("ID", "id", "year")
+identity_labels <- c(ID = "个人时期记录标识", id = "个人标识", year = "调查年")
+raw_vars <- c("source_a", "source_b")
+source_labels <- c(source_a = "来源 A", source_b = "来源 B")
+db_data <- data[c(identity_vars, raw_vars, analysis_vars)]
+analysis_data <- data[c(identity_vars, analysis_vars)]
+
+identity_codebook <- data.frame(
+  Variable = identity_vars, original_vars = identity_vars, processed_vars = identity_vars,
+  Label = unname(identity_labels[identity_vars]), count = 1L
+)
+source_codebook <- data.frame(
+  Variable = raw_vars, original_vars = name_z$Variable[match(raw_vars, name_z$newname)],
+  processed_vars = raw_vars, Label = unname(source_labels[raw_vars]), count = 1L
+)
+codebook <- bind_rows(identity_codebook, source_codebook, analysis_codebook)
+codebook <- codebook[match(names(db_data), codebook$Variable), ]
+# 完整字典是表格；各列对应 db_data。分析字典仅含最终结果。
+# 按本主题替换文件名，并按第5步设置实际业务分组。
 # ----------- 5 正式输出 -----------
-# db_data、codebook、analysis_data 在前面的正式定义中建立；文件前缀按本主题替换。
 openxlsx::write.xlsx(db_data, "db_topic.xlsx", overwrite = TRUE)
 openxlsx::write.xlsx(codebook, "codebook_topic.xlsx", overwrite = TRUE)
 openxlsx::write.xlsx(analysis_data, "analysis_db_topic.xlsx", overwrite = TRUE)

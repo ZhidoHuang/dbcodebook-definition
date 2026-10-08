@@ -12,7 +12,7 @@ import zipfile
 from itertools import zip_longest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from questionnaire_display import requires_questionnaire_display
+from questionnaire_display import requires_questionnaire_display, is_plain_paraphrase, validate_paraphrase
 
 
 READY_STATUS = "READY"
@@ -316,10 +316,13 @@ def validate_questionnaire_evidence(
         if unknown_periods:
             fail(f"{field} references unknown periods: {unknown_periods}")
 
-        nonempty_text(item.get("question_id"), f"{field}.question_id")
-        nonempty_text(item.get("question_text"), f"{field}.question_text")
-        if item.get("question_text_complete") is not True:
-            fail(f"{field}.question_text_complete must be true")
+        if is_plain_paraphrase(item):
+            validate_paraphrase(item)
+        else:
+            nonempty_text(item.get("question_id"), f"{field}.question_id")
+            nonempty_text(item.get("question_text"), f"{field}.question_text")
+            if item.get("question_text_complete") is not True:
+                fail(f"{field}.question_text_complete must be true")
         response_type = item.get("response_type")
         if response_type not in QUESTION_RESPONSE_TYPES:
             fail(

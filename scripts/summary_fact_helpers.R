@@ -36,7 +36,7 @@ summary_object_text <- function(period_stats,
                                 threshold = 0.85,
                                 split_gap = 0.20,
                                 prefix = "Wave") {
-  if (nrow(period_stats) == 0) stop("摘要变量没有任何非缺失覆盖周期。")
+  if (nrow(period_stats) == 0) return("无有效值")
   rates <- period_stats$rate
   if (all(rates >= threshold)) return("全样本")
 
@@ -162,7 +162,7 @@ build_summary_facts <- function(analysis_db,
     covered <- stats[stats$nonmissing > 0 & !is.na(stats$rate), , drop = FALSE]
     object <- summary_object_text(covered, threshold, split_gap, period_prefix)
 
-    if (all(covered$rate >= threshold) && !identical(object, "全样本")) {
+    if (nrow(covered) > 0 && all(covered$rate >= threshold) && !identical(object, "全样本")) {
       stop(variable, "：所有覆盖周期均达到阈值，但对象不是全样本。")
     }
     if (any(covered$rate < threshold) && identical(object, "全样本")) {
@@ -194,15 +194,15 @@ build_summary_facts <- function(analysis_db,
       Variable = variable,
       meaning = unname(meanings[i]),
       raw_count = length(unique(raw_sources)),
-      period = summary_period_text(
+      period = if (nrow(covered) == 0) "无有效值时期" else summary_period_text(
         covered$period,
         period_prefix,
         expected_periods
       ),
       object = object,
       coverage_period_count = nrow(covered),
-      min_coverage = min(covered$rate),
-      max_coverage = max(covered$rate),
+      min_coverage = if (nrow(covered)) min(covered$rate) else 0,
+      max_coverage = if (nrow(covered)) max(covered$rate) else 0,
       stringsAsFactors = FALSE
     )
   })

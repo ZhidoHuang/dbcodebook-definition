@@ -2,9 +2,12 @@
 
 ## 本步输入与完成条件
 
-输入为已授权同步的当前正式笔记、analysis_db、analysis_codebook及有效发布许可。只同步时不重跑定义流程；权限见[写入边界](../write-boundaries.md#网站发布权限)，浏览器准备见[共用会话](../write-boundaries.md#浏览器会话)。
+- 输入为已授权同步的当前正式笔记、analysis_db、analysis_codebook及有效发布许可。
+- 只同步时不重跑定义流程；权限见[写入边界](../write-boundaries.md#网站发布权限)，浏览器准备见[共用会话](../write-boundaries.md#浏览器会话)。
 
-沿用当前Chrome/Edge及目标标签。先检查文章身份、正文和附件，提交一次后以返回地址确认结果，随即停止浏览器工作，不再次审页或重开编辑器。输出为原始同步结果和执行报告，完成后待用户检查。
+- 沿用当前Chrome/Edge及目标标签。
+- 先检查文章身份、正文和附件，提交一次后以返回地址确认结果，随即停止浏览器工作，不再次审页或重开编辑器。
+- 输出为原始同步结果和执行报告，完成后待用户检查。
 
 ## Website-Only Commands
 
@@ -16,7 +19,8 @@
 & $Python scripts/execution_report.py website-prepare --process-dir $Process --database $Database --topic-id $Topic --topic-name $TopicName
 ```
 
-在准备阶段运行网站准备入口，完成登录核对、文章身份确认、打开编辑页和等待内容加载。把以下 JSON 保存为过程目录中的 `$WebsitePrepareAction`，地址和身份来自本任务记录：
+- 在准备阶段运行网站准备入口，完成登录核对、文章身份确认、打开编辑页和等待内容加载。
+- 把以下 JSON 保存为过程目录中的 `$WebsitePrepareAction`，地址和身份来自本任务记录：
 
 ```json
 {"base_url":"http://localhost:8000","post_id":"local-395","identity_title_parts":["CHNS","人口学"],"open_login":true}
@@ -26,11 +30,18 @@
 & $Python -X utf8 scripts/playwright_session_action.py --config $Config --mode website-prepare --action $WebsitePrepareAction --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $WebsitePrepareResult
 ```
 
-既有文章从实际“编辑”按钮取得编辑编号；返回 `WEBSITE_EDITOR_READY` 后，把返回的 `edit_id` 传给后面两次 verify-ready 的 `--edit-id`。已在本任务编辑页时，准备 JSON 也传入此前核实的 `edit_id`，不重新加载。新建时 JSON 使用 `{"base_url":"http://localhost:8000","create":true,"open_login":true}`，不传文章编号；固定入口打开 `/nodes/edit/` 并确认空白表单，不创建占位文章。
+- 既有文章从实际“编辑”按钮取得编辑编号；返回 `WEBSITE_EDITOR_READY` 后，把返回的 `edit_id` 传给后面两次 verify-ready 的 `--edit-id`。
+- 已在本任务编辑页时，准备 JSON 也传入此前核实的 `edit_id`，不重新加载。
+- 新建时 JSON 使用 `{"base_url":"http://localhost:8000","create":true,"open_login":true}`，不传文章编号；固定入口打开 `/nodes/edit/` 并确认空白表单，不创建占位文章。
 
-`LOGIN_REQUIRED` 表示需要用户完成登录，之后重跑准备入口；其它失败先处理返回的具体原因。已打开其它编辑页或新建页有内容时，保留现场，不覆盖或绕过。网站准备只导航和读取，不填写、上传或提交。不要把查询页专用的 login-status/login-open 用于文章页。
+- `LOGIN_REQUIRED` 表示需要用户完成登录，之后重跑准备入口；其它失败先处理返回的具体原因。
+- 已打开其它编辑页或新建页有内容时，保留现场，不覆盖或绕过。
+- 网站准备只导航和读取，不填写、上传或提交。
+- 不要把查询页专用的 login-status/login-open 用于文章页。
 
-返回的 `fields` 已包含[当前标签选项](#下拉选项与填写)。完成语义判断和选择后再生成预检载荷；这些均在准备计时内完成。两次verify-ready使用同一份确定的选择，按下文传入标签参数或taxonomy-plan。
+- 返回的 `fields` 已包含[当前标签选项](#下拉选项与填写)。
+- 完成语义判断和选择后再生成预检载荷；这些均在准备计时内完成。
+- 两次verify-ready使用同一份确定的选择，按下文传入标签参数或taxonomy-plan。
 
 ```powershell
 & $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl --website-title $WebsiteTitle | Set-Content -Encoding utf8 $Preflight
@@ -51,44 +62,77 @@
 & $Python -X utf8 scripts/playwright_session_action.py --config $Config --mode sync --action $Action --preflight $Preflight --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $SyncResult
 ```
 
-沿用同份预检、会话和标签，程序校验helper哈希及尝试身份。`--start-sync`自动结束准备并开始提交；缺准备计时会被拒绝。分派有效期为启动后60秒，以首次进入固定浏览器动作为准；固定同步执行从程序开始执行起另有60秒运行限时，两者分别计时。不手工建阶段、不重置计时，也不直接运行旧run_script。固定入口不适用时停止报告，另修工具，不临场拼调用或改走粘贴。
+- 沿用同份预检、会话和标签，程序校验helper哈希及尝试身份。
+- `--start-sync`自动结束准备并开始提交；缺准备计时会被拒绝。
+- 分派有效期为启动后60秒，以首次进入固定浏览器动作为准；固定同步执行从程序开始执行起另有60秒运行限时，两者分别计时。
+- 不手工建阶段、不重置计时，也不直接运行旧run_script。
+- 固定入口不适用时停止报告，另修工具，不临场拼调用或改走粘贴。
 
 ### 3. 导入结果与收口
 
-仅同步成功且不存在未解决问题时执行。下方completed仅用于本次没有问题记录的成功情况；本次存在已解决问题时改用completed_with_issues。失败或提交结果不明时，不执行成功收口：
+仅同步成功、当前成果已经验证且没有仍阻断交付的 open 问题时，才执行以下成功收口命令。问题状态按[执行报告](../execution-report.md#bug-与异常)解释。
+
+| 本次结果 | 收口状态 |
+| --- | --- |
+| 成功，且无问题记录 | `completed` |
+| 成功，有 resolved 问题，或已验证恢复交付的 mitigated 问题 | `completed_with_issues`；mitigated 必须保留恢复证据和待修根因 |
+| 失败、存在 open 问题、成果未验证或提交结果不明 | 不执行成功收口；记录 issue 和真实状态 |
+
+下方命令使用 `completed`；存在 resolved 或 mitigated 问题时，按表替换状态：
 
 ```powershell
 & $Python scripts/execution_report.py website-finish --process-dir $Process --result $SyncResult
 & $Python scripts/execution_report.py finish --process-dir $Process --status completed --summary "网站已同步，待用户检查。"
 ```
 
-保留原始 `$SyncResult`，由website-finish校验并写标准结果文件，不手工填报成功。过程中有已解决问题仍用completed_with_issues；失败记issue及真实失败状态，不运行成功收口。时间范围和汇报项见[执行报告](../execution-report.md#网站耗时)。
+保留原始 `$SyncResult`，由 `website-finish` 校验并写标准结果文件，不手工填报成功。
+时间范围和汇报项见[执行报告](../execution-report.md#网站耗时)。
 
 ## 新建、改标题与附件
 
-- 网站标题使用“数据库 — 中文（英文）”，例如“ELSA — 认知功能（Cognitive Function）”：数据库后用两侧各一个空格的长破折号，英文名称用中文全角括号，不带主题序号。中英文含义一致且覆盖实际定义范围，采用主题已确定的英文名称，不由程序猜译。新建和以后同步时，两次verify-ready（预检及--start-sync）均显式传入同一完整`--website-title`，不使用旧的仅中文默认标题。序号只用于本地目录和内部记录；不因此批量改动未请求同步的旧文章。程序兼容识别旧标题，以文章地址、数据库和主题名称核对身份。
-- 新建文章在同一标签打开网站空白新建表单。两个verify-ready命令均将post-id参数替换为 `--create --directory-tag $DirectoryTag`，保留上述完整标题参数；不先建占位文章取得ID，不用新建绕过既有文章身份检查。
-- 文章编号支持正整数及 `local-正整数`，传入实际文章地址中的完整编号；程序将 `local-N` 的编辑入口映射为 `/nodes/edit/N/`。更新返回允许同一编号的纯数字或 `local-` 地址，不接受另一编号；新建返回必须属于当前站点的文章路径。
-- 原文章与本地编辑编号不同时，从原文章点击“编辑”核实对应地址；两次 verify-ready 均用 `--post-id <原文章编号> --edit-id <实际编辑编号>`。编辑编号只指定操作页面，提交成功仍须返回原文章编号；不能猜测对应关系，也不能因此另建文章。
+- 网站标题使用“数据库 — 中文（英文）”，例如“ELSA — 认知功能（Cognitive Function）”：数据库后用两侧各一个空格的长破折号，英文名称用中文全角括号，不带主题序号。
+- 中英文含义一致且覆盖实际定义范围，采用主题已确定的英文名称，不由程序猜译。
+- 新建和以后同步时，两次verify-ready（预检及--start-sync）均显式传入同一完整`--website-title`，不使用旧的仅中文默认标题。
+- 序号只用于本地目录和内部记录；不因此批量改动未请求同步的旧文章。
+- 程序兼容识别旧标题，以文章地址、数据库和主题名称核对身份。
+- 新建文章在同一标签打开网站空白新建表单。
+- 两个verify-ready命令均将post-id参数替换为 `--create --directory-tag $DirectoryTag`，保留上述完整标题参数；不先建占位文章取得ID，不用新建绕过既有文章身份检查。
+- 文章编号支持正整数及 `local-正整数`，传入实际文章地址中的完整编号；程序将 `local-N` 的编辑入口映射为 `/nodes/edit/N/`。
+- 更新返回允许同一编号的纯数字或 `local-` 地址，不接受另一编号；新建返回必须属于当前站点的文章路径。
+- 原文章与本地编辑编号不同时，从原文章点击“编辑”核实对应地址；两次 verify-ready 均用 `--post-id <原文章编号> --edit-id <实际编辑编号>`。
+- 编辑编号只指定操作页面，提交成功仍须返回原文章编号；不能猜测对应关系，也不能因此另建文章。
 - 改既有标题时，两个命令都加同一 `--website-title`；先确认旧文章身份，再与正文附件同次提交。
-- 目录标签与跨库主题（网页显示“主题标签”）均为单选：先读取当前下拉选项，优先选择含义匹配的已有项；检查同义、近义项后确无匹配才新建。旧台账仅作线索，不能代替当前选项；不能把“搜索无结果”或“出现新建按钮”当成没有语义匹配。更新时未要求调整的字段保留。
-- 未变封面保留。附件只有当前身份、名称、顺序及上次成功记录中的文件哈希吻合才保留，不凭同名认定未变。只改第二份就替换第二份；第一份变更时从第一份起替换，保持analysis_db、analysis_codebook顺序。各文件逐个上传至侧栏文档，不合并选择，不为测试重复删除上传；正文文档仅在正文含[DOCUMENTS]且任务另有规定时使用。
+- 目录标签与跨库主题（网页显示“主题标签”）均为单选：先读取当前下拉选项，优先选择含义匹配的已有项；检查同义、近义项后确无匹配才新建。
+- 旧台账仅作线索，不能代替当前选项；不能把“搜索无结果”或“出现新建按钮”当成没有语义匹配。
+- 更新时未要求调整的字段保留。
+- 未变封面保留。
+- 附件只有当前身份、名称、顺序及上次成功记录中的文件哈希吻合才保留，不凭同名认定未变。
+- 只改第二份就替换第二份；第一份变更时从第一份起替换，保持analysis_db、analysis_codebook顺序。
+- 各文件逐个上传至侧栏文档，不合并选择，不为测试重复删除上传；正文文档仅在正文含[DOCUMENTS]且任务另有规定时使用。
 
 ## 下拉选项与填写
 
-使用网站准备结果的 `fields`，不重复读取；只有页面选项已变化时，才在同一已确认编辑页运行 `playwright_session_action.py --mode taxonomy-options --tab-id $TabId`（其余会话、配置、out参数同预检）。主执行者结合本主题含义选择已有项；匹配有歧义时先查清，不让机械程序按字面猜含义。
+- 使用网站准备结果的 `fields`，不重复读取；只有页面选项已变化时，才在同一已确认编辑页运行 `playwright_session_action.py --mode taxonomy-options --tab-id $TabId`（其余会话、配置、out参数同预检）。
+- 主执行者结合本主题含义选择已有项；匹配有歧义时先查清，不让机械程序按字面猜含义。
 
-已有项可通过 `--directory-tag`、`--cross-database-topic` 传入其原名；新建文章两项都要确定，未传跨库主题时程序只尝试匹配主题名称，不自动新建。需要新建时，两个verify-ready命令均传同一 `--taxonomy-plan <本次选择JSON>`，字段为 `directory_tag` 和/或 `cross_database_topic`：
+- 已有项可通过 `--directory-tag`、`--cross-database-topic` 传入其原名；新建文章两项都要确定，未传跨库主题时程序只尝试匹配主题名称，不自动新建。
+- 需要新建时，两个verify-ready命令均传同一 `--taxonomy-plan <本次选择JSON>`，字段为 `directory_tag` 和/或 `cross_database_topic`：
 
 ```json
 {"directory_tag":{"value":"已有目录原名","mode":"existing"},"cross_database_topic":{"value":"新主题名称","mode":"create","options":["本次读取的全部已有选项"],"reason":"已比较哪些相近项及不匹配的具体原因"}}
 ```
 
-选择记录保存在本次过程目录，不新增审批环节。程序优先使用规范化后唯一匹配的已有项；没有匹配时，只有明确的新建选择且选项仍与读取时一致才点“使用…”；选项变化、同名歧义或控件不匹配时停止，返回选项判断。通过按钮选择，不填隐藏字段、不直接回车。选中后和提交前均核对两个目标值；仅准备或测试时不提交正式文章，不新建正式测试标签。
+- 选择记录保存在本次过程目录，不新增审批环节。
+- 程序优先使用规范化后唯一匹配的已有项；没有匹配时，只有明确的新建选择且选项仍与读取时一致才点“使用…”；选项变化、同名歧义或控件不匹配时停止，返回选项判断。
+- 通过按钮选择，不填隐藏字段、不直接回车。
+- 选中后和提交前均核对两个目标值；仅准备或测试时不提交正式文章，不新建正式测试标签。
 
 ## 固定程序应完成的检查
 
-1. 固定入口在浏览器操作前、上传前及提交前核对正文和附件与准备载荷中的文件哈希；缺失或变化时停止，回到受影响的本地验证后重新准备，不沿用旧载荷。页面实际就绪后确认目标URL、数据库、标题及编辑身份；新建须验证表单为空。身份未确认前不清正文或删附件。只返回必要身份与控件信息，不把全文输出到上下文。
+1. 固定入口在浏览器操作前、上传前及提交前核对正文和附件与准备载荷中的文件哈希；缺失或变化时停止，回到受影响的本地验证后重新准备，不沿用旧载荷。
+   - 页面实际就绪后确认目标URL、数据库、标题及编辑身份；新建须验证表单为空。
+   - 身份未确认前不清正文或删附件。
+   - 只返回必要身份与控件信息，不把全文输出到上下文。
 2. 清空正文并确认空，再一次导入正式Markdown，不追加、分段拼接或重复导入。
 3. 按上述规则保留或替换侧栏附件。**绑定标签页使用该页文件输入的setInputFiles，不等待系统文件选择窗口；旧未绑定入口使用CLI click/upload，仅限单任务独占会话。**两者不能混用，共享会话不得退回当前页或共享chooser。
 4. 提交前核对正文UTF-16长度、LF换行下的首尾，与载荷body_check一致；核对身份及附件名称和顺序。已有载荷不再另算一份正文哈希。未替换附件不借机调整历史顺序。
@@ -103,8 +147,13 @@
 | 提交已开始但响应不明 | 保留SUBMISSION_UNCERTAIN；不重载、不丢弃、不自动再次提交。先核对本次动作已经返回的结果及现有记录，不因此新增浏览器操作；需要核实网页保存状态时，按下段用户授权条件执行 |
 | 明确失败结束 | 保留失败证据；新一次同步须有用户指令，不循环重连或消耗尝试 |
 
-失败结果中的 `editor_page_restored` 只表示编辑页恢复，`content_rollback_status=NOT_VERIFIED` 表示正文和附件回滚未验证；兼容字段 `recovery_confirmed` 与前者同义。页面恢复、内容回滚与同步成功分别判断，不能相互代替。
+- 失败结果中的 `editor_page_restored` 只表示编辑页恢复，`content_rollback_status=NOT_VERIFIED` 表示正文和附件回滚未验证；兼容字段 `recovery_confirmed` 与前者同义。
+- 页面恢复、内容回滚与同步成功分别判断，不能相互代替。
 
 用户授权核对不确定提交时，只读检查同次返回文章的身份、已保存正文和实际附件，另存确认依据；保留原始失败结果，不补造成功回执，也不通过重新发布来确认旧提交。
 
-文件为空、格式或读取失败、正文/附件不完整、连接中断和标签失效均不能带病提交。固定动作有上述独立的60秒运行限时；提交前失败后的页面恢复另行执行，不受这60秒截止时间约束，整个失败处理可能超过60秒。耗时目标不能代替成功检查，也不能因超时在可能已提交后重新操作。人工点击没有系统弹窗不是绑定入口失败的判据。禁止坐标猜测、另写上传器、切换共享当前页、临时API探索和绕过固定程序。
+- 文件为空、格式或读取失败、正文/附件不完整、连接中断和标签失效均不能带病提交。
+- 固定动作有上述独立的60秒运行限时；提交前失败后的页面恢复另行执行，不受这60秒截止时间约束，整个失败处理可能超过60秒。
+- 耗时目标不能代替成功检查，也不能因超时在可能已提交后重新操作。
+- 人工点击没有系统弹窗不是绑定入口失败的判据。
+- 禁止坐标猜测、另写上传器、切换共享当前页、临时API探索和绕过固定程序。

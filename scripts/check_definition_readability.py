@@ -18,7 +18,7 @@ from check_reader_copy import Document, validate_note, normalized, route_matches
 from questionnaire_groups import period_keys, original_options, question_matches, unverified_question_periods
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
-    rendered_when_matches, jump_descriptions)
+    rendered_when_matches, jump_descriptions, is_plain_paraphrase, validate_paraphrase_display)
 
 
 def is_question_instruction(attrs: dict) -> bool:
@@ -282,6 +282,15 @@ def validate_questionnaire_rendering(
             re.IGNORECASE,
         ):
             fail(f"{field}.copy_locator still describes unfinished copy")
+        if is_plain_paraphrase(item):
+            blocks = [{"label": section["label"], "module": section.get("module", ""),
+                       "design_count": len(section["period_notes"]),
+                       "design_title": section["period_notes"][0].get("title") if section["period_notes"] else None,
+                       "design": "\n".join(note["text"] for note in section["period_notes"])}
+                      for section in parser.sections]
+            validate_paraphrase_display(item, blocks, normalized_evidence_text, evidence)
+            rendered_pairs.update((item.get("evidence_id", str(index)), str(period)) for period in item["periods"])
+            continue
         question_id = str(item.get("question_id", "")).strip()
         display_text, display_instructions = display_question(item, record)
         question_text = normalized_evidence_text(display_text)

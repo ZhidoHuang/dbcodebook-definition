@@ -2,7 +2,8 @@
 
 版本日期：2026-09-26
 
-适用范围：记录本 Skill 中 Full HRS 原始库的稳定身份、文件族、分析单位和时期边界。本文件不替代真实 dbCodeBook 页面、官方代码本、`raw_codebook.csv` 或本轮主题裁决。
+- 适用范围：记录本 Skill 中 Full HRS 原始库的稳定身份、文件族、分析单位和时期边界。
+- 本文件不替代真实 dbCodeBook 页面、官方代码本、`raw_codebook.csv` 或本轮主题裁决。
 
 ## 1. 路线与产品身份
 
@@ -17,13 +18,16 @@
 | 时变变量单位 | 各波次 Core 或从 Tracker 宽表显式转换的个人-时期长表 |
 
 - `/home/hrs/`、`/home/harmonized/randhrs/` 与 `/home/harmonized/hrs/` 是不同产品路线，不能互换来源、变量名、版本、下载记录或验收结论。
-- 本 profile 只把 Full HRS 原始库作为正式数据源。RAND HRS 可用于追溯构造思路和原始字段映射，但必须标为辅助证据，并在 Full HRS 页面及官方原始代码本中重新核实。
+- 本 profile 只把 Full HRS 原始库作为正式数据源。
+- RAND HRS 可用于追溯构造思路和原始字段映射，但必须标为辅助证据，并在 Full HRS 页面及官方原始代码本中重新核实。
 
 ## 2. 文件族与变量身份
 
 - Tracker 提供跨期稳定信息和逐波次状态，常见字段包括 `BIRTHYR`、`BIRTHMO`、`GENDER`、`RACE`、`HISPANIC`、`SCHLYRS`、`DEGREE`、`USBORN`、`xAGE`、`xIWMONTH`、`xIWYEAR`、`xCOUPLE`。
-- Core 原始变量的前缀和名称随波次变化；2004 年以后常见波次前缀为 `J` 至 `S`。必须保存网页显示的 `Base_Variable`、`File` 和各时期实际变量名，不能仅凭前缀推断。
-- Cross-Wave Geographic 提供 `REGIONxx`、`REGIONB` 和不同年份版本的 `BEALEyyyy_xx`。地理文件的最新时期可能落后于 Tracker；这是结构性覆盖差异，不得用后续时期值填补。
+- Core 原始变量的前缀和名称随波次变化；2004 年以后常见波次前缀为 `J` 至 `S`。
+- 必须保存网页显示的 `Base_Variable`、`File` 和各时期实际变量名，不能仅凭前缀推断。
+- Cross-Wave Geographic 提供 `REGIONxx`、`REGIONB` 和不同年份版本的 `BEALEyyyy_xx`。
+- 地理文件的最新时期可能落后于 Tracker；这是结构性覆盖差异，不得用后续时期值填补。
 - 同名变量可能出现在 Core、Exit、Internet Survey 等不同文件。正式选择必须使用完整的 `Variable (File)` 身份，不能只按变量 token 选择。
 
 ## 3. 时期与分析单位

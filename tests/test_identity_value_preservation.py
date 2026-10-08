@@ -74,7 +74,8 @@ def main() -> int:
             wide_header,
             wide_results,
         )
-        assert wide_results[-1]["ok"] is True
+        assert wide_results[-1]["ok"] is False
+        assert wide_results[-1]["check"] == "analysis person-period rows"
 
         leading_zero_lost = [
             analysis_header,

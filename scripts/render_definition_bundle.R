@@ -463,6 +463,23 @@ definition_source_entry <- function(value, database = "CHARLS", source_count = N
   value
 }
 
+validate_person_period_outputs <- function(frames, database) {
+  keys <- switch(toupper(database), CHARLS=c("id", "year"), ELSA=c("idauniq", "Wave"),
+    HRS=c("HHID", "PN", "year"), SHARE=c("mergeid", "Wave_id"),
+    KLOSA=c("Harmonized_id", "Wave_id"), CHNS=c("IDind", "WAVE"), KNHANES=c("id", "year"))
+  for (frame in frames) {
+    if (!all(keys %in% names(frame))) stop("Final data requires person-period long rows: ", paste(keys, collapse=", "))
+    identity <- frame[keys]
+    if (anyNA(identity) || any(vapply(identity, function(x) any(!nzchar(trimws(as.character(x)))), logical(1)))) {
+      stop("Final person-period keys must not be missing.")
+    }
+    period <- sub("^Wave +", "", as.character(identity[[length(keys)]]))
+    identity[[length(keys)]] <- sub("\\.0+$", "", period)
+    if (anyDuplicated(identity)) stop("Final data must contain one row per person per period.")
+  }
+}
+
+
 render_definition_bundle <- function(
     data,
     db_data,
@@ -596,6 +613,7 @@ render_definition_bundle <- function(
     references = paste(reference_lines[!grepl("^## 参考资料说明$", reference_lines)], collapse = "\n"),
     questionnaire = if (missing(summary_selection)) "" else render_summary_selection_paragraph(summary_selection, theme_color)
   ))
+  validate_person_period_outputs(list(db_data, analysis_data), database)
   for (pkg in c("dplyr", "tidyr", "dbCodeBookr")) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
       stop("Required package is not installed: ", pkg)

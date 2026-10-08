@@ -26,6 +26,61 @@ def requires_questionnaire_display(item):
     return required
 
 
+def is_plain_paraphrase(item):
+    mode = item.get("question_text_mode", "verified_quote")
+    if mode not in ("verified_quote", "plain_paraphrase"):
+        raise ValueError("question_text_mode must be verified_quote or plain_paraphrase")
+    return mode == "plain_paraphrase"
+
+
+def validate_paraphrase(item):
+    """The exception changes available wording, not the required factual evidence."""
+    if item.get("question_text_complete") is not False:
+        raise ValueError("plain_paraphrase requires question_text_complete=false")
+    for field in ("question_text", "paraphrase_reason", "applicable_population", "recall_period"):
+        value = item.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError("plain_paraphrase requires " + field)
+    for field in ("question_text", "paraphrase_reason"):
+        if not re.search(r"[\u3400-\u9fff]", item[field]):
+            raise ValueError(field + " must contain Chinese text")
+    if not isinstance(item.get("question_id", ""), str):
+        raise ValueError("question_id must be text; leave unknown identifiers empty")
+
+
+def validate_paraphrase_display(item, blocks, normalize, evidence=None):
+    """Blocks carry label/module/design, shared by copy and rendered-note checks."""
+    validate_paraphrase(item)
+    periods = item.get("periods")
+    if not isinstance(periods, list) or not periods:
+        raise ValueError("plain_paraphrase requires periods")
+    supported = set()
+    for other in evidence or [item]:
+        if (other.get("question_text_mode") == "plain_paraphrase"
+                and other.get("source_group") == item.get("source_group")
+                and other.get("questionnaire_module") == item.get("questionnaire_module")
+                and normalize(other.get("question_text", "")) == normalize(item["question_text"])
+                and normalize(other.get("paraphrase_reason", "")) == normalize(item["paraphrase_reason"])):
+            for period in other.get("periods", []):
+                supported.update(period_keys(str(period)))
+    for period in periods:
+        keys = set(period_keys(str(period)))
+        matches = [block for block in blocks
+                   if keys.intersection(period_keys(block["label"]))
+                   and (not item.get("questionnaire_module") or block.get("module") == item["questionnaire_module"])
+                   and normalize(item["question_text"]) in normalize(block["design"])
+                   and normalize(item["paraphrase_reason"]) in normalize(block["design"])]
+        if len(matches) != 1:
+            raise ValueError(f"{period}: expected one design with verified paraphrase and reason")
+        if not set(period_keys(matches[0]["label"])).issubset(supported):
+            raise ValueError(f"{period}: paraphrase includes unverified periods")
+        if matches[0].get("design_count", 1) != 1 or matches[0].get("design_title") not in ("问卷设计", "问卷设计变化"):
+            raise ValueError(f"{period}: expected exactly one questionnaire design note")
+        design = matches[0]["design"]
+        if not re.search(r"题意概括\s*[:：]", design) or not re.search(r"未取得完整原题的原因\s*[:：]", design):
+            raise ValueError(f"{period}: paraphrase and reason must be explicitly labelled")
+
+
 def display_question(item, record):
     policy = record.get("questionnaire_display_policy")
     if policy not in (None, POLICY):

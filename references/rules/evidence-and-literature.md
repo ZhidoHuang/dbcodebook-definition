@@ -1,49 +1,96 @@
 # Evidence And Literature
 
-Use evidence to decide the definition before formal R, not to decorate a completed result.
+正式 R 编写前，用证据确定定义方案。不要在结果完成后才补引用。
 
 ## 按问题决定是否探索文献
 
-模块探索只需查明数据库提供什么，使用目录、问卷、codebook和官方说明，不强制研究文献。具体主题定义时，两路各自按[确定主题范围](stages/01-source-plan.md#两个代理各自查什么怎样判断)检索相关研究，发现概念和指标候选。涉及重新归类、阈值、分段或指标构造时，再查适用的分类标准、方法文献及其人群/时期条件；官方已有明确派生方法且不需另作选择时，不额外为该方法凑文献。
+| 需要解决的问题 | 查什么 |
+| --- | --- |
+| 数据模块提供什么 | 查目录、问卷、codebook 和官方说明，不强制查研究文献 |
+| 具体主题包含哪些概念和指标 | 两路各自按[主题范围探索](stages/01-source-plan.md#两个代理各自查什么怎样判断)检索相关研究，发现候选 |
+| 重新分类、阈值、分段或指标构造 | 查适用分类标准及方法文献，核对适用人群和时期 |
+| 官方已有明确派生方法，且无需另作选择 | 不额外为该方法凑文献 |
 
-先找适用依据；未找到时说明实际查找范围，再结合题义、数据结构和常理提出本次处理及理由，不冒充文献结论。常理不足以支持的具体诊断阈值或量表切点不得编造，提出保留原值等可行替代或请用户决定。两边相同的推测不是外部证据。
+1. 先查适用依据。
+2. 未找到依据时，说明实际查找范围，再结合题义、数据结构和常理提出本次处理及理由。
+3. 本次判断不能冒充文献结论；两个代理相同的推测不属于外部证据。
+4. 常理不足以支持具体诊断阈值或量表切点时，不编造。提出保留原值等可行替代，或请用户决定。
 
 ## Evidence Order
 
-1. Actual dbCodeBook variable details, raw codebook, and observed values.
-2. Repository official questionnaires, user guides, release notes, and technical documents.
-3. Harmonized technical codebooks or traceable construction documentation.
-4. Original scale papers, authoritative guidelines, or primary methodological sources.
-5. Direct studies that report the relevant items, periods, formulas, and missing handling.
-6. Official web material when the repository library lacks the item, a version needs confirmation, or readers need a public link.
+先确认材料适用于本次时期和版本，再判断它能支持什么事实。网站记录用于核实实际导出；题义、对象、原始选项和跳题按官方材料；构造方法按相应方法依据。不能用网站简写推翻完整题义，也不能仅因旧材料在本地就优先于适用的新版本。
 
-For technical questions, prefer primary or official sources. Record what each source explicitly supports, what it does not support, and how it changes the current decision.
+在材料适用且能够支持所核实事实的前提下，证据的优先顺序如下：
 
-For long PDFs, first locate matching pages or sections, then read those passages with their question options and adjacent routing instructions. Save extracted text in the process directory for reuse; do not repeatedly print every keyword match from the entire document. Use an available PDF parser or the host's bundled document runtime rather than assuming a particular executable is on PATH.
+1. dbCodeBook 实际变量详情、raw codebook 和观测取值。
+2. 仓库内官方问卷、用户指南、发布说明及技术文档。
+3. Harmonized 技术代码本或可追溯的构造说明。
+4. 原始量表论文、权威指南或一手方法材料。
+5. 直接报告有关题项、时期、公式和缺失处理的研究。
+6. 仓库缺件、需要核实版本或需要公开链接时，查官方网页材料。
+
+技术问题优先用一手或官方来源。
+每份证据都说明支持什么、不支持什么，以及怎样影响当前决定。
+
+长 PDF 按以下顺序读取：
+
+1. 定位相关页码或章节。
+2. 阅读匹配段落、选项及相邻跳题说明。
+3. 将提取文本保存在过程目录，后续复用；不反复输出全文的所有关键词匹配。
+
+使用可用 PDF 解析器或宿主提供的文档运行环境，不假定某个程序已在 PATH。
 
 ## Questionnaire Evidence
 
-For each period and source group represented as original-question content, record:
+对每个作为原始问卷内容展示的时期和来源组，记录：
 
-- official question id and full question text;
-- complete options for closed questions;
-- population and reference period;
-- actual skip conditions and destinations;
-- repository material path and page, question, or section locator;
-- the copy section that uses the evidence.
+- 官方题号和完整题文。无法取得完整原题时，仅在必要题义、对象、回顾期、选项和跳题均已核实时使用下述题意概括分支。
+- 封闭题的完整选项。
+- 适用人群和回顾期。
+- 实际跳题条件及去向。
+- 仓库材料路径，以及页码、题号或章节定位。
+- 使用该证据的文案位置。
 
-Build this record by walking through the original question and every option, including conditions, explicit continuation and exit destinations. Check from original material to record, not just from recorded items back to the original: the latter cannot reveal an omitted route. Put actual omissions or uncertainty in the existing `logic_issues`; do not mark the source plan resolved while an applicable original route is missing. `options_complete` and similar flags describe this work, but are not evidence that it happened.
+题意概括使用现有 `questionnaire_evidence`，不另建证据记录：
 
-`local_material_path` is relative to the selected database's material root, not the repository. For CHARLS, the root is `references/source-materials/charls`; write `官方问卷/2011/2011 家户问卷.pdf`, not `references/source-materials/charls/官方问卷/2011/2011 家户问卷.pdf`. The example illustrates the base only; verify the actual filename before using it. For missing materials, record the existing directory actually searched; put page/question details in `locator`, not in the file path.
+| 字段 | 填写要求 |
+| --- | --- |
+| `question_text_mode`、`question_text_complete` | 分别填 `plain_paraphrase`、`false`；完整原题沿用原有填写方式 |
+| `question_text`、`paraphrase_reason` | 已核实的中文题意概括，以及未取得完整题文的实际原因 |
+| `question_id` | 保留已核实题号；未知时为空，不编造 |
+| `applicable_population`、`recall_period` | 已核实对象及回顾期；无回顾期时写明不适用及原因 |
+| 选项、跳题、材料定位及 `evidence_steps` | 沿用完整核实要求；证据须能支持定义所用事实 |
 
-An explanatory phrase such as “进入工作分支” may clarify a destination but cannot replace an available question number or original destination. Do not present a paraphrase as an original question.
+关键事实仍不清楚时，返回来源探索，不下载。缺完整题文不能标成非问卷来源，也不能将概括登记成完整原题。程序检查字段及前后对应，证据是否足够仍由探索环节根据材料判断。
 
-When repository material is absent, record the searched local location and the absence before adding an official web source. A similar website label is not questionnaire evidence.
+核对顺序：
+
+1. 从原问卷逐题、逐选项检查，包含条件、明确的继续路径及退出去向。
+2. 将原文与记录对照。只从已记录项目反查原文，无法发现漏掉的路径。
+3. 实际遗漏或疑点写入已有 `logic_issues`。
+4. 适用原始路径仍缺失时，不将来源方案标为已解决。
+
+`options_complete` 等标志只描述上述工作，不能证明工作确实完成。
+
+材料定位要求：
+
+| 字段或情况 | 要求 |
+| --- | --- |
+| `local_material_path` | 相对于所选数据库材料根，不相对于仓库根 |
+| CHARLS 示例 | 材料根为 `references/source-materials/charls`；填写 `官方问卷/2011/2011 家户问卷.pdf`，不重复材料根前缀 |
+| 使用路径示例 | 示例只说明基址；填写前核实实际文件名 |
+| 材料缺失 | 记录实际查过的现存目录及缺件事实，再补充官方网页来源 |
+| `locator` | 写页码、题号或章节，不把这些内容放进文件路径 |
+
+“进入工作分支”等解释可以补充去向，但不能替代已有的题号或原始目的位置。
+概括不能冒充原题；相似的网站标签不能当作问卷证据。
 
 ## Method Decisions
 
-Use literature and Harmonized documentation to check completeness, formulas, thresholds, scoring, missing handling, and cross-period comparability. Distinguish source statements, facts directly verified from questionnaire/raw, and the project's proposed definition.
+用文献和 Harmonized 说明核对范围完整性、公式、阈值、计分、缺失处理及跨期可比性。
+分别标明来源陈述、直接从问卷或 raw 核实的事实，以及本项目提出的定义。
 
-Formal raw must still come from the current dbCodeBook download. Literature, official questionnaires, Harmonized data, and other datasets cannot substitute for downloaded raw fields.
+正式 raw 仍须来自本次 dbCodeBook 下载。文献、官方问卷、Harmonized 数据和其他数据集不能替代下载字段。
 
-Keep only references that materially support a definition choice or interpretation. Do not repeat official-questionnaire citations mechanically when the period-design section already presents and locates those questions.
+只保留实际支持定义选择或解释的参考资料。
+时期设计部分已展示并定位的官方问卷，不机械重复引用。

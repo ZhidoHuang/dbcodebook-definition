@@ -96,6 +96,9 @@ def prepare(args):
     for name in result['artifacts']:
         if name.endswith('.xlsx') or name == '文案.md':
             shutil.copy2(formal / name, folder / name)
+    for name in ('reader_comprehension_review.json', 'ordinary_reader_input.md'):
+        if (process / name).is_file():
+            shutil.copy2(process / name, folder / name)
     shutil.copy2(source, folder / source.name)
     shutil.copy2(process / 'definition_change_impact.json', folder / 'definition_change_impact.json')
     # Validate legacy bindings while originals still exist, then record explicit
@@ -111,7 +114,7 @@ def prepare(args):
     binding = {'formal_dir': str(formal), 'folder': str(folder), 'reason': args.reason,
                'source_hash': digest(folder / source.name), 'result': result,
                'r_script': rfiles[0], 'audit_artifacts': audit['artifacts'],
-               'review': review, 'status': 'prepared'}
+               'review': review, 'status': 'prepared', 'issue_numbers': [], 'attempts': []}
     report['copy_update'] = binding
     report['stage_reviews'] = {er.COMBINED_REVIEW_ROLE: review}
     er.save(*er.paths(process), report)
@@ -127,7 +130,10 @@ def check_unchanged(formal, process, binding):
     if research_record(read(folder / 'definition_search_record.json')) != research_record(read(process / 'definition_search_record.json')):
         raise ValueError('研究内容已变化，不能按纯文案更新')
     for name, sha in binding['result']['artifacts'].items():
-        if name != '文案.md' and digest(formal / name) != sha:
+        current = digest(formal / name) if (formal / name).is_file() else None
+        immutable = name.startswith('raw_') or name.lower().endswith(('.r', '.zip'))
+        expected = sha if immutable else binding.get('recovery_artifacts', {}).get(name, sha)
+        if name != '文案.md' and current != expected:
             raise ValueError('文案以外成果已变化：' + name)
         if (name.endswith('.xlsx') or name == '文案.md') and digest(folder / name) != sha:
             raise ValueError('修改前成果副本已变化：' + name)
@@ -154,19 +160,26 @@ def run(args):
     source = read(source_path)
     impact = read(folder / 'definition_change_impact.json')
     impact.update(schema_version=3, change_summary=binding['reason'], changed_dimensions=['copy'])
-    if args.omit_questionnaire:
+    omit_questionnaire = args.omit_questionnaire or binding.get('omit_questionnaire')
+    if omit_questionnaire:
         if '## 原始问卷' in (formal / '文案.md').read_text(encoding='utf-8-sig'):
             raise ValueError('正文仍有原始问卷，不能登记为全部省略')
         for question in source.get('questionnaire_evidence', []):
-            question.update(display_required=False, display_omission_reason=args.omit_questionnaire,
-                            rendered_in_copy=False, copy_locator='不展示：' + args.omit_questionnaire)
+            question.update(display_required=False, display_omission_reason=omit_questionnaire,
+                            rendered_in_copy=False, copy_locator='不展示：' + omit_questionnaire)
         write(source_path, source)
-        impact.update(question_groups=[], question_groups_not_applicable_reason=args.omit_questionnaire)
+        impact.update(question_groups=[], question_groups_not_applicable_reason=omit_questionnaire)
     write(process / 'definition_change_impact.json', impact)
+    binding['omit_questionnaire'] = omit_questionnaire
+    attempt_folder = folder / 'attempts' / str(len(binding.get('attempts', [])) + 1)
+    attempt_folder.mkdir(parents=True, exist_ok=False)
+    binding.setdefault('attempts', []).append({'folder': str(attempt_folder), 'status': 'running'})
+    report['copy_update'] = binding
+    er.save(*er.paths(process), report)
     stage = 'copy'
     try:
         call('check_reader_copy.py', '--copy', formal / '文案.md', '--record', source_path,
-             '--process-dir', process, log=folder / 'copy-check.log')
+             '--process-dir', process, log=attempt_folder / 'copy-check.log')
         call('execution_report.py', 'stage-finish', '--process-dir', process, '--stage-id', stage,
              '--status', 'completed', '--copy', formal / '文案.md', '--summary', binding['reason'])
         stage = 'generate'
@@ -184,10 +197,10 @@ def run(args):
                '-ProcessDir', str(process), '-Database', source['database']]
         if args.config:
             cmd += ['-Config', str(args.config.resolve())]
-        with (folder / 'generate.log').open('w', encoding='utf-8') as log:
+        with (attempt_folder / 'generate.log').open('w', encoding='utf-8') as log:
             outcome = subprocess.run(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
         if outcome.returncode:
-            raise ValueError('正式生成失败，见 ' + str(folder / 'generate.log'))
+            raise ValueError('正式生成失败，见 ' + str(attempt_folder / 'generate.log'))
         for name in binding['result']['artifacts']:
             if not name.endswith('.xlsx'):
                 continue
@@ -208,36 +221,110 @@ def run(args):
                   '--require-log-exit-code', '--log-prefix', prefix, '--report', process / 'result_check.json']
         if source.get('language'):
             params += ['--language', source['language']]
-        call('check_definition_output.py', *params, log=folder / 'result-check.log')
-        preserve = ['--preserve-reader'] if (process / 'reader_comprehension_review.json').exists() else []
+        call('check_definition_output.py', *params, log=attempt_folder / 'result-check.log')
+        reader_exists = (process / 'reader_comprehension_review.json').exists()
+        previous_audit = read(process / 'readability_audit.json')
+        previous_note = previous_audit.get('artifacts', {}).get('note', {})
+        note_unchanged = digest(formal / art['note']['path']).lower() == previous_note.get('sha256', '').lower()
+        reader_required = reader_exists or previous_audit.get('reader_review_required', False)
+        preserve = ['--preserve-reader'] if reader_exists and note_unchanged else []
+        # Keep the previous evidence before init invalidates an obsolete review.
+        for name in ('reader_comprehension_review.json', 'ordinary_reader_input.md'):
+            if (process / name).is_file():
+                shutil.copy2(process / name, attempt_folder / name)
         call('check_definition_readability.py', 'init', '--formal-dir', formal, '--process-dir', process,
              '--topic-id', report['topic_id'], '--note', art['note']['path'], '--r-script', binding['r_script'],
              '--analysis-db', art['analysis_db']['path'], '--analysis-codebook', art['analysis_codebook']['path'],
-             '--overwrite', *preserve, log=folder / 'delivery-init.log')
+             '--overwrite', *preserve, log=attempt_folder / 'delivery-init.log')
+        if reader_required and not preserve:
+            report = read(process / er.REPORT_NAME)
+            report['copy_update'].update(status='awaiting_reader',
+                delivery_artifacts=current_artifacts(formal, binding),
+                recovery_artifacts=current_artifacts(formal, binding))
+            report['copy_update']['attempts'][-1]['status'] = 'awaiting_reader'
+            er.save(*er.paths(process), report)
+            call('execution_report.py', 'stage-finish', '--process-dir', process, '--stage-id', stage,
+                 '--status', 'completed', '--summary', '已生成当前成果；原读者结论过期，须按第7步复核受影响内容。')
+            return {'ok': True, 'status': 'READER_REVIEW_REQUIRED', 'website_submitted': False,
+                    'next': '按第7步完成受影响内容的普通读者复核，再运行本入口 finish；不重做研究和生成。'}
         call('check_definition_readability.py', 'check', '--formal-dir', formal, '--process-dir', process,
-             '--topic-id', report['topic_id'], log=folder / 'delivery-check.log')
+             '--topic-id', report['topic_id'], log=attempt_folder / 'delivery-check.log')
         call('execution_report.py', 'stage-finish', '--process-dir', process, '--stage-id', stage,
              '--status', 'completed', '--summary', '当前成果检查通过；未变的数据及附件沿用原文件。')
-        report = read(process / er.REPORT_NAME)
-        report['copy_update']['status'] = 'completed'
-        er.save(*er.paths(process), report)
-        call('execution_report.py', 'finish', '--process-dir', process, '--status', 'completed',
-             '--summary', '局部文案已生成并验证；尚未同步网站。')
-        return {'ok': True, 'status': 'LOCAL_UPDATE_COMPLETE', 'website_submitted': False}
+        return complete_update(process)
     except (Exception, SystemExit) as exc:
-        call('execution_report.py', 'stage-finish', '--process-dir', process, '--stage-id', stage,
-             '--status', 'failed', '--summary', str(exc))
-        call('execution_report.py', 'issue', '--process-dir', process, '--stage-id', stage,
-             '--kind', 'abnormal', '--description', str(exc), '--status', 'open')
+        current = read(process / er.REPORT_NAME)
+        if er.latest_stage(current, stage)['status'] == 'running':
+            call('execution_report.py', 'stage-finish', '--process-dir', process, '--stage-id', stage,
+                 '--status', 'failed', '--summary', str(exc))
+        issue = call('execution_report.py', 'issue', '--process-dir', process, '--stage-id', stage,
+                     '--kind', 'abnormal', '--description', str(exc), '--status', 'open')
         report = read(process / er.REPORT_NAME)
         report['copy_update']['status'] = 'failed'
+        report['copy_update'].setdefault('issue_numbers', []).append(json.loads(issue.stdout)['issue_count'])
+        report['copy_update']['recovery_artifacts'] = current_artifacts(formal, binding)
+        report['copy_update']['attempts'][-1].update(status='failed', stage=stage, error=str(exc))
         er.save(*er.paths(process), report)
         raise
 
 
+def current_artifacts(formal, binding):
+    return {name: digest(formal / name) if (formal / name).is_file() else None
+            for name in binding['result']['artifacts']}
+
+
+def retry(args):
+    formal, process = args.formal_dir.resolve(), args.process_dir.resolve()
+    report = read(process / er.REPORT_NAME)
+    binding = report.get('copy_update', {})
+    if report['status'] != 'running' or binding.get('status') not in ('failed', 'awaiting_reader') or binding.get('formal_dir') != str(formal):
+        raise ValueError('retry 仅恢复本任务的失败或读者要求返修的局部文案更新')
+    if not binding.get('recovery_artifacts'):
+        raise ValueError('旧失败记录没有现场文件指纹，不能自动恢复；先核实原基线和失败后的文件')
+    check_unchanged(formal, process, binding)
+    binding['status'] = 'prepared'
+    binding['attempts'][-1]['retry_reason'] = args.reason
+    er.save(*er.paths(process), report)
+    call('execution_report.py', 'stage-start', '--process-dir', process, '--stage-id', 'copy',
+         '--name', '修正文案后重新执行', '--role', '主执行', '--mode', 'rework')
+    return run(args)
+
+
+def complete_update(process):
+    report = read(process / er.REPORT_NAME)
+    for number in report['copy_update'].get('issue_numbers', []):
+        if report['issues'][number - 1]['status'] == 'open':
+            call('execution_report.py', 'issue-amend', '--process-dir', process, '--issue-number', number,
+                 '--status', 'resolved', '--resolution', '同一基线重试后，当前完整成果和发布条件检查通过；失败日志和尝试记录保留。',
+                 '--note', '固定局部更新入口在重新验证成功后关闭本入口登记的问题。')
+    report = read(process / er.REPORT_NAME)
+    report['copy_update']['status'] = 'completed'
+    report['copy_update']['attempts'][-1]['status'] = 'completed'
+    er.save(*er.paths(process), report)
+    status = 'completed_with_issues' if report.get('issues') else 'completed'
+    call('execution_report.py', 'finish', '--process-dir', process, '--status', status,
+         '--summary', '局部文案已生成并验证；尚未同步网站。')
+    return {'ok': True, 'status': 'LOCAL_UPDATE_COMPLETE', 'website_submitted': False}
+
+
+def finish(args):
+    formal, process = args.formal_dir.resolve(), args.process_dir.resolve()
+    report = read(process / er.REPORT_NAME)
+    binding = report.get('copy_update', {})
+    if report['status'] != 'running' or binding.get('status') != 'awaiting_reader' or binding.get('formal_dir') != str(formal):
+        raise ValueError('finish 仅用于本入口等待读者复核的当前成果')
+    if current_artifacts(formal, binding) != binding['delivery_artifacts']:
+        raise ValueError('待复核成果已变化；须重新生成和绑定，不能沿用旧发布条件')
+    if research_record(read(Path(binding['folder']) / 'definition_search_record.json')) != research_record(read(process / 'definition_search_record.json')):
+        raise ValueError('研究内容已变化，不能沿用纯文案更新')
+    call('check_definition_readability.py', 'check', '--formal-dir', formal, '--process-dir', process,
+         '--topic-id', report['topic_id'])
+    return complete_update(process)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['prepare', 'run'])
+    parser.add_argument('command', choices=['prepare', 'run', 'retry', 'finish'])
     parser.add_argument('--formal-dir', type=Path, required=True)
     parser.add_argument('--process-dir', type=Path, required=True)
     parser.add_argument('--reason', help='本次纯表达或展示修改；至少20字')
@@ -245,12 +332,13 @@ def main():
     parser.add_argument('--config', type=Path)
     parser.add_argument('--pwsh')
     args = parser.parse_args()
-    if args.command == 'prepare' and len(args.reason or '') < 20:
-        parser.error('prepare须说明具体修改范围（至少20字）')
+    if args.command in ('prepare', 'retry') and len(args.reason or '') < 20:
+        parser.error('prepare/retry须说明具体修改或修复内容（至少20字）')
     if args.omit_questionnaire and len(args.omit_questionnaire) < 20:
         parser.error('请说明完整的问卷省略原因（至少20字）')
     try:
-        print(json.dumps(prepare(args) if args.command == 'prepare' else run(args), ensure_ascii=False))
+        command = {'prepare': prepare, 'run': run, 'retry': retry, 'finish': finish}[args.command]
+        print(json.dumps(command(args), ensure_ascii=False))
     except (Exception, SystemExit) as exc:
         print(str(exc), file=sys.stderr)
         return 1
