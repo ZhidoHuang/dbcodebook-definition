@@ -1212,8 +1212,22 @@ def build_parser() -> argparse.ArgumentParser:
             stage_review.add_argument("--isolated-reason")
         stage_review.set_defaults(func=command_review_stage)
 
+    review_template = subparsers.add_parser("review-template", help="Create the findings JSON structure without registering a conclusion")
+    review_template.add_argument("--out", required=True, type=Path)
+    review_template.set_defaults(func=command_review_template)
     add_commands(subparsers)
     return parser
+
+
+def command_review_template(args):
+    path = Path(args.out)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    draft = [{"category": "", "location": "", "problem": "", "evidence": "",
+              "changed_artifact": False, "resolved": False}]
+    with path.open("x", encoding="utf-8") as handle:
+        json.dump(draft, handle, ensure_ascii=False, indent=2)
+    return {"ok": True, "status": "FINDINGS_TEMPLATE_CREATED", "path": str(path),
+            "instruction": "Fill actual findings; use [] only after a review found none. This template is not a review result."}
 
 
 def main() -> int:

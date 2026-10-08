@@ -34,4 +34,4 @@
 - 问卷显示与当前文案逐项核对通过。
 
 - 本结论仅适用于本次普通个人年Core data人口学流程；不代表重复文件、其他主题、其他年份或新模型首次写作已通过。
-- 固定source-read仍仅CHARLS专属，KNHANES使用绑定tab-code只读。
+- 固定 source-read 的当前支持范围见[来源读取](../../rules/stages/01-source-plan.md)；KNHANES 尚未接入，使用绑定 tab-code 只读。

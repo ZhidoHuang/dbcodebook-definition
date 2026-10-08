@@ -444,6 +444,7 @@ def initialize_impact(
     process_dir: Path,
     topic_id: str,
     overwrite: bool = False,
+    question_group_names: list[str] | None = None,
 ) -> dict:
     process_dir = process_dir.resolve()
     process_dir.mkdir(parents=True, exist_ok=True)
@@ -457,7 +458,12 @@ def initialize_impact(
         "status": IMPACT_SCOPE_STATUS,
         "change_summary": "",
         "changed_dimensions": [],
-        "question_groups": [],
+        "question_groups": [
+            {"name": name, "periods": [], "respondent": "", "official_source": "",
+             "definition_use": "", "draft_location": "", "question_mode": "",
+             "question_text": ""}
+            for name in (question_group_names or [])
+        ],
         "question_groups_not_applicable_reason": "",
         "unresolved_issues": previous.get("unresolved_issues", []),
     }
@@ -1914,6 +1920,7 @@ def parse_args() -> argparse.Namespace:
     impact_parser.add_argument("--process-dir", required=True, type=Path)
     impact_parser.add_argument("--topic-id", required=True)
     impact_parser.add_argument("--overwrite", action="store_true")
+    impact_parser.add_argument("--question-group", action="append", help="Create one empty, correctly named question-group object; repeat for each actual group")
     impact_check = subparsers.add_parser("check-impact")
     add_common_arguments(impact_check)
 
@@ -1973,6 +1980,7 @@ def main() -> int:
                 args.process_dir,
                 args.topic_id,
                 overwrite=args.overwrite,
+                question_group_names=args.question_group,
             )
         elif args.command == "check-impact":
             result = {"ok": True, "impact": validate_impact(args.formal_dir, args.process_dir, args.topic_id)}

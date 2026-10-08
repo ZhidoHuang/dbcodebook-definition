@@ -95,7 +95,7 @@
 ### CHARLS网页取证固定入口
 
 - 浏览器及标签先按[会话规则](../write-boundaries.md#浏览器会话)绑定。
-- CHARLS目录、普通搜索和单来源逐期详情使用`source-read`，不在主题中另编目录定位、等待刷新或详情解析脚本。
+- CHARLS、SHARE 的目录、普通搜索和单来源逐期详情使用 `source-read`，不在主题中另编目录定位、等待刷新或详情解析脚本。数据库支持范围见本节末尾。
 - 研究者决定查什么，固定入口负责读对页面并保存原文。
 
 在本分支保存一个动作JSON，按需要选择一种：
@@ -108,18 +108,22 @@
 - 普通搜索用`{"kind":"search","query":"dressing"}`；详情用`{"kind":"detail","variable":"db010","file":"health status and functioning","periods":["2011","2013"]}`，身份和时期取自本次页面结果，不照抄示例。
 
 ```powershell
-& $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --config $Config --mode source-read --database charls --action $Action --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $Receipt
+& $Python -X utf8 "$Skill/scripts/playwright_session_action.py" --config $Config --mode source-read --database $Database --action $Action --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $Receipt
 ```
 
-- 每次只读一个来源、最多6个时期，依次执行并分别保存结果。
+- 一份动作只列一个来源，可列本次需要的全部时期。程序按时期依次调用浏览器，每期结束立即保存独立结果；同一标签已有读取未结束时，不启动新的读取。
+- `--out` 使用新路径，不覆盖已有结果。控制台返回保存位置和完成情况；完整目录、搜索结果和详情从该文件读取。
 - 入口只操作本标签：按完整目录层级选可见节点，监听本次搜索响应并核对表格身份和时期人数，按完整变量/文件/时期核对详情；保留题文全文，不按“跳至某题”的字样截断。
 - 搜索返回第一页及总页数，多页结果不能声称全部查看，继续缩小检索定位候选。
 - `NO_RECORDS`只说明该期页面无记录，不证明未采集或可以补0。
 
-- 只有`ok=true`的本次结果可作取证记录。
+- 只有 `ok=true` 的本次结果可作取证记录。整批未完成时，已保存且 `ok=true` 的单期结果仍可使用。
 - 登录失效按会话规则恢复；目录歧义、结果未更新、详情不一致或超时，保留失败结果；先看返回的中文原因、请求与响应记录、变量/年份及耗时，确定卡在哪一步再处理，不把旧结果填成成功、不自动重放。
 - “未观察到请求”不等于已经证明网站没有发出请求。
-- 此入口当前仅验证CHARLS；ELSA/HRS仍按各库规则使用绑定标签入口，不声称已经适配。
+- 原因处理后，使用同一动作、会话、标签和程序版本，追加 `--resume $PreviousReceipt`，并将 `--out` 改为新路径。程序复用已完成结果，只继续未完成时期；不重新读取已完成部分。
+- 原调用是否结束不明时，续办先观察原调用。仍在执行或无法确认状态时停止，不重放；原调用已结束但失败时先保存失败结果，再按原因处理后续办。
+- CHARLS 沿用详情卡核对。SHARE 已接入普通页面的目录、搜索和分类分布浮窗：按完整来源、时期及本次响应核对，不要求浮窗所有选项人数之和等于表格记录数。未支持的详情布局返回失败，不猜测解析。
+- ELSA/HRS 及其他库仍按各库规则使用绑定标签入口，不据此声称已经适配。
 
 ### 主线程怎样合并
 

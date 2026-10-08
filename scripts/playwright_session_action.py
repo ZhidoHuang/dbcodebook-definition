@@ -349,6 +349,7 @@ def main() -> None:
     parser.add_argument("--tab-index", type=int, help="Observed tab-list index; only used to create a binding")
     parser.add_argument("--tab-id", help="Stable Chromium target id from mode bind; never an index")
     parser.add_argument("--preflight", type=Path)
+    parser.add_argument("--resume", type=Path, help="source-read: reuse completed receipts from an earlier identical request")
     parser.add_argument("--session", required=True)
     parser.add_argument("--session-workdir", required=True, type=Path)
     parser.add_argument("--out", required=True, type=Path)
@@ -390,7 +391,7 @@ def main() -> None:
         print(json.dumps(payload, ensure_ascii=False))
         raise SystemExit(0 if payload.get('ok') else 1)
     if args.mode == "source-read":
-        from source_read import browser_code
+        from source_read import run_read
         if not args.tab_id or not args.database or not args.action:
             parser.error('source-read requires --tab-id, --database and --action')
         try:
@@ -398,16 +399,16 @@ def main() -> None:
             if args.database == "klosa":
                 from klosa_adapter_contract import require_context
                 require_context(action, args.language)
-            code = browser_code(action, database_url(config, args.database, args.language), args.database)
+            payload = run_read(
+                Session(args.session, args.session_workdir, args.out.with_suffix('.browser.js'), config, args.tab_id),
+                action, database_url(config, args.database, args.language), args.database, args.out, args.resume)
         except ValueError as exc:
             parser.error(str(exc))
-        try:
-            payload = Session(args.session, args.session_workdir,
-                              args.out.with_suffix('.browser.js'), config, args.tab_id).code(code)
-        except (RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
-            payload = {'ok': False, 'status': 'READ_INCOMPLETE', 'error': str(exc)}
-        args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
-        print(json.dumps(payload, ensure_ascii=False))
+        print(json.dumps({"ok": payload["ok"], "status": payload["status"],
+                          "receipt": str(args.out.resolve()),
+                          "completed_count": len(payload["completed"]),
+                          "remaining_periods": payload["remaining_periods"],
+                          "pending": payload["pending"], "failed": payload["failed"]}, ensure_ascii=False))
         raise SystemExit(0 if payload.get('ok') else 1)
     if args.mode in {"login-status", "login-open", "select"}:
         from prepare_source_selection import browser_code

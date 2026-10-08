@@ -1,4 +1,9 @@
 async (page, action) => {
+  const key = Symbol.for('dbCodeBook.sourceRead');
+  if (page[key]?.running) return {ok:false,status:'READ_BUSY',message:'本标签的上一项读取尚未结束，未启动新动作。'};
+  const operation = {request_id:action.request_id, running:true, result:null};
+  page[key] = operation;
+  const run = async () => {
   let phase = 'page';
   const started = Date.now();
   const diagnostics = {action:action.kind, searches:[]};
@@ -80,13 +85,13 @@ async (page, action) => {
         // CHARLS clears the header when a fresh search returns no results.
         if (!rows.length) return displayed.length === 0 ||
           (displayed.length === 1 && displayed[0].querySelector('td[colspan]') !== null);
-        const heads = [...table.querySelectorAll('thead th')].map(x => x.innerText.trim().split(/\s/)[0]);
+        const heads = [...table.querySelectorAll('thead th')].map(x => x.getAttribute?.('data-column') || x.innerText.trim().split(/\s/)[0]);
         const vi = heads.indexOf('Variable'), fi = heads.indexOf('File');
         if (vi < 0 || fi < 0) return false;
         return displayed.length === rows.length && rows.every((r, i) => {
           const cells = displayed[i].querySelectorAll('td');
           return clean(cells[vi]?.innerText) === clean(r.Variable) && clean(cells[fi]?.innerText) === clean(r.File) &&
-            heads.every((h, j) => !/^\d{4}$/.test(h) || clean(cells[j]?.innerText) === clean(r[h]));
+            heads.every((h, j) => !/^\d{4}$|^Wave \d+$|^Corona Survey \d+$|^Cross-wave$/.test(h) || clean(cells[j]?.innerText) === clean(r[h]));
         });
       }, rows, {timeout:8000});
       return {total_results:data.total_results, total_pages:data.total_pages,
@@ -104,7 +109,7 @@ async (page, action) => {
     };
     const summarize = result => ({...result, rows:result.rows.map(r => ({
       variable:r.Variable, file:r.File, label:r.Label,
-      periods:Object.fromEntries(Object.entries(r).filter(([k]) => /^\d{4}$/.test(k)))
+      periods:Object.fromEntries(Object.entries(r).filter(([k]) => /^\d{4}$|^Wave \d+$|^Corona Survey \d+$|^Cross-wave$/.test(k)))
     }))});
 
     if (action.kind === 'directory') {
@@ -149,7 +154,7 @@ async (page, action) => {
     if (matches.length !== 1) return fail('SOURCE_AMBIGUOUS_OR_NOT_ON_PAGE', {query, ...summarize(result)});
     phase = 'detail';
     const {r, i} = matches[0];
-    const heads = await table.locator('thead th').evaluateAll(es => es.map(x => x.innerText.trim().split(/\s/)[0]));
+    const heads = await table.locator('thead th').evaluateAll(es => es.map(x => x.getAttribute?.('data-column') || x.innerText.trim().split(/\s/)[0]));
     const details = [];
     for (const period of action.periods) {
       phase = 'detail';
@@ -161,6 +166,39 @@ async (page, action) => {
         details.push({period, status:'NO_RECORDS', count:r[period] ?? null}); continue;
       }
       const identity = `${action.variable} (${action.file})`;
+      if (action.database === 'share') {
+        // SHARE displays a transient tooltip rather than CHARLS' persistent detail cards.
+        // Compare all published categories, including refusal/DK; do not infer a count denominator.
+        await page.locator('#search').click({timeout:3000});
+        await table.locator('tbody tr').nth(i).locator('td').nth(col).click({timeout:3000});
+        const target = {variable:action.variable, label:r[`${period}_label`] ?? r.Label,
+          summary:r[`${period}_summary`]};
+        phase = 'detail_card';
+        await page.waitForFunction(target => {
+          const clean = s => String(s ?? '').replace(/\s+/g,' ').trim();
+          const cards = [...document.querySelectorAll('.tooltip-content')].filter(e=>e.getClientRects().length);
+          return cards.length === 1 && clean(cards[0].querySelector('.tooltip-title')?.textContent) === target.variable &&
+            clean(cards[0].querySelector('.tooltip-item.label')?.textContent) === clean(target.label);
+        }, target, {timeout:3000});
+        const cards = await page.locator('.tooltip-content:visible').evaluateAll(es=>es.map(e=>({
+          variable:e.querySelector('.tooltip-title')?.textContent?.trim(),
+          label:e.querySelector('.tooltip-item.label')?.textContent?.trim(),
+          text:e.innerText,
+          distribution:[...e.querySelectorAll('.code-table tr')].map(row=>({
+            label:row.querySelector('.code-cell')?.textContent?.trim(),
+            count:row.querySelector('.count-cell')?.textContent?.trim()
+          }))
+        })));
+        const card = cards[0];
+        if (cards.length === 1 && !card.distribution.length)
+          return fail('DETAIL_LAYOUT_UNSUPPORTED', {period, details, source_row:r, cards});
+        if (cards.length !== 1 ||
+            norm(card.distribution.map(x=>`${x.label} ( ${x.count} )`).join(', ')) !== norm(target.summary))
+          return fail('DETAIL_CONTENT_MISMATCH', {period, details, source_row:r, cards});
+        details.push({...card, identity, period, status:'DETAIL_READ', count:r[period],
+          summary:target.summary, source:r[`${period}_text`] ?? '', source_row:r});
+        continue;
+      }
       const boxes = page.locator('#display-content .content-box');
       const read = async () => await boxes.evaluateAll((es, target) => {
         const clean = s => String(s ?? '').replace(/\s+/g, ' ').trim();
@@ -207,4 +245,9 @@ async (page, action) => {
     return fail('READ_INCOMPLETE', {error_code:code,
       message:messages[code] || '读取操作失败，具体步骤和原因见 phase 与 error。', error:String(error)});
   }
+  };
+  try {
+    operation.result = {...await run(), operation_completed:true};
+    return operation.result;
+  } finally { operation.running = false; }
 }
