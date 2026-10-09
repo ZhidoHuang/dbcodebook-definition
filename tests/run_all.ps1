@@ -55,7 +55,7 @@ foreach ($test in $pythonTests) {
 }
 
 if (-not [string]::IsNullOrWhiteSpace($rscript)) {
-  & (Join-Path $PSScriptRoot "test_run_r_definition_no_install.ps1") -Rscript $rscript
+  & (Join-Path $PSScriptRoot "test_run_r_definition_no_install.ps1") -Rscript $rscript -Python $python
   if ($LASTEXITCODE -ne 0) { throw "test_run_r_definition_no_install.ps1 failed." }
 
   Remove-Item Env:LC_ALL -ErrorAction SilentlyContinue

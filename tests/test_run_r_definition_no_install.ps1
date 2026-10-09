@@ -1,4 +1,4 @@
-param([string]$Rscript = $env:RSCRIPT)
+param([string]$Rscript = $env:RSCRIPT, [string]$Python = "")
 
 $ErrorActionPreference = "Stop"
 
@@ -13,6 +13,25 @@ if ([string]::IsNullOrWhiteSpace($Rscript)) {
 
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 $runner = Join-Path $repoRoot "scripts\run_r_definition.ps1"
+if (-not $Python) {
+  $configCandidate = if ($env:DBCODEBOOK_DEFINITION_CONFIG) { $env:DBCODEBOOK_DEFINITION_CONFIG } else { Join-Path $repoRoot "config.local.json" }
+  if (Test-Path -LiteralPath $configCandidate) {
+    $settings = Get-Content -LiteralPath $configCandidate -Raw -Encoding UTF8 | ConvertFrom-Json
+    $Python = [string]$settings.executables.python
+    if ($Python) {
+      $Python = [Environment]::ExpandEnvironmentVariables($Python)
+      if (-not [System.IO.Path]::IsPathRooted($Python)) {
+        $Python = Join-Path (Split-Path -Parent $configCandidate) $Python
+      }
+    }
+  }
+}
+if (-not $Python) {
+  $Python = (Get-Command python, python3 -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+}
+if (-not $Python) { throw "Supply -Python or configure executables.python for the runner fixture." }
+& $Python -c "import sys; print(sys.executable)" *> $null
+if ($LASTEXITCODE -ne 0) { throw "Runner fixture Python is not executable: $Python" }
 $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) (
   "definition_runner_no_install_" + [guid]::NewGuid().ToString("N")
 )
@@ -41,7 +60,7 @@ cat("RUN_OK\n")
 
   $missingCopyBlocked = $false
   try {
-    & $runner `
+    & $runner -Python $Python `
       -WorkDir $tempDir `
       -Script "fixture.R" `
       -LogPrefix "fixture" `
@@ -62,7 +81,7 @@ cat("RUN_OK\n")
   )
   $styledCopyBlocked = $false
   try {
-    & $runner `
+    & $runner -Python $Python `
       -WorkDir $tempDir `
       -Script "fixture.R" `
       -LogPrefix "fixture" `
@@ -97,14 +116,16 @@ cat("RUN_OK\n")
   @{ schema_version = 1; executables = @{ rscript = $Rscript } } |
     ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $configPath -Encoding UTF8
   $unNumberedBlocked = $false
+  $sourceCheckError = "Runner returned without an exception."
   try {
-    & $runner -WorkDir $tempDir -Script "fixture.R" -LogPrefix "fixture" -Config $configPath -ProcessDir (Join-Path $tempDir "process") -PreflightOnly *> $null
+    & $runner -Python $Python -WorkDir $tempDir -Script "fixture.R" -LogPrefix "fixture" -Config $configPath -ProcessDir (Join-Path $tempDir "process") -PreflightOnly *> $null
   } catch {
-    $unNumberedBlocked = $_.Exception.Message -match "Definition source-search record"
+    $sourceCheckError = $_.Exception.Message
+    $unNumberedBlocked = $sourceCheckError -match "Definition source-search record"
   }
-  if (-not $unNumberedBlocked) { throw "Unnumbered definition bypassed source checks." }
+  if (-not $unNumberedBlocked) { throw "Expected missing source-record rejection; actual result: $sourceCheckError" }
 
-  $preflightOutput = & $runner `
+  $preflightOutput = & $runner -Python $Python `
     -WorkDir $tempDir `
     -Script "fixture.R" `
     -LogPrefix "fixture" `
@@ -131,7 +152,7 @@ name_z<-read.csv('raw_codebook.csv')
   [System.IO.File]::WriteAllText($scriptPath,
     $publicPart + "`n" + $multilineReads + "`n" + $outputBoundary + "`nstop('MUST_NOT_RUN')`n",
     [System.Text.UTF8Encoding]::new($false))
-  $charlsPreflight = & $runner -WorkDir $tempDir -Script "fixture.R" -LogPrefix "fixture" `
+  $charlsPreflight = & $runner -Python $Python -WorkDir $tempDir -Script "fixture.R" -LogPrefix "fixture" `
     -Rscript $Rscript -Database CHARLS -PreflightOnly 2>&1 | Out-String
   if ($LASTEXITCODE -ne 0 -or $charlsPreflight -match "MUST_NOT_RUN") {
     throw "Multiline CHARLS raw reads did not pass semantic preflight: $charlsPreflight"
@@ -141,13 +162,13 @@ name_z<-read.csv('raw_codebook.csv')
     ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $badConfig -Encoding UTF8
   $invalidConfigBlocked = $false
   try {
-    & $runner -WorkDir $tempDir -Script "fixture.R" -LogPrefix "fixture" -Config $badConfig -PreflightOnly *> $null
+    & $runner -Python $Python -WorkDir $tempDir -Script "fixture.R" -LogPrefix "fixture" -Config $badConfig -PreflightOnly *> $null
   } catch {
     $invalidConfigBlocked = $_.Exception.Message -match "Rscript does not exist"
   }
   if (-not $invalidConfigBlocked) { throw "Invalid configured executable was silently replaced." }
 
-  & $runner -WorkDir $tempDir -Script "fixture.R" -LogPrefix "fixture" -Rscript $Rscript
+  & $runner -Python $Python -WorkDir $tempDir -Script "fixture.R" -LogPrefix "fixture" -Rscript $Rscript
   if ($LASTEXITCODE -ne 0) {
     throw "Runner fixture failed with exit code $LASTEXITCODE."
   }

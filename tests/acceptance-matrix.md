@@ -900,3 +900,8 @@
 - 人工依据既有正式 Criteria 试写 HRS CES-D 两棵树及 CHARLS 连续综合得分一棵树。前者核对13个最终结果及11项0–3分meta；后者区分14个输出结果和5个中间项，保留逐层标准化及总分不再标准化的顺序。未运行主题数据，未发布试写内容；不是独立新模型执行测试。
 - 待提交索引单独导出检查：全部 Python 测试通过，包含新增 test_tree_contract.py 的实际 Python→R 文字、角色和标签核对；六项后续 R 测试及 Skill 结构检查通过。六份模板的标记、无内部空行与右侧汇合对齐检查通过。
 - 全套入口未通过：初次索引副本缺本机配置使 runner fixture 在55行停止；补入同一本机配置后复现既有105行失败（Unnumbered definition bypassed source checks）。本次没有修改该检查或放宽门槛；不能据此声称真实主题完整流程或新稿视觉验收通过。
+
+### 2026-10-10 runner 回归误报修复
+- 定位证据：测试临时配置只有 Rscript，环境准备误用 PATH 上的 WindowsApps Python 占位程序；实际异常为 R runtime paths are not ready，尚未执行来源检查，不能解释为来源门槛被绕过。
+- 修复限于测试：全套入口传递已选 Python，独立测试可读取本机配置；全部 runner 调用显式传入 Python。来源检查异常不匹配时保留实际信息。生产 runner 及来源门槛未改。
+- 显式 Python 与读取本机配置两种入口均通过 no-install fixture。当前工作树完整 tests/run_all.ps1 通过（ALL_SKILL_TESTS_PASS），含 Skill 结构检查；该结论不代表新主题真实执行或网站验收通过。
