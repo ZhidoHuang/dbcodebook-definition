@@ -638,8 +638,9 @@ render_summary_entry_paragraph <- function(entry, theme_color) {
           stop("摘要代码树不能为空。")
         }
         return(paste0('<pre class="summary-code-tree" data-summary-tree="true" ',
+          if (!is.null(paragraph$label)) paste0('data-tree-label="', summary_escape_html(paragraph$label), '" ') else '',
           'style="margin:0 0 0.75em;text-indent:0;white-space:pre;overflow-x:auto;font-family:monospace;">',
-          '<code>', summary_escape_html(paragraph$text), '</code></pre>'))
+          '<code>', if (is.null(paragraph$role_html)) summary_escape_html(paragraph$text) else paragraph$role_html, '</code></pre>'))
       }
       parts <- if (is.list(paragraph) && !is.null(paragraph$parts)) {
         paragraph$parts

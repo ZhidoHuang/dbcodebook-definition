@@ -112,6 +112,32 @@ def sections(text, level):
     return result
 
 
+def semantic_tree(text):
+    """Explicit roles only; connectors are syntax, never inferred result names."""
+    roles = {"result", "component", "relation", "meta"}
+    pieces, plain = [], []
+    def add(value, role=None):
+        plain.append(value)
+        if role:
+            pieces.append(f'<span data-tree-role="{role}">{escape(value)}</span>')
+        else:
+            pieces.append(re.sub(r'([│├└─┐┘┬┤→←]+)', r'<span data-tree-role="connector">\1</span>', escape(value)))
+    offset = 0
+    for match in re.finditer(r'\[\[([a-z]+):((?:\[[^\[\]\n]*\]|[^\[\]\n])+)\]\]', text):
+        add(text[offset:match.start()])
+        if match[1] not in roles:
+            raise ValueError('未知关系树角色：' + match[1])
+        add(match[2], match[1])
+        offset = match.end()
+    add(text[offset:])
+    if '[[' in ''.join(plain) or ']]' in ''.join(plain):
+        raise ValueError('关系树角色标记不完整')
+    block = {"type": "code_tree", "text": ''.join(plain)}
+    if offset:
+        block['role_html'] = ''.join(pieces)
+    return block
+
+
 def summary_blocks(text):
     """Parse prose and literal trees once; renderers must not reinterpret fences."""
     lines = str(text).splitlines()
@@ -125,7 +151,7 @@ def summary_blocks(text):
     i = 0
     while i < len(lines):
         line = lines[i]
-        fence = re.fullmatch(r" {0,3}(`{3,}|~{3,})(?:text|plaintext)?[ \t]*", line)
+        fence = re.fullmatch(r" {0,3}(`{3,}|~{3,})(?:(?:text|plaintext)(?:[ \t]+([^\r\n]+?))?)?[ \t]*", line)
         if fence:
             flush()
             marker, body = fence[1], []
@@ -137,7 +163,10 @@ def summary_blocks(text):
                 raise ValueError("摘要代码树缺少结束围栏")
             if not any(x.strip() for x in body):
                 raise ValueError("摘要代码树不能为空")
-            blocks.append({"type": "code_tree", "text": "\n".join(body)})
+            block = semantic_tree("\n".join(body))
+            if fence[2]:
+                block['label'] = fence[2].strip()
+            blocks.append(block)
         elif re.match(r" {0,3}(?:`{3,}|~{3,})", line):
             raise ValueError("摘要代码树使用无语言或 text 围栏")
         elif line.startswith("    "):
@@ -148,7 +177,7 @@ def summary_blocks(text):
                 i += 1
             while body and not body[-1]:
                 body.pop()
-            blocks.append({"type": "code_tree", "text": "\n".join(body)})
+            blocks.append(semantic_tree("\n".join(body)))
             continue
         elif not line.strip():
             flush()
