@@ -905,3 +905,9 @@
 - 定位证据：测试临时配置只有 Rscript，环境准备误用 PATH 上的 WindowsApps Python 占位程序；实际异常为 R runtime paths are not ready，尚未执行来源检查，不能解释为来源门槛被绕过。
 - 修复限于测试：全套入口传递已选 Python，独立测试可读取本机配置；全部 runner 调用显式传入 Python。来源检查异常不匹配时保留实际信息。生产 runner 及来源门槛未改。
 - 显式 Python 与读取本机配置两种入口均通过 no-install fixture。当前工作树完整 tests/run_all.ps1 通过（ALL_SKILL_TESTS_PASS），含 Skill 结构检查；该结论不代表新主题真实执行或网站验收通过。
+
+## 2026-10-10 Criteria 格式与重复说明整理
+
+- 范围：Criteria 正文变量名和公式标记、模板提示；合并 meta、共用选项及小book 的重复说明，保留适用条件与例外。
+- 验证：本次工作区运行 tests/run_all.ps1（含 skill-creator 校验）返回 ALL_SKILL_TESTS_PASS；暂存差异检查通过。全套测试包含工作区中尚未提交的既有改动，不声称是本提交单独的全量回归。
+- 边界：本次为规则和模板调整，未运行新主题、未重新发布文章，未证明新模型首次执行必然不漏项。
