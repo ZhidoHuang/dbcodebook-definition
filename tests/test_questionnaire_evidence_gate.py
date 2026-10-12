@@ -241,6 +241,28 @@ def main() -> int:
         )
         assert path_result == {"variable_periods": 2, "branches": 2}
 
+        auxiliary = copy.deepcopy(record)
+        auxiliary_groups = source_groups + [
+            {"concept": "访谈身份", "periods": ["cross-wave"], "raw_variables": ["self_status"]},
+            {"concept": "无关来源", "periods": ["cross-wave"], "raw_variables": ["unrelated"]},
+        ]
+        auxiliary_plan = copy.deepcopy(definition_plan)
+        auxiliary_plan[0]["source_groups"].append("访谈身份")
+        for path in auxiliary["questionnaire_path_closure"]:
+            path["branches"][0]["required_raw_variables"].append("self_status")
+        assert checker.validate_questionnaire_path_closure(
+            auxiliary, exploration_log, auxiliary_groups, approved_names, auxiliary_plan,
+        ) == path_result
+        expect_path_failure(
+            checker, auxiliary, exploration_log, auxiliary_groups, approved_names,
+            definition_plan, "outside the relevant source groups",
+        )
+        auxiliary["questionnaire_path_closure"][0]["branches"][0]["required_raw_variables"].append("unrelated")
+        expect_path_failure(
+            checker, auxiliary, exploration_log, auxiliary_groups, approved_names,
+            auxiliary_plan, "outside the relevant source groups",
+        )
+
         pending = copy.deepcopy(record)
         for path in pending["questionnaire_path_closure"]:
             path["branches"][0]["observed_count"] = None

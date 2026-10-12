@@ -2,6 +2,7 @@ import sys
 import tempfile
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from check_definition_output import read_xlsx_rows
@@ -14,4 +15,11 @@ with tempfile.TemporaryDirectory() as tmp:
         archive.writestr("xl/_rels/workbook.xml.rels", '''<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>''')
         archive.writestr("xl/worksheets/sheet1.xml", '''<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="A1"/><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>id</t></is></c><c r="B1" t="inlineStr"><is><t>value</t></is></c></row><row r="2"><c r="A2" t="inlineStr"><is><t>001</t></is></c><c r="B2"><v>7</v></c></row><row r="3"><c r="B3"><v>0</v></c></row></sheetData></worksheet>''')
     assert read_xlsx_rows(path) == [["id", "value"], ["001", 7], [None, 0]]
+    original_read = zipfile.ZipFile.read
+    def reject_whole_sheet_read(archive, name, *args, **kwargs):
+        if str(name).startswith("xl/worksheets/"):
+            raise AssertionError("worksheet must be streamed, not read in full")
+        return original_read(archive, name, *args, **kwargs)
+    with patch.object(zipfile.ZipFile, "read", reject_whole_sheet_read):
+        assert read_xlsx_rows(path) == [["id", "value"], ["001", 7], [None, 0]]
 print("XLSX_STALE_DIMENSIONS_PASS")

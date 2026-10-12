@@ -11,7 +11,7 @@
    - 一次提交、新鲜文件和失败处理遵循第2步，不新增审批点。
 3. `klosa_adapter_contract.py`按普通/插补文件分别检查字典、别名、身份和记录键。
    - 包没有语言标记，离线校验不能单凭ZIP证明来源语言；真实网页动作与下载回执须一同保留。
-4. 公开R在读取时保留字符型`ID`、`Harmonized_id`、`Wave_id`。
+4. 公开R在读取时保留字符型`ID`、`Harmonized_id`、`Wave_id`，实际包带有默认`pid`时也按字符原样保留。
    - 普通个人结果用`render_definition_bundle(database="KLOSA", language=chosen_language, cycle_order=verified_waves, ...)`，目录输入同样带`summary_source=list(path=verified_paths, language=chosen_language)`。
    - 时期为有证据的有序子集，不从非缺失行反推。
    - 生成器只在工作副本投影时期，不改raw。

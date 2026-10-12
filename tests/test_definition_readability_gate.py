@@ -631,6 +631,18 @@ def main() -> int:
         assert created["existing_tab_match"] == ["http://localhost:8000/nodes/edit/"]
         assert created["payload"]["directory_tag"] == "medical"
         assert created["payload"]["desired_title"] == "CHARLS 家庭支持"
+        assert created["payload"]["database_category"] == "CHARLS"
+        for language, category in (("ko", "KLoSA（韩文）"), ("en", "KLoSA（英文）")):
+            korean_action = checker.build_cua_sync_action(
+                upload, "http://localhost:8000", "", "klosa", "004", "吸烟",
+                "KLoSA — 吸烟（Smoking）", create=True, directory_tag="健康行为", language=language,
+            )
+            assert korean_action["payload"]["database_category"] == category
+            assert korean_action["payload"]["expected_title_parts"] == ["klosa", "吸烟"]
+        expect_failure(lambda: checker.build_cua_sync_action(
+            upload, "http://localhost:8000", "", "klosa", "004", "吸烟",
+            "KLoSA — 吸烟（Smoking）", create=True, directory_tag="健康行为",
+        ), "verified source language")
         unnumbered = checker.build_cua_sync_action(
             upload, "http://localhost:8000", "", "ELSA", "003", "生活质量 CASP-19",
             "ELSA 生活质量 CASP-19", create=True, directory_tag="medical",
@@ -748,7 +760,7 @@ console.log("website preflight self-binding PASS");
             category_test = r'''
 const assert = require("node:assert/strict");
 async function selectDatabase(database, options) {
-  const payload = { database };
+  const payload = { database, database_category: database };
   let selected;
   const tab = { playwright: {
     evaluate: async () => options,
@@ -762,6 +774,10 @@ async function selectDatabase(database, options) {
   assert.equal(await selectDatabase("CHARLS", options), "1");
   assert.equal(await selectDatabase(" charls ", options), "1");
   assert.equal(await selectDatabase("klosa", options), "2");
+  const languageOptions = [{label: "KLoSA（韩文）", value: "ko"}, {label: "KLoSA（英文）", value: "en"}];
+  assert.equal(await selectDatabase("KLoSA（韩文）", languageOptions), "ko");
+  assert.equal(await selectDatabase("KLoSA（英文）", languageOptions), "en");
+  await assert.rejects(selectDatabase("KLoSA", languageOptions));
   await assert.rejects(selectDatabase("ELSA", options));
   await assert.rejects(selectDatabase("charls", [...options, options[0]]));
 })().catch(error => { console.error(error); process.exitCode = 1; });

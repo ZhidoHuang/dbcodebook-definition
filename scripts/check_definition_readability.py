@@ -244,7 +244,8 @@ def validate_questionnaire_rendering(
     sections: dict[str, list[dict]] = {}
     for section in parser.sections:
         scope_errors = unverified_question_periods(section["label"],
-            [identifier for line in section["lines"] for identifier in line["question_ids"]], evidence, section.get("module", ""))
+            [identifier for line in section["lines"] for identifier in line["question_ids"]], evidence, section.get("module", ""),
+            [x.get("period", "") for x in record.get("questionnaire_coverage", [])])
         if scope_errors:
             fail(scope_errors[0])
         keys = {
@@ -1530,6 +1531,7 @@ def build_cua_sync_action(
     cross_database_topic: str | None = None,
     taxonomy_plan: dict | None = None,
     edit_id: str | None = None,
+    language: str | None = None,
 ) -> dict:
     base_url = base_url.strip().rstrip("/")
     parsed = urlsplit(base_url)
@@ -1574,6 +1576,11 @@ def build_cua_sync_action(
         for item in upload["attachments"]
     ]
     expected_title_parts = [database, topic_name]
+    database_category = database
+    if database.casefold() == "klosa":
+        if language not in {"en", "ko"}:
+            fail("KLoSA publication requires verified source language en or ko")
+        database_category = {"en": "KLoSA（英文）", "ko": "KLoSA（韩文）"}[language]
     website_title = website_title.strip() if website_title else f"{database.upper()} {topic_name}"
     # Topic numbers belong to local organization, not the published title.
     if str(topic_id).isdigit():
@@ -1593,6 +1600,7 @@ def build_cua_sync_action(
     payload = {
         "create": create,
         "database": database,
+        "database_category": database_category,
         "directory_tag": directory_tag.strip() if directory_tag else None,
         "taxonomy_plan": plans,
         "post_id": post_id,
@@ -1738,14 +1746,14 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
         }}))
       );
       const matchingCategories = categoryOptions.filter(option =>
-        option.label.toLocaleLowerCase() === payload.database.trim().toLocaleLowerCase()
+        option.label.toLocaleLowerCase() === payload.database_category.trim().toLocaleLowerCase()
       );
       if (matchingCategories.length !== 1) throw new Error("未找到唯一匹配的数据库选项");
       await tab.playwright.locator("#category").selectOption({{ value: matchingCategories[0].value }});
       const metadata = await tab.playwright.evaluate(() => ({{
         database: document.querySelector("#category").selectedOptions[0].textContent.trim()
       }}));
-      if (metadata.database.toLocaleLowerCase() !== payload.database.trim().toLocaleLowerCase()) {{
+      if (metadata.database.toLocaleLowerCase() !== payload.database_category.trim().toLocaleLowerCase()) {{
         throw new Error("数据库未设置成功");
       }}
     }}
@@ -2020,11 +2028,15 @@ def main() -> int:
                 args.topic_id,
             )
             if browser_target_requested:
+                source_language = None
+                if args.database.casefold() == "klosa":
+                    source_language = json.loads((args.process_dir / SOURCE_RECORD_NAME).read_text(encoding="utf-8-sig")).get("language")
                 prepared_action = build_cua_sync_action(
                     result["upload"], args.base_url, args.post_id, args.database,
                     args.topic_id, args.topic_name, args.website_title,
                     create=args.create, directory_tag=args.directory_tag,
                     edit_id=args.edit_id,
+                    language=source_language,
                     cross_database_topic=args.cross_database_topic,
                     taxonomy_plan=json.loads(args.taxonomy_plan.read_text(encoding="utf-8-sig")) if args.taxonomy_plan else None,
                 )
@@ -2041,6 +2053,7 @@ def main() -> int:
                         args.website_title, sync["started_at"], include_preload=False,
                         create=args.create, directory_tag=args.directory_tag,
                         edit_id=args.edit_id,
+                        language=source_language,
                         cross_database_topic=args.cross_database_topic,
                         taxonomy_plan=json.loads(args.taxonomy_plan.read_text(encoding="utf-8-sig")) if args.taxonomy_plan else None,
                         sync_run_id=sync["run_id"], sync_attempt=sync["attempt"],

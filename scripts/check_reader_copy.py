@@ -236,8 +236,8 @@ def read_copy(path, expected_vars=None):
               "insight": insight, "references": parts.get("参考资料说明", "")}
     result["definition_basis"] = parts.get("定义依据", "")
     result["summary_blocks"] = summary_blocks(result["summary"])
-    if "原始问卷" in parts:
-        result["questionnaire"] = read_questionnaire_copy(parts["原始问卷"])
+    if "问卷" in parts:
+        result["questionnaire"] = read_questionnaire_copy(parts["问卷"])
     return result
 
 
@@ -247,7 +247,7 @@ def read_questionnaire_copy(text):
     nested = [bool(re.search(r"(?m)^##### 问卷设计(?:变化)?\s*$", body)) for body in top.values()]
     if any(nested):
         if not all(nested):
-            raise ValueError("原始问卷不能混用题组内时期与全局时期结构")
+            raise ValueError("问卷不能混用题组内时期与全局时期结构")
         result = {}
         for module, body in top.items():
             if re.split(r"(?m)^#### ", body, maxsplit=1)[0].strip():
@@ -269,7 +269,7 @@ def read_questionnaire_copy(text):
         key_pattern = r"[^A-Za-z0-9\u3400-\u9fff]+" if re.search(r"[:：]", label) else r"[^A-Za-z0-9]+"
         period = re.sub(key_pattern, "_", label).strip("_")
         if not period or period in periods:
-            raise ValueError("原始问卷时期标识为空或重复：" + label)
+            raise ValueError("问卷时期标识为空或重复：" + label)
         # Read the authored heading as a title, separately from its body.
         heading = re.match(r"\A(?:####[ \t]+|\*\*)?(问卷设计变化|问卷设计)(?:\*\*)?[ \t]*(?:\n|$)", body.strip())
         design_title = heading.group(1) if heading else "问卷设计"
@@ -277,7 +277,7 @@ def read_questionnaire_copy(text):
         questionnaire_body = body.strip()[heading.end():].lstrip() if heading else body
         design = re.split(r"(?m)^#### ", questionnaire_body, maxsplit=1)[0].strip()
         if not normalized(design):
-            raise ValueError("原始问卷缺少时期设计说明：" + label)
+            raise ValueError("问卷缺少时期设计说明：" + label)
         questions = []
         question_blocks = []
         for title, content in sections(questionnaire_body, 4).items():
@@ -306,6 +306,8 @@ def read_questionnaire_copy(text):
                     if question["condition"]:
                         raise ValueError("重复的题目适用对象：" + question_id)
                     question["condition"] = line.removeprefix("适用对象：").strip()
+                elif line.startswith("对应数据变量："):
+                    question.setdefault("notes", []).append(line)
                 elif line.startswith("跳题说明："):
                     question["instructions"].append(line.removeprefix("跳题说明：").strip())
                 elif line.startswith("共同跳题（"):
@@ -320,12 +322,12 @@ def read_questionnaire_copy(text):
                     text_lines.append(line)
             question["text"] = "\n".join(text_lines)
             if not question["text"]:
-                raise ValueError("原始问卷缺少完整题文：" + question_id)
+                raise ValueError("问卷缺少完整题文：" + question_id)
             questions.append(question)
         summary_only = all(re.search(r"(?m)^" + marker + r"[：:][ \t]*\S", design)
                            for marker in ("题意概括", "未取得完整原题的原因"))
         if not questions and not summary_only:
-            raise ValueError("原始问卷缺少题目：" + label)
+            raise ValueError("问卷缺少题目：" + label)
         ids = [q["id"] for q in questions]
         if len(ids) != len(set(ids)):
             raise ValueError("本时期题号重复：" + label)
@@ -341,7 +343,7 @@ def read_questionnaire_copy(text):
                 raise ValueError("共同选项与单题选项重复：" + question["id"])
         periods[period] = {"label": label, "design_title": design_title, "design": design, "questions": questions}
     if not periods:
-        raise ValueError("原始问卷没有时期内容")
+        raise ValueError("问卷没有时期内容")
     return periods
 
 
@@ -356,6 +358,7 @@ def questionnaire_text(period):
             parts.append(group)
         previous_group = group
         parts.extend([question["id"], question["text"]])
+        parts.extend(question.get("notes", []))
         if question["condition"]:
             parts.append("（" + question["condition"] + "）")
         parts.extend(option["text"] + option["jump"] for option in question["options"])
@@ -377,7 +380,7 @@ def questionnaire_content(markup):
     for element in root.find(lambda e: bool(e.attrs.get("data-raw-source-period"))):
         key = element.attrs["data-raw-source-period"]
         if key in periods:
-            raise ValueError("成品有重复的原始问卷时期：" + key)
+            raise ValueError("成品有重复的问卷时期：" + key)
         prefix = element.attrs.get("data-questionnaire-module", "")
         periods[key] = (prefix + "\n" if prefix else "") + element.text()
     return periods
@@ -444,10 +447,10 @@ def compare_content(copy, actual, *, source=False):
         if isinstance(rendered, str):
             rendered = questionnaire_content(rendered)
         if list(copy["questionnaire"]) != list(rendered):
-            raise ValueError("原始问卷的时期或顺序与文案不一致")
+            raise ValueError("问卷的时期或顺序与文案不一致")
         for period, value in copy["questionnaire"].items():
             actual_text = questionnaire_text(rendered[period]) if isinstance(rendered[period], dict) else rendered[period]
-            require_equal(questionnaire_text(value), actual_text, "原始问卷/" + period)
+            require_equal(questionnaire_text(value), actual_text, "问卷/" + period)
         expected_flows = [flow for p in copy["questionnaire"].values() for q in p["questions"] for flow in q.get("flows", [])]
         if isinstance(actual.get("questionnaire"), str):
             actual_flows = [e.text() for e in Document(actual["questionnaire"]).root.find(lambda e: e.attrs.get("data-questionnaire-flow") == "true")]
@@ -547,7 +550,8 @@ def questionnaire_copy_errors(copy, record):
     displayed_evidence = [item for item in evidence if item.get("display_required", True) is not False]
     for block in copy.get("questionnaire", {}).values():
         errors.extend(unverified_question_periods(block["label"], [q["id"] for q in block["questions"]],
-                                                 displayed_evidence, block.get("module", "")))
+                                                 displayed_evidence, block.get("module", ""),
+                                                 [x.get("period", "") for x in record.get("questionnaire_coverage", [])]))
     cross_periods = [(p["label"], [(q["id"], [o["text"] for o in q["options"]]) for q in p["questions"]], p["design"], p.get("module", ""))
                      for p in copy.get("questionnaire", {}).values()]
     for item in evidence:

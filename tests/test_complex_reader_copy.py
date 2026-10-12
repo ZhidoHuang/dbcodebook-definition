@@ -29,7 +29,7 @@ def main():
 | 乙 | 握力 |
 
 本次采用甲。
-## 原始问卷
+## 问卷
 ### 握力
 #### Wave 1–2
 ##### 问卷设计
@@ -76,7 +76,7 @@ def main():
         record = {'schema_version': 6, 'questionnaire_evidence': [{
             'question_id': 'Q1', 'question_text': '握力是多少公斤？',
             'periods': ['Wave 1', 'Wave 2'], 'response_type': 'open_value', 'options': [], 'skip_logic': [],
-            'rendered_in_copy': True, 'copy_locator': '原始问卷/握力/Q1', 'questionnaire_module': '握力'}]}
+            'rendered_in_copy': True, 'copy_locator': '问卷/握力/Q1', 'questionnaire_module': '握力'}]}
         assert questionnaire_copy_errors(parsed, record) == []
         ambiguous = copy.deepcopy(record)
         ambiguous['questionnaire_evidence'][0].pop('questionnaire_module')
@@ -136,7 +136,7 @@ definition_copy_check(note="note.md")
         try:
             validate_note(path, note)
         except ValueError as e:
-            assert '原始问卷' in str(e)
+            assert '问卷' in str(e)
         else:
             raise AssertionError('Wrong module-period text accepted')
     print('COMPLEX_READER_COPY_PASS')

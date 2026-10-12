@@ -123,36 +123,47 @@ def _question_alias(identifier):
     return match[1] if match else str(identifier)
 
 
-def _alias_declarations(text):
+def _question_alias_map(identifiers):
+    identifiers = [str(identifier) for identifier in identifiers]
+    if len(identifiers) != len(set(identifiers)):
+        raise ValueError("duplicate questionnaire question ids")
+    short_ids = [_question_alias(identifier) for identifier in identifiers]
+    # Suffixes may distinguish real questions in one period (DA050_1/DA050_2).
+    # Only a unique short identifier can safely stand for a longer identifier.
+    return {identifier: short if short_ids.count(short) == 1 else identifier
+            for identifier, short in zip(identifiers, short_ids)}
+
+
+def _alias_declarations(text, aliases=None):
     # Change reference identifiers only, never quoted questions or CAPI routes.
-    alias_ids = lambda value: re.sub(r"(?<![A-Za-z0-9_])[A-Z]+\d+_[A-Za-z0-9_]+(?![A-Za-z0-9_])", lambda m: _question_alias(m[0]), value)
+    alias_ids = lambda value: re.sub(r"(?<![A-Za-z0-9_])[A-Z]+\d+_[A-Za-z0-9_]+(?![A-Za-z0-9_])",
+        lambda m: _question_alias(m[0]) if aliases is None else aliases.get(m[0], m[0]), value)
     text = re.sub(r"[^。\n]*(?:选项|跳题规则)[^。\n]*相同。", lambda m: alias_ids(m[0]), text)
     return re.sub(r"(共同(?:选项|跳题)（)([^）]+)(）)",
                   lambda m: m[1] + alias_ids(m[2]) + m[3], text)
 
 
-def _alias_entries(entries):
-    identifiers = [_question_alias(entry[0]) for entry in entries]
-    if len(identifiers) != len(set(identifiers)):
-        raise ValueError("ambiguous questionnaire short question ids")
-    return [(identifiers[i], entry[1], _alias_declarations(entry[2]) if len(entry) > 2 else "")
-            for i, entry in enumerate(entries)]
+def _alias_entries(entries, aliases):
+    return [(aliases[entry[0]], entry[1], _alias_declarations(entry[2], aliases) if len(entry) > 2 else "")
+            for entry in entries]
 
 
 def referenced_options(text, question_id, entries):
-    return _referenced_options(_alias_declarations(text), _question_alias(question_id), _alias_entries(entries))
+    aliases = _question_alias_map(entry[0] for entry in entries)
+    return _referenced_options(_alias_declarations(text, aliases), aliases.get(question_id, question_id),
+                               _alias_entries(entries, aliases))
 
 
 def referenced_jump_options(question_id, entries):
-    return _referenced_jump_options(_question_alias(question_id), _alias_entries(entries))
+    aliases = _question_alias_map(entry[0] for entry in entries)
+    return _referenced_jump_options(aliases.get(question_id, question_id), _alias_entries(entries, aliases))
 
 
 def shared_question_info(design, question_id=None, question_ids=None):
-    aliases = None if question_ids is None else [_question_alias(q) for q in question_ids]
-    if aliases is not None and len(aliases) != len(set(aliases)):
-        raise ValueError("ambiguous questionnaire short question ids")
-    return _shared_question_info(_alias_declarations(design),
-                                 None if question_id is None else _question_alias(question_id), aliases)
+    aliases = None if question_ids is None else _question_alias_map(question_ids)
+    current = (None if question_id is None else _question_alias(question_id)) if aliases is None else aliases.get(question_id, question_id)
+    return _shared_question_info(_alias_declarations(design, aliases), current,
+                                 None if aliases is None else list(aliases.values()))
 
 
 def _trigger_codes(text):

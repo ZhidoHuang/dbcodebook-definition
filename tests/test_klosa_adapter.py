@@ -50,6 +50,20 @@ class ContractTests(unittest.TestCase):
  def test_ordinary_duplicate(self):
   self.reg.append(self.reg[0]);self.write()
   with self.assertRaises(ValueError):self.runvalid()
+ def test_default_pid_preserved(self):
+  header=k.IDENTIFIERS+['pid','sex10']
+  self.csv('raw_data.csv',header,[['00001_10','00001','10','00001.0','1']])
+  result=self.runvalid()
+  self.assertEqual(result['data']['raw_data.csv']['identity_columns'],k.IDENTIFIERS+['pid'])
+  results=[]
+  output_check.check_identity_values(self.root/'raw_data.csv',header,[header,['00001_10','00001','10','00001.0',1]],header,results,'klosa')
+  self.assertFalse(any(r.get('ok') is False for r in results))
+  results=[]
+  output_check.check_identity_values(self.root/'raw_data.csv',header,[header,['00001_10','00001','10','changed',1]],header,results,'klosa')
+  self.assertTrue(any(r.get('ok') is False for r in results))
+ def test_default_does_not_accept_arbitrary_extra(self):
+  self.csv('raw_data.csv',k.IDENTIFIERS+['other_key','sex10'],[['00001_10','00001','10','00001','1']])
+  with self.assertRaises(ValueError):self.runvalid()
  def test_person_wave_duplicate(self):
   self.reg.append(['different_id','00001','10','5']);self.write()
   with self.assertRaises(ValueError):self.runvalid()

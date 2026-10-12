@@ -11,6 +11,19 @@ REPEAT_IDENTIFIERS = ['RowIndex', *IDENTIFIERS, 'v_imputation_']
 FILES = {'KLoSA_Core', 'KLoSA_Exit', 'KLoSA_str', 'KLoSA_Lt', 'KLoSA_Imputation'}
 DICT_HEADER = ['Easy label', 'Base_Variable', 'Wave', 'Variable', 'File type', 'newname']
 
+def identity_columns(header, repeated=False):
+    """Accept the verified pid default, retaining already downloaded old exports."""
+    prefix = ['RowIndex', *IDENTIFIERS] if repeated else list(IDENTIFIERS)
+    if header[:len(prefix)] != prefix:
+        raise ValueError('KLoSA identity prefix differs from website contract')
+    if header[len(prefix):len(prefix)+1] == ['pid']:
+        prefix.append('pid')
+    if repeated:
+        prefix.append('v_imputation_')
+    if header[:len(prefix)] != prefix:
+        raise ValueError('KLoSA identity prefix differs from website contract')
+    return prefix
+
 def language(value):
     if value not in LANGUAGES:
         raise ValueError('KLoSA requires explicit language=en or ko')
@@ -86,10 +99,8 @@ def validate_package(staging, members, expected, lang):
     seen, reports, id_metadata = set(), {}, {}
     for member in members:
         repeated = member == REPEAT_MEMBER
-        identities = REPEAT_IDENTIFIERS if repeated else IDENTIFIERS
         header, rows = _rows(staging/member)
-        if header[:len(identities)] != identities:
-            raise ValueError('KLoSA identity prefix differs from website contract')
+        identities = identity_columns(header, repeated)
         variables = header[len(identities):]
         if not variables or any(v not in owners or owners[v] != member for v in variables):
             raise ValueError('raw alias absent from dictionary or assigned to wrong member')

@@ -13,12 +13,14 @@ from itertools import zip_longest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from questionnaire_display import requires_questionnaire_display, is_plain_paraphrase, validate_paraphrase
+from local_source_evidence import validate_local_evidence
 
 
 READY_STATUS = "READY"
 LOGIC_RESULTS = {"clear", "reported_and_resolved"}
 RESOLVED_ISSUE_STATUSES = {"resolved", "reported_and_resolved"}
 EXPLORATION_ACTIONS = {
+    "local_dictionary_query",
     "directory_open",
     "ordinary_search",
     "detail_open",
@@ -575,6 +577,7 @@ def validate_questionnaire_path_closure(
         fail("schema v7 definition_plan must not be empty")
 
     expected_groups: dict[tuple[str, str], set[str]] = {}
+    planned_raw_by_variable: dict[str, set[str]] = {}
     for index, item in enumerate(definition_plan, start=1):
         field = f"definition_plan[{index}]"
         if not isinstance(item, dict):
@@ -589,6 +592,7 @@ def validate_questionnaire_path_closure(
             group = nonempty_text(group, f"{field}.source_groups")
             if group not in periods_by_group:
                 fail(f"{field} references unknown source group: {group}")
+            planned_raw_by_variable.setdefault(analysis_var, set()).update(raw_by_group[group])
             for period in periods_by_group[group]:
                 if (group, period) in questionnaire_pairs:
                     expected_groups.setdefault((analysis_var, period), set()).add(group)
@@ -623,7 +627,10 @@ def validate_questionnaire_path_closure(
                 f"definition sources; expected={sorted(expected_groups[pair])}, "
                 f"actual={sorted(groups)}"
             )
-        allowed_raw = set().union(*(raw_by_group[group] for group in groups))
+        # Assignment may also depend on a planned non-questionnaire source,
+        # such as a Tracker interview-status field. It must still belong to
+        # this result's definition plan, not merely exist elsewhere in the raw.
+        allowed_raw = planned_raw_by_variable[analysis_var]
 
         branches = item.get("branches")
         if not isinstance(branches, list) or not branches:
@@ -763,6 +770,8 @@ def validate_download_selection(
     schema_version = record.get("schema_version")
     if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
         fail(f"schema_version must be one of {sorted(SUPPORTED_SCHEMA_VERSIONS)}")
+    if record.get('source_access') is not None and schema_version != 7:
+        fail('Local dictionary evidence requires source record schema_version=7')
     if str(record.get("topic_id", "")).zfill(3) != topic_id:
         fail(f"topic_id must be {topic_id}")
     if record.get("status") != READY_STATUS:
@@ -986,7 +995,7 @@ def validate_exploration_log(record: dict) -> set[int]:
     return steps
 
 
-def validate_directory_entries(directories, database):
+def validate_directory_entries(directories, database, local_evidence=None):
     # New database hierarchies use their actual UI paths, not an invented common root.
     if not isinstance(directories, list) or not directories:
         fail("directory_entries must contain at least one verified directory")
@@ -1003,11 +1012,16 @@ def validate_directory_entries(directories, database):
         full_path = nonempty_text(
             item.get("full_path"), f"directory_entries[{index}].full_path"
         )
-        if directory_prefixes and not full_path.startswith(directory_prefixes):
+        if local_evidence is None and directory_prefixes and not full_path.startswith(directory_prefixes):
             fail(
                 f"directory_entries[{index}].full_path is not a full {database} data path"
             )
-        if item.get("verified_in_ui") is not True:
+        if local_evidence is not None:
+            if item.get('verified_in_ui') is not False or item.get('verified_in_local_dictionary') is not True:
+                fail('Local directory must be marked as local, not as a website observation')
+            if full_path not in local_evidence['directories']:
+                fail('Directory not present in local evidence: ' + full_path)
+        elif item.get("verified_in_ui") is not True:
             fail(f"directory_entries[{index}] was not verified in the website UI")
         nonempty_text(item.get("purpose"), f"directory_entries[{index}].purpose")
         directory_paths.add(full_path)
@@ -1029,6 +1043,8 @@ def validate_record(
     schema_version = record.get("schema_version")
     if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
         fail(f"schema_version must be one of {sorted(SUPPORTED_SCHEMA_VERSIONS)}")
+    if record.get("source_access") is not None and schema_version != 7:
+        fail("local_dictionary source_access requires schema_version 7")
     if str(record.get("topic_id", "")).zfill(3) != topic_id:
         fail(f"topic_id must be {topic_id}")
     if record.get("status") != READY_STATUS:
@@ -1052,7 +1068,8 @@ def validate_record(
             evidence_reviews = []
 
     database = nonempty_text(record.get("database"), "database").upper()
-    directory_paths = validate_directory_entries(record.get("directory_entries"), database)
+    local_evidence = validate_local_evidence(record, record_path)
+    directory_paths = validate_directory_entries(record.get("directory_entries"), database, local_evidence)
 
     searches = record.get("normal_searches")
     if not isinstance(searches, list) or not searches:
@@ -1194,7 +1211,12 @@ def validate_record(
         value = nonempty_text(
             discovery.get("value"), f"source_groups[{index}].discovery.value"
         )
-        if mode == "directory":
+        if mode == "local_dictionary":
+            if local_evidence is None:
+                fail('local_dictionary discovery requires bound local evidence')
+            if value not in directory_paths and value not in local_evidence['keywords']:
+                fail('Local discovery value must reference a recorded directory or search')
+        elif mode == "directory":
             if value not in directory_paths:
                 fail(f"source_groups[{index}] uses an unrecorded directory")
         elif mode == "ordinary_search":
@@ -1211,7 +1233,15 @@ def validate_record(
         )
     alias_family_count = validate_alias_families(record, recorded_raw)
     raw_vars = selection if pre_download else read_raw_vars(raw_codebook_path)
-    exported_identity_vars = set() if pre_download else read_exported_identity_vars(raw_codebook_path)
+    from hrs_export_contract import record_defaults, validate_defaults
+    defaults = record_defaults(record)
+    exported_identity_vars = defaults if pre_download else read_exported_identity_vars(raw_codebook_path)
+    if not pre_download and str(record.get("database", "")).lower() == "hrs":
+        with (raw_codebook_path.parent / "raw_data.csv").open(encoding="utf-8-sig", newline="") as h:
+            header = next(csv.reader(h))
+        exported_identity_vars |= validate_defaults(raw_codebook_path, header)
+        if not defaults.issubset(exported_identity_vars):
+            fail("Recorded Tracker default columns are absent from the export")
     if not set(raw_vars).issubset(recorded_raw) or not set(recorded_raw).issubset(
         set(raw_vars) | exported_identity_vars
     ):

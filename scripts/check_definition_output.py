@@ -257,12 +257,26 @@ def first_sheet_path(zf: zipfile.ZipFile) -> str:
 
 
 def read_xlsx_rows(path: Path) -> list[list[object]]:
+    rows: list[list[object]] = []
     with zipfile.ZipFile(path) as zf:
         shared_strings = load_shared_strings(zf)
-        sheet_xml = zf.read(first_sheet_path(zf))
-    root = ET.fromstring(sheet_xml)
-    rows: list[list[object]] = []
-    for row in root.iter(f"{NS_MAIN}row"):
+        # Large sparse exports can have multi-GB worksheet XML. Parse one row
+        # at a time; do not retain the XML tree or trust the dimension hint.
+        with zf.open(first_sheet_path(zf)) as stream:
+            sheet_data = None
+            for event, element in ET.iterparse(stream, events=("start", "end")):
+                if event == "start" and element.tag == f"{NS_MAIN}sheetData":
+                    sheet_data = element
+                if event != "end" or element.tag != f"{NS_MAIN}row":
+                    continue
+                rows.append(_xlsx_row_values(element, shared_strings))
+                element.clear()
+                if sheet_data is not None:
+                    sheet_data.remove(element)
+    return rows
+
+
+def _xlsx_row_values(row, shared_strings) -> list[object]:
         values: list[object] = []
         for cell in row.findall(f"{NS_MAIN}c"):
             idx = col_to_index(cell.attrib.get("r", "A1"))
@@ -293,8 +307,7 @@ def read_xlsx_rows(path: Path) -> list[list[object]]:
                     else:
                         value = raw
             values[idx] = value
-        rows.append(values)
-    return rows
+        return values
 
 
 def check_long_table(rows, header, results, db=""):
@@ -416,7 +429,8 @@ def check_identity_values(
             fail(results, "analysis identity values", "SHARE requires ID, Wave_id, mergeid in raw and analysis")
             return
     elif db == "klosa":
-        identity_columns = ["ID", "Harmonized_id", "Wave_id"]
+        from klosa_adapter_contract import identity_columns as klosa_identity_columns
+        identity_columns = klosa_identity_columns(raw_header)
         if not set(identity_columns).issubset(raw_header) or not set(identity_columns).issubset(analysis_header):
             fail(results, "analysis identity values", "KLoSA identities must all be preserved")
             return
@@ -1493,11 +1507,18 @@ def main() -> int:
             if args.db == "charls"
             else [expected_header]
         )
+        hrs_defaults = set()
+        if args.db == "hrs":
+            from hrs_export_contract import validate_defaults
+            try:
+                hrs_defaults = validate_defaults(raw_codebook, header)
+            except ValueError as exc:
+                fail(results, "HRS automatic Tracker columns", str(exc))
         hrs_header_matches = (
             args.db == "hrs"
             and header[:4] == ["ID", "HHID", "PN", "Wave_id"]
-            and len(header[4:]) == len(raw_vars)
-            and set(header[4:]) == set(raw_vars)
+            and len(header[4:]) == len(raw_vars) + len(hrs_defaults)
+            and set(header[4:]) == set(raw_vars) | hrs_defaults
         )
         share_header_matches = False
         if args.db == "share":
@@ -1513,8 +1534,15 @@ def main() -> int:
                 fail(results, "SHARE personal key contract", str(exc))
         knhanes_header_matches = (args.db == "knhanes" and header[:3] == ["ID", "id", "year"]
                                   and len(header[3:]) == len(raw_vars) and set(header[3:]) == set(raw_vars))
-        klosa_header_matches = (args.db == "klosa" and header[:3] == ["ID", "Harmonized_id", "Wave_id"]
-            and len(header[3:]) == len(raw_vars) and set(header[3:]) == set(raw_vars))
+        klosa_header_matches = False
+        if args.db == "klosa":
+            from klosa_adapter_contract import identity_columns as klosa_identity_columns
+            try:
+                klosa_keys = klosa_identity_columns(header)
+                klosa_header_matches = (len(header[len(klosa_keys):]) == len(raw_vars)
+                    and set(header[len(klosa_keys):]) == set(raw_vars))
+            except ValueError:
+                pass
         if (args.db not in {"share", "chns"} and (header in layered_headers or hrs_header_matches or klosa_header_matches)) or share_header_matches or knhanes_header_matches or chns_header_matches:
             ok(results, "raw_data header", header)
         elif args.db == "charls" and header == ["ID", "year", *raw_vars]:

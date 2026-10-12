@@ -20,7 +20,7 @@ record = {"schema_version": 6, "questionnaire_evidence": [
 with tempfile.TemporaryDirectory() as temp:
     path = Path(temp) / "copy.md"
     text = (ROOT / "tests/fixtures/writing-inputs/reader-copy.md").read_text(encoding="utf-8-sig")
-    text += "\n## 原始问卷\n### 2011年\nPeriod design.\n#### DA001\nQuestion one?\n- 1 Yes → 跳至 DA002\n#### DA002\nQuestion two?\n"
+    text += "\n## 问卷\n### 2011年\nPeriod design.\n#### DA001\nQuestion one?\n- 1 Yes → 跳至 DA002\n#### DA002\nQuestion two?\n"
     path.write_text(text, encoding="utf-8")
     content = read_copy(path)
     record["approved_analysis_vars"] = list(content["criteria"])

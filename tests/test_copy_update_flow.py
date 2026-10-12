@@ -84,8 +84,9 @@ def main():
         else:raise AssertionError('Changed R was accepted')
         r.write_bytes(content)
         copy=formal/'文案.md';text=copy.read_text(encoding='utf-8-sig')
-        if '## 原始问卷' in text:
-            start=text.index('## 原始问卷');end=text.index('## Criteria',start)
+        heading = '## 问卷' if '## 问卷' in text else None
+        if heading:
+            start=text.index(heading);end=text.index('## Criteria',start)
             text=text[:start]+text[end:]
         else:
             text=text.replace('## 摘要导读','## 摘要导读\n',1)

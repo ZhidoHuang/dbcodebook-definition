@@ -10,7 +10,7 @@
 | 写作内容与表达 | [纯文案](stages/03-copy.md) |
 | 变更影响与返修范围 | [验收流程](validation.md#定义变更影响) |
 | 正式 R、固定头部、代码组织、注释、重编码和合并函数 | [公开 R](stages/04-public-r.md) |
-| Criteria、摘要导读、原始问卷、小book 和文献 | [纯文案](stages/03-copy.md) |
+| Criteria、摘要导读、问卷、小book 和文献 | [纯文案](stages/03-copy.md) |
 | 公共生成脚本定位、图表、时期分组、正式输出 | [成果生成](stages/05-generate.md) |
 | 结果、路径、缺失、键和机器验证 | [结果验证](stages/06-results.md) |
 | 执行结论汇总与按需读者复核 | [成品交接](stages/07-review.md) |

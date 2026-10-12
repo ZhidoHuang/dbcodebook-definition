@@ -66,3 +66,15 @@ assert period_keys('Wave 4–5：模块说明含 Wave 9') == ['wave4','wave5']
 assert period_keys('Wave 2：全日制教育年数') == ['wave2']
 assert period_keys('Wave 1、Wave 4–5: 不连续时期') == ['wave1','wave4','wave5']
 print('GROUPED_QUESTIONNAIRE_PASS: copy/rendered scope, text, codes, labels, overlap and real differences')
+
+from questionnaire_groups import unverified_question_periods
+years = list(range(2004, 2023, 2))
+ev = [{'question_id':'D110', 'periods':[str(y)]} for y in years]
+assert not unverified_question_periods('2004–2022 年', ['D110'], ev, survey_periods=years)
+assert unverified_question_periods('2004–2022 年', ['D110'], ev[:-1], survey_periods=years)
+assert unverified_question_periods('2004–2022 年', ['D110'], ev[:2]+ev[3:], survey_periods=years)
+assert unverified_question_periods('2004–2022 年', ['D110'], ev, survey_periods=years[:2]+years[3:])
+assert unverified_question_periods('2004–2024 年', ['D110'], ev, survey_periods=years)
+assert unverified_question_periods('2004–2022 年', ['D110'], ev)
+assert not unverified_question_periods('2004–2010、2014 年', ['D110'], ev, survey_periods=years)
+print('REGULAR_YEAR_LABEL_PASS: fixed interval, missing evidence, irregular scope and boundaries')

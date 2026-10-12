@@ -14,7 +14,7 @@ instruction = "访员记录正确词数，最多等待2分钟。"
 record = {"schema_version": 6, "questionnaire_display_policy": "chinese_v1", "questionnaire_evidence": [{
     "question_id": "Q01", "question_text": "Please recall the words. INTERVIEWER: Wait up to 2 minutes.",
     "periods": ["Wave 1", "Wave 2"], "response_type": "open_value", "options": [], "skip_logic": [],
-    "rendered_in_copy": True, "copy_locator": "原始问卷 / Wave 1–2 / Q01",
+    "rendered_in_copy": True, "copy_locator": "问卷 / Wave 1–2 / Q01",
     "display": {"question_text": question, "instructions": [instruction]},
 }]}
 text = f"### Wave 1–2\n本人认知测验。{instruction}\n\n#### Q01\n{question}\n"

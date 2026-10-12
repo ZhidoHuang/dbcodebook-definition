@@ -3,7 +3,7 @@
 - 网站有英文 `/home/klosa/en/` 与韩文 `/home/klosa/ko/` 两个产品入口，当前分别覆盖普通 Wave 1–9 与 Wave 1–10。
 - 来源计划、选择动作、下载快照、恢复记录和目录链接必须使用同一显式语言，不能将两版当成只换显示文字。
 
-- 普通导出身份为 `ID`、`Harmonized_id`、`Wave_id`。
+- 当前普通导出默认身份为 `ID`、`Harmonized_id`、`Wave_id`、`pid`；旧包可能只有前三列。按实际包保留，`pid` 不重复手选、不设别名。
 - ID保持原样，不能推断其内部编码或把Harmonized_id直接等同官方pid。
 - 普通表按ID连接，同时检查个人—时期唯一；插补表另带`RowIndex`、`v_imputation_`，不得当普通个人表去重。
 

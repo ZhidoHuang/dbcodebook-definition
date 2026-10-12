@@ -19,13 +19,13 @@
 
 - `/home/hrs/`、`/home/harmonized/randhrs/` 与 `/home/harmonized/hrs/` 是不同产品路线，不能互换来源、变量名、版本、下载记录或验收结论。
 - 本 profile 只把 Full HRS 原始库作为正式数据源。
-- RAND HRS 可用于追溯构造思路和原始字段映射，但必须标为辅助证据，并在 Full HRS 页面及官方原始代码本中重新核实。
+- RAND HRS 可用于追溯构造思路和原始字段映射，但必须标为辅助证据，并按公共[来源取证方式](../../rules/stages/01-source-plan.md#来源取证方式)核实 Full HRS 来源及官方原始代码本。
 
 ## 2. 文件族与变量身份
 
 - Tracker 提供跨期稳定信息和逐波次状态，常见字段包括 `BIRTHYR`、`BIRTHMO`、`GENDER`、`RACE`、`HISPANIC`、`SCHLYRS`、`DEGREE`、`USBORN`、`xAGE`、`xIWMONTH`、`xIWYEAR`、`xCOUPLE`。
 - Core 原始变量的前缀和名称随波次变化；2004 年以后常见波次前缀为 `J` 至 `S`。
-- 必须保存网页显示的 `Base_Variable`、`File` 和各时期实际变量名，不能仅凭前缀推断。
+- 必须保存已核实来源中的 `Base_Variable`、`File` 和各时期实际变量名，不能仅凭前缀推断。
 - Cross-Wave Geographic 提供 `REGIONxx`、`REGIONB` 和不同年份版本的 `BEALEyyyy_xx`。
 - 地理文件的最新时期可能落后于 Tracker；这是结构性覆盖差异，不得用后续时期值填补。
 - 同名变量可能出现在 Core、Exit、Internet Survey 等不同文件。正式选择必须使用完整的 `Variable (File)` 身份，不能只按变量 token 选择。
@@ -47,3 +47,12 @@
 
 - 具体变量、别名、公式、分类、时期覆盖和结构性缺失由本轮真实页面探索、实际下载、当前官方代码本、正式 R 和用户裁决确定。
 - 单主题事实不回填 profile；只有经真实任务验证的跨主题稳定规律才更新本文件。
+
+### Tracker 默认连接列
+
+选择 `TRACKER_FILE_HRS_2022_EARLY_RELEASE_TRACKER_FILE_VERSION_2_RESPONDENT` 中的业务变量后，网站自动附带 `OVHHID`、`OVPN`、`OVRESULT`、`OVYEAR`。
+
+- 四列不加入批量选择，不另设下载别名；R 按默认列名读取。
+- 来源记录仍保留四列的完整身份与连接用途；不计入手选来源数，不放入逐结果的业务来源 mapping。
+- 下载后核实四列全部存在，再按官方变更类型与时期判断连接，不因自动附带就自动合并编号。
+- 默认列不在 raw_codebook 的手选条目中；生成提取清单仍使用实际 raw_codebook。旧包保留原样，更新手选清单时按第2步重新下载，不改旧 CSV 表头伪装新导出。

@@ -18,6 +18,7 @@ import zipfile
 import execution_report as er
 from exploration_handoff import validate_exploration
 from source_record_binding import research_record, SOURCE_SCOPE
+from hrs_export_contract import record_defaults
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -162,8 +163,9 @@ def run(args):
     impact.update(schema_version=3, change_summary=binding['reason'], changed_dimensions=['copy'])
     omit_questionnaire = args.omit_questionnaire or binding.get('omit_questionnaire')
     if omit_questionnaire:
-        if '## 原始问卷' in (formal / '文案.md').read_text(encoding='utf-8-sig'):
-            raise ValueError('正文仍有原始问卷，不能登记为全部省略')
+        if any(line.strip() == '## 问卷' for line in
+               (formal / '文案.md').read_text(encoding='utf-8-sig').splitlines()):
+            raise ValueError('正文仍有问卷，不能登记为全部省略')
         for question in source.get('questionnaire_evidence', []):
             question.update(display_required=False, display_omission_reason=omit_questionnaire,
                             rendered_in_copy=False, copy_locator='不展示：' + omit_questionnaire)
@@ -212,7 +214,8 @@ def run(args):
         old = binding['result']
         columns = next(c['detail'] for c in old['checks'] if c['check'] == 'analysis_db columns')
         art = binding['audit_artifacts']
-        raw = list(dict.fromkeys(v for group in source['source_groups'] for v in group['raw_variables']))
+        defaults = record_defaults(source)
+        raw = list(dict.fromkeys(v for group in source['source_groups'] for v in group['raw_variables'] if v not in defaults))
         params = ['--complete', '--db', source['database'].lower(), '--formal-dir', formal,
                   '--process-dir', process, '--expected-files', ','.join(n for n in old['artifacts'] if not n.endswith('.log')),
                   '--raw-vars', ','.join(raw), '--analysis-db', art['analysis_db']['path'],
@@ -253,12 +256,14 @@ def run(args):
              '--status', 'completed', '--summary', '当前成果检查通过；未变的数据及附件沿用原文件。')
         return complete_update(process)
     except (Exception, SystemExit) as exc:
+        # Full checker output stays in the attempt logs; do not exceed Windows argv limits.
+        error_summary = str(exc)[:2000]
         current = read(process / er.REPORT_NAME)
         if er.latest_stage(current, stage)['status'] == 'running':
             call('execution_report.py', 'stage-finish', '--process-dir', process, '--stage-id', stage,
-                 '--status', 'failed', '--summary', str(exc))
+                 '--status', 'failed', '--summary', error_summary)
         issue = call('execution_report.py', 'issue', '--process-dir', process, '--stage-id', stage,
-                     '--kind', 'abnormal', '--description', str(exc), '--status', 'open')
+                     '--kind', 'abnormal', '--description', error_summary, '--status', 'open')
         report = read(process / er.REPORT_NAME)
         report['copy_update']['status'] = 'failed'
         report['copy_update'].setdefault('issue_numbers', []).append(json.loads(issue.stdout)['issue_count'])

@@ -8,7 +8,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'scripts'))
 from check_reader_copy import read_questionnaire_copy, questionnaire_copy_errors, validate_note
-q = '''## 原始问卷
+q = '''## 问卷
 
 ### 2011
 

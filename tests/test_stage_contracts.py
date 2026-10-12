@@ -75,12 +75,12 @@ def main():
         note.write_text("Changed", encoding="utf-8")
         rejects(lambda: review.validate_result_check(formal, process, artifacts), "已变化")
 
-        questionnaire = read_questionnaire_copy((ROOT / "tests/fixtures/writing-inputs/questionnaire-copy.md").read_text(encoding="utf-8").split("## 原始问卷", 1)[1])
+        questionnaire = read_questionnaire_copy((ROOT / "tests/fixtures/writing-inputs/questionnaire-copy.md").read_text(encoding="utf-8").split("## 问卷", 1)[1])
         content = {"summary": "summary", "criteria": {}, "insight": "", "references": "ref", "questionnaire": questionnaire}
         assert compare_content(content, copy.deepcopy(content))["ok"]
         changed = copy.deepcopy(content)
         changed["questionnaire"]["2011"]["questions"][0]["options"][0]["jump"] = "→ 跳至 Q999"
-        rejects(lambda: compare_content(content, changed), "原始问卷/2011")
+        rejects(lambda: compare_content(content, changed), "问卷/2011")
         assert "适用对象：" not in questionnaire_text(questionnaire["2011"])
     print("STAGE_CONTRACT_TESTS_PASS: partial scope, missing prerequisites, options, routes, current result evidence, questionnaire copy")
 

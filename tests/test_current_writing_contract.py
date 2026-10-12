@@ -45,7 +45,7 @@ for group, years in zip(groups, [['2011'], ['2020']]):
             'skip_logic': [{'when': trigger, 'destination': 'DB016'}]
                 if years[0] == '2011' and item['id'] in route_ids else
                 ([{'when':'1 没有困难','destination':'DB004'}] if years[0]=='2011' and item['id'] in ['DB001','DB002'] else []),
-            'rendered_in_copy': True, 'copy_locator': '文案.md > 原始问卷'})
+            'rendered_in_copy': True, 'copy_locator': '文案.md > 问卷'})
 assert not questionnaire_copy_errors({'questionnaire': q}, record)
 
 def rejected(action):

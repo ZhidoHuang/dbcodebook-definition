@@ -42,6 +42,12 @@ def render_note(content):
 def main():
     base_questionnaire = "### 2011 年\n\n询问当前健康。\n\n#### DA001\n\n您的健康怎么样？\n\n- 1 好\n"
     expected = read_questionnaire_copy(base_questionnaire)
+    mapping_note = "对应数据变量：2004 年 JD111；2006 年 KD111。"
+    noted = read_questionnaire_copy(base_questionnaire + "\n" + mapping_note + "\n")["2011"]["questions"][0]
+    assert noted["text"] == "您的健康怎么样？"
+    assert noted["notes"] == [mapping_note]
+    assert noted["instructions"] == []
+    assert noted["options"] == expected["2011"]["questions"][0]["options"]
     for heading in ("**问卷设计**", "问卷设计", "#### 问卷设计"):
         assert read_questionnaire_copy(base_questionnaire.replace("询问当前健康。", heading + "\n\n询问当前健康。")) == expected
     changed = read_questionnaire_copy(base_questionnaire.replace("询问当前健康。", "#### 问卷设计变化\n\n询问当前健康。"))["2011"]
@@ -148,6 +154,7 @@ cat("R_COPY_FORWARD_PASS\\n")
         questionnaire_copy = (ROOT / "tests/fixtures/writing-inputs/questionnaire-copy.md").read_text(encoding="utf-8")
         # Exercise the accepted heading through the actual R loader and renderer.
         questionnaire_copy = questionnaire_copy.replace("### 2011年\n", "### 2011年\n\n#### 问卷设计变化\n", 1)
+        questionnaire_copy += "\n\n" + mapping_note + "\n"
         assert "#### 问卷设计变化" in questionnaire_copy
         path.write_text(original + "\n\n" + questionnaire_copy, encoding="utf-8")
         questionnaire_script = folder / "questionnaire.R"
@@ -175,13 +182,18 @@ cat("QUESTIONNAIRE_COPY_FORWARD_PASS\\n")
         generated = folder / "questionnaire_note.md"
         assert validate_note(path, generated)["ok"]
         rendered = generated.read_text(encoding="utf-8")
+        assert re.search(r'<span[^>]*data-summary-question-detail-role="instruction"[^>]*font-size:0\.72em;[^>]*>' + re.escape(mapping_note) + r"</span>", rendered)
         assert "#### 问卷设计变化" not in rendered
         assert rendered.count("问卷设计变化") == 1
+        note_at = rendered.index(mapping_note)
+        # Note is inside its question, before that question's options.
+        question_at = rendered.rfind('data-summary-selection-line="true"', 0, note_at)
+        assert rendered.find('data-summary-question-option="true"', question_at) > note_at
         generated.write_text(rendered.replace("问卷设计变化", "问卷设计"), encoding="utf-8")
-        rejects(lambda: validate_note(path, generated), "原始问卷")
+        rejects(lambda: validate_note(path, generated), "问卷")
         generated.write_text(rendered, encoding="utf-8")
         generated.write_text(generated.read_text(encoding="utf-8").replace("跳至 Q002", "跳至 Q999"), encoding="utf-8")
-        rejects(lambda: validate_note(path, generated), "原始问卷")
+        rejects(lambda: validate_note(path, generated), "问卷")
         # Real template -> Python parser -> R renderer -> copy fidelity check.
         template = (ROOT / "templates/reader-copy.md").read_text(encoding="utf-8")
         adl = template.split("**分期问卷的展示格式**", 1)[1].split("```markdown", 1)[1].split("```", 1)[0]
@@ -197,7 +209,7 @@ cat("QUESTIONNAIRE_COPY_FORWARD_PASS\\n")
         assert rendered.count("DB001–DB015 的选项设置相同，该范围内的后续题目不再逐一展开选项。") == 1
         # A dropped group title must not escape the same full-text check.
         generated.write_text(rendered.replace("ADL上游问题", ""), encoding="utf-8")
-        rejects(lambda: validate_note(path, generated), "原始问卷")
+        rejects(lambda: validate_note(path, generated), "问卷")
         # Module names are authored headings, not special parser keywords.
         path.write_text((original + "\n\n" + adl).replace("ADL上游问题", "身体活动").replace("ADL原始问题", "日常生活活动"), encoding="utf-8")
         run = subprocess.run([rscript, "--vanilla", "--encoding=UTF-8", str(questionnaire_script)],

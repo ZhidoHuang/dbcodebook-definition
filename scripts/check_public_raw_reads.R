@@ -5,7 +5,7 @@ check_public_raw_reads <- function(lines, database = "CHARLS") {
     identity_names <- c("ID", "Wave_id", "mergeid", "hhid", "country", "intid", "intidwX", "Record_id")
   }
   if (toupper(database) == "KNHANES") identity_names <- c("ID", "id", "year")
-  if (toupper(database) == "KLOSA") identity_names <- c("ID", "Harmonized_id", "Wave_id")
+  if (toupper(database) == "KLOSA") identity_names <- c("ID", "Harmonized_id", "Wave_id", "pid")
   if (toupper(database) == "CHNS") identity_names <- c("ID", "IDind", "WAVE", "hhid", "COMMID", "Household_ID", "Community_ID")
   boundary <- grep("^# 输出\\s*$", lines)
   if (length(boundary)) lines <- head(lines, boundary[[1]] - 1L)

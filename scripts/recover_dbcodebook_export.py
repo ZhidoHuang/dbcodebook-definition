@@ -357,6 +357,9 @@ def validate_data_members(
         if duplicates:
             fail(f"{member} contains duplicated columns", detail=duplicates)
         identities = identity_columns_for_member(member)
+        if member == "raw_data.csv" and header[:4] == ["ID", "HHID", "PN", "Wave_id"]:
+            from hrs_export_contract import validate_defaults
+            identities |= validate_defaults(out_dir / "raw_codebook.csv", header)
         data_vars = [name for name in header if name not in identities]
         unexpected = [name for name in data_vars if name not in expected_set]
         if unexpected:

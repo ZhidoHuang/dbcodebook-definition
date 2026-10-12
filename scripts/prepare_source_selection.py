@@ -47,6 +47,8 @@ def build_record_action(record, url):
     groups = record.get('source_groups')
     if not isinstance(groups, list) or not groups:
         raise ValueError('source_groups must contain the settled sources')
+    from hrs_export_contract import record_defaults
+    defaults = record_defaults(record)
     sources, aliases = {}, {}
     for group in groups:
         identities, names = group.get('source_identities'), group.get('raw_variables')
@@ -56,6 +58,8 @@ def build_record_action(record, url):
         for identity, alias in zip(identities, names):
             if not isinstance(identity, str) or not isinstance(alias, str):
                 raise ValueError('Source identity and alias must be strings')
+            if alias in defaults:
+                continue
             rows = parse_selection(identity + '=' + alias)
             if len(rows) != 1:
                 raise ValueError('Each source entry must contain exactly one identity and alias')

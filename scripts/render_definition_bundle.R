@@ -224,6 +224,7 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
             }
             previous_group <- group
             lines <- c(lines, list(summary_questionnaire_line(question$id, question$text,
+              notes = unlist(question$notes, use.names = FALSE),
               condition = if (nzchar(question$condition)) question$condition else character(),
               options = lapply(question$options, function(option) {
                 summary_questionnaire_option(option$text, option$jump)
@@ -741,7 +742,7 @@ render_definition_bundle <- function(
       c("Wave_id", "mergeid", "hhid", "country", "intid", "intidwX", "Record_id",
         grep("^intid[ .(]", names(detail_data), value = TRUE)), names(detail_data)))
   }
-  if (database == "KLOSA") identity_columns <- union(identity_columns, c("Harmonized_id", "Wave_id"))
+  if (database == "KLOSA") identity_columns <- union(identity_columns, intersect(c("Harmonized_id", "Wave_id", "pid"), names(detail_data)))
   if (database == "CHNS") identity_columns <- union(identity_columns, intersect(
     c("IDind", "WAVE", "hhid", "COMMID", "Household_ID", "Community_ID",
       grep("^(IDind|WAVE|hhid|COMMID|Household_ID|Community_ID)[ .(]", names(detail_data), value = TRUE)), names(detail_data)))

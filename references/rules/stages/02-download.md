@@ -32,7 +32,7 @@
 - 原变量名简短易懂时可以保留；需要改善可读性时可设简短别名，完整原始身份仍保存在来源记录和映射中。
 - 合理词干可以保留；区分来源身份、跨期合并关系及重复成员所需的词干和后缀，按下节确定。
 - 不把处理步骤或解释性长句塞进变量名，也不能删掉区分即时/延迟、状态/数量、单项/汇总等含义所需的核心维度。
-- 定义后的最终分析变量需要用共同前缀定位同一系列，要求见[最终分析变量命名](01-source-plan.md#最终分析变量命名)，不套用到来源变量。
+- 最终结果按[最终分析变量命名](01-source-plan.md#最终分析变量命名)区分模块前缀与常用分析变量前缀，不套用到来源变量。
 
 ### 1.2 来源别名必须在下载前确定
 
@@ -105,6 +105,8 @@ ztooth (health status and functioning)=ztooth
 - 下载前预览核对来源身份与别名、记录数、文件层级和身份列，确认筛选、跳题及计算所需来源齐全。
 - 重复成员变量族至少查看首项、中间项和末项，核对编号与后缀；预览抽查不能代替完整选择清单及落盘包校验。
 - 各库具体 header、文件类型和连接键见对应数据库差异说明。
+
+网站默认附带的连接列按数据库已核实的导出规则处理：保留来源身份和依赖，但不重复放入手选清单，不为默认列设置别名。检查器须按对应文件核对默认列确实存在，不能全局放行同名额外列。具体 Tracker 列见 [HRS 差异](../../databases/hrs/profile.md#tracker-默认连接列)。
 
 ### 固定选择与别名输入
 
@@ -220,14 +222,14 @@ $Action = "$Process/download_action.json"
 | 字段 | 下载前 | 后续要求与完成时点 |
 | --- | --- | --- |
 | status / logic_review.result | READY；clear 或 reported_and_resolved，未决问题不得掩盖 | 继续保留真实结论 |
-| directory_entries / discovery.value | 完整 UI 路径且 verified_in_ui=true；discovery 指向已登记条目 | 保留同一来源身份 |
+| directory_entries / discovery.value | 网页分支：完整 UI 路径且 verified_in_ui=true；本地分支：按[本地证据接口](../local-source-evidence.md)绑定查询结果，不冒称网页观察；discovery 指向已登记条目 | 保留同一来源身份 |
 | 单期 source_group | handling_decision=single_period | 与实际时期核对 |
 | questionnaire_evidence | 完整题文，或符合[题意概括条件](../evidence-and-literature.md#questionnaire-evidence)的已核实概括；两者均须核实必要选项和路径；local_material_path 相对本数据库材料根 | 文案完成后：需展示项的rendered_in_copy=true、copy_locator指向实际文案；省略项按[文案程序操作](../scoped-tasks.md#copy-operations)登记，研究证据仍保留 |
 | questionnaire_path_closure | 真实进入/退出条件；未知人数和统计结论用 null | 下载后数据核实、正式 R 前：observed_count 为非负整数，unexplained_count=0，实际闭合有依据 |
 | human_record / evidence_steps | 探索记录存在同号 S001 等步骤标题 | 沿用可追溯步骤，不为过检查编造观察 |
 
 - 跨期复用同一 raw 列但题义变化时，按研究概念登记来源组，在各组列出准确单期与路由；组间可以共享该 raw，下载清单只保留一次。
-- 不能把不同题义合并成一个定义，也不在下载后复制列以绕过去重。
+- 不同概念不能合并成一个定义；同一概念的跨期口径差异按[跨期结果合并](01-source-plan.md#跨期结果合并)处理。不在下载后复制来源列以绕过去重。
 
 - 材料路径正例：`官方问卷/2011/2011 家户问卷.pdf`；反例：`references/source-materials/charls/官方问卷/...`。
 - `locator` 是页码/题号/章节定位，不是第二个文件路径；同一个材料文件统一使用前述相对路径。

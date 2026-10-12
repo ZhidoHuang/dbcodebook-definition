@@ -84,7 +84,7 @@ data[data == ""] <- NA
 | `id`、`householdid`、`communityid` 的实际值含前导 0 | 可仅为这些列追加 `colClasses = c(... = "character")`；读取前用一句注释说明目的 |
 | Full HRS | `HHID`、`PN` 按字符读取，在读取时保留前导 0，不在数值化后补救 |
 | SHARE 普通 Wave 个人唯一文件 | 允许 `ID`、`Wave_id`、`mergeid`、`hhid`、`country`、`intid`、`intidwX`、`Record_id` 及经字典来源文件核实的 `intid (File)` 自动身份列按字符读取；这项许可不套到其他数据库 |
-| KLoSA | `ID`、`Harmonized_id`、`Wave_id` 按字符读取 |
+| KLoSA | `ID`、`Harmonized_id`、`Wave_id` 按字符读取；实际导出含默认 `pid` 时同样按字符保留 |
 | CHNS | 主表 `ID`、`IDind` 和静态表 `IDind` 必须按字符读取。主表还允许字典核实的 `WAVE`、`hhid`、`COMMID`、`Household_ID`、`Community_ID` 及带来源文件后缀的这些自动身份列；静态表当前只支持 `IDind`。不把业务列纳入许可；新增身份结构先核实并适配 |
 | KNHANES | `id` 必须按字符读取；必要时 `ID`、`year` 也可按字符读取 |
 
@@ -200,7 +200,8 @@ table(data$var, useNA = "ifany")
 **调用前**：
 
 1. 按[来源别名](02-download.md#12-来源别名必须在下载前确定)在下载前确定别名、合并资格和来源优先级。
-2. 原始编码不同时，按来源探索确定的对应关系重编码。合并时，各列必须以相同编码表达相同含义；只把数字改成一样不代表可以合并。
+2. 原始编码不同时，按来源探索确定的对应关系重编码。直接合并时，各列必须以相同编码表达相同含义；只把数字改成一样不代表可以合并。
+   - 最终结果按已定方案保留跨期口径差异时，分别实现各期赋值，再写入同一结果列。此时允许按时期使用 `case_when()`；不以同一词干或本函数掩盖来源差异。
 3. 将 `data` 中的来源列排成方案确定的优先顺序。
 
 **函数怎样合并**：

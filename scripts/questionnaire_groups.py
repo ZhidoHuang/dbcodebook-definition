@@ -150,17 +150,29 @@ def question_matches(title, identifier, period, evidence=None):
                for value in identifiers)
 
 
-def unverified_question_periods(label, identifiers, evidence, module=""):
-    """A declared continuous year block cannot add periods absent from source evidence."""
+def unverified_question_periods(label, identifiers, evidence, module="", survey_periods=None):
+    """Validate ranges against recorded survey periods, then each question's evidence."""
     if not re.search(r"\d{4}\s*年?\s*[–—-]\s*\d{4}", label):
         return []
     errors = []
     declared = set(period_keys(label))
+    checked = set(declared)
+    known = {period_key(p) for p in (survey_periods or [])}
+    for match in re.finditer(r"(\d{4})\s*年?\s*[–—-]\s*(\d{4})", label):
+        start, end = map(int, match.groups())
+        years = sorted(int(p) for p in known if re.fullmatch(r"\d{4}", p) and start <= int(p) <= end)
+        if years and years[0] == start and years[-1] == end:
+            gaps = {b-a for a,b in zip(years, years[1:])}
+            if len(gaps) <= 1:
+                checked.difference_update(str(y) for y in range(start, end+1))
+                checked.update(map(str, years))
+            else:
+                errors.append(f"{match[0]}: irregular survey periods must be listed explicitly")
     for title in identifiers:
         alias_scopes = re.findall(r"[（(]([^）)]*\d{4}[^）)]*)[）)]", re.split(r"[:：]", title, maxsplit=1)[0])
         if any(not set(period_keys(scope)) <= declared for scope in alias_scopes):
             errors.append(f"{title}: question id scope extends outside its questionnaire period")
-    for period in period_keys(label):
+    for period in sorted(checked):
         for title in identifiers:
             if not any(period_key(period) in {period_key(p) for p in item.get("periods", [])}
                        and question_matches(title, item.get("question_id", ""), period, item)

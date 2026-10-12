@@ -321,6 +321,9 @@ def run_sync(session, action, preflight):
     except Exception as exc:
         session.deadline = None  # Recovery is disclosed separately, not a second submission.
         result = {"ok": False, "status": "SUBMISSION_UNCERTAIN" if submitted else "SYNC_FAILED",
+                  "sync_run_id": payload.get("sync_run_id"),
+                  "sync_attempt": payload.get("sync_attempt"),
+                  "sync_started_at": payload.get("sync_started_at"),
                   "error": str(exc), "phase": state["phase"],
                   "browser_elapsed_ms": round((time.monotonic() - started) * 1000),
                   "recovery_attempted": False, "recovery_confirmed": False,

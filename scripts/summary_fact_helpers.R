@@ -383,7 +383,7 @@ summary_questionnaire_option <- function(text, jump = "") {
 summary_questionnaire_line <- function(question_id, question, details = character(),
                                        before = character(), condition = character(),
                                        options = list(),
-                                       after = character()) {
+                                       after = character(), notes = character()) {
   if (!is.list(options) || any(!vapply(options, function(option) {
     is.list(option) && identical(option$role, "option") &&
       identical(option$position, "options") && identical(option$type, "question_detail")
@@ -409,7 +409,7 @@ summary_questionnaire_line <- function(question_id, question, details = characte
     summary_strong_part(question_id),
     " ",
     summary_question_part(question, quote = FALSE)
-  ), condition_part, lapply(as.character(details), summary_question_detail_part),
+  ), programs(notes, "after"), condition_part, lapply(as.character(details), summary_question_detail_part),
   options, programs(after, "after"))
   list(parts = parts, questionnaire = TRUE)
 }
@@ -990,7 +990,8 @@ render_summary_note_section <- function(entry,
     render_summary_entry_paragraph(entry, theme_color),
     "",
     if (nzchar(trimws(definition_basis))) c("## 定义依据", "", definition_basis, "", "<!-- definition-basis:end -->", "") else character(),
-    render_summary_selection_paragraph(selection, theme_color)
+    if (nzchar(paste(render_summary_selection_paragraph(selection, theme_color), collapse = "")))
+      c("## 问卷", "", render_summary_selection_paragraph(selection, theme_color)) else character()
   )
   if (!is.null(insight_items)) {
     lines <- c(lines, "", render_summary_insight_card(

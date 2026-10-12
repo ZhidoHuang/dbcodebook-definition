@@ -60,7 +60,7 @@ with tempfile.TemporaryDirectory(prefix='definition_branch_contracts_') as tmp:
         rejects(lambda: source.validate_questionnaire_evidence(bad, log, periods), error)
     bad = deepcopy(record); bad['questionnaire_evidence'][0].pop('question_text_mode')
     rejects(lambda: source.validate_questionnaire_evidence(bad, log, periods), 'question_id')
-    questionnaire = f'''## 原始问卷
+    questionnaire = f'''## 问卷
 
 ### 测试题组
 

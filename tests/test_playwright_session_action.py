@@ -144,6 +144,7 @@ const page = {
             item.write_bytes(b"stable fixture")
         signature = hashlib.sha256(b"stable fixture").hexdigest().upper()
         website = {"payload": {"note": str(files[0]), "note_sha256": signature,
+                   "sync_run_id": "fixture-run", "sync_attempt": 1, "sync_started_at": "fixture-time",
                    "edit_url": "editor", "attachments": [{"path": str(p), "sha256": signature} for p in files[1:]]},
                    "existing_tab_match": ["editor"]}
         with patch('playwright_session_action.build_code'):
@@ -174,6 +175,8 @@ const page = {
             assert result["status"] == 'SUBMISSION_UNCERTAIN' and 'discard' not in calls
             assert not result['recovery_attempted'] and not result['editor_page_restored']
             assert result['content_rollback_status'] == 'NOT_VERIFIED'
+            assert result['sync_run_id'] == 'fixture-run' and result['sync_attempt'] == 1
+            assert result['sync_started_at'] == 'fixture-time'
             for item in files:
                 calls.clear()
                 item.write_bytes(b"changed after readiness")

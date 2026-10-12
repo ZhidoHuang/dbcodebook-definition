@@ -13,6 +13,7 @@
 | [stages/](stages/01-source-plan.md) | 八个环节各自的探索/明确执行/机械操作、交接和失败返回范围；按 validation 表读取对应文件 | 其他环节的完整规则、数据库专门事实 |
 | [evidence-and-literature.md](evidence-and-literature.md) | 权威材料使用、文献支持与方法依据 | 主题裁决、下载操作 |
 | [review-roles.md](review-roles.md) | 只读角色生命周期与模型配置 | 代替各环节的具体验收标准 |
+| [local-source-evidence.md](local-source-evidence.md) | 可选本地字典证据的公共交接接口 | 本机配置、查询实现或第二套定义流程 |
 | [CHARLS 差异说明](../databases/charls/workflow.md) | CHARLS 特有的网页探索、年份、来源身份、选择与下载、特殊编码及输出事实 | 重新定义跨数据库命名、文案、函数或网站发布操作 |
 | [ELSA 差异说明](../databases/elsa/workflow.md) | ELSA 特有的 `Variable (File)`、Wave、文件族、选择与恢复、负值和分析单位 | 复制 CHARLS 规则或另写一套共同文案和代码规范 |
 | [HRS 差异说明](../databases/hrs/workflow.md) | Full HRS 原始库的 Tracker、Core、Cross-Wave 文件、时期映射、选择和下载验收边界 | 把 RAND HRS/Harmonized HRS 当作正式 raw 或混用数据库身份 |
