@@ -65,7 +65,9 @@ def main():
 #### 分类
 - 数值。
 ## 小book提示
-本主题没有需要单独提示的主题级边界
+1. 第一项。说明第一项。
+这是第一项的续行。
+2. 第二项。说明第二项。
 '''
         path.write_text(text, encoding='utf-8')
         parsed = read_copy(path)
@@ -96,8 +98,8 @@ source(file.path(root,"scripts","render_definition_bundle.R"),encoding="UTF-8")
 copy <- read_definition_copy("result")
 q <- render_summary_selection_paragraph(copy$summary_selection,"#A33842")
 definition_copy_check(source=list(summary=render_summary_entry_paragraph(copy$summary_entry,"#A33842"),
- criteria=copy$criteria,insight="",references="",definition_basis=copy$definition_basis,questionnaire=q))
-summary <- render_summary_note_section(copy$summary_entry,copy$summary_selection,"#A33842",definition_basis=copy$definition_basis)
+ criteria=copy$criteria,insight=paste(copy$summary_insight_items,collapse="\\n\\n"),references="",definition_basis=copy$definition_basis,questionnaire=q))
+summary <- render_summary_note_section(copy$summary_entry,copy$summary_selection,"#A33842",definition_basis=copy$definition_basis,insight_items=copy$summary_insight_items)
 writeLines(c(summary,"## 定义",'<table><tr><th>Definition</th><th>Criteria</th><th>detail</th></tr>',
  paste0('<tr><td>result</td><td>',copy$criteria$result,'</td><td>分布</td></tr>'),'</table>'),"note.md",useBytes=TRUE)
 definition_copy_check(note="note.md")
@@ -120,6 +122,9 @@ definition_copy_check(note="note.md")
         else:
             raise AssertionError('Ambiguous repeated question ID accepted')
         output = note.read_text(encoding='utf-8')
+        assert output.count('data-summary-insight-paragraph="true"') == 2
+        assert output.count('class="summary-insight-number"') == 2
+        assert '这是第一项的续行。' in output
         assert output.count('data-display="period-tabs"') == 2
         assert output.count('data-questionnaire-module-title="true"') == 2
         assert '<pre data-questionnaire-flow="true"' in output

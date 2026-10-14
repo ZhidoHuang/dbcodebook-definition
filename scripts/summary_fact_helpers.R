@@ -916,6 +916,12 @@ render_summary_insight_card <- function(items,
   variant <- match.arg(variant)
   items <- as.character(items)
   if (length(items) == 0 || any(!nzchar(items))) stop("小book提示文案不能为空。")
+  # A compact Markdown numbered list still contains separate items.
+  # Keep ordinary wrapped lines inside the same item.
+  items <- unlist(lapply(items, function(item) {
+    strsplit(item, "\\r?\\n(?=[ \\t]*[0-9]+\\.[ \\t]+)", perl = TRUE)[[1]]
+  }), use.names = FALSE)
+  items <- trimws(items)
   summary_validate_insight_inline_code(items)
   marker_pattern <- "^\\s*(?:[①②③④⑤⑥⑦⑧⑨⑩]|[0-9]+[、.)．])\\s*"
   body <- paste0(

@@ -782,6 +782,16 @@ no_question_source <- render_summary_selection_paragraph(definition_source_entry
 stopifnot(grepl("本主题在数据中对应 2 个原始变量", no_question_source, fixed = TRUE),
           !grepl("以上问卷", no_question_source, fixed = TRUE))
 
+for (variant in c("standard", "compact")) {
+  expected_items <- c("1. 第一项。\n这是同一条的续行。", "2. 第二项。", "3. 第三项。")
+  expected_html <- render_summary_insight_card(expected_items, "#A33842", variant)
+  for (separator in c("\n", "\r\n", "\n\n")) {
+    compact_items <- paste(expected_items, collapse = separator)
+    actual_html <- render_summary_insight_card(compact_items, "#A33842", variant)
+    stopifnot(identical(actual_html, expected_html))
+  }
+}
+
 report <- list(ok = TRUE, checks = checks, questionnaire_html = question_layout_fixture)
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 1 && nzchar(args[1])) {
