@@ -7,6 +7,7 @@ import re
 import subprocess
 import sys
 import tempfile
+from copy import deepcopy
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
@@ -49,6 +50,14 @@ for group, years in zip(groups, [['2011'], ['2020']]):
             'rendered_in_copy': True, 'copy_locator': '文案.md > 问卷'})
 assert not questionnaire_copy_errors({'questionnaire': q}, record)
 
+# A later shared option must keep its own code, not inherit the first option's.
+nonfirst = deepcopy(q)
+list(nonfirst.values())[0]['questions'][1]['options'][0]['text'] = '4 无法完成'
+nonfirst_record = deepcopy(record)
+nonfirst_record['questionnaire_evidence'][1]['skip_logic'][0]['when'] = '4 无法完成'
+assert not questionnaire_copy_errors({'questionnaire': nonfirst}, nonfirst_record)
+assert questionnaire_copy_errors({'questionnaire': nonfirst}, record)
+
 def rejected(action):
     try:
         result = action()
@@ -64,9 +73,9 @@ mutations = [
     ('选项与 DB001 相同。', '选项与 DB999 相同。'),
 
     ('→ 跳至 DB004。', '→ 跳至 DB005。'),
-    ('DB003–DB015 的选项设置', 'DB003–DB016 的选项设置'),
-    ('DB003–DB015 的选项设置', 'DB003–DB014 的选项设置'),
-    ('DB003–DB015 的选项设置', 'DB004–DB015 的选项设置'),
+    ('DB001–DB015 的选项设置', 'DB001–DB016 的选项设置'),
+    ('DB001–DB015 的选项设置', 'DB001–DB014 的选项设置'),
+    ('DB001–DB015 的选项设置', 'DB002–DB015 的选项设置'),
     ('2011 年', '2012 年'),
 ]
 for old, new in mutations:
@@ -113,7 +122,7 @@ definition_copy_check(note="note.md")
     assert '## 参考资料说明' not in rendered
     assert rendered.count('data-criteria-intro="true"') == 0
     assert (folder / 'definition.html').read_text(encoding='utf-8').count('data-criteria-intro="true"') == 0
-    assert rendered.count('data-summary-question-option="true"') == 16  # DB001/002/003 in 2011; DB001 in 2020
+    assert rendered.count('data-summary-question-option="true"') == 9  # shared four answers per period plus DB002 jump row
     assert '→ 跳至 DB004。' in rendered
     assert '跳至 <code>DB004</code>' not in rendered
     assert '共同跳题（' not in rendered

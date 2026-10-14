@@ -16,6 +16,7 @@ from urllib.parse import urlsplit
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_reader_copy import Document, validate_note, normalized, route_matches
 from questionnaire_groups import period_keys, original_options, question_matches, unverified_question_periods
+from questionnaire_groups import validate_shared_option_rows
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
     rendered_when_matches, jump_descriptions, is_plain_paraphrase, validate_paraphrase_display)
@@ -390,7 +391,8 @@ def validate_questionnaire_rendering(
             if expected_jumps and line["instruction_count"] < 1 and not (shared_routes or inherited_jumps):
                 fail(f"final note period {period} omits jump instructions for {question_id}")
             if referenced and options:
-                fail(f"final note repeats referenced options for {question_id}")
+                own_rows = next((rows for identifier, rows, _ in jump_entries if question_matches(identifier, question_id, period, item)), [])
+                validate_shared_option_rows(referenced, own_rows)
             if item.get("response_type") == "closed_options" and not (shared_options or referenced or cross_options) and len(options) < len(expected_options):
                 fail(f"final note period {period} omits options for {question_id}")
             if shared_options and options:
@@ -402,7 +404,7 @@ def validate_questionnaire_rendering(
                     fail(f"final note period {period} option values/labels/order differ for {question_id}; expected={expected_text!r}; actual={[normalized(option.text()) for option in options]!r}")
             for jump in expected_jumps:
                 own_rows = next((rows for identifier, rows, _ in jump_entries if question_matches(identifier, question_id, period, item)), [])
-                rows = [{"text": raw, "jump": row["jump"]} for row, raw in zip(own_rows, option_text)]
+                rows = own_rows if referenced else [{"text": raw, "jump": row["jump"]} for row, raw in zip(own_rows, option_text)]
                 instructions = [e.text() for e in node.find(lambda e: is_question_instruction(e.attrs))]
                 descriptions = jump_descriptions(jump["when"], rows, instructions)
                 descriptions += [r["destination"] for r in shared_routes if rendered_when_matches(jump["when"], r["when"])]

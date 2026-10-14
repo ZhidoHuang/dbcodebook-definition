@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 import re
 from questionnaire_groups import period_keys, original_options, question_matches, question_identifiers, unverified_question_periods
+from questionnaire_groups import validate_shared_option_rows
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
     rendered_when_matches, jump_descriptions, is_plain_paraphrase, validate_paraphrase_display)
@@ -313,7 +314,7 @@ def read_questionnaire_copy(text):
                 elif line.startswith("共同跳题（"):
                     question["instructions"].append(line)
                 elif (re.search(r"(?:选项|跳题规则)与\s*[A-Za-z][A-Za-z0-9_]*\s*相同。", re.sub(r"`([^`]+)`", r"\1", line))
-                      or re.search(r"的选项设置相同，(?:该范围内的后续题目|下列题目)不再逐一展开选项。", line)):
+                      or re.search(r"的选项设置相同，(?:(?:该范围内的后续题目|下列题目)不再逐一展开选项|后续题目仅列有跳转的选项)。", line)):
                     question["instructions"].append(line)
                 elif line.startswith("- "):
                     option = re.split(r"\s*(?:→|->)\s*", line[2:], maxsplit=1)
@@ -336,7 +337,7 @@ def read_questionnaire_copy(text):
             referenced = referenced_options("\n".join(question["instructions"]), question["id"],
                 [(q["id"], [o["text"] for o in q["options"]], "\n".join(q["instructions"])) for q in questions])
             if referenced and question["options"]:
-                raise ValueError("引用选项与单题选项重复：" + question["id"])
+                validate_shared_option_rows(referenced, question["options"])
             shared_text = design + "\n" + "\n".join(s for q in questions for s in q["instructions"] if s.startswith("共同跳题（"))
             shared_options, _ = shared_question_info(shared_text, question["id"], ids)
             if shared_options and question["options"]:
@@ -618,7 +619,7 @@ def questionnaire_copy_errors(copy, record):
                     errors.append(f"{label}: option values/labels/order differ; expected={expected!r}; actual={[normalized(o['text']) for o in options]!r}")
             for jump in expected_jumps:
                 # Legends may restore source codes to label-only rendered rows.
-                rows = [{"text": raw, "jump": option["jump"]} for option, raw in zip(options, option_text)]
+                rows = options if referenced else [{"text": raw, "jump": option["jump"]} for option, raw in zip(options, option_text)]
                 descriptions = jump_descriptions(jump["when"], rows, question["instructions"])
                 descriptions += [r["destination"] for r in shared_routes if rendered_when_matches(jump["when"], r["when"])]
                 descriptions += jump_descriptions(jump["when"], inherited_jumps, [])

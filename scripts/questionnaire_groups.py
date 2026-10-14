@@ -34,7 +34,7 @@ def referenced_options(text, question_id, entries):
                 raise ValueError("连续选项范围须从本题开始，使用同一题号前缀和顺序：" + match[0])
             scope = [start[1] + str(i).zfill(len(start[2])) for i in range(int(start[2]) + 1, int(end[2]) + 1)]
             return "、".join(scope) + " 的选项与 " + first + " 相同。"
-        visible = re.sub(r"([A-Za-z][A-Za-z0-9_]*)\s*[–—-]\s*([A-Za-z][A-Za-z0-9_]*)\s*的选项设置相同，(?:该范围内的后续题目|下列题目)不再逐一展开选项。", expand_range, visible)
+        visible = re.sub(r"([A-Za-z][A-Za-z0-9_]*)\s*[–—-]\s*([A-Za-z][A-Za-z0-9_]*)\s*的选项设置相同，(?:(?:该范围内的后续题目|下列题目)不再逐一展开选项|后续题目仅列有跳转的选项)。", expand_range, visible)
         for match in re.finditer(pattern, visible):
             scope, source = match.groups()
             scope = [x.strip() for x in scope.split("、")]
@@ -64,6 +64,18 @@ def referenced_options(text, question_id, entries):
                 raise ValueError("引用题须完整展示选项：" + target)
             return options
     raise ValueError("选项须引用本时期前面已展示的题目：" + target)
+
+
+def validate_shared_option_rows(referenced, rows):
+    """Additional rows must be distinct shared answers with their own jumps."""
+    normalize = lambda text: re.sub(r"[\s`]+", "", str(text))
+    allowed = {normalize(text) for text in referenced}
+    seen = set()
+    for row in rows:
+        key = normalize(row["text"])
+        if key not in allowed or key in seen or not row.get("jump", "").strip():
+            raise ValueError("引用选项与单题选项重复或不一致：仅可补列带跳转的共用选项")
+        seen.add(key)
 
 
 def period_key(value):
