@@ -28,7 +28,8 @@ q = read_questionnaire_copy(questionnaire)
 groups = list(q.values())
 assert [len(g['questions']) for g in groups] == [15, 6]
 assert all('共同跳题（' not in g['design'] for g in groups)
-assert '回答“1 没有困难”时，跳至 DB004。' in groups[0]['questions'][1]['instructions']
+assert groups[0]['questions'][1]['options'][0]['jump'] == '→ 跳至 DB004。'
+assert not any(question['condition'] for question in groups[0]['questions'])
 assert groups[0]['questions'][0]['options'][0]['jump'] == '→ 跳至 DB004。'
 assert [x['id'] for x in groups[0]['questions'][:9]] == [f'DB{i:03d}' for i in range(1,10)]
 assert [g['design_title'] for g in groups] == ['问卷设计', '问卷设计变化']
@@ -59,14 +60,13 @@ mutations = [
     ('1 没有困难', '1 不确定'),
     ('DB001–DB009 的活动中都没有困难', 'DB009 没有困难'),
     ('跳至 DB016', '跳至 DB099'),
-    ('回答“1 没有困难”时，跳至 DB004。', '回答“1 没有困难”时，跳至 DB005。'),
     ('选项与 DB001 相同。', '选项与 DB004 相同。'),
     ('选项与 DB001 相同。', '选项与 DB999 相同。'),
 
     ('→ 跳至 DB004。', '→ 跳至 DB005。'),
-    ('DB001–DB015 的选项设置', 'DB001–DB016 的选项设置'),
-    ('DB001–DB015 的选项设置', 'DB001–DB014 的选项设置'),
-    ('DB001–DB015 的选项设置', 'DB002–DB015 的选项设置'),
+    ('DB003–DB015 的选项设置', 'DB003–DB016 的选项设置'),
+    ('DB003–DB015 的选项设置', 'DB003–DB014 的选项设置'),
+    ('DB003–DB015 的选项设置', 'DB004–DB015 的选项设置'),
     ('2011 年', '2012 年'),
 ]
 for old, new in mutations:
@@ -113,7 +113,7 @@ definition_copy_check(note="note.md")
     assert '## 参考资料说明' not in rendered
     assert rendered.count('data-criteria-intro="true"') == 0
     assert (folder / 'definition.html').read_text(encoding='utf-8').count('data-criteria-intro="true"') == 0
-    assert rendered.count('data-summary-question-option="true"') == 8  # four options per period group
+    assert rendered.count('data-summary-question-option="true"') == 16  # DB001/002/003 in 2011; DB001 in 2020
     assert '→ 跳至 DB004。' in rendered
     assert '跳至 <code>DB004</code>' not in rendered
     assert '共同跳题（' not in rendered
