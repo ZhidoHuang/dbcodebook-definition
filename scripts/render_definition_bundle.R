@@ -63,7 +63,7 @@ criteria_render_inline_code <- function(x) {
     stop("Criteria 文案不能为空。")
   }
   if (any(grepl("<code\\b", value, ignore.case = TRUE, perl = TRUE))) {
-    stop("Criteria 生成源不得手写 <code>；请使用成对反引号标记变量名和代码对象。")
+    stop("Criteria 生成源不得手写 <code>；请使用成对反引号标记变量名和程序代码。")
   }
 
   vapply(value, function(item) {
@@ -277,7 +277,7 @@ validate_criteria_markup <- function(criteria, variable_names = character()) {
     }
     stop(
       "Criteria 中的数据取值、编码值、分类值和问卷选项不得使用 inline code；",
-      "请改用 criteria_value()：",
+      "请在文案中使用普通方括号，如 [0]、[No_difficulty]，去掉外层反引号：",
       paste(invalid_names, collapse = "、")
     )
   }
