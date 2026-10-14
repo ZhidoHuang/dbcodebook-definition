@@ -42,7 +42,7 @@ def render_note(content):
 def main():
     base_questionnaire = "### 2011 年\n\n询问当前健康。\n\n#### DA001\n\n您的健康怎么样？\n\n- 1 好\n"
     expected = read_questionnaire_copy(base_questionnaire)
-    mapping_note = "对应数据变量：2004 年 JD111；2006 年 KD111。"
+    mapping_note = "对应数据变量：2004 年 `JD111`；2006 年 `KD111`。"
     noted = read_questionnaire_copy(base_questionnaire + "\n" + mapping_note + "\n")["2011"]["questions"][0]
     assert noted["text"] == "您的健康怎么样？"
     assert noted["notes"] == [mapping_note]
@@ -182,10 +182,11 @@ cat("QUESTIONNAIRE_COPY_FORWARD_PASS\\n")
         generated = folder / "questionnaire_note.md"
         assert validate_note(path, generated)["ok"]
         rendered = generated.read_text(encoding="utf-8")
-        assert re.search(r'<span[^>]*data-summary-question-detail-role="instruction"[^>]*font-size:0\.72em;[^>]*>' + re.escape(mapping_note) + r"</span>", rendered)
+        mapping_markup = mapping_note.replace('`JD111`', '<code>JD111</code>').replace('`KD111`', '<code>KD111</code>')
+        assert re.search(r'<span[^>]*data-summary-question-detail-role="instruction"[^>]*font-size:0\.72em;[^>]*>' + re.escape(mapping_markup) + r"</span>", rendered)
         assert "#### 问卷设计变化" not in rendered
         assert rendered.count("问卷设计变化") == 1
-        note_at = rendered.index(mapping_note)
+        note_at = rendered.index(mapping_markup)
         # Note is inside its question, before that question's options.
         question_at = rendered.rfind('data-summary-selection-line="true"', 0, note_at)
         assert rendered.find('data-summary-question-option="true"', question_at) > note_at
@@ -205,8 +206,8 @@ cat("QUESTIONNAIRE_COPY_FORWARD_PASS\\n")
         assert validate_note(path, generated)["ok"]
         assert rendered.count("ADL上游问题") == 1 and rendered.count("ADL原始问题") == 1
         assert rendered.count('data-summary-question-option="true"') == 8
-        assert rendered.count("选项与 DB001 相同。") == 1
-        assert rendered.count("DB001–DB015 的选项设置相同，该范围内的后续题目不再逐一展开选项。") == 1
+        assert rendered.count("选项与 <code>DB001</code> 相同。") == 1
+        assert rendered.count("<code>DB001</code>–<code>DB015</code> 的选项设置相同，该范围内的后续题目不再逐一展开选项。") == 1
         # A dropped group title must not escape the same full-text check.
         generated.write_text(rendered.replace("ADL上游问题", ""), encoding="utf-8")
         rejects(lambda: validate_note(path, generated), "问卷")

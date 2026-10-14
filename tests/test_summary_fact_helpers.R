@@ -238,10 +238,12 @@ question_layout_fixture <- render_summary_selection_paragraph(
   )))),
   "#A33842"
 )
-mapping_note <- "对应数据变量：2004 年 JD111；2006 年 KD111。"
+mapping_note <- "对应数据变量：2004 年 `JD111`；2006 年 `KD111`。"
 mapping_note_html <- render_summary_selection_paragraph(
   list(lines = list(summary_questionnaire_line("D111", "过去一周是否感到抑郁？", notes = mapping_note))), "#A33842")
-stopifnot(grepl(mapping_note, mapping_note_html, fixed = TRUE),
+stopifnot(grepl('<code>JD111</code>', mapping_note_html, fixed = TRUE),
+          grepl('<code>KD111</code>', mapping_note_html, fixed = TRUE),
+          !grepl('<code>D111</code>', mapping_note_html, fixed = TRUE),
           grepl('data-summary-question-detail-role="instruction"', mapping_note_html, fixed = TRUE),
           grepl('font-size:0.72em;', mapping_note_html, fixed = TRUE))
 

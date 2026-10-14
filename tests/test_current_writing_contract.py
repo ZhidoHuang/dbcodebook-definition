@@ -28,8 +28,8 @@ q = read_questionnaire_copy(questionnaire)
 groups = list(q.values())
 assert [len(g['questions']) for g in groups] == [15, 6]
 assert all('共同跳题（' not in g['design'] for g in groups)
-assert '回答“1 没有困难”时，跳至 DB004。' in groups[0]['questions'][1]['instructions']
-assert groups[0]['questions'][0]['options'][0]['jump'] == '→ 跳至 DB004。'
+assert '回答“1 没有困难”时，跳至 `DB004`。' in groups[0]['questions'][1]['instructions']
+assert groups[0]['questions'][0]['options'][0]['jump'] == '→ 跳至 `DB004`。'
 assert [x['id'] for x in groups[0]['questions'][:9]] == [f'DB{i:03d}' for i in range(1,10)]
 assert [g['design_title'] for g in groups] == ['问卷设计', '问卷设计变化']
 trigger = 'DB001–DB009 的活动中都没有困难'
@@ -70,7 +70,7 @@ mutations = [
     ('2011 年', '2012 年'),
 ]
 for old, new in mutations:
-    changed = questionnaire.replace(old, new, 1)
+    changed = questionnaire.replace('`', '').replace(old, new, 1)
     rejected(lambda: questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(changed)}, record))
 
 with tempfile.TemporaryDirectory() as temp:
@@ -114,12 +114,14 @@ definition_copy_check(note="note.md")
     assert rendered.count('data-criteria-intro="true"') == 0
     assert (folder / 'definition.html').read_text(encoding='utf-8').count('data-criteria-intro="true"') == 0
     assert rendered.count('data-summary-question-option="true"') == 8  # four options per period group
+    assert '<code>DB004</code>' in rendered
     assert '共同跳题（' not in rendered
     assert '的跳题规则与' not in rendered
     assert validate_note(path, note)['ok']
     assert validate_questionnaire_rendering(folder, folder, 'note.md')['rendered_question_periods'] == 21
     for old, new in mutations[:-1]:
-        changed = rendered.replace(html.escape(old, quote=False), html.escape(new, quote=False), 1)
+        markup = lambda value: re.sub(r'DB\d{3}', lambda m: '<code>' + m[0] + '</code>', html.escape(value, quote=False))
+        changed = rendered.replace(markup(old), markup(new), 1)
         assert changed != rendered, 'Mutation did not reach rendered text: ' + old
         note.write_text(changed, encoding='utf-8')
         try:

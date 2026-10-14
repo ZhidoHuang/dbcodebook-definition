@@ -3,6 +3,7 @@ import re
 
 
 def option_reference(text):
+    text = re.sub(r"`([^`]+)`", r"\1", text)
     matches = re.findall(r"选项与\s*([A-Za-z][A-Za-z0-9_]*)\s*相同。", text)
     if len(matches) > 1:
         raise ValueError("一道题不能引用多套选项")
@@ -15,12 +16,15 @@ def referenced_options(text, question_id, entries):
     Entries contain id, option labels and optional visible instructions.
     Historical per-question references remain readable. Routes are not shared.
     """
+    # Compare visible identifiers; keep authored inline code in the output.
+    text = re.sub(r"`([^`]+)`", r"\1", text)
     pattern = r"([A-Za-z][A-Za-z0-9_]*(?:\s*、\s*[A-Za-z][A-Za-z0-9_]*)*)\s*的选项与\s*([A-Za-z][A-Za-z0-9_]*)\s*相同。"
     ids = [entry[0] for entry in entries]
     targets = []
     covered = set()
     for entry in entries:
         visible = entry[2] if len(entry) > 2 else ""
+        visible = re.sub(r"`([^`]+)`", r"\1", visible)
         def expand_range(match):
             first, last = match.groups()
             start = re.fullmatch(r"([A-Za-z_]+)(\d+)", first)
@@ -74,6 +78,7 @@ def referenced_jump_options(question_id, entries):
     """
     scoped = []
     for identifier, options, instructions in entries:
+        instructions = re.sub(r"`([^`]+)`", r"\1", instructions)
         declarations = "\n".join(match.group(0).replace("的跳题规则与", "的选项与")
             for match in re.finditer(r"[A-Za-z][A-Za-z0-9_]*(?:\s*、\s*[A-Za-z][A-Za-z0-9_]*)*\s*的跳题规则与\s*[A-Za-z][A-Za-z0-9_]*\s*相同。", instructions))
         if declarations and not any(option.get("jump") for option in options):
