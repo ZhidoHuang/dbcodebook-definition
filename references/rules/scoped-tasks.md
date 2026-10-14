@@ -114,6 +114,7 @@ Copy-operations 保存文案阶段共用的程序操作。
 | --- | --- |
 | `display.options` | 原编码和顺序不变，只译标签 |
 | `display.skip_logic` | `source_index` 完整且唯一；原触发代码及目的题号不变 |
+| `display.skip_logic[].presentation="sequence"` | 已核实为同一时期、同一题组内的正常顺序作答时使用，并用 `display.next_question` 登记原问卷下一题；保留原分支及译文，不要求文案另写跳转提示。检查器核对下一题存在于逐期证据，且在文案和成品中紧接当前题；不能用于跳过题目或结束题组 |
 
 不提供这些字段时，保持旧检查行为。
 两个问卷检查入口使用同一核验规则，并支持同题明确引用先前内容一致的 Wave 选项。

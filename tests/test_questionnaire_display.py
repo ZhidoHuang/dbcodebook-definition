@@ -44,4 +44,39 @@ with tempfile.TemporaryDirectory() as temp:
     note.write_text(markup.replace(question, "中文概括。"), encoding="utf-8")
     rejects(lambda: validate_questionnaire_rendering(folder, folder, note.name), "complete text")
 assert record == original  # No comparator rewrites the original evidence.
+
+# Evidence lists may be stored by variable rather than questionnaire order.
+# Explicit next-question display metadata must match both copy and final HTML.
+sequential = copy.deepcopy(record)
+sequential['questionnaire_evidence'] = []
+for identifier in ['Q01', 'Q03', 'Q02']:
+    sequential['questionnaire_evidence'].append({
+        'question_id': identifier, 'periods': ['Wave 1'], 'question_text': 'Original question',
+        'response_type': 'open_value', 'options': [], 'skip_logic': [],
+        'rendered_in_copy': True, 'copy_locator': '问卷 / Wave 1 / ' + identifier,
+        'display': {'question_text': '请回答' + identifier + '的问题。', 'instructions': []}})
+first = sequential['questionnaire_evidence'][0]
+first['skip_logic'] = [{'when': '回答本题后', 'destination': 'Q02'}]
+first['display'].update(next_question='Q02', skip_logic=[{
+    'source_index': 0, 'when': '回答本题后', 'destination': '跳至 Q02', 'presentation': 'sequence'}])
+sequence_copy = '### Wave 1\n问卷设计：按原问卷顺序回答。\n\n' + '\n\n'.join(
+    '#### ' + identifier + '\n请回答' + identifier + '的问题。' for identifier in ['Q01', 'Q02', 'Q03'])
+snapshot = copy.deepcopy(sequential)
+assert not questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(sequence_copy)}, sequential)
+reordered = sequence_copy.replace('#### Q02', '#### TEMP').replace('#### Q03', '#### Q02').replace('#### TEMP', '#### Q03')
+rejects(lambda: questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(reordered)}, sequential), 'next displayed')
+with tempfile.TemporaryDirectory() as temp:
+    folder = Path(temp)
+    (folder / SOURCE_RECORD_NAME).write_text(json.dumps(sequential, ensure_ascii=False), encoding='utf-8')
+    bodies = ['<div data-summary-questionnaire-line="true"><strong data-summary-question-id="true">' + identifier
+              + '</strong>请回答' + identifier + '的问题。</div>' for identifier in ['Q01', 'Q02', 'Q03']]
+    markup = '<section class="raw-source-period" data-raw-source-period="Wave 1" data-label="Wave 1"><div data-summary-period-note="true"><strong data-summary-period-note-title="true">问卷设计</strong>按原问卷顺序回答。</div>' + ''.join(bodies) + '</section>'
+    (folder / 'note.md').write_text(markup, encoding='utf-8')
+    assert validate_questionnaire_rendering(folder, folder, 'note.md')['rendered_question_periods'] == 3
+    (folder / 'note.md').write_text(markup.replace(''.join(bodies), bodies[0] + bodies[2] + bodies[1]), encoding='utf-8')
+    rejects(lambda: validate_questionnaire_rendering(folder, folder, 'note.md'), 'next displayed')
+assert sequential == snapshot
+bad = copy.deepcopy(sequential)
+bad['questionnaire_evidence'][0]['display']['skip_logic'][0]['destination'] = '跳至 Q03'
+assert questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(sequence_copy)}, bad)
 print("QUESTIONNAIRE_DISPLAY_PASS: Chinese display, instructions, grouped periods, source preservation")

@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_reader_copy import Document, validate_note, normalized, route_matches
 from questionnaire_groups import period_keys, original_options, question_matches, unverified_question_periods
 from questionnaire_groups import validate_shared_option_rows
+from questionnaire_display import validate_display_sequence
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
     rendered_when_matches, jump_descriptions, is_plain_paraphrase, validate_paraphrase_display)
@@ -372,6 +373,9 @@ def validate_questionnaire_rendering(
                     entries.append((entry_ids[0].text().strip(), [o.text() for o in entry.find(
                         lambda e: e.attrs.get("data-summary-question-option") == "true")], entry.text()))
             visible_id = next(q.text().strip() for q in node.find(lambda q: q.attrs.get("data-summary-question-id") == "true"))
+            node_index = question_nodes.index(node)
+            next_ids = list(question_nodes[node_index + 1].find(lambda q: q.attrs.get("data-summary-question-id") == "true")) if node_index + 1 < len(question_nodes) else []
+            validate_display_sequence(item, next_ids[0].text().strip() if next_ids else None)
             referenced = referenced_options(node.text(), visible_id, entries)
             jump_entries = []
             for entry in question_nodes:

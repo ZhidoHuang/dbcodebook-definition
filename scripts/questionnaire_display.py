@@ -211,7 +211,35 @@ def display_answers(item, record):
             own_id = _question_alias(item.get("question_id", ""))
             if _condition_ids(source["when"]) - {own_id} != _condition_ids(jump["when"]) - {own_id}:
                 raise ValueError(f"display.skip_logic[{i}] changes trigger question/flag id")
-    return options, jumps
+    displayed_jumps = []
+    for jump in jumps:
+        presentation = jump.get("presentation")
+        if presentation is None:
+            displayed_jumps.append(jump)
+            continue
+        if presentation != "sequence":
+            raise ValueError("unknown display.skip_logic presentation")
+        # Keep every original branch and its translation; omit only a verified
+        # next-question destination within the same recorded questionnaire group.
+        declared_next = display.get("next_question")
+        for period in item.get("periods", []):
+            available = {_question_alias(question.get("question_id", ""))
+                         for question in record.get("questionnaire_evidence", [])
+                         if period in question.get("periods", []) and question.get("questionnaire_module") == item.get("questionnaire_module")}
+            if (not declared_next or declared_next not in available
+                    or _destination_ids(jump["destination"]) != {declared_next}
+                    or any(word in jump["destination"] for word in ("结束", "退出"))):
+                raise ValueError("sequence must point to the next verified question in the same period/group")
+        if not item.get("periods"):
+            raise ValueError("sequence requires verified periods")
+    return options, displayed_jumps
+
+
+def validate_display_sequence(item, next_identifier):
+    display = item.get("display") or {}
+    if any(j.get("presentation") == "sequence" for j in display.get("skip_logic", [])):
+        if not next_identifier or _question_alias(next_identifier) != display.get("next_question"):
+            raise ValueError("sequence destination must be the next displayed verified question")
 
 
 def rendered_when_matches(when, text):

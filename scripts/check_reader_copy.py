@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 from questionnaire_groups import period_keys, original_options, question_matches, question_identifiers, unverified_question_periods
 from questionnaire_groups import validate_shared_option_rows
+from questionnaire_display import validate_display_sequence
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
     rendered_when_matches, jump_descriptions, is_plain_paraphrase, validate_paraphrase_display)
@@ -585,6 +586,10 @@ def questionnaire_copy_errors(copy, record):
                 errors.append(f"{label}: expected one question")
                 continue
             question = questions[0]
+            ordered_questions = matches[0]["questions"]
+            question_index = ordered_questions.index(question)
+            next_identifier = ordered_questions[question_index + 1]["id"] if question_index + 1 < len(ordered_questions) else None
+            validate_display_sequence(item, next_identifier)
             if text not in normalized_evidence_text(question["text"]):
                 errors.append(f"{label}: incomplete or different question text")
             if text in normalized_evidence_text(matches[0]["design"]):
