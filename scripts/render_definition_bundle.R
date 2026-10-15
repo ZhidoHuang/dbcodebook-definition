@@ -519,13 +519,12 @@ render_definition_bundle <- function(
   database <- toupper(database)
   if (!is.character(theme_color) || length(theme_color) != 1L ||
       is.na(theme_color) || !nzchar(trimws(theme_color))) {
-    stop("Missing or invalid theme_color for ", database,
-         "; check references/database-themes.json.")
+    theme_color <- "#A33842"
   }
-  tryCatch(grDevices::col2rgb(theme_color), error = function(e) {
-    stop("Missing or invalid theme_color for ", database,
-         "; check references/database-themes.json.")
-  })
+  theme_color <- tryCatch({
+    grDevices::col2rgb(theme_color)
+    theme_color
+  }, error = function(e) "#A33842")
   if (!database %in% c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "KLOSA", "CHNS")) stop("Unsupported definition database: ", database)
   if (database == "CHNS") {
     if (missing(cycle_order)) stop("CHNS requires explicit, evidence-based cycle_order.")

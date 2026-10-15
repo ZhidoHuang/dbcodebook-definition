@@ -116,7 +116,7 @@ RAND HRS 和 Harmonized HRS 是独立产品，只能作为明确标注的辅助�
 | 正式 R | 保留独立运行入口，读者从头运行即可生成完整笔记 |
 | 最终数据 | 按[第5步](references/rules/stages/05-generate.md#正式输出与图表)统一为每人每期一行的长表；原始来源可以是其他结构 |
 | 主题事实 | 不把单主题选择变成公共规则，不套用其他数据库的身份或时期假设 |
-| 颜色与宣传 | 数据库颜色由[主题配置](references/database-themes.json)维护；宣传材料使用对应专用 Skill |
+| 颜色与宣传 | 网站决定笔记最终主题色；本地生成允许默认色。宣传配色见[主题配置](references/database-themes.json)，使用对应专用 Skill |
 
 ## Progress And Finish
 

@@ -25,20 +25,33 @@ reject(validate_chns_render_inputs(list(wrong), years), "Duplicate CHNS")
 wrong <- frame; wrong$WAVE[2] <- wrong$WAVE[1]
 reject(validate_chns_render_inputs(list(wrong), years), "Duplicate CHNS")
 reject(render_definition_bundle(database="CHNS"), "CHNS requires explicit")
-for (color in list(NULL, character(), "", NA_character_, c("red", "blue"), "not-a-color")) {
-  reject(render_definition_bundle(database="CHNS", theme_color=color),
-    "Missing or invalid theme_color for CHNS")
-}
 themes <- jsonlite::fromJSON(file.path(root, "references/database-themes.json"))$databases
-for (database in c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "KLOSA", "CHNS")) {
+for (database in names(themes)) {
   color <- themes[[database]]$primary
   stopifnot(is.character(color), length(color) == 1L, !is.na(color), nzchar(color),
     length(sprintf("<style>.varlink-info{color:%s}</style>", color)) == 1L)
   grDevices::col2rgb(color)
 }
-definition_source_entry <- function(...) stop("CHNS_IDENTITY_CONTRACT_ACCEPTED")
+observed_color <- NULL
+definition_source_entry <- function(...) {
+  observed_color <<- get("theme_color", envir=parent.frame())
+  stop("CHNS_IDENTITY_CONTRACT_ACCEPTED")
+}
 reject(render_definition_bundle(data=frame, db_data=frame, analysis_data=frame,
   database="CHNS", cycle_order=years), "CHNS_IDENTITY_CONTRACT_ACCEPTED")
+stopifnot(identical(observed_color, "#A33842"))
+without_chns <- themes; without_chns$CHNS <- NULL
+for (color in list(without_chns$CHNS$primary, character(), "", NA_character_,
+                   c("red", "blue"), "not-a-color")) {
+  reject(render_definition_bundle(data=frame, db_data=frame, analysis_data=frame,
+    database="CHNS", cycle_order=years, theme_color=color),
+    "CHNS_IDENTITY_CONTRACT_ACCEPTED")
+  stopifnot(identical(observed_color, "#A33842"))
+}
+reject(render_definition_bundle(data=frame, db_data=frame, analysis_data=frame,
+  database="CHNS", cycle_order=years, theme_color="#E74C3C"),
+  "CHNS_IDENTITY_CONTRACT_ACCEPTED")
+stopifnot(identical(observed_color, "#E74C3C"))
 reader <- c('dt <- read.csv("raw_data.csv", colClasses=c(ID="character",IDind="character"))',
   'name_z <- read.csv("raw_codebook.csv")',
   'static_person <- read.csv("raw_data_mast_pub_12.csv", colClasses=c(IDind="character"))')
