@@ -1523,11 +1523,8 @@ def main() -> int:
         share_header_matches = False
         if args.db == "share":
             try:
-                from share_export_contract import read_unique_codebook, validate_unique_csv
-                aliases, identities = read_unique_codebook(raw_codebook)
-                if set(aliases) != set(raw_vars) or len(aliases) != len(raw_vars):
-                    raise ValueError("SHARE codebook aliases differ from expected raw vars")
-                share_contract = validate_unique_csv(raw_data, raw_vars, identities)
+                from share_export_contract import validate_unique_package
+                share_contract = validate_unique_package(formal_dir, ["raw_data.csv"], raw_vars)
                 share_header_matches = True
                 ok(results, "SHARE personal key contract", share_contract)
             except ValueError as exc:

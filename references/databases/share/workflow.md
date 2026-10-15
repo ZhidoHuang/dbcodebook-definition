@@ -10,7 +10,7 @@
 1. 复用已绑定的原始SHARE标签，先确认本轮来源、身份、时期、别名及研究方法已确定，再使用公共选择入口。
    - 目录、搜索和详情使用[固定来源读取入口](../../rules/stages/01-source-plan.md#网页取证固定入口)，传 `--database share`。
    - 保持原有READY来源门禁及双路合并要求，不因程序已接受share参数而绕过来源问题。
-2. 页面正常预览响应必须包含一个uniqID数据文件和完整Dictionary。
+2. 页面正常预览响应必须包含一个uniqID数据文件和完整Dictionary。新版还包含连接说明标签；按 profile 核对其中的时期、来源与个人连接关系。
    - 核对完整来源身份及别名、文件类型、match_key、header及样本行维度。
    - 超过50个来源的截断预览不能证明完整字典。
    - `share_export_contract.validate_unique_preview`只检查已取得的正常UI响应，不调用网站接口，不把样本键检查当全文件验收。

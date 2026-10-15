@@ -4,7 +4,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/'scripts'))
 from share_export_contract import validate_unique_package, validate_unique_preview
-from recover_dbcodebook_export import inspect_archive
+from recover_dbcodebook_export import inspect_archive, install_archive
 from check_definition_output import check_identity_values
 from prepare_source_selection import build_record_action
 
@@ -55,6 +55,46 @@ def main():
         must_fail(lambda:validate_unique_preview(bad,{'x (A)':'answer'}),'match key')
         bad=copy.deepcopy(preview);bad['variables_limited']=True
         must_fail(lambda:validate_unique_preview(bad,{'x (A)':'answer'}),'limited')
+        # New downloads move period and connection metadata to the original HTML note.
+        newheader=['Variable','Label','File type','newname']
+        newrows=[['x (A)','Answer','uniqID','answer']]
+        note=('SHARE 连接说明\n文件信息\n① raw_data.csv\n记录单位：受访者 × 调查时期\n'
+              '变量来源\n连接键：ID = Wave_id + "_" + mergeid\n'
+              '├─ sharew1_rel9-0-0_a.dta [Wave 1]\n│  └─ x → answer\n'
+              '└─ sharew2_rel9-0-0_a.dta [Wave 2]\n   └─ x → answer\n')
+        from html import escape
+        def save_note(text):
+            (d/'连接说明.html').write_text('<div>'+escape(text)+'</div>',encoding='utf-8')
+        write_csv(d/'raw_codebook.csv',[newheader,*newrows])
+        must_fail(lambda:validate_unique_package(d,['raw_data.csv'],['answer']),'requires 连接说明')
+        save_note(note)
+        assert validate_unique_package(d,['raw_data.csv'],['answer'])['rows']==2
+        newpreview=copy.deepcopy(preview)
+        newpreview['files'][1].update(columns=newheader,rows=newrows)
+        newpreview['files'].append({'file_type':'connection_note','text':note})
+        newpreview['total_files']=3
+        assert validate_unique_preview(newpreview,{'x (A)':'answer'})['full_file_verified'] is False
+        for altered,fragment in [(note.replace('mergeid','country'),'match key/unit'),
+                                 (note.replace('Wave 2','Wave 10'),'ordinary Wave'),
+                                 (note.replace('─ x','─ other'),'provenance'),
+                                 (note.replace('→ answer','→ wrong_alias'),'provenance')]:
+            save_note(altered)
+            must_fail(lambda:validate_unique_package(d,['raw_data.csv'],['answer']),fragment)
+        save_note(note.split('└─ sharew2')[0])
+        must_fail(lambda:validate_unique_package(d,['raw_data.csv'],['answer']),'raw periods differ')
+        save_note(note)
+        write_csv(d/'raw_codebook.csv',[newheader+['Period'],newrows[0]+['Wave 1, Wave 2']])
+        must_fail(lambda:validate_unique_package(d,['raw_data.csv'],['answer']),'both Period and Match key')
+        write_csv(d/'raw_codebook.csv',[newheader,['x (A)','Answer','reID','answer']])
+        must_fail(lambda:validate_unique_package(d,['raw_data.csv'],['answer']),'personal uniqID')
+        write_csv(d/'raw_codebook.csv',[newheader,*newrows])
+        with zipfile.ZipFile(z,'w') as f:
+            for name in ['raw_data.csv','raw_codebook.csv','连接说明.html']: f.write(d/name,name)
+        assert inspect_archive(z,['answer'],'share')['data']['raw_data.csv']['rows']==2
+        installed=d/'installed';installed.mkdir()
+        install_archive(z,installed)
+        for name in ['raw_data.csv','raw_codebook.csv','连接说明.html']:
+            assert (installed/name).read_bytes()==(d/name).read_bytes()
     action=build_record_action({'status':'READY','source_groups':[{'source_identities':['x (A)'],'raw_variables':['answer']}]},'https://example.test/home/share/')
     assert action['input_text']=='x (A)=answer'
     r=os.environ.get('RSCRIPT')

@@ -292,6 +292,8 @@ def install_archive(archive_path: Path, out_dir: Path) -> tuple[list[str], list[
         names, data_members = _safe_csv_members(archive)
         for name in ["raw_codebook.csv", *data_members]:
             (out_dir / name).write_bytes(archive.read(name))
+        if "连接说明.html" in names:
+            (out_dir / "连接说明.html").write_bytes(archive.read("连接说明.html"))
     (out_dir / "bookapp_download.zip").write_bytes(payload)
     return names, data_members
 
