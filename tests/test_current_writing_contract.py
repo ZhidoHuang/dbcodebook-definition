@@ -27,28 +27,22 @@ summary = '## 摘要导读\n\n本主题定义“**困难项目数**”。\n\n'
 document = summary + questionnaire + '\n\n' + intro + '\n\n' + criteria + '\n\n## 小book提示\n\n本主题没有需要单独提示的主题级边界\n'
 q = read_questionnaire_copy(questionnaire)
 groups = list(q.values())
-assert [len(g['questions']) for g in groups] == [15, 6]
+assert [len(g['questions']) for g in groups] == [15, 4]
 assert all('共同跳题（' not in g['design'] for g in groups)
 assert groups[0]['questions'][1]['options'][0]['jump'] == '→ 跳至 DB004。'
 assert not any(question['condition'] for question in groups[0]['questions'])
 assert groups[0]['questions'][0]['options'][0]['jump'] == '→ 跳至 DB004。'
 assert [x['id'] for x in groups[0]['questions'][:9]] == [f'DB{i:03d}' for i in range(1,10)]
 assert [g['design_title'] for g in groups] == ['问卷设计', '问卷设计变化']
-trigger = 'DB001–DB009 的活动中都没有困难'
-route_ids = ['DB009']
-record = {'schema_version': 6, 'questionnaire_evidence': []}
-for group, years in zip(groups, [['2011'], ['2020']]):
-    for item in group['questions']:
-        record['questionnaire_evidence'].append({
-            'question_id': item['id'], 'periods': years, 'question_text': item['text'],
-            'response_type': 'closed_options',
-            'options': [{'value': str(i), 'label': v} for i, v in enumerate(
-                ['没有困难', '有困难但仍可以完成', '有困难，需要帮助', '无法完成'], 1)],
-            'skip_logic': [{'when': trigger, 'destination': 'DB016'}]
-                if years[0] == '2011' and item['id'] in route_ids else
-                ([{'when':'1 没有困难','destination':'DB004'}] if years[0]=='2011' and item['id'] in ['DB001','DB002'] else []),
-            'rendered_in_copy': True, 'copy_locator': '文案.md > 问卷'})
+# Expected evidence is independently transcribed from official PDF pages.
+# Do not reconstruct this record from the template or parser output.
+record = json.loads((ROOT / 'tests/fixtures/charls_questionnaire_example_evidence.json').read_text(encoding='utf-8'))
 assert not questionnaire_copy_errors({'questionnaire': q}, record)
+
+# Dropping a question from the template must not also drop it from expectations.
+missing_help = deepcopy(q)
+list(missing_help.values())[1]['questions'].pop(1)
+assert questionnaire_copy_errors({'questionnaire': missing_help}, record)
 
 # A later shared option must keep its own code, not inherit the first option's.
 nonfirst = deepcopy(q)
@@ -69,8 +63,8 @@ mutations = [
     ('1 没有困难', '1 不确定'),
     ('DB001–DB009 的活动中都没有困难', 'DB009 没有困难'),
     ('跳至 DB016', '跳至 DB099'),
-    ('选项与 DB001 相同。', '选项与 DB004 相同。'),
-    ('选项与 DB001 相同。', '选项与 DB999 相同。'),
+    ('穿衣服的时候是否有人帮助', '穿衣服的时候是否需要帮助'),
+    ('- 2 没有', '- 2 不确定'),
 
     ('→ 跳至 DB004。', '→ 跳至 DB005。'),
     ('DB001–DB015 的选项设置', 'DB001–DB016 的选项设置'),
@@ -122,16 +116,16 @@ definition_copy_check(note="note.md")
     assert '## 参考资料说明' not in rendered
     assert rendered.count('data-criteria-intro="true"') == 0
     assert (folder / 'definition.html').read_text(encoding='utf-8').count('data-criteria-intro="true"') == 0
-    assert rendered.count('data-summary-question-option="true"') == 9  # shared four answers per period plus DB002 jump row
+    assert rendered.count('data-summary-question-option="true"') == 17  # 2011: four shared answers + one jump; 2020: 4 + 2 + 4 + 2
     assert '→ 跳至 DB004。' in rendered
     assert '跳至 <code>DB004</code>' not in rendered
     assert '共同跳题（' not in rendered
     assert '的跳题规则与' not in rendered
     assert validate_note(path, note)['ok']
-    assert validate_questionnaire_rendering(folder, folder, 'note.md')['rendered_question_periods'] == 21
+    assert validate_questionnaire_rendering(folder, folder, 'note.md')['rendered_question_periods'] == 19
     for old, new in mutations[:-1]:
         def markup(value):
-            escaped = html.escape(value, quote=False)
+            escaped = html.escape(value.removeprefix('- '), quote=False)
             if '选项' in old:
                 return re.sub(r'DB\d{3}', lambda m: '<code>' + m[0] + '</code>', escaped)
             return escaped

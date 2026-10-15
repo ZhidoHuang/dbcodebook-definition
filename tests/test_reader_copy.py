@@ -205,8 +205,8 @@ cat("QUESTIONNAIRE_COPY_FORWARD_PASS\\n")
         rendered = generated.read_text(encoding="utf-8")
         assert validate_note(path, generated)["ok"]
         assert rendered.count("ADL上游问题") == 1 and rendered.count("ADL原始问题") == 1
-        assert rendered.count('data-summary-question-option="true"') == 9
-        assert rendered.count("选项与 <code>DB001</code> 相同。") == 1
+        assert rendered.count('data-summary-question-option="true"') == 17
+        assert "选项与 <code>DB001</code> 相同。" not in rendered
         assert rendered.count("<code>DB001</code>–<code>DB015</code> 的选项设置相同，后续题目仅列有跳转的选项。") == 1
         # A dropped group title must not escape the same full-text check.
         generated.write_text(rendered.replace("ADL上游问题", ""), encoding="utf-8")
