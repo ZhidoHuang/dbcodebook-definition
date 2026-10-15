@@ -25,6 +25,17 @@ reject(validate_chns_render_inputs(list(wrong), years), "Duplicate CHNS")
 wrong <- frame; wrong$WAVE[2] <- wrong$WAVE[1]
 reject(validate_chns_render_inputs(list(wrong), years), "Duplicate CHNS")
 reject(render_definition_bundle(database="CHNS"), "CHNS requires explicit")
+for (color in list(NULL, character(), "", NA_character_, c("red", "blue"), "not-a-color")) {
+  reject(render_definition_bundle(database="CHNS", theme_color=color),
+    "Missing or invalid theme_color for CHNS")
+}
+themes <- jsonlite::fromJSON(file.path(root, "references/database-themes.json"))$databases
+for (database in c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "KLOSA", "CHNS")) {
+  color <- themes[[database]]$primary
+  stopifnot(is.character(color), length(color) == 1L, !is.na(color), nzchar(color),
+    length(sprintf("<style>.varlink-info{color:%s}</style>", color)) == 1L)
+  grDevices::col2rgb(color)
+}
 definition_source_entry <- function(...) stop("CHNS_IDENTITY_CONTRACT_ACCEPTED")
 reject(render_definition_bundle(data=frame, db_data=frame, analysis_data=frame,
   database="CHNS", cycle_order=years), "CHNS_IDENTITY_CONTRACT_ACCEPTED")

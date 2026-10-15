@@ -17,7 +17,7 @@ def main() -> int:
     spec.loader.exec_module(module)
     routes = module.validate_routes()
     assert routes["databases"] == ["charls", "elsa", "hrs", "klosa", "knhanes", "share"]
-    assert routes["database_themes"] == ["CHARLS", "ELSA", "HRS", "KLOSA", "KNHANES", "SHARE"]
+    assert routes["database_themes"] == ["CHARLS", "CHNS", "ELSA", "HRS", "KLOSA", "KNHANES", "SHARE"]
     assert module.validate_manifest()["source_materials"] >= 22
     assert module.validate_portability()["text_files"] > 20
     assert module.validate_markdown_links()["markdown_links"] >= 20
