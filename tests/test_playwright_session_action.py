@@ -123,6 +123,44 @@ const page = {
             raise AssertionError("Mismatched preflight accepted")
         except ValueError:
             pass
+        # File selection returns before client-side parsing finishes. A slower first
+        # file must finish rendering before a faster second file can be selected.
+        upload_code = []
+        bound = Session("fixture", root, root / "upload.js", tab_id="bound")
+        bound.code = lambda code: upload_code.append(code) or {"ok": True}
+        for name in ("large.xlsx", "small.xlsx"):
+            item = root / name
+            item.write_bytes(b"fixture")
+            bound.upload("#documents-sidebar-input", item)
+        waiting = root / "upload-wait.cjs"
+        waiting.write_text("""
+const assert = require('node:assert/strict');
+let names = [], pending = false, waits = 0;
+global.document = {querySelector: () => ({get innerText() { return names.join('\\n'); }})};
+const page = {
+  evaluate: async fn => fn(),
+  locator: () => ({setInputFiles: async path => {
+    assert.equal(pending, false, 'Previous file is still being processed');
+    pending = true;
+    setTimeout(() => {names.push(path.split(/[\\\\/]/).pop()); pending = false;}, 20);
+  }}),
+  waitForFunction: async (fn, expected, options) => {
+    waits++;
+    assert.equal(options.timeout, 15000);
+    for (let i=0;i<100;i++) {
+      if (fn(expected)) return;
+      await new Promise(resolve => setTimeout(resolve, 2));
+    }
+    throw Error('Attachment did not finish');
+  }
+};
+(async () => {
+""" + "\n".join("await (" + code + ")(page);" for code in upload_code) + """
+  assert.deepEqual(names, ['large.xlsx', 'small.xlsx']);
+  assert.equal(waits, 2);
+})().catch(error => {console.error(error);process.exitCode=1;});
+""", encoding="utf-8")
+        subprocess.run(["node", str(waiting)], check=True)
         calls = []
         class FakeSession:
             def select_target(self, urls):

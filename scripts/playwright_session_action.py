@@ -233,18 +233,37 @@ class Session:
             raise RuntimeError("CLI did not return JSON: " + output) from exc
 
     def upload(self, selector, path):
-        # CLI owns the intercepted chooser. Native setFiles in run-code leaves it pending.
+        # Wait for each asynchronous attachment import before starting the next.
         if not Path(path).is_file():
             raise FileNotFoundError(path)
+        file_path = str(Path(path).resolve())
+        attachment = selector == "#documents-sidebar-input"
+        read_names = """() => document.querySelector('#documents-sidebar-list').innerText
+          .split(/\\r?\\n/).map(line => line.trim())
+          .filter(line => /\\.(xlsx|xls|csv|docx?|txt|pdf)$/i.test(line))"""
+        wait_code = """async page => {
+          await page.waitForFunction(expected => {
+            const actual = document.querySelector('#documents-sidebar-list').innerText
+              .split(/\\r?\\n/).map(line => line.trim())
+              .filter(line => /\\.(xlsx|xls|csv|docx?|txt|pdf)$/i.test(line));
+            return JSON.stringify(actual) === JSON.stringify(expected);
+          }, EXPECTED, {timeout: 15000});
+          return {ok:true};
+        }"""
         if self.tab_id:
-            self.code('async page => { await page.locator(' + json.dumps(selector)
-                      + ').setInputFiles(' + json.dumps(str(Path(path).resolve()))
-                      + '); return {ok:true}; }')
+            prefix = ('const expected = await page.evaluate(' + read_names + ');'
+                      + ' expected.push(' + json.dumps(Path(path).name) + ');') if attachment else ''
+            wait = wait_code.split('async page => {', 1)[1].rsplit('}', 1)[0].replace('EXPECTED', 'expected') if attachment else 'return {ok:true};'
+            self.code('async page => {' + prefix + ' await page.locator(' + json.dumps(selector)
+                      + ').setInputFiles(' + json.dumps(file_path) + ');' + wait + '}')
             return
+        expected = self.code('async page => page.evaluate(' + read_names + ')') if attachment else None
         output = self.call("click", selector)
         if "[File chooser]" not in output:
             raise RuntimeError("Upload click did not open a CLI file chooser")
-        self.call("upload", str(Path(path).resolve()))
+        self.call("upload", file_path)
+        if attachment:
+            self.code(wait_code.replace('EXPECTED', json.dumps(expected + [Path(path).name])))
 
     def select_target(self, urls):
         if self.tab_id:
