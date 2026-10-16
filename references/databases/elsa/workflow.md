@@ -19,7 +19,7 @@
 使用[第2步固定入口](../../rules/stages/02-download.md)，数据库参数为 `elsa`。
 
 - 预览核对 File/Wave 覆盖、记录数和文件分组。
-- 普通个人来源 raw header 按 `ID, idauniq, <selected variables...>` 核实，不套用 CHARLS 的 `id/year`。
+- 普通个人来源 raw header 按 `ID, idauniq, <selected variables...>` 核实；允许在 `idauniq` 后包含默认时期列 `Wave_id`。该列不计入选取的来源变量，出现时须逐行与 `ID` 的 Wave 前缀一致。raw 保持原样，不套用 CHARLS 的 `id/year`。
 - codebook 同时保留 `Variable (File)` 与 `newname`；恢复结果保留 variable、file、transaction 和文件列表，不去掉 File 后用裸变量对账。
 - Nutrition detail、Pension Grid 等重复明细不能套用普通个人表的 header 或唯一键，先按实际文件结构及支持范围确认。
 

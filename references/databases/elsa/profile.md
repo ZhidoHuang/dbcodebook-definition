@@ -24,7 +24,7 @@
 | household 标识 | 按 Wave 识别，例如 `idahhw10`、`idahhw11` 或 `hhidw*`，不能当稳定跨 Wave 家庭 ID |
 | raw 来源身份 | `Variable (File)`，不得只用裸 `Variable` |
 
-- ELSA raw header 通常为 `ID, idauniq, <selected variables...>`；不得套用 CHARLS 的 `id/year` 身份结构。
+- ELSA raw header 为 `ID, idauniq, <selected variables...>`，或包含默认时期列的 `ID, idauniq, Wave_id, <selected variables...>`。`Wave_id` 不计入选取的来源变量；出现时须逐行与 `ID` 的 Wave 前缀一致。不得套用 CHARLS 的 `id/year` 身份结构。
 - 正式 db/analysis 使用 `ID, idauniq, Wave`。`Wave` 从 `ID` 解析，保留 `Wave 1`、`Wave 2`……文本；raw 不改写。
 - 同一 `idauniq` 可跨 Wave 重复，这是纵向记录，不按 `idauniq` 去重。
 

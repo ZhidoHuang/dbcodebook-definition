@@ -95,8 +95,9 @@ def route_matches(destination, description, period=None):
     pattern = r"(?<![A-Za-z0-9_])" + r"\s*".join(re.escape(c) for c in target) + r"(?![A-Za-z0-9_])"
     if period is not None:
         # A visibly scoped target may carry a different question number in another year.
-        target_id = re.fullmatch(r"([A-Za-z0-9_][A-Za-z0-9_.-]*)(?:[（(][^）)]+[）)])?", str(destination).strip())
-        scoped = re.search(r"([A-Za-z0-9_][A-Za-z0-9_.-]*\s*[（(]\d{4}[^）)]*[）)](?:\s*[／/]\s*[A-Za-z0-9_][A-Za-z0-9_.-]*\s*[（(][^）)]+[）)])*)", description)
+        source_id = re.sub(r"^第\s*(\d+)\s*题$", r"\1", str(destination).strip())
+        target_id = re.fullmatch(r"([A-Za-z0-9_][A-Za-z0-9_.-]*)(?:[（(][^）)]+[）)])?", source_id)
+        scoped = re.search(r"([A-Za-z0-9_][A-Za-z0-9_.-]*\s*[（(](?:\d{4}|Wave\s*\d+)[^）)]*[）)](?:\s*[／/]\s*[A-Za-z0-9_][A-Za-z0-9_.-]*\s*[（(][^）)]+[）)])*)", description, re.I)
         if target_id and scoped:
             return question_matches(scoped[1], target_id[1], period)
     return re.search(pattern, description) is not None

@@ -127,7 +127,7 @@ def period_keys(label):
 def question_identifiers(title, period=None):
     """Resolve visible question aliases only inside their explicitly declared scope."""
     title = re.split(r"[:：]", str(title), maxsplit=1)[0].strip()
-    if not re.search(r"[（(].*\d{4}.*[）)]", title):
+    if not re.search(r"[（(][^）)]*(?:\d{4}|Wave\s*\d+)[^）)]*[）)]", title, re.I):
         return [re.sub(r"\s|`", "", title)]
     result, covered = [], set()
     for part in re.split(r"[／/]", title):
@@ -136,8 +136,9 @@ def question_identifiers(title, period=None):
             raise ValueError("Invalid scoped questionnaire question id: " + title)
         identifier, scope = match.groups()
         keys = period_keys(scope)
-        if any(not re.fullmatch(r"\d{4}", key) for key in keys) or not keys:
-            raise ValueError("Question id scope must name explicit years: " + title)
+        if not keys or not (all(re.fullmatch(r"\d{4}", key) for key in keys)
+                            or all(re.fullmatch(r"wave[1-9]\d*", key) for key in keys)):
+            raise ValueError("Question id scope must name explicit years or Waves: " + title)
         if covered.intersection(keys):
             raise ValueError("Overlapping questionnaire question id scopes: " + title)
         covered.update(keys)
@@ -169,7 +170,9 @@ def question_matches(title, identifier, period, evidence=None):
 
 def unverified_question_periods(label, identifiers, evidence, module="", survey_periods=None):
     """Validate ranges against recorded survey periods, then each question's evidence."""
-    if not re.search(r"\d{4}\s*年?\s*[–—-]\s*\d{4}", label):
+    has_wave_alias = any(re.search(r"[（(][^）)]*Wave\s*\d+", str(title), re.I)
+                         for title in identifiers)
+    if not re.search(r"\d{4}\s*年?\s*[–—-]\s*\d{4}", label) and not has_wave_alias:
         return []
     errors = []
     declared = set(period_keys(label))
@@ -186,7 +189,7 @@ def unverified_question_periods(label, identifiers, evidence, module="", survey_
             else:
                 errors.append(f"{match[0]}: irregular survey periods must be listed explicitly")
     for title in identifiers:
-        alias_scopes = re.findall(r"[（(]([^）)]*\d{4}[^）)]*)[）)]", re.split(r"[:：]", title, maxsplit=1)[0])
+        alias_scopes = re.findall(r"[（(]([^）)]*(?:\d{4}|Wave\s*\d+)[^）)]*)[）)]", re.split(r"[:：]", title, maxsplit=1)[0], re.I)
         if any(not set(period_keys(scope)) <= declared for scope in alias_scopes):
             errors.append(f"{title}: question id scope extends outside its questionnaire period")
     for period in sorted(checked):

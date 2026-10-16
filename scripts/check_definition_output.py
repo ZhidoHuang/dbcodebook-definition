@@ -165,6 +165,28 @@ def expected_raw_header(db: str, raw_vars: list[str]) -> list[str]:
     return ["ID", "id", "year", *raw_vars]
 
 
+def check_elsa_raw_contract(path: Path, raw_vars: list[str]) -> dict:
+    """Accept the optional default Wave_id without treating it as a source variable."""
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        header = reader.fieldnames or []
+        legacy = ["ID", "idauniq", *raw_vars]
+        current = ["ID", "idauniq", "Wave_id", *raw_vars]
+        if header not in (legacy, current):
+            raise ValueError(f"ELSA raw header must be {legacy} or {current}; actual={header}")
+        if header == legacy:
+            return {"header": header, "default_wave_id": False}
+        rows = 0
+        for number, row in enumerate(reader, start=2):
+            record = row.get("ID") or ""
+            wave = row.get("Wave_id") or ""
+            if (None in row or not re.fullmatch(r"Wave [1-9]\d*", wave)
+                    or record.split("_", 1)[0] != wave):
+                raise ValueError(f"ELSA Wave_id must equal the valid Wave prefix of ID; CSV row {number}")
+            rows += 1
+        return {"header": header, "default_wave_id": True, "verified_rows": rows}
+
+
 def charls_layered_raw_headers(raw_vars: list[str]) -> list[list[str]]:
     """Return the supported CHARLS export identities by data layer."""
     return [
@@ -1540,7 +1562,15 @@ def main() -> int:
                     and set(header[len(klosa_keys):]) == set(raw_vars))
             except ValueError:
                 pass
-        if (args.db not in {"share", "chns"} and (header in layered_headers or hrs_header_matches or klosa_header_matches)) or share_header_matches or knhanes_header_matches or chns_header_matches:
+        elsa_header_matches = False
+        if args.db == "elsa":
+            try:
+                elsa_contract = check_elsa_raw_contract(raw_data, raw_vars)
+                elsa_header_matches = True
+                ok(results, "ELSA default Wave_id", elsa_contract)
+            except ValueError as exc:
+                fail(results, "ELSA default Wave_id", str(exc))
+        if (args.db not in {"share", "chns", "elsa"} and (header in layered_headers or hrs_header_matches or klosa_header_matches)) or share_header_matches or knhanes_header_matches or chns_header_matches or elsa_header_matches:
             ok(results, "raw_data header", header)
         elif args.db == "charls" and header == ["ID", "year", *raw_vars]:
             identifier_check = check_charls_household_identifier(raw_data)
