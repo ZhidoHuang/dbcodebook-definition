@@ -1531,9 +1531,9 @@ def main() -> int:
         )
         hrs_defaults = set()
         if args.db == "hrs":
-            from hrs_export_contract import validate_defaults
+            from hrs_export_contract import validate_defaults, accepts_legacy_package
             try:
-                hrs_defaults = validate_defaults(raw_codebook, header)
+                hrs_defaults = validate_defaults(raw_codebook, header, legacy_package=accepts_legacy_package(args.process_dir, formal_dir))
             except ValueError as exc:
                 fail(results, "HRS automatic Tracker columns", str(exc))
         hrs_header_matches = (

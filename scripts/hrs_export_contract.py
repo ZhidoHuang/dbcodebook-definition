@@ -1,5 +1,7 @@
 """Full HRS Tracker columns exported automatically; scoped by full file identity."""
 import csv
+import json
+import hashlib
 from pathlib import Path
 
 TRACKER_FILE = "TRACKER_FILE_HRS_2022_EARLY_RELEASE_TRACKER_FILE_VERSION_2_RESPONDENT"
@@ -23,9 +25,33 @@ def codebook_defaults(path):
     manual = {x["Variable"].split(" ",1)[0] for x in tracker} & TRACKER_DEFAULTS
     return TRACKER_DEFAULTS - manual if tracker else set()
 
-def validate_defaults(path, header):
+def accepts_legacy_package(process_dir, formal_dir):
+    if process_dir is None:
+        return False
+    report_path = Path(process_dir) / 'execution_report.json'
+    if not report_path.is_file():
+        return False
+    report = json.loads(report_path.read_text(encoding='utf-8-sig'))
+    binding = report.get('copy_update', {})
+    legacy = binding.get('legacy_evidence', {})
+    if not legacy or Path(binding.get('formal_dir', '')).resolve() != Path(formal_dir).resolve():
+        return False
+    old = Path(legacy['path'])
+    sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest().upper()
+    if not old.is_file() or sha(old) != legacy.get('sha256', '').upper():
+        raise ValueError('Historical package evidence has changed')
+    artifacts = binding.get('result', {}).get('artifacts', {})
+    required = ['raw_data.csv', 'raw_codebook.csv']
+    required += [name for name in artifacts if name.lower().endswith('.zip')]
+    if not all(name in artifacts and sha(Path(formal_dir) / name) == artifacts[name].upper()
+               for name in required):
+        raise ValueError('Historical raw package no longer matches the accepted baseline')
+    return True
+
+
+def validate_defaults(path, header, *, legacy_package=False):
     expected = codebook_defaults(path)
     missing = expected - set(header)
-    if missing:
+    if missing and not legacy_package:
         raise ValueError("Missing automatic Tracker columns: " + ", ".join(sorted(missing)))
-    return expected
+    return expected & set(header) if legacy_package else expected

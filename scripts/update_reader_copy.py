@@ -78,13 +78,26 @@ def prepare(args):
     source = process / "definition_search_record.json"
     if digest(source) != result["source_sha256"]:
         raise ValueError("来源记录已变化；请先解决原有变化")
+    legacy_used = False
     for path in reports(process):
         prior = read(path)
         if prior.get("exploration_policy"):
             validate_exploration(prior, source)
             break
     else:
-        raise ValueError("没有可沿用的探索方案")
+        legacy_path = getattr(args, 'legacy_report', None)
+        if legacy_path is None:
+            raise ValueError("没有可沿用的探索方案")
+        legacy = read(legacy_path)
+        if (legacy.get('exploration_policy') or
+                legacy.get('status') not in ('completed', 'completed_with_issues') or
+                str(legacy.get('database', '')).lower() != str(current.get('database', '')).lower() or
+                legacy.get('topic_id') != current.get('topic_id') or
+                er.COMBINED_REVIEW_ROLE not in legacy.get('stage_reviews', {})):
+            raise ValueError("指定的历史报告与当前主题或已完成R复核不符")
+        legacy_used = True
+        # Explicit historical evidence does not replace the current R/source
+        # verification below or any existing dual-exploration registration.
     rfiles = [n for n in result["artifacts"] if n.lower().endswith('.r')]
     if len(rfiles) != 1:
         raise ValueError("须有唯一正式 R")
@@ -116,6 +129,11 @@ def prepare(args):
                'source_hash': digest(folder / source.name), 'result': result,
                'r_script': rfiles[0], 'audit_artifacts': audit['artifacts'],
                'review': review, 'status': 'prepared', 'issue_numbers': [], 'attempts': []}
+    if legacy_used:
+        legacy_path = args.legacy_report.resolve()
+        if legacy_path == (process / er.REPORT_NAME).resolve():
+            legacy_path = process / 'archived_runs' / current['run_id'] / er.REPORT_NAME
+        binding['legacy_evidence'] = {'path': str(legacy_path), 'sha256': digest(legacy_path)}
     report['copy_update'] = binding
     report['stage_reviews'] = {er.COMBINED_REVIEW_ROLE: review}
     er.save(*er.paths(process), report)
@@ -149,6 +167,19 @@ def workbook_content(path):
                 for name in archive.namelist() if name != 'docProps/core.xml'}
 
 
+def previous_raw_order(result, planned):
+    # A copy-only update keeps the accepted download order, even when source
+    # groups are organized by meaning rather than CSV position.
+    previous = next((item.get('detail') for item in result.get('checks', [])
+                     if item.get('check') == 'raw_codebook vars' and item.get('ok')), None)
+    if previous is None:
+        return planned
+    if (not isinstance(previous, list) or len(previous) != len(set(previous))
+            or set(previous) != set(planned)):
+        raise ValueError('原始变量清单与修改前已验证清单不同')
+    return previous
+
+
 def run(args):
     formal, process = args.formal_dir.resolve(), args.process_dir.resolve()
     report = read(process / er.REPORT_NAME)
@@ -160,7 +191,8 @@ def run(args):
     source_path = process / 'definition_search_record.json'
     source = read(source_path)
     impact = read(folder / 'definition_change_impact.json')
-    impact.update(schema_version=3, change_summary=binding['reason'], changed_dimensions=['copy'])
+    impact.update(schema_version=3, status='CHANGE_SCOPE_RECORDED',
+                  change_summary=binding['reason'], changed_dimensions=['copy'])
     omit_questionnaire = args.omit_questionnaire or binding.get('omit_questionnaire')
     if omit_questionnaire:
         if any(line.strip() == '## 问卷' for line in
@@ -216,6 +248,7 @@ def run(args):
         art = binding['audit_artifacts']
         defaults = record_defaults(source)
         raw = list(dict.fromkeys(v for group in source['source_groups'] for v in group['raw_variables'] if v not in defaults))
+        raw = previous_raw_order(old, raw)
         params = ['--complete', '--db', source['database'].lower(), '--formal-dir', formal,
                   '--process-dir', process, '--expected-files', ','.join(n for n in old['artifacts'] if not n.endswith('.log')),
                   '--raw-vars', ','.join(raw), '--analysis-db', art['analysis_db']['path'],
@@ -332,6 +365,7 @@ def main():
     parser.add_argument('command', choices=['prepare', 'run', 'retry', 'finish'])
     parser.add_argument('--formal-dir', type=Path, required=True)
     parser.add_argument('--process-dir', type=Path, required=True)
+    parser.add_argument('--legacy-report', type=Path, help='用户已明确接受的无双路登记历史R复核报告；默认不启用')
     parser.add_argument('--reason', help='本次纯表达或展示修改；至少20字')
     parser.add_argument('--omit-questionnaire', help='已删除整节问卷时，给出明确的省略原因（至少20字）')
     parser.add_argument('--config', type=Path)

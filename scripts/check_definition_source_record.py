@@ -1233,13 +1233,13 @@ def validate_record(
         )
     alias_family_count = validate_alias_families(record, recorded_raw)
     raw_vars = selection if pre_download else read_raw_vars(raw_codebook_path)
-    from hrs_export_contract import record_defaults, validate_defaults
+    from hrs_export_contract import record_defaults, validate_defaults, accepts_legacy_package
     defaults = record_defaults(record)
     exported_identity_vars = defaults if pre_download else read_exported_identity_vars(raw_codebook_path)
     if not pre_download and str(record.get("database", "")).lower() == "hrs":
         with (raw_codebook_path.parent / "raw_data.csv").open(encoding="utf-8-sig", newline="") as h:
             header = next(csv.reader(h))
-        exported_identity_vars |= validate_defaults(raw_codebook_path, header)
+        exported_identity_vars |= validate_defaults(raw_codebook_path, header, legacy_package=accepts_legacy_package(record_path.parent, raw_codebook_path.parent))
         if not defaults.issubset(exported_identity_vars):
             fail("Recorded Tracker default columns are absent from the export")
     if not set(raw_vars).issubset(recorded_raw) or not set(recorded_raw).issubset(
