@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 from questionnaire_groups import period_keys, original_options, question_matches, question_identifiers, unverified_question_periods
 from questionnaire_groups import validate_shared_option_rows
+from questionnaire_groups import question_identity
 from questionnaire_display import validate_display_sequence
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
@@ -422,7 +423,7 @@ def read_questionnaire_copy(text):
                     if question["condition"]:
                         raise ValueError("重复的题目适用对象：" + question_id)
                     question["condition"] = line.removeprefix("适用对象：").strip()
-                elif line.startswith("对应数据变量："):
+                elif line.startswith(("对应数据变量：", "原问卷变量名题号：")):
                     question.setdefault("notes", []).append(line)
                 elif line.startswith("跳题说明："):
                     question["instructions"].append(line.removeprefix("跳题说明：").strip())
@@ -686,6 +687,14 @@ def questionnaire_copy_errors(copy, record):
 
     if record.get("schema_version", 0) < 6:
         return []
+    # Keep authored headings/notes intact for rendering. Only the checking view
+    # uses the same scoped identities formerly carried by long headings.
+    from copy import deepcopy
+    copy = deepcopy(copy)
+    for block in copy.get("questionnaire", {}).values():
+        for question in block["questions"]:
+            question["display_id"] = question["id"]
+            question["id"] = question_identity(question["id"], question.get("notes", []))
     evidence = record.get("questionnaire_evidence")
     if not isinstance(evidence, list):
         return ["questionnaire_evidence must be a list"]
@@ -734,7 +743,7 @@ def questionnaire_copy_errors(copy, record):
             ordered_questions = matches[0]["questions"]
             question_index = ordered_questions.index(question)
             next_identifier = ordered_questions[question_index + 1]["id"] if question_index + 1 < len(ordered_questions) else None
-            validate_display_sequence(item, next_identifier)
+            validate_display_sequence(item, next_identifier, period)
             if text not in normalized_evidence_text(question["text"]):
                 errors.append(f"{label}: incomplete or different question text")
             if text in normalized_evidence_text(matches[0]["design"]):
@@ -744,12 +753,12 @@ def questionnaire_copy_errors(copy, record):
                 if normalized_evidence_text(instruction) not in visible:
                     errors.append(f"{label}: missing display instruction")
             options = question["options"]
-            inherited_jumps = referenced_jump_options(question["id"],
-                [(q["id"], q["options"], "\n".join(q["instructions"])) for q in matches[0]["questions"]])
+            inherited_jumps = referenced_jump_options(question["display_id"],
+                [(q["display_id"], q["options"], "\n".join(q["instructions"])) for q in matches[0]["questions"]])
             shared_text = matches[0]["design"] + "\n" + "\n".join(s for q in matches[0]["questions"] for s in q["instructions"] if s.startswith("共同跳题（"))
-            shared_options, shared_routes = shared_question_info(shared_text, question_id)
-            referenced = referenced_options("\n".join(question["instructions"]), question["id"],
-                [(q["id"], [o["text"] for o in q["options"]], "\n".join(q["instructions"])) for q in matches[0]["questions"]])
+            shared_options, shared_routes = shared_question_info(shared_text, question["display_id"])
+            referenced = referenced_options("\n".join(question["instructions"]), question["display_id"],
+                [(q["display_id"], [o["text"] for o in q["options"]], "\n".join(q["instructions"])) for q in matches[0]["questions"]])
             option_text = shared_options or original_options(referenced or [o["text"] for o in options], matches[0]["design"] + "\n" + question["text"], period)
             try:
                 cross_options = cross_period_options(question["text"] + "\n" + "\n".join(question["instructions"]),

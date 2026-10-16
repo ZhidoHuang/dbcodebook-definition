@@ -54,6 +54,8 @@ def markup(text):
               + escape(o['jump']) + '</span></div>' for o in q['options'])
             lines.append('<div data-summary-questionnaire-line="true"><b data-summary-question-id="true">'
               + escape(q['id']) + '</b>' + escape(q['text'])
+              + ''.join('<span data-summary-question-instruction="true">' + escape(n) + '</span>' for n in q.get('notes', []))
+              + ''.join('<span data-summary-question-instruction="true">' + escape(n) + '</span>' for n in q.get('instructions', []))
               + '<span data-summary-question-condition="true">' + escape(q['condition']) + '</span>' + rows + '</div>')
         sections.append('<section data-raw-source-period="'+key+'" data-label="'+escape(block['label'])+'">'
           + '<div data-summary-period-note="true"><b data-summary-period-note-title="true">问卷设计</b>'

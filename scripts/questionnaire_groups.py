@@ -147,6 +147,28 @@ def question_identifiers(title, period=None):
     return result
 
 
+def question_identity(title, notes):
+    """Resolve a visible period mapping for checking, without changing its display."""
+    text = "\n".join(notes) if isinstance(notes, list) else str(notes)
+    mappings = re.findall(r"原问卷变量名题号：([^。\n]+)", text)
+    if not mappings:
+        return title
+    if len(mappings) != 1:
+        raise ValueError("Duplicate questionnaire identifier note")
+    parts = []
+    for entry in re.split(r"[；;]", mappings[0].replace("`", "")):
+        match = re.fullmatch(r"\s*(.+?)\s+([A-Za-z0-9_][A-Za-z0-9_.-]*)\s*", entry)
+        if not match:
+            raise ValueError("Questionnaire identifier note needs a period and original identifier")
+        scope, identifier = match.groups()
+        parts.append(f"{identifier}（{scope}）")
+    resolved = "／".join(parts)
+    identifiers = question_identifiers(resolved)
+    if question_identifiers(title) != [title.strip()] or title.strip() not in identifiers:
+        raise ValueError("Question title must be one of the original identifiers in its note")
+    return resolved
+
+
 def question_matches(title, identifier, period, evidence=None):
     """Match source IDs or explicitly evidenced variable names within a period."""
     canonical = lambda value: re.sub(r"^Q(?=\d+(?:-\d+)*$)", "", str(value))
@@ -209,9 +231,17 @@ def original_options(actual, design, period):
     only when its entire ordered label list matches the question's options.
     """
     legends = re.findall(r"原问卷选项编码（([^）]+)）：([^。\n]+)", design)
-    matches = []
+    # A group can state its changed periods once and use a remainder clause.
+    for scope, body in re.findall(r"((?:Wave\s*\d|\d{4})[^。\n；]*?)\s*的选项编码为\s*([^。\n]+)", design, re.I):
+        clauses = re.split(r"[；;]\s*其余时期(?:的选项编码)?为\s*", body)
+        legends.append((scope.strip(), clauses[0].replace("、", "；")))
+        if len(clauses) == 2:
+            legends.append(("其余时期", clauses[1].replace("、", "；")))
+        elif len(clauses) > 2:
+            raise ValueError("Duplicate remainder option legend")
+    matches, defaults = [], []
     for scope, body in legends:
-        if period_key(period) not in period_keys(scope):
+        if scope != "其余时期" and period_key(period) not in period_keys(scope):
             continue
         pairs = []
         if "=" not in body:
@@ -226,7 +256,10 @@ def original_options(actual, design, period):
                     raise ValueError("Invalid original option legend: " + entry)
                 pairs.append(tuple(p.strip() for p in pair))
         if [label for _, label in pairs] == [s.strip() for s in actual]:
-            matches.append([code + " " + label for code, label in pairs])
+            (defaults if scope == "其余时期" else matches).append([code + " " + label for code, label in pairs])
+    if len(defaults) > 1:
+        raise ValueError("Overlapping remainder option legends: " + str(period))
+    matches = matches or defaults
     if len(matches) > 1:
         raise ValueError("Overlapping original option legends: " + str(period))
     return matches[0] if matches else actual

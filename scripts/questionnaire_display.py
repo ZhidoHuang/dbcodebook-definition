@@ -4,7 +4,7 @@ Checks compare registered display strings; they do not certify translation quali
 Legacy records without a display policy retain their original comparison behavior.
 """
 import re
-from questionnaire_groups import (period_keys, original_options,
+from questionnaire_groups import (period_keys, original_options, question_matches,
     shared_question_info as _shared_question_info, referenced_options as _referenced_options,
     referenced_jump_options as _referenced_jump_options)
 
@@ -235,10 +235,16 @@ def display_answers(item, record):
     return options, displayed_jumps
 
 
-def validate_display_sequence(item, next_identifier):
+def validate_display_sequence(item, next_identifier, period=None):
     display = item.get("display") or {}
     if any(j.get("presentation") == "sequence" for j in display.get("skip_logic", [])):
-        if not next_identifier or _question_alias(next_identifier) != display.get("next_question"):
+        matches = False
+        if next_identifier:
+            if period is None:
+                matches = _question_alias(next_identifier) == display.get("next_question")
+            else:
+                matches = question_matches(next_identifier, display.get("next_question"), period)
+        if not matches:
             raise ValueError("sequence destination must be the next displayed verified question")
 
 
