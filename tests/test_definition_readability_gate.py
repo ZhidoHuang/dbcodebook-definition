@@ -754,6 +754,49 @@ console.log("website preflight self-binding PASS");
             )
             assert preflight_run.returncode == 0, preflight_run.stderr
             assert "website preflight self-binding PASS" in preflight_run.stdout
+            submit_code = 'const returned =' + preload_script.split(
+                'const returned =', 1
+            )[1].split('timings.submit_and_return_ms =', 1)[0]
+            submit_test = r'''
+const assert = require("node:assert/strict");
+async function run(create, outcome) {
+  const state = { clicks: 0, loaded: false, url: "/nodes/edit/221/" };
+  const payload = {create, success_url_pattern: "**/nodes/post/*/"};
+  let submissionStarted = false, complete, fail, waitOptions;
+  const validDbCodeBookPostUrl = url => url === "/nodes/post/221/";
+  const tab = {url: async () => state.url, playwright: {
+    waitForURL: (pattern, options) => {
+      waitOptions = options;
+      return new Promise((resolve, reject) => {complete = resolve; fail = reject;});
+    },
+    getByRole: (role, {name}) => ({click: async options => {
+      assert.equal(role, "button");
+      assert.equal(String(name), create ? "/发布文章/" : "更新文章");
+      assert.equal(options.noWaitAfter, true);
+      state.clicks++;
+      if (outcome === "timeout") {fail(new Error("navigation timeout")); return;}
+      state.url = outcome === "wrong" ? "/nodes/post/999/" : "/nodes/post/221/";
+      // The destination commits, but its load event never fires.
+      if (waitOptions.waitUntil === "commit") complete();
+    }})
+  }};
+  try {
+    await Promise.race([(async () => {SUBMIT_CODE})(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("still waiting for load")), 50))]);
+    assert.equal(state.loaded, false);
+  } finally {
+    assert.equal(state.clicks, 1);
+    assert.equal(submissionStarted, true);
+  }
+}
+(async () => {
+  await run(false, "saved");
+  await run(true, "saved");
+  await assert.rejects(run(false, "wrong"), /未返回文章地址/);
+  await assert.rejects(run(false, "timeout"), /navigation timeout/);
+})().catch(error => {console.error(error); process.exitCode = 1;});
+'''.replace("SUBMIT_CODE", submit_code)
+            subprocess.run([node, "-e", submit_test], check=True)
             category_code = preload_script.split("const categoryOptions =", 1)[1].split(
                 'const metadata =', 1
             )[0]

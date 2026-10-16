@@ -1837,13 +1837,13 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
 
     stepStarted = Date.now();
     const returned = tab.playwright.waitForURL(
-      payload.success_url_pattern, {{ timeoutMs: 30000 }}
+      payload.success_url_pattern, {{ timeoutMs: 30000, waitUntil: "commit" }}
     );
     submissionStarted = true;
     if (payload.create) {{
-      await tab.playwright.getByRole("button", {{ name: /发布文章/ }}).click();
+      await tab.playwright.getByRole("button", {{ name: /发布文章/ }}).click({{ noWaitAfter: true }});
     }} else {{
-      await tab.playwright.getByRole("button", {{ name: "更新文章" }}).click();
+      await tab.playwright.getByRole("button", {{ name: "更新文章" }}).click({{ noWaitAfter: true }});
     }}
     await returned;
     const postUrl = await tab.url();
