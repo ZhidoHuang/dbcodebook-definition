@@ -32,7 +32,13 @@ except ValueError:
     pass
 else:
     raise AssertionError('another target must not be omitted')
-print('PASS: record notes preserve conditional and cross-question routes')
+# A conditional blank label is metadata only when backed by that exact source label.
+conditional = deepcopy(item)
+conditional['skip_logic'][0]['when'] = 'INAP; [Q123] = 5'
+conditional['display']['skip_logic'][0]['when'] = '不适用；Q123 为 5 时'
+conditional['options'] = [{'value':'Blank', 'label':'INAP; [Q123] = 5'}]
+assert display_answers(conditional,{})[1] == []
+print('PASS: blank metadata is separated without suppressing genuine routes')
 
 note = 'Blank 是发布空白，-8 是网页未回答，均不是作答选项。'
 options = {'options': [{'value':'1','label':'YES'}, {'value':'Blank','label':'INAP'},
@@ -42,12 +48,7 @@ options = {'options': [{'value':'1','label':'YES'}, {'value':'Blank','label':'IN
 assert display_answers(options,{})[0] == [{'value':'1','label':'YES'}]
 missing_note = deepcopy(options)
 missing_note['display']['instructions'] = []
-try:
-    display_answers(missing_note,{})
-except ValueError:
-    pass
-else:
-    raise AssertionError('record-only options require visible explanation')
+assert display_answers(missing_note,{})[0] == [{'value':'1','label':'YES'}]
 options['display']['record_only_option_values']=['1']
 try:
     display_answers(options,{})

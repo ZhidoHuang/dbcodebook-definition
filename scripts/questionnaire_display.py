@@ -218,16 +218,19 @@ def display_answers(item, record):
             displayed_jumps.append(jump)
             continue
         if presentation == "record_note":
-            # Legacy codebook imports sometimes recorded an unconditional blank
-            # category as a route back to the same variable. It has no target
-            # question or response condition and must not become a fake jump.
+            # A codebook's blank-category explanation describes this field's
+            # stored value, not a destination question. Keep its full evidence;
+            # actual questionnaire routes are registered/displayed separately.
             source = source_jumps[jump['source_index']]
-            condition = re.sub(r'Inapplicable|Partial Interview|INAP|[\s();,:.]', '', source['when'], flags=re.I)
             own_id = _question_alias(item.get('question_id', ''))
-            if (condition or _destination_ids(source['destination']) - {own_id}
+            blank_labels = [str(o.get('label', '')) for o in source_options
+                            if str(o.get('value', '')).lower() == 'blank']
+            unconditional = not re.sub(r'Inapplicable|Partial Interview|INAP|[\s();,:.]', '', source['when'], flags=re.I)
+            if ((not unconditional and source['when'] not in blank_labels)
+                    or _destination_ids(source['destination']) - {own_id}
                     or not re.search(r'发布.*空白|\bblank\b', source['destination'], re.I)
                     or not str(jump.get('presentation_reason', '')).strip()):
-                raise ValueError('record_note requires an unconditional blank category, not a question route')
+                raise ValueError('record_note requires source blank-category evidence, not a question route')
             continue
         if presentation != "sequence":
             raise ValueError("unknown display.skip_logic presentation")
@@ -247,8 +250,8 @@ def display_answers(item, record):
     record_codes = display.get('record_only_option_values', [])
     if record_codes:
         explanation = display.get('record_only_options_note', '')
-        if not explanation or explanation not in display.get('instructions', []):
-            raise ValueError('record-only options need a displayed group explanation')
+        if not isinstance(explanation, str) or not explanation.strip():
+            raise ValueError('record-only options need an internal evidence explanation')
         eligible = {str(option['value']) for option in source_options
                     if (str(option['value']).lower() == 'blank'
                         or re.fullmatch(r'Web non-response', option['label'], re.I))}
