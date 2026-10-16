@@ -113,6 +113,14 @@ for item in modern_sequence['questionnaire_evidence'][::2]:
 check(TEXT, modern_sequence)
 check(TEXT.replace('##### C104', '##### C999'), modern_sequence, good=False)
 
+# Later original IDs can coincide with another question's displayed heading.
+collision = copy.deepcopy(RECORD)
+for item in collision['questionnaire_evidence']:
+    if item['periods'][0] in ('Wave 3', 'Wave 4'):
+        item['question_id'] = 'C104' if item['display']['question_title'] == 'C103' else 'C105'
+check(TEXT, collision)
+check(TEXT.replace('##### C103', '##### C105'), collision, good=False)
+
 # Read the current public template, rather than copying its syntax into a test.
 template = (ROOT / 'templates/reader-copy.md').read_text(encoding='utf-8')
 sample = re.search(r'```markdown\n(.*?)\n```', template[template.index('**多期相同问卷的展示格式**'):], re.S)[1]

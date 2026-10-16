@@ -1208,3 +1208,9 @@
 - 新稿保留首期原问卷标识，题干后仅用“各个时期的变量名：”展示数据变量，允许按已核实规律简写；不再逐期展示问卷题号。
 - 合并标题由内部 display.question_title 和 question_title_source 关联首期证据。文案与生成物两个入口核对原标识、题组、时期和题干，继续逐期检查选项及跳转；正常顺序作答按本期原题号核对下一题。
 - test_questionnaire_identifier_notes.py 覆盖新旧备注、首期证据缺失/错误/晚于本期、跨题组、题干及选项变化、错误标题、正常顺序，并调用真实 R 渲染。test_reader_copy.py 与 test_summary_fact_helpers.R 覆盖新备注保留与小字号备注位置。通过不代表其他主题已更新。
+
+### 首期标题与后期原题号重名
+
+- 已核实 `display.question_title_source` 时，匹配只使用指定的首期标题，不再回退匹配本期原题号。逐期证据、题干、选项和跳转检查保持不变。
+- `test_questionnaire_identifier_notes.py` 增加后期原题号与另一题展示标题相同的情境，同时检查错误标题仍被拒绝。两个文案／成品入口共用该匹配函数。
+- 2026-10-17 完整 `tests/run_all.ps1` 通过，含 skill-creator 校验。此次程序测试不等于其他主题已更新或网站视觉验收通过。

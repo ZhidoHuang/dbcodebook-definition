@@ -216,8 +216,9 @@ def question_matches(title, identifier, period, evidence=None):
     identifiers = question_identifiers(title, period)
     if evidence is not None:
         display = evidence.get("display", {})
-        if display.get("question_title_source") and display.get("question_title") in identifiers:
-            return period_key(period) in {period_key(p) for p in evidence.get("periods", [])}
+        if display.get("question_title_source"):
+            return (display.get("question_title") in identifiers
+                    and period_key(period) in {period_key(p) for p in evidence.get("periods", [])})
     return any(canonical(value) == canonical(identifier) or (variable and value == variable)
                for value in identifiers)
 
