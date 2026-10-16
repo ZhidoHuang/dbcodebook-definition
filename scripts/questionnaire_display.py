@@ -217,6 +217,18 @@ def display_answers(item, record):
         if presentation is None:
             displayed_jumps.append(jump)
             continue
+        if presentation == "record_note":
+            # Legacy codebook imports sometimes recorded an unconditional blank
+            # category as a route back to the same variable. It has no target
+            # question or response condition and must not become a fake jump.
+            source = source_jumps[jump['source_index']]
+            condition = re.sub(r'Inapplicable|Partial Interview|INAP|[\s();,:.]', '', source['when'], flags=re.I)
+            own_id = _question_alias(item.get('question_id', ''))
+            if (condition or _destination_ids(source['destination']) - {own_id}
+                    or not re.search(r'发布.*空白|\bblank\b', source['destination'], re.I)
+                    or not str(jump.get('presentation_reason', '')).strip()):
+                raise ValueError('record_note requires an unconditional blank category, not a question route')
+            continue
         if presentation != "sequence":
             raise ValueError("unknown display.skip_logic presentation")
         # Keep every original branch and its translation; omit only a verified
@@ -232,6 +244,19 @@ def display_answers(item, record):
                 raise ValueError("sequence must point to the next verified question in the same period/group")
         if not item.get("periods"):
             raise ValueError("sequence requires verified periods")
+    record_codes = display.get('record_only_option_values', [])
+    if record_codes:
+        explanation = display.get('record_only_options_note', '')
+        if not explanation or explanation not in display.get('instructions', []):
+            raise ValueError('record-only options need a displayed group explanation')
+        eligible = {str(option['value']) for option in source_options
+                    if (str(option['value']).lower() == 'blank'
+                        or re.fullmatch(r'Web non-response', option['label'], re.I))}
+        if not isinstance(record_codes, list) or not set(record_codes) <= eligible:
+            raise ValueError('only explicit blank or Web non-response metadata can leave question options')
+        if any(code in _trigger_codes(jump['when']) for code in record_codes for jump in source_jumps):
+            raise ValueError('a routing response cannot be removed from question options')
+        options = [option for option in options if str(option['value']) not in record_codes]
     return options, displayed_jumps
 
 

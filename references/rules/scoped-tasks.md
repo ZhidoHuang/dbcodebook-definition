@@ -117,7 +117,9 @@ Copy-operations 保存文案阶段共用的程序操作。
 | 可选字段 | 保留要求 |
 | --- | --- |
 | `display.options` | 原编码和顺序不变，只译标签 |
+| `display.record_only_option_values` | 代码本把 Blank 或 Web non-response 列入选项表时，可将这些明确的记录状态移到组内设计说明。原始选项仍保留；`record_only_options_note` 写说明，并同步放入 `display.instructions`。不得用于有效回答、拒答、不知道或触发跳题的选项。 |
 | `display.skip_logic` | `source_index` 完整且唯一；原触发代码及目的题号不变 |
+| `display.skip_logic[].presentation="record_note"` | 旧记录把无条件的“不适用／部分访谈导致本字段为空白”误存为跳题时使用；用 `presentation_reason` 说明核实依据，保留原记录。它不作为跳转展示。有回答条件、前置题条件或转向另一题时不适用。必要的数据说明在设计说明中集中写。 |
 | `display.skip_logic[].presentation="sequence"` | 已核实为同一时期、同一题组内的正常顺序作答时使用，并用 `display.next_question` 登记原问卷下一题；保留原分支及译文，不要求文案另写跳转提示。检查器核对下一题存在于逐期证据，且在文案和成品中紧接当前题；不能用于跳过题目或结束题组 |
 
 不提供这些字段时，保持旧检查行为。
