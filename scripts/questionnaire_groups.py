@@ -169,6 +169,34 @@ def question_identity(title, notes):
     return resolved
 
 
+def validate_display_titles(evidence):
+    """Check internal merged-title links without publishing original ID mappings."""
+    by_id = {}
+    for item in evidence:
+        by_id.setdefault(item.get("evidence_id"), []).append(item)
+    for item in evidence:
+        display = item.get("display", {})
+        title, source_id = display.get("question_title"), display.get("question_title_source")
+        if title is None and source_id is None:
+            continue
+        anchors = by_id.get(source_id, [])
+        if not isinstance(title, str) or not title.strip() or len(anchors) != 1:
+            raise ValueError("Merged question title requires one verified source evidence_id")
+        anchor = anchors[0]
+        if title not in [anchor.get("question_id"), anchor.get("question_variable")]:
+            raise ValueError("Merged question title must retain its first-period original identifier")
+        if anchor.get("questionnaire_module", "") != item.get("questionnaire_module", ""):
+            raise ValueError("Merged question title cannot cross questionnaire groups")
+        if not anchor.get("display_required", True) or not anchor.get("periods") or not item.get("periods"):
+            raise ValueError("Merged question title source must be displayed with verified periods")
+        order = lambda p: int(re.search(r"\d+", period_key(p))[0])
+        if min(map(order, anchor["periods"])) > min(map(order, item["periods"])):
+            raise ValueError("Merged question title source cannot be a later period")
+        stem = lambda q: re.sub(r"\s+", "", q.get("display", {}).get("question_text", q.get("question_text", "")))
+        if not stem(anchor) or stem(anchor) != stem(item):
+            raise ValueError("Merged question title requires the same displayed question text")
+
+
 def question_matches(title, identifier, period, evidence=None):
     """Match source IDs or explicitly evidenced variable names within a period."""
     canonical = lambda value: re.sub(r"^Q(?=\d+(?:-\d+)*$)", "", str(value))
@@ -186,6 +214,10 @@ def question_matches(title, identifier, period, evidence=None):
     if annotated:
         return bool(variable and annotated[2] == variable and canonical(annotated[1]) == canonical(identifier))
     identifiers = question_identifiers(title, period)
+    if evidence is not None:
+        display = evidence.get("display", {})
+        if display.get("question_title_source") and display.get("question_title") in identifiers:
+            return period_key(period) in {period_key(p) for p in evidence.get("periods", [])}
     return any(canonical(value) == canonical(identifier) or (variable and value == variable)
                for value in identifiers)
 

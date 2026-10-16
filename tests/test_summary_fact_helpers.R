@@ -238,7 +238,7 @@ question_layout_fixture <- render_summary_selection_paragraph(
   )))),
   "#A33842"
 )
-mapping_note <- "对应数据变量：2004 年 `JD111`；2006 年 `KD111`。"
+mapping_note <- "各个时期的变量名：2004 年 `JD111`；2006 年 `KD111`。"
 mapping_note_html <- render_summary_selection_paragraph(
   list(lines = list(summary_questionnaire_line("D111", "过去一周是否感到抑郁？", notes = mapping_note))), "#A33842")
 stopifnot(grepl('<code>JD111</code>', mapping_note_html, fixed = TRUE),

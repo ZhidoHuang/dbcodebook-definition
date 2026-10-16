@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 from questionnaire_groups import period_keys, original_options, question_matches, question_identifiers, unverified_question_periods
 from questionnaire_groups import validate_shared_option_rows
-from questionnaire_groups import question_identity
+from questionnaire_groups import question_identity, validate_display_titles
 from questionnaire_display import validate_display_sequence
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
@@ -423,7 +423,7 @@ def read_questionnaire_copy(text):
                     if question["condition"]:
                         raise ValueError("重复的题目适用对象：" + question_id)
                     question["condition"] = line.removeprefix("适用对象：").strip()
-                elif line.startswith(("对应数据变量：", "原问卷变量名题号：")):
+                elif line.startswith(("各个时期的变量名：", "对应数据变量：", "原问卷变量名题号：")):
                     question.setdefault("notes", []).append(line)
                 elif line.startswith("跳题说明："):
                     question["instructions"].append(line.removeprefix("跳题说明：").strip())
@@ -698,6 +698,7 @@ def questionnaire_copy_errors(copy, record):
     evidence = record.get("questionnaire_evidence")
     if not isinstance(evidence, list):
         return ["questionnaire_evidence must be a list"]
+    validate_display_titles(evidence)
     periods = {}
     for period in copy.get("questionnaire", {}).values():
         for key in period_keys(period["label"]):
@@ -743,7 +744,7 @@ def questionnaire_copy_errors(copy, record):
             ordered_questions = matches[0]["questions"]
             question_index = ordered_questions.index(question)
             next_identifier = ordered_questions[question_index + 1]["id"] if question_index + 1 < len(ordered_questions) else None
-            validate_display_sequence(item, next_identifier, period)
+            validate_display_sequence(item, next_identifier, period, displayed_evidence)
             if text not in normalized_evidence_text(question["text"]):
                 errors.append(f"{label}: incomplete or different question text")
             if text in normalized_evidence_text(matches[0]["design"]):

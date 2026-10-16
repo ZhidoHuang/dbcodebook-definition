@@ -77,6 +77,42 @@ shared = TEXT.replace('- 是\n- 否\n##### C104', '- 是\n- 否\nC103–C104 的
 shared = shared.rsplit('- 是\n- 否\n', 1)[0]
 check(shared, RECORD)
 
+# New reader copy shows only data variables; original IDs stay in evidence.
+TEXT = TEXT.replace('原问卷变量名题号：Wave 1–2 C103；Wave 3–4 C203。',
+    '各个时期的变量名：Wave 1–4，变量名有规律，使用 `w01`～`w04C103`。')
+TEXT = TEXT.replace('原问卷变量名题号：Wave 1–2 C104；Wave 3–4 C204。',
+    '各个时期的变量名：Wave 1–4，变量名有规律，使用 `w01`～`w04C104`。')
+for index, item in enumerate(RECORD['questionnaire_evidence']):
+    item['evidence_id'] = 'e' + str(index)
+    item['display']['question_title'] = 'C10' + str(3 + index % 2)
+    item['display']['question_title_source'] = 'e' + str(index % 2)
+check(TEXT, RECORD)
+for mutate in [
+    lambda q: q['display'].update(question_title_source='absent'),
+    lambda q: q['display'].update(question_title='C999'),
+    lambda q: q.update(questionnaire_module='wrong group'),
+    lambda q: q['display'].update(question_text='另一道题'),
+    lambda q: q['options'][0].update(value='7'),
+]:
+    bad = copy.deepcopy(RECORD)
+    mutate(bad['questionnaire_evidence'][-2])
+    check(TEXT, bad, good=False)
+check(TEXT.replace('##### C103', '##### C999'), RECORD, good=False)
+bad = copy.deepcopy(RECORD)
+bad['questionnaire_evidence'][0]['display']['question_title_source'] = 'e2'
+check(TEXT, bad, good=False)
+
+modern_sequence = copy.deepcopy(RECORD)
+for item in modern_sequence['questionnaire_evidence'][::2]:
+    wave = int(item['periods'][0].split()[-1])
+    destination = 'C104' if wave <= 2 else 'C204'
+    item['skip_logic'] = [{'when': item['options'][0]['value'] + ' 是', 'destination': destination}]
+    item['display']['skip_logic'] = [{'source_index': 0, 'when': item['options'][0]['value'] + ' 是',
+        'destination': '跳至 ' + destination, 'presentation': 'sequence'}]
+    item['display']['next_question'] = destination
+check(TEXT, modern_sequence)
+check(TEXT.replace('##### C104', '##### C999'), modern_sequence, good=False)
+
 # Read the current public template, rather than copying its syntax into a test.
 template = (ROOT / 'templates/reader-copy.md').read_text(encoding='utf-8')
 sample = re.search(r'```markdown\n(.*?)\n```', template[template.index('**多期相同问卷的展示格式**'):], re.S)[1]
@@ -110,9 +146,9 @@ writeLines(render_summary_selection_paragraph(copy$summary_selection, "#A33842")
     rendered = (folder / 'note.md').read_text(encoding='utf-8')
     headings = list(Document(rendered).root.find(lambda e: e.attrs.get('data-summary-question-id') == 'true'))
     assert [h.text() for h in headings] == ['C103', 'C104']
-    assert rendered.index('是否参加过活动？') < rendered.index('原问卷变量名题号：') < rendered.index('data-summary-question-option')
+    assert rendered.index('是否参加过活动？') < rendered.index('各个时期的变量名：') < rendered.index('data-summary-question-option')
     assert validate_questionnaire_rendering(folder, folder, 'note.md')['rendered_question_periods'] == 8
-    (folder / 'note.md').write_text(rendered.replace('Wave 3–4 C203', 'Wave 3–4 C299'), encoding='utf-8')
+    (folder / 'note.md').write_text(rendered.replace('>C103</', '>C999</'), encoding='utf-8')
     try:
         validate_questionnaire_rendering(folder, folder, 'note.md')
     except (SystemExit, ValueError):

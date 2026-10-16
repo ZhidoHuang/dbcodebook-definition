@@ -42,7 +42,7 @@ def render_note(content):
 def main():
     base_questionnaire = "### 2011 年\n\n询问当前健康。\n\n#### DA001\n\n您的健康怎么样？\n\n- 1 好\n"
     expected = read_questionnaire_copy(base_questionnaire)
-    mapping_note = "对应数据变量：2004 年 `JD111`；2006 年 `KD111`。"
+    mapping_note = "各个时期的变量名：2004 年 `JD111`；2006 年 `KD111`。"
     noted = read_questionnaire_copy(base_questionnaire + "\n" + mapping_note + "\n")["2011"]["questions"][0]
     assert noted["text"] == "您的健康怎么样？"
     assert noted["notes"] == [mapping_note]

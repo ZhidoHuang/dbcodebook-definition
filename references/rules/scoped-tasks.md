@@ -116,6 +116,7 @@ Copy-operations 保存文案阶段共用的程序操作。
 
 | 可选字段 | 保留要求 |
 | --- | --- |
+| `display.question_title`、`display.question_title_source` | 合并时期且题目标识变化时，登记首期显示标识及其来源 evidence_id。各期原题号仍留在原记录，不要求在正文逐期展示。两个检查入口核对首期标识、题干、题组和时期，再逐期核对选项与跳转。 |
 | `display.options` | 原编码和顺序不变，只译标签 |
 | `display.record_only_option_values` | 代码本把 Blank 或 Web non-response 列入选项表时，不作为问卷选项展示。原始选项仍保留；`record_only_options_note` 记录内部核实依据，不要求放入 `display.instructions` 或正文。不得用于有效回答、拒答、不知道或触发跳题的选项。 |
 | `display.skip_logic` | `source_index` 完整且唯一；原触发代码及目的题号不变 |

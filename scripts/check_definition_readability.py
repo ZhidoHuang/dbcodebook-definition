@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_reader_copy import Document, validate_note, normalized, route_matches
 from questionnaire_groups import period_keys, original_options, question_matches, unverified_question_periods
 from questionnaire_groups import validate_shared_option_rows
-from questionnaire_groups import question_identity
+from questionnaire_groups import question_identity, validate_display_titles
 from questionnaire_display import validate_display_sequence
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
@@ -232,6 +232,7 @@ def validate_questionnaire_rendering(
     evidence = record.get("questionnaire_evidence")
     if not isinstance(evidence, list):
         fail("source record questionnaire_evidence must be a list")
+    validate_display_titles(evidence)
     evidence_count = len(evidence)
     evidence = [item for item in evidence if requires_questionnaire_display(item)]
 
@@ -389,7 +390,7 @@ def validate_questionnaire_rendering(
                 visible_id, [entry[0] for entry in entries])
             node_index = question_nodes.index(node)
             next_ids = list(question_nodes[node_index + 1].find(lambda q: q.attrs.get("data-summary-question-id") == "true")) if node_index + 1 < len(question_nodes) else []
-            validate_display_sequence(item, next_ids[0].text().strip() if next_ids else None, period)
+            validate_display_sequence(item, next_ids[0].text().strip() if next_ids else None, period, evidence)
             referenced = referenced_options(node.text(), visible_id, entries)
             jump_entries = []
             for entry in question_nodes:

@@ -263,7 +263,7 @@ def display_answers(item, record):
     return options, displayed_jumps
 
 
-def validate_display_sequence(item, next_identifier, period=None):
+def validate_display_sequence(item, next_identifier, period=None, evidence=()):
     display = item.get("display") or {}
     if any(j.get("presentation") == "sequence" for j in display.get("skip_logic", [])):
         matches = False
@@ -272,6 +272,11 @@ def validate_display_sequence(item, next_identifier, period=None):
                 matches = _question_alias(next_identifier) == display.get("next_question")
             else:
                 matches = question_matches(next_identifier, display.get("next_question"), period)
+                targets = [q for q in evidence
+                           if q.get("question_id") == display.get("next_question")
+                           and q.get("questionnaire_module", "") == item.get("questionnaire_module", "")]
+                matches = matches or any(question_matches(next_identifier, display.get("next_question"), period, q)
+                                         for q in targets)
         if not matches:
             raise ValueError("sequence destination must be the next displayed verified question")
 
