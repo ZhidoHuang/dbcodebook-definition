@@ -120,6 +120,21 @@ criteria_item <- function(x) paste0(
 
 criteria_block <- function(...) paste(..., sep = "")
 
+criteria_table <- function(block, render_values) {
+  render_row <- function(cells, tag) {
+    paste0("<tr>", paste0(vapply(seq_along(cells), function(i) {
+      paste0("<", tag, ' style="padding:4px 8px;border:1px solid #ddd;text-align:',
+             block$align[[i]], ';">',
+             criteria_render_inline_code(render_values(cells[[i]])), "</", tag, ">")
+    }, character(1)), collapse = ""), "</tr>")
+  }
+  paste0('<div data-criteria-item="true" style="margin:6px 0 6px 1.8em;overflow-x:auto;">',
+         '<table data-criteria-table="true" style="border-collapse:collapse;font-size:0.92em;">',
+         "<thead>", render_row(block$header, "th"), "</thead><tbody>",
+         paste0(vapply(block$rows, render_row, character(1), tag = "td"), collapse = ""),
+         "</tbody></table></div>")
+}
+
 definition_copy_check <- function(copy_path = "文案.md", source = NULL,
                                   note = NULL, export = NULL) {
   root <- Sys.getenv("DBCODEBOOK_DEFINITION_SKILL_ROOT")
@@ -191,15 +206,17 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
     rendered <- paste(pieces, collapse = "`")
     substr(rendered, 1L, nchar(rendered) - 1L)
   }
-  criteria <- lapply(copy$criteria, function(fields) {
+  criteria <- lapply(names(copy$criteria), function(variable) {
+    fields <- copy$criteria[[variable]]
     paste0(vapply(names(fields), function(field) {
-      lines <- strsplit(fields[[field]], "\n", fixed = TRUE)[[1]]
-      lines <- lines[nzchar(trimws(lines))]
-      paste0(criteria_heading(field), paste0(vapply(lines, function(line) {
-        criteria_item(render_values(line))
+      blocks <- copy$criteria_blocks[[variable]][[field]]
+      paste0(criteria_heading(field), paste0(vapply(blocks, function(block) {
+        if (identical(block$type, "table")) criteria_table(block, render_values)
+        else criteria_item(render_values(block$text))
       }, character(1)), collapse = ""))
     }, character(1)), collapse = "")
   })
+  names(criteria) <- names(copy$criteria)
   result <- list(
     criteria = criteria,
     criteria_intro = copy$criteria_intro,

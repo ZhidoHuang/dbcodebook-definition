@@ -916,18 +916,20 @@ render_summary_insight_card <- function(items,
   variant <- match.arg(variant)
   items <- as.character(items)
   if (length(items) == 0 || any(!nzchar(items))) stop("小book提示文案不能为空。")
-  # A compact Markdown numbered list still contains separate items.
-  # Keep ordinary wrapped lines inside the same item.
+  # Paragraphs and list markers identify items. Ordinary wrapped lines stay together.
+  marker_pattern <- "(?:[①②③④⑤⑥⑦⑧⑨⑩]|[0-9]+[、.)．](?=[ \\t]|$))[ \\t]*"
   items <- unlist(lapply(items, function(item) {
-    strsplit(item, "\\r?\\n(?=[ \\t]*[0-9]+\\.[ \\t]+)", perl = TRUE)[[1]]
+    strsplit(item, paste0("\\r?\\n[ \\t]*\\r?\\n|\\r?\\n(?=[ \\t]*", marker_pattern, ")"), perl = TRUE)[[1]]
   }), use.names = FALSE)
   items <- trimws(items)
+  items <- items[nzchar(items)]
+  if (length(items) == 0L) stop("小book提示文案不能为空。")
   summary_validate_insight_inline_code(items)
-  marker_pattern <- "^\\s*(?:[①②③④⑤⑥⑦⑧⑨⑩]|[0-9]+[、.)．])\\s*"
+  marker_pattern <- paste0("^\\s*", marker_pattern)
   body <- paste0(
-    vapply(items, function(item) {
-      numbered <- grepl(marker_pattern, item, perl = TRUE)
-      marker <- if (numbered) trimws(regmatches(item, regexpr(marker_pattern, item, perl = TRUE))) else ""
+    vapply(seq_along(items), function(i) {
+      item <- items[[i]]
+      marker <- paste0(i, ".")
       content <- sub(marker_pattern, "", item, perl = TRUE)
       # First sentence states the point; plain Markdown needs no styling markup.
       sentence_end <- regexpr("。", content, fixed = TRUE)[[1]]
@@ -939,8 +941,8 @@ render_summary_insight_card <- function(items,
       paste0(
         '<div class="summary-insight-paragraph" data-summary-insight-paragraph="true" ',
         'style="margin:0 0 8px;text-indent:0;',
-        if (numbered) 'display:flex;align-items:baseline;gap:0.5em;' else '', '">',
-        if (numbered) paste0('<span class="summary-insight-number" style="flex:0 0 1.5em;text-align:right;font-weight:400;">', marker, '</span>') else '',
+        'display:flex;align-items:baseline;gap:0.5em;">',
+        paste0('<span class="summary-insight-number" style="flex:0 0 1.5em;text-align:right;font-weight:400;">', marker, '</span>'),
         '<span class="summary-insight-text" style="min-width:0;flex:1;">', text, '</span>',
         '</div>'
       )

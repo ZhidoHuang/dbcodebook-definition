@@ -39,6 +39,18 @@ assert [g['design_title'] for g in groups] == ['问卷设计', '问卷设计变�
 record = json.loads((ROOT / 'tests/fixtures/charls_questionnaire_example_evidence.json').read_text(encoding='utf-8'))
 assert not questionnaire_copy_errors({'questionnaire': q}, record)
 
+# One shared introduction in each period satisfies its applicable questions.
+# It remains an instruction in evidence, rather than part of every question.
+shared_intro = '请按本期实际情况回答以下问题。'
+shared_record = deepcopy(record)
+shared_copy = deepcopy(q)
+for period in shared_copy.values():
+    period['design'] += '\n' + shared_intro
+for item in shared_record['questionnaire_evidence']:
+    item['display'] = {'question_text': item['question_text'], 'instructions': [shared_intro]}
+assert not questionnaire_copy_errors({'questionnaire': shared_copy}, shared_record)
+assert questionnaire_copy_errors({'questionnaire': q}, shared_record)
+
 # Dropping a question from the template must not also drop it from expectations.
 missing_help = deepcopy(q)
 list(missing_help.values())[1]['questions'].pop(1)

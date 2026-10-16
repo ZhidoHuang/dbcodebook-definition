@@ -81,6 +81,117 @@ def normalized(text):
     return re.sub(r"\s+", "", text)
 
 
+def table_cells(line):
+    """Split a Markdown row without splitting escaped pipes or inline code."""
+    cells, cell, ticks = [], [], 0
+    i = 0
+    line = line.strip()
+    while i < len(line):
+        char = line[i]
+        if char == "\\" and i + 1 < len(line):
+            cell.append(line[i:i + 2])
+            i += 2
+            continue
+        if char == "`":
+            ticks ^= 1
+        if char == "|" and not ticks:
+            cells.append("".join(cell).strip())
+            cell = []
+        else:
+            cell.append(char)
+        i += 1
+    cells.append("".join(cell).strip())
+    if line.startswith("|"):
+        cells.pop(0)
+    if line.endswith("|") and not line.endswith("\\|"):
+        cells.pop()
+    return [value.replace(r"\|", "|") for value in cells]
+
+
+def criteria_blocks(text):
+    """Keep table cells structured; ordinary lines retain their existing format."""
+    lines = text.splitlines()
+    result, i = [], 0
+    while i < len(lines):
+        line = lines[i].strip()
+        if not line:
+            i += 1
+            continue
+        delimiters = table_cells(lines[i + 1]) if i + 1 < len(lines) else []
+        if "|" in line and delimiters and all(re.fullmatch(r":?-{3,}:?", d) for d in delimiters):
+            header = table_cells(line)
+            if len(header) != len(delimiters):
+                raise ValueError("Criteria 表格表头与分隔行列数不同")
+            align = ["center" if d.startswith(":") and d.endswith(":") else
+                     "right" if d.endswith(":") else "left" for d in delimiters]
+            rows = []
+            i += 2
+            while i < len(lines) and lines[i].strip() and "|" in lines[i]:
+                row = table_cells(lines[i])
+                if len(row) != len(header):
+                    raise ValueError("Criteria 表格数据行与表头列数不同")
+                rows.append(row)
+                i += 1
+            result.append(dict(type="table", header=header, rows=rows, align=align))
+        else:
+            result.append(dict(type="text", text=line))
+            i += 1
+    return result
+
+
+def criteria_comparable(text):
+    blocks = criteria_blocks(text)
+    for block in blocks:
+        if block["type"] == "table":
+            block.pop("align")  # Alignment is presentation, not source content.
+            block["header"] = [normalized(c) for c in block["header"]]
+            block["rows"] = [[normalized(c) for c in row] for row in block["rows"]]
+        else:
+            block["text"] = normalized(block["text"])
+    # Preserve old whitespace tolerance for prose, but keep table boundaries.
+    merged = []
+    for block in blocks:
+        if block["type"] == "text" and merged and merged[-1]["type"] == "text":
+            merged[-1]["text"] += block["text"]
+        else:
+            merged.append(block)
+    return merged
+
+
+INSIGHT_MARKER = r"(?:[①②③④⑤⑥⑦⑧⑨⑩]|[0-9]+[、.)．](?=[ \t]|$))[ \t]*"
+
+
+def insight_items(text):
+    items = re.split(r"\r?\n[ \t]*\r?\n|\r?\n(?=[ \t]*" + INSIGHT_MARKER + ")", text)
+    return [re.sub(r"^\s*" + INSIGHT_MARKER, "", item).strip()
+            for item in items if item.strip()]
+
+
+def insight_markup_content(markup, expected):
+    """Check the generated list, rather than merely ignoring its numbering."""
+    root = Document(markup).root if isinstance(markup, str) else markup
+    bodies = list(root.find(lambda e: e.attrs.get("data-summary-insight-body") == "true"))
+    if not bodies:
+        return visible_markup(markup) if isinstance(markup, str) else ""
+    items = list(bodies[0].find(lambda e: e.attrs.get("data-summary-insight-paragraph") == "true"))
+    if len(items) != len(insight_items(expected)):
+        raise ValueError("小book 条目数与文案分段不一致")
+    content = []
+    for i, item in enumerate(items, 1):
+        numbers = list(item.find(lambda e: "summary-insight-number" in e.attrs.get("class", "").split()))
+        texts = list(item.find(lambda e: "summary-insight-text" in e.attrs.get("class", "").split()))
+        if len(numbers) != 1 or numbers[0].text() != f"{i}." or len(texts) != 1:
+            raise ValueError("小book 必须由生成器逐条顺序编号，并与正文分列")
+        if "display:flex" not in item.attrs.get("style", "").replace(" ", ""):
+            raise ValueError("小book 缺少编号与正文分列的缩进结构")
+        if normalized(item.text()) != normalized(numbers[0].text() + texts[0].text()):
+            raise ValueError("小book 条目存在未核对的额外文字")
+        content.append(texts[0].text())
+    if normalized(bodies[0].text()) != normalized("".join(item.text() for item in items)):
+        raise ValueError("小book 存在未归入条目的文字")
+    return "\n\n".join(content)
+
+
 
 def route_matches(destination, description, period=None):
     # Ignore presentation whitespace symmetrically while retaining identifier
@@ -238,6 +349,8 @@ def read_copy(path, expected_vars=None):
               "criteria_intro": re.split(r"(?m)^### ", parts["Criteria"], maxsplit=1)[0].strip(),
               "insight": insight, "references": parts.get("参考资料说明", "")}
     result["definition_basis"] = parts.get("定义依据", "")
+    result["criteria_blocks"] = {v: {f: criteria_blocks(t) for f, t in fields.items()}
+                                 for v, fields in criteria.items()}
     result["summary_blocks"] = summary_blocks(result["summary"])
     if "问卷" in parts:
         result["questionnaire"] = read_questionnaire_copy(parts["问卷"])
@@ -409,7 +522,29 @@ def criteria_fields(markup):
             fields[current] = ""
             accounted.append(element.text())
         elif current:
-            fields[current] += element.text() + "\n"
+            tables = list(element.find(lambda e: e.attrs.get("data-criteria-table") == "true"))
+            if tables:
+                if len(tables) != 1 or normalized(element.text()) != normalized(tables[0].text()):
+                    raise ValueError("Criteria 表格包含未归入单元格的文字")
+                rows = []
+                accounted_cells = []
+                for row in tables[0].find(lambda e: e.tag == "tr"):
+                    elements = [c for c in row.children if isinstance(c, Element) and c.tag in {"th", "td"}]
+                    expected_tag = "th" if not rows else "td"
+                    if not elements or any(c.tag != expected_tag for c in elements):
+                        raise ValueError("Criteria 表格的表头或数据行结构不正确")
+                    accounted_cells.extend(c.text() for c in elements)
+                    cells = [c.text().replace("|", r"\|") for c in elements]
+                    rows.append("| " + " | ".join(cells) + " |")
+                if normalized(tables[0].text()) != normalized("".join(accounted_cells)):
+                    raise ValueError("Criteria 表格包含未归入单元格的文字")
+                if not rows:
+                    raise ValueError("Criteria 表格缺少表头")
+                count = len(table_cells(rows[0]))
+                rows.insert(1, "| " + " | ".join(["---"] * count) + " |")
+                fields[current] += "\n".join(rows) + "\n"
+            else:
+                fields[current] += element.text() + "\n"
             accounted.append(element.text())
     if normalized(root.text()) != normalized("".join(accounted)):
         raise ValueError("Criteria 存在未归入栏目或重复提取的可见文字")
@@ -431,6 +566,10 @@ def compare_content(copy, actual, *, source=False):
         if source:
             value = visible_markup(value)
         expected = "\n\n".join(b["text"] for b in blocks) if field == "summary" else copy.get(field, "")
+        if field == "insight":
+            value = insight_markup_content(actual.get(field, ""), expected)
+            value = "\n\n".join(insight_items(value))
+            expected = "\n\n".join(insight_items(expected))
         if field == "summary" and not source and "summary_blocks" in actual and "summary_trees" not in actual:
             value = "\n\n".join(b["text"] for b in summary_blocks(value))
         require_equal(expected, value, field)
@@ -444,7 +583,8 @@ def compare_content(copy, actual, *, source=False):
         if list(fields) != list(rendered):
             raise ValueError(f"Criteria/{variable} 栏目丢失或增加：应为{list(fields)}，实际{list(rendered)}")
         for field, text in fields.items():
-            require_equal(text, rendered[field], f"Criteria/{variable}/{field}")
+            if criteria_comparable(text) != criteria_comparable(rendered[field]):
+                raise ValueError(f"Criteria/{variable}/{field} 的正文或表格单元格与文案不一致")
     if "questionnaire" in copy:
         rendered = actual.get("questionnaire", {})
         if isinstance(rendered, str):
@@ -500,7 +640,10 @@ def note_content(text):
             "criteria_intro": intros[0].text() if intros else "",
             "summary_trees": rendered_summary_trees(summary),
             "questionnaire_flows": [e.text() for e in root.find(lambda e: e.attrs.get("data-questionnaire-flow") == "true")],
-            "insight": insight[0].text() if insight else "", "references": visible_markup(references),
+            "insight": "\n\n".join(e.text() for e in insight[0].find(
+                lambda e: "summary-insight-text" in e.attrs.get("class", "").split()))
+                if insight and list(insight[0].find(lambda e: e.attrs.get("data-summary-insight-paragraph") == "true"))
+                else insight[0].text() if insight else "", "references": visible_markup(references),
             "questionnaire": questionnaire_content(text)}
 
 
@@ -513,6 +656,7 @@ def validate_note(copy_path, note_path, codebook_path=None):
         expected = [str(row[column]) for row in rows[1:]]
     copy = read_copy(copy_path, expected)
     text = Path(note_path).read_text(encoding="utf-8-sig")
+    insight_markup_content(text, copy["insight"])
     result = compare_content(copy, note_content(text))
     errors = summary_markup_errors(copy["summary"])
     if errors:

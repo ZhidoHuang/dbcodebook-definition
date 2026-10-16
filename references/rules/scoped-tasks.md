@@ -130,7 +130,7 @@ Copy-operations 保存文案阶段共用的程序操作。
    - 来源记录question_text保留原文，逐期证据不因合并展示而删除。
    - 原问卷题号与变量名不同时，question_id保留题号，question_variable登记已核实的原始变量名，locator注明对应依据；对应随时期变化时分期登记。
    - 两个问卷检查入口据此匹配正文标题，不从下载别名或题义猜测对应。
-   - 写作时设置questionnaire_display_policy="chinese_v1"；需要展示的证据用display.question_text填完整中文题干，display.instructions填必要中文访员/测验说明，无则空列表。
+   - 写作时设置questionnaire_display_policy="chinese_v1"；需要展示的证据用display.question_text填完整中文题干，display.instructions填必要中文引导语、访员或测验说明，无则空列表。共用说明也按各题实际适用性登记到instructions，不反复拼进question_text；正文按第3步集中展示。原文证据不因此删改。
    - 共同说明可以放在该组设计段。
    - 原始选项编码与标签保留；数据解码方式只在影响对应关系时说明。
    - 原文、题意或时期有缺口，回到实际材料解决，不反向编造证据。
