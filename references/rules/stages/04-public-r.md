@@ -158,6 +158,36 @@ data[data == ""] <- NA
 - 示例应参与正式结果，避免另外算一份演示对象，再用另一套代码生成成果。
 - 少量分类值使用已解码的完整真实标签逐项重编码；大量同构变量才在说明每期编码含义并展示代表性映射后复用编码提取。不把裸数字或全局编码规律当作业务依据；具体函数限制见下节。
 
+### 固定条目的计分示例
+
+以下仅示范代码组织，不规定某个量表的算法。假定来源已按方案整理为0–4数值，无效回答已处理为NA；本例四个正向条目需要反向，十题完整才计算。实际题目、取值、反向项及适用人群按方案替换。
+
+```r
+# 十个来源的名称分别对应：心烦、无法控制、紧张、自信、事情顺利、
+# 无法应付、控制烦恼、掌控局面、生气、困难过多。
+score_sources <- c("upset", "unable_control", "nervous", "confident", "going_well",
+                   "unable_cope", "control_irritations", "in_control", "angry", "overwhelmed")
+lapply(data[score_sources], table, useNA = "ifany")
+
+# 四个正向回答反向后，数值越高均表示困难越多。
+lack_confidence <- 4 - data$confident
+things_not_going_well <- 4 - data$going_well
+unable_control_irritations <- 4 - data$control_irritations
+not_in_control <- 4 - data$in_control
+
+# rowSums只统计缺答数；各题怎样计分和相加在下面直接列出。
+complete_score <- rowSums(is.na(data[score_sources])) == 0
+data$Example_total <- case_when(
+  complete_score ~ data$upset + data$unable_control + data$nervous +
+    lack_confidence + things_not_going_well + data$unable_cope +
+    unable_control_irritations + not_in_control + data$angry + data$overwhelmed,
+  TRUE ~ NA_real_
+)
+summary(data$Example_total)
+```
+
+四个反向计分对象直接参与总分，不再另算一套矩阵结果。这里使用 `rowSums()` 不隐藏计分含义；是否采用其他复用方式，仍按上方“业务顺序与注释”判断。
+
 ## 6. 函数用法
 
 ### recode.chr： `recode.chr()`

@@ -31,6 +31,14 @@ assert trees[2]['role_html'].count('data-tree-role="component"') == 5
 assert '听力分＋（远视力分＋近视力分）÷2' in trees[2]['text']
 assert trees[2]['text'].count('取平均，再标准化') == 2
 assert '总分不再标准化' in trees[2]['text']
+# Exercise the shared-item template itself through the same renderer, with only
+# the two totals marked as delivered results and all six items as components.
+template = (ROOT / 'templates/reader-copy.md').read_text(encoding='utf-8')
+shared_tree = re.search(r'```text 两种总分\n.*?\n```', template, re.S)[0]
+shared = [b for b in summary_blocks(shared_tree) if b['type'] == 'code_tree'][0]
+assert shared['role_html'].count('data-tree-role="result"') == 2
+assert shared['role_html'].count('data-tree-role="component"') == 6
+trees.append(shared)
 for bad in ['```text 例\n[[unknown:名字]]\n```', '```text 例\n[[meta:未闭合\n```']:
     try:
         summary_blocks(bad)
@@ -54,4 +62,4 @@ writeLines(render_summary_entry_paragraph(entry, "#123456"), "trees.html", useBy
     assert rendered_summary_trees(rendered) == [t['text'] for t in trees]
     for tree in trees:
         assert f'data-tree-label="{tree["label"]}"' in rendered
-print('TREE_CONTRACT_PASS: three trial trees, variable roles, meta, formula order, literal text, labels, actual R')
+print('TREE_CONTRACT_PASS: trial trees and shared-item template, variable roles, meta, formula order, literal text, labels, actual R')
