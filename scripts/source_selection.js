@@ -46,10 +46,10 @@ async (page, action, mode) => {
     await page.locator('#loading-overlay').waitFor({state: 'hidden', timeout: 10000});
     const count = await page.locator('#tag-area .tag').count();
     if (count !== action.aliases.length) return fail('SELECTION_COUNT_MISMATCH', {count});
-    const selected = await page.locator('#tag-area .tag').evaluateAll(tags => tags.map(tag => ({
-      variable: tag.getAttribute('data-variable'), file: tag.getAttribute('data-file'),
+    const selected = await page.locator('#tag-area .tag').evaluateAll((tags, database) => tags.map(tag => ({
+      variable: tag.getAttribute('data-variable'), file: tag.getAttribute(database === 'nhanes' ? 'data-source-type' : 'data-file'),
       alias: tag.getAttribute('data-display'), text: tag.querySelector('.tag-text')?.textContent?.trim()
-    })));
+    })), action.database);
     const expectedRows = action.input_text.split('\n').map(line => {
       const [identity, alias] = line.split('=');
       const match = identity.match(/^([^()\s]+)\s+\((.+)\)$/);

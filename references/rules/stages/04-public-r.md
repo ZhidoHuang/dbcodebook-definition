@@ -87,6 +87,7 @@ data[data == ""] <- NA
 | KLoSA | `ID`、`Harmonized_id`、`Wave_id` 按字符读取；实际导出含默认 `pid` 时同样按字符保留 |
 | CHNS | 主表 `ID`、`IDind` 和静态表 `IDind` 必须按字符读取。主表还允许字典核实的 `WAVE`、`hhid`、`COMMID`、`Household_ID`、`Community_ID` 及带来源文件后缀的这些自动身份列；静态表当前只支持 `IDind`。不把业务列纳入许可；新增身份结构先核实并适配 |
 | MHAS Core | 读取 `raw_data_MHAS_SURVEY_CORE_RESPONDENT.csv`；`ID`、`Wave_id` 及实际导出的默认身份分量按字符保留，列名及支持范围见MHAS profile |
+| NHANES 普通来源 | `SEQN`、`YEAR` 按字符读取；两列共同标识个人—周期记录 |
 | KNHANES | `id` 必须按字符读取；必要时 `ID`、`year` 也可按字符读取 |
 
 不追加 `fileEncoding`、`encoding`、`na.strings`、`col.names` 或 `check.names = FALSE`。

@@ -60,7 +60,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--language', choices=['en', 'ko'])
     parser.add_argument(
         "--db",
-        choices=["charls", "elsa", "hrs", "share", "knhanes", "klosa", "chns", "mhas"],
+        choices=["charls", "elsa", "hrs", "share", "knhanes", "klosa", "chns", "mhas", "nhanes"],
         default="charls",
         help="Database identity mode. Defaults to charls for backward compatibility.",
     )
@@ -150,6 +150,8 @@ def read_codebook_vars(path: Path) -> list[str]:
 
 
 def expected_raw_header(db: str, raw_vars: list[str]) -> list[str]:
+    if db == "nhanes":
+        return ["SEQN", "YEAR", *raw_vars]
     if db == "chns":
         return ["ID", "IDind", "WAVE", *raw_vars]
     if db == "klosa":
@@ -337,7 +339,7 @@ def check_long_table(rows, header, results, db=""):
         "charls": ["id", "year"], "elsa": ["idauniq", "Wave"],
         "hrs": ["HHID", "PN", "year"], "share": ["mergeid", "Wave_id"],
         "klosa": ["Harmonized_id", "Wave_id"], "chns": ["IDind", "WAVE"],
-        "knhanes": ["id", "year"], "mhas": ["ID", "Wave_id"],
+        "knhanes": ["id", "year"], "mhas": ["ID", "Wave_id"], "nhanes": ["SEQN", "YEAR"],
     }[(db or "charls").lower()]
     if any(key not in header for key in keys):
         fail(results, "analysis person-period rows", {"required_keys": keys, "actual": header})
@@ -353,6 +355,8 @@ def check_long_table(rows, header, results, db=""):
         period = re.sub(r"^Wave\s+", "", key[-1])
         period = re.sub(r"\.0+$", "", period)
         key = (*key[:-1], period)
+        if db.lower() == "nhanes":
+            key = (re.sub(r"\.0+$", "", key[0]).lstrip("0") or "0", period)
         if key in seen:
             fail(results, "analysis person-period rows", {"row": number, "reason": "duplicate person-period", "key": key})
             return False
@@ -444,6 +448,14 @@ def check_identity_values(
         if any(len(row) <= analysis_header.index(name) or not isinstance(row[analysis_header.index(name)], str)
                for row in analysis_rows[1:] for name in ["ID", "IDind"]):
             fail(results, "analysis identity values", "CHNS ID and IDind must remain string cells")
+            return
+    elif db == "nhanes":
+        identity_columns = ["SEQN", "YEAR"]
+        if any(name not in raw_header or name not in analysis_header for name in identity_columns):
+            fail(results, "analysis identity values", "NHANES requires SEQN,YEAR")
+            return
+        if any(not isinstance(row[analysis_header.index(name)], str) for row in analysis_rows[1:] for name in identity_columns):
+            fail(results, "analysis identity values", "NHANES identities must remain character cells")
             return
     elif db == "mhas":
         from mhas_export_contract import IDENTIFIERS
@@ -1512,6 +1524,15 @@ def main() -> int:
             except ValueError as exc:
                 fail(results, "KLoSA package contract", str(exc))
         header = read_csv_header(raw_data)
+        nhanes_header_matches = False
+        if args.db == "nhanes":
+            try:
+                from nhanes_export_contract import validate_package
+                contract = validate_package(formal_dir, [p.name for p in formal_dir.glob("raw_data*.csv")], raw_vars)
+                nhanes_header_matches = True
+                ok(results, "NHANES ordinary person-period contract", contract)
+            except (OSError, ValueError) as exc:
+                fail(results, "NHANES ordinary person-period contract", str(exc))
         mhas_header_matches = False
         if args.db == "mhas":
             try:
@@ -1591,7 +1612,7 @@ def main() -> int:
                 ok(results, "ELSA default Wave_id", elsa_contract)
             except ValueError as exc:
                 fail(results, "ELSA default Wave_id", str(exc))
-        if (args.db not in {"share", "chns", "elsa", "mhas"} and (header in layered_headers or hrs_header_matches or klosa_header_matches)) or share_header_matches or knhanes_header_matches or chns_header_matches or elsa_header_matches or mhas_header_matches:
+        if (args.db not in {"share", "chns", "elsa", "mhas", "nhanes"} and (header in layered_headers or hrs_header_matches or klosa_header_matches)) or share_header_matches or knhanes_header_matches or chns_header_matches or elsa_header_matches or mhas_header_matches or nhanes_header_matches:
             ok(results, "raw_data header", header)
         elif args.db == "charls" and header == ["ID", "year", *raw_vars]:
             identifier_check = check_charls_household_identifier(raw_data)

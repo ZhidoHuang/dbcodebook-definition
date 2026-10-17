@@ -64,6 +64,8 @@
 
 ## 数据库适配边界
 
+- NHANES普通来源使用 `database="NHANES"` 和显式 `cycle_order`；保留字符型 `SEQN`、`YEAR`。接入与验证范围见[NHANES流程](../../databases/nhanes/workflow.md)。
+
 - MHAS Core使用 `database="MHAS"` 及已核实的 `cycle_order`。原始文件名、字符身份及验证范围见[MHAS流程](../../databases/mhas/workflow.md)。
 
 - ELSA调用公共render_definition_bundle并设置database="ELSA"、cycle_order为已核实时期顺序，输入保留ID/idauniq/Wave。

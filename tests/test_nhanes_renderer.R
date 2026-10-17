@@ -1,0 +1,21 @@
+source("scripts/render_definition_bundle.R")
+source("scripts/check_public_raw_reads.R")
+source("scripts/summary_fact_helpers.R")
+periods <- c("2017-2018", "2017-2020")
+frame <- data.frame(SEQN=c("1.0", "1.0"), YEAR=periods)
+validate_nhanes_render_inputs(list(frame), periods)
+reject <- function(expr) stopifnot(inherits(tryCatch({force(expr); NULL}, error=identity), "error"))
+reject(validate_nhanes_render_inputs(list(transform(frame, SEQN=c("1", "1.0"), YEAR="2017-2018")), periods))
+reject(validate_nhanes_render_inputs(list(transform(frame, SEQN=c(1, 2))), periods))
+reject(validate_nhanes_render_inputs(list(frame), "2017-2018"))
+frame$value <- c(1,NA)
+facts <- build_summary_facts(frame,data.frame(Variable="value",original_vars="source",Label="value"),
+  c(value="value"),c(value="demo"),c(value=TRUE),period_col="YEAR",expected_periods=periods)
+stopifnot(facts$period=="2017-2018",facts$coverage_period_count==1)
+stopifnot(summary_period_text(periods,"",periods)=="全周期")
+stopifnot(summary_period_text(periods,"")=="2017-2018、2017-2020")
+check_public_raw_reads(c('dt <- read.csv("raw_data.csv", colClasses=c(SEQN="character", YEAR="character"))',
+                        'name_z <- read.csv("raw_codebook.csv")'), "NHANES")
+reject(check_public_raw_reads(c('dt <- read.csv("raw_data.csv")',
+                               'name_z <- read.csv("raw_codebook.csv")'), "NHANES"))
+cat("NHANES render identities and read contract PASS; full bundle not tested by this fixture\n")

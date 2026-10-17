@@ -7,6 +7,9 @@ summary_split_sources <- function(x) {
 }
 
 summary_period_ranges <- function(periods, prefix = "Wave") {
+  if (!nzchar(prefix) && length(periods) && all(grepl("^[0-9]{4}-[0-9]{4}$", periods))) {
+    return(sort(unique(as.character(periods))))
+  }
   periods <- sort(unique(as.integer(periods)))
   if (length(periods) == 0) return(character())
   breaks <- c(1, which(diff(periods) != 1) + 1, length(periods) + 1)
@@ -25,6 +28,11 @@ summary_period_ranges <- function(periods, prefix = "Wave") {
 }
 
 summary_period_text <- function(periods, prefix = "Wave", all_periods = NULL) {
+  if (!nzchar(prefix) && length(periods) && all(grepl("^[0-9]{4}-[0-9]{4}$", periods))) {
+    periods <- sort(unique(as.character(periods)))
+    if (!is.null(all_periods) && identical(periods, sort(unique(as.character(all_periods))))) return("全周期")
+    return(paste(periods, collapse="、"))
+  }
   periods <- sort(unique(as.integer(periods)))
   if (!is.null(all_periods) && identical(periods, sort(unique(as.integer(all_periods))))) {
     return("全周期")
@@ -76,7 +84,7 @@ build_summary_facts <- function(analysis_db,
     stop("analysis_codebook 缺少摘要事实列：", paste(missing_codebook, collapse = ", "))
   }
   if (!period_col %in% names(analysis_db)) stop("analysis_db 缺少周期列。")
-  expected_prefix <- if (identical(period_col, "year")) {
+  expected_prefix <- if (period_col %in% c("year", "YEAR")) {
     ""
   } else if (period_col %in% c("wave", "Wave", "Wave_id")) {
     "Wave"
@@ -89,7 +97,12 @@ build_summary_facts <- function(analysis_db,
     expected_display <- if (nzchar(expected_prefix)) expected_prefix else "直接年份"
     stop("摘要周期术语与周期列不一致：", period_col, " 必须使用 ", expected_display, "。")
   }
-  period_values <- if (period_col %in% c("Wave", "Wave_id")) {
+  period_values <- if (identical(period_col, "YEAR")) {
+    values <- as.character(analysis_db[[period_col]])
+    if (anyNA(values) || any(!grepl("^[0-9]{4}-[0-9]{4}$",values)) ||
+        any(substr(values,1,4)>=substr(values,6,9))) stop("Invalid NHANES period ranges.")
+    values
+  } else if (period_col %in% c("Wave", "Wave_id")) {
     as.integer(sub("^Wave[[:space:]]+", "", as.character(analysis_db[[period_col]])))
   } else {
     as.integer(analysis_db[[period_col]])
@@ -99,7 +112,12 @@ build_summary_facts <- function(analysis_db,
   if (is.null(expected_periods)) {
     expected_periods <- observed_periods
   } else {
-    expected_periods <- if (period_col %in% c("Wave", "Wave_id")) {
+    expected_periods <- if (identical(period_col,"YEAR")) {
+      values <- as.character(expected_periods)
+      if (anyNA(values) || any(!grepl("^[0-9]{4}-[0-9]{4}$",values)) ||
+          any(substr(values,1,4)>=substr(values,6,9))) stop("Invalid expected NHANES periods.")
+      values
+    } else if (period_col %in% c("Wave", "Wave_id")) {
       as.integer(sub("^Wave[[:space:]]+", "", as.character(expected_periods)))
     } else {
       as.integer(expected_periods)
@@ -555,7 +573,7 @@ summary_render_parts <- function(parts, theme_color) {
           grepl("[\r\n]", path)) {
         stop("summary_source path must contain only the directory; put explanatory text in note.")
       }
-      if (length(database) != 1L || !database %in% c("charls", "elsa", "hrs", "share", "klosa", "knhanes", "chns", "mhas")) stop("Invalid source-link database.")
+      if (length(database) != 1L || !database %in% c("charls", "elsa", "hrs", "share", "klosa", "knhanes", "chns", "mhas", "nhanes")) stop("Invalid source-link database.")
       route <- paste0('/home/', database, '/')
       if (database == "klosa") {
         if (length(part$language) != 1L || !part$language %in% c("en", "ko")) stop("KLoSA source link requires explicit language.")

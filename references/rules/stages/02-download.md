@@ -133,7 +133,7 @@ ztooth (health status and functioning)=ztooth
 | `WRONG_PAGE` / 控件变化 / 登录状态未知 | 核实绑定页或页面结构，不换页猜选项 |
 | `SELECTION_UNCERTAIN` / `SESSION_UNAVAILABLE_OR_UNCERTAIN` | 保存结果并检查原页是否仍在处理；未确认结束前不重发。已结束但状态不明时重新按完整清单选择，不触发下载 |
 
-- 此入口适用于 CHARLS、ELSA、Full HRS 的现有批量输入页面。
+- 此入口适用于已配置数据库的现有批量输入页面。NHANES 普通来源的完整身份为 `Variable (常规(唯一SEQN))`，固定入口核对 `data-source-type`；其他来源类型不在当前接入范围。
 - 已有独立 `Variable (File)=alias` 清单仍可用兼容参数 `--input`，新流程不再另抄一份。
 - 来源含输入分隔符或页面不再支持此格式时明确报告，不静默删改身份。
 - 离线生成成功只证明输入格式成立，不证明来源存在、已登录或获准下载；原下载准备检查仍须通过。

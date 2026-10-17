@@ -16,8 +16,8 @@ def main() -> int:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     routes = module.validate_routes()
-    assert routes["databases"] == ["charls", "elsa", "hrs", "klosa", "knhanes", "mhas", "share"]
-    assert routes["database_themes"] == ["CHARLS", "CHNS", "ELSA", "HRS", "KLOSA", "KNHANES", "MHAS", "SHARE"]
+    assert routes["databases"] == ["charls", "elsa", "hrs", "klosa", "knhanes", "mhas", "nhanes", "share"]
+    assert routes["database_themes"] == ["CHARLS", "CHNS", "ELSA", "HRS", "KLOSA", "KNHANES", "MHAS", "NHANES", "SHARE"]
     assert module.validate_manifest()["source_materials"] >= 22
     assert module.validate_portability()["text_files"] > 20
     assert module.validate_markdown_links()["markdown_links"] >= 20

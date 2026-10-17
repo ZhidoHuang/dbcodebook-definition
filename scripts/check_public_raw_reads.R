@@ -9,6 +9,7 @@ check_public_raw_reads <- function(lines, database = "CHARLS") {
   if (toupper(database) == "CHNS") identity_names <- c("ID", "IDind", "WAVE", "hhid", "COMMID", "Household_ID", "Community_ID")
   if (toupper(database) == "MHAS") identity_names <- c("ID", "Wave_id", "UNHHIDNP", "CUNICAH", "NP",
     "cunicah", "np", "unhhid", "ps3", "acthog", "ent2", "codent01", "codent03", "source_file", "source_row")
+  if (toupper(database) == "NHANES") identity_names <- c("SEQN", "YEAR")
   boundary <- grep("^# 输出\\s*$", lines)
   if (length(boundary)) lines <- head(lines, boundary[[1]] - 1L)
   expressions <- parse(text = lines, keep.source = FALSE)
@@ -42,6 +43,7 @@ check_public_raw_reads <- function(lines, database = "CHARLS") {
       stop(target, " must read ", targets[[target]])
     }
     if (length(args) == 1L) {
+      if (target == "dt" && toupper(database) == "NHANES") stop("NHANES must preserve SEQN and YEAR as character")
       if (target == "dt" && toupper(database) == "MHAS") stop("MHAS must preserve ID and Wave_id as character")
       if (target == "dt" && toupper(database) == "KNHANES") stop("KNHANES must preserve id as character at read time")
       if (target != "name_z" && toupper(database) == "CHNS") stop("CHNS must preserve personal identities as character at read time")
@@ -56,6 +58,7 @@ check_public_raw_reads <- function(lines, database = "CHARLS") {
     }
     values <- as.list(classes)[-1]
     ids <- names(values)
+    if (toupper(database) == "NHANES" && !all(c("SEQN", "YEAR") %in% ids)) stop("NHANES must preserve SEQN and YEAR as character")
     if (toupper(database) == "MHAS" && !all(c("ID", "Wave_id") %in% ids)) stop("MHAS must preserve ID and Wave_id as character")
     if (toupper(database) == "KNHANES" && !"id" %in% ids) stop("KNHANES must preserve id as character at read time")
     if (toupper(database) == "CHNS") {

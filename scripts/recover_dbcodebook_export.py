@@ -31,7 +31,7 @@ def database_page_url(base_url: str, database: str, language=None) -> str:
     parsed = urlsplit(base_url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         fail("--base-url must be an absolute http or https URL")
-    return f"{base_url}/home/{database}/"
+    return f"{base_url}/home/" if database == "nhanes" else f"{base_url}/home/{database}/"
 
 
 def build_download_browser_action(
@@ -419,6 +419,11 @@ def inspect_archive(archive_path: Path, expected: list[str], database: str | Non
     with tempfile.TemporaryDirectory(prefix="dbcodebook_check_") as temp:
         staging = Path(temp)
         names, members = install_archive(archive_path, staging)
+        if database == "nhanes":
+            from nhanes_export_contract import validate_package
+            contract = validate_package(staging, members, expected)
+            return {"zip_members": names, "codebook": validate_codebook(staging, expected),
+                    "data": {"raw_data.csv": contract}}
         if database == "mhas":
             from mhas_export_contract import validate_package, RAW_NAME
             contract = validate_package(staging, members, expected)
@@ -605,7 +610,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--action-file", type=Path,
                         help="Save the prepared CLI payload and print a compact receipt (prepare only).")
     parser.add_argument("--wait-seconds", type=float, default=20)
-    parser.add_argument("--database", type=str.lower, choices=("charls", "elsa", "hrs", "share", "chns", "knhanes", "klosa", "mhas"))
+    parser.add_argument("--database", type=str.lower, choices=("charls", "elsa", "hrs", "share", "chns", "knhanes", "klosa", "mhas", "nhanes"))
     parser.add_argument("--base-url")
     parser.add_argument('--language', choices=['en', 'ko'])
     parser.add_argument("--out", type=Path)

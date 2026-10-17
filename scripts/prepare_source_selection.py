@@ -83,6 +83,10 @@ def browser_code(action, mode):
             from klosa_adapter_contract import require_wave_source_identities
             require_wave_source_identities(action, action.get('language'))
             rebuilt.update(database='klosa', language=action['language'])
+        if action.get('database') == 'nhanes':
+            if any(row['identity'].split(' (', 1)[1] != '常规(唯一SEQN))' for row in parse_selection(action['input_text'])):
+                raise ValueError('NHANES currently supports 常规(唯一SEQN) only')
+            rebuilt.update(database='nhanes')
         if action != rebuilt:
             raise ValueError('Selection action is inconsistent; regenerate from the source list')
     source = Path(__file__).with_name('source_selection.js').read_text(encoding='utf-8')
@@ -94,7 +98,7 @@ def main():
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument('--input', type=Path, help='Legacy explicit full-identity list')
     source.add_argument('--record', type=Path, help='Primary merged READY source record')
-    parser.add_argument('--database', required=True, choices=['charls', 'elsa', 'hrs', 'share', 'chns', 'knhanes', 'klosa', 'mhas'])
+    parser.add_argument('--database', required=True, choices=['charls', 'elsa', 'hrs', 'share', 'chns', 'knhanes', 'klosa', 'mhas', 'nhanes'])
     parser.add_argument('--config', type=Path)
     parser.add_argument('--language', choices=['en', 'ko'])
     parser.add_argument('--action-file', required=True, type=Path)
@@ -118,6 +122,9 @@ def main():
         require_context(record, args.language)
         action.update(database="klosa", language=args.language)
         require_wave_source_identities(action, args.language)
+    if args.database == "nhanes":
+        action.update(database="nhanes")
+        browser_code(action, "select")
     for path in (args.action_file, args.expect_vars_file):
         path.parent.mkdir(parents=True, exist_ok=True)
     args.action_file.write_text(json.dumps(action, ensure_ascii=False, indent=2), encoding='utf-8')

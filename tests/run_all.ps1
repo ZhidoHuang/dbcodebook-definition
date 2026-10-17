@@ -71,6 +71,8 @@ if (-not [string]::IsNullOrWhiteSpace($rscript)) {
     if ($LASTEXITCODE -ne 0) { throw "test_klosa_renderer.R failed." }
     & $rscript --vanilla --encoding=UTF-8 'tests/test_share_renderer.R'
     if ($LASTEXITCODE -ne 0) { throw "test_share_renderer.R failed." }
+    & $rscript --vanilla --encoding=UTF-8 'tests/test_nhanes_renderer.R'
+    if ($LASTEXITCODE -ne 0) { throw "test_nhanes_renderer.R failed." }
     & $rscript --vanilla --encoding=UTF-8 'tests/test_knhanes_renderer.R'
     if ($LASTEXITCODE -ne 0) { throw "test_knhanes_renderer.R failed." }
     & $rscript --vanilla --encoding=UTF-8 'tests/test_mhas_renderer.R'
