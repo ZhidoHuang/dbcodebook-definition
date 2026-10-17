@@ -8,6 +8,7 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
+from reference_format import reference_items, render_references
 from questionnaire_groups import period_keys, original_options, question_matches, question_identifiers, unverified_question_periods
 from questionnaire_groups import validate_shared_option_rows
 from questionnaire_groups import question_identity, validate_display_titles
@@ -348,7 +349,7 @@ def read_copy(path, expected_vars=None):
         insight = ""
     result = {"summary": parts["摘要导读"], "criteria": criteria,
               "criteria_intro": re.split(r"(?m)^### ", parts["Criteria"], maxsplit=1)[0].strip(),
-              "insight": insight, "references": parts.get("参考资料说明", "")}
+              "insight": insight, "references": render_references(parts.get("参考资料说明", ""))}
     result["definition_basis"] = parts.get("定义依据", "")
     result["criteria_blocks"] = {v: {f: criteria_blocks(t) for f, t in fields.items()}
                                  for v, fields in criteria.items()}
@@ -567,6 +568,11 @@ def compare_content(copy, actual, *, source=False):
         if source:
             value = visible_markup(value)
         expected = "\n\n".join(b["text"] for b in blocks) if field == "summary" else copy.get(field, "")
+        if field == "references":
+            # Compare material content and order, not generator-owned numbering.
+            if [normalized(x) for x in reference_items(expected)] != [normalized(x) for x in reference_items(value)]:
+                raise ValueError("references 内容或条目顺序与文案不一致")
+            continue
         if field == "insight":
             value = insight_markup_content(actual.get(field, ""), expected)
             value = "\n\n".join(insight_items(value))

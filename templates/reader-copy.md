@@ -781,13 +781,13 @@ Wave 6–11 的选项编码为 01=Yes、02=No；其余时期为 1=Yes、2=No。
 
 ## 7. 参考资料说明
 
-**模板**（按编号引用填写；没有实际使用的方法资料时，省略整节。检索和访问过程留在探索记录）：
+**模板**（每份材料写一行，无需手写编号；没有实际使用的方法资料时，省略整节。检索和访问过程留在探索记录）：
 
 ```markdown
 ## 参考资料说明
 
-> 1. {材料名称、版本或年份及页码}说明{相关方法或限制}。本主题据此{具体采用之处}；{必要时说明本项目另作的决定}。
-> 2. {另一份实际采用的资料及其用途；没有则删除本行。}
+{材料名称、版本或年份及页码}说明{相关方法或限制}。本主题据此{具体采用之处}；{必要时说明本项目另作的决定}。
+{另一份实际采用的资料及其用途；没有则删除本行。}
 ```
 
 **官方技术资料的引用格式**：
@@ -795,7 +795,7 @@ Wave 6–11 的选项编码为 01=Yes、02=No；其余时期为 1=Yes、2=No。
 ```markdown
 ## 参考资料说明
 
-> 1. Harmonised ELSA E technical codebook，PDF 第 168–177 页说明 CES-D-8 八个条目的计分方向、0–8 分总分以及代理访谈的结构性缺失。该材料支持条目方向与量表组成；其部分缺失时保留已观测条目之和的做法不作为本主题的缺失处理，本主题只计算八项完整者的总分。
+Harmonised ELSA E technical codebook，PDF 第 168–177 页说明 CES-D-8 八个条目的计分方向、0–8 分总分以及代理访谈的结构性缺失。该材料支持条目方向与量表组成；其部分缺失时保留已观测条目之和的做法不作为本主题的缺失处理，本主题只计算八项完整者的总分。
 ```
 
 **研究文献与指南的引用格式**：
@@ -803,6 +803,8 @@ Wave 6–11 的选项编码为 01=Yes、02=No；其余时期为 1=Yes、2=No。
 ```markdown
 ## 参考资料说明
 
-> 1. [Hughes 等：A Short Scale for Measuring Loneliness in Large Surveys（2004）](https://pmc.ncbi.nlm.nih.gov/articles/PMC2394670/)，Table 1 与 Procedures 说明三题各计 1–3 分后求和，得分越高孤独感越强，研究中排除了任一题缺失的受访者。本主题据此采用完整三题求和；在数据中保留这些受访者并将总分记为缺失，是本定义的处理选择，不是 ELSA 统一缺失规定。
-> 2. [ONS：Measuring loneliness: guidance for use of the national indicators on surveys](https://www.ons.gov.uk/peoplepopulationandcommunity/wellbeing/methodologies/measuringlonelinessguidanceforuseofthenationalindicatorsonsurveys)，第 8 节说明三题总分为 3–9 分、直接孤独题单独分析，并指出没有公认的孤独划分切点。本主题保留总分与直接回答，不另设二分类；直接题的三个类别仍取自 ELSA 原问卷，不采用 ONS 的不同选项设置。
+[Hughes 等：A Short Scale for Measuring Loneliness in Large Surveys（2004）](https://pmc.ncbi.nlm.nih.gov/articles/PMC2394670/)，Table 1 与 Procedures 说明三题各计 1–3 分后求和，得分越高孤独感越强，研究中排除了任一题缺失的受访者。本主题据此采用完整三题求和；在数据中保留这些受访者并将总分记为缺失，是本定义的处理选择，不是 ELSA 统一缺失规定。
+[ONS：Measuring loneliness: guidance for use of the national indicators on surveys](https://www.ons.gov.uk/peoplepopulationandcommunity/wellbeing/methodologies/measuringlonelinessguidanceforuseofthenationalindicatorsonsurveys)，第 8 节说明三题总分为 3–9 分、直接孤独题单独分析，并指出没有公认的孤独划分切点。本主题保留总分与直接回答，不另设二分类；直接题的三个类别仍取自 ELSA 原问卷，不采用 ONS 的不同选项设置。
 ```
+
+生成器按上述材料顺序输出引用块编号；条目之间不留空行。文案中的链接和用途说明原样保留。
