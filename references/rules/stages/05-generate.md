@@ -64,6 +64,8 @@
 
 ## 数据库适配边界
 
+- MHAS Core使用 `database="MHAS"` 及已核实的 `cycle_order`。原始文件名、字符身份及验证范围见[MHAS流程](../../databases/mhas/workflow.md)。
+
 - ELSA调用公共render_definition_bundle并设置database="ELSA"、cycle_order为已核实时期顺序，输入保留ID/idauniq/Wave。
 - Full HRS用database="HRS"及本轮核实年份，保留字符型HHID/PN和year；不在主题复制渲染器。
 - 顺序取自证据，不从非缺失行反推；概览和文件前缀随参数生成。

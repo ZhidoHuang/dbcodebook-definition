@@ -419,6 +419,11 @@ def inspect_archive(archive_path: Path, expected: list[str], database: str | Non
     with tempfile.TemporaryDirectory(prefix="dbcodebook_check_") as temp:
         staging = Path(temp)
         names, members = install_archive(archive_path, staging)
+        if database == "mhas":
+            from mhas_export_contract import validate_package, RAW_NAME
+            contract = validate_package(staging, members, expected)
+            return {"zip_members": names, "codebook": validate_codebook(staging, expected),
+                    "data": {RAW_NAME: contract}}
         if database == "knhanes":
             from knhanes_export import validate_bundle
             return {"zip_members": names, **validate_bundle(staging, members, expected)}
@@ -600,7 +605,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--action-file", type=Path,
                         help="Save the prepared CLI payload and print a compact receipt (prepare only).")
     parser.add_argument("--wait-seconds", type=float, default=20)
-    parser.add_argument("--database", type=str.lower, choices=("charls", "elsa", "hrs", "share", "chns", "knhanes", "klosa"))
+    parser.add_argument("--database", type=str.lower, choices=("charls", "elsa", "hrs", "share", "chns", "knhanes", "klosa", "mhas"))
     parser.add_argument("--base-url")
     parser.add_argument('--language', choices=['en', 'ko'])
     parser.add_argument("--out", type=Path)

@@ -429,7 +429,7 @@ def read_questionnaire_copy(text):
                     question["instructions"].append(line.removeprefix("跳题说明：").strip())
                 elif line.startswith("共同跳题（"):
                     question["instructions"].append(line)
-                elif (re.search(r"(?:选项|跳题规则)与\s*[A-Za-z][A-Za-z0-9_]*\s*相同。", re.sub(r"`([^`]+)`", r"\1", line))
+                elif (re.search(r"(?:选项|跳题规则)与\s*[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*\s*相同。", re.sub(r"`([^`]+)`", r"\1", line))
                       or re.search(r"的选项设置相同，(?:(?:该范围内的后续题目|下列题目)不再逐一展开选项|后续题目仅列有跳转的选项)。", line)):
                     question["instructions"].append(line)
                 elif line.startswith("- "):

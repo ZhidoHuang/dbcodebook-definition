@@ -13,7 +13,7 @@ async (page, action) => {
   // Occluded headed Chrome can render at 1 fps; allow its actionability checks to settle.
   // Network/content checks keep their separate bounds, and actions are never replayed.
   const norm = s => String(s ?? '').replace(/\s+/g, ' ').trim();
-  const family = ['hrs','klosa'].includes(action.database);
+  const family = ['hrs','klosa','mhas'].includes(action.database);
   const identityKey = family ? 'Base_Variable' : 'Variable';
   const requestedVariable = family ? action.base_variable : action.variable;
   // Summary delimiters differ across pages; category names and counts must still match.

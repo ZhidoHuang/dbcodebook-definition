@@ -60,7 +60,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--language', choices=['en', 'ko'])
     parser.add_argument(
         "--db",
-        choices=["charls", "elsa", "hrs", "share", "knhanes", "klosa", "chns"],
+        choices=["charls", "elsa", "hrs", "share", "knhanes", "klosa", "chns", "mhas"],
         default="charls",
         help="Database identity mode. Defaults to charls for backward compatibility.",
     )
@@ -337,7 +337,7 @@ def check_long_table(rows, header, results, db=""):
         "charls": ["id", "year"], "elsa": ["idauniq", "Wave"],
         "hrs": ["HHID", "PN", "year"], "share": ["mergeid", "Wave_id"],
         "klosa": ["Harmonized_id", "Wave_id"], "chns": ["IDind", "WAVE"],
-        "knhanes": ["id", "year"],
+        "knhanes": ["id", "year"], "mhas": ["ID", "Wave_id"],
     }[(db or "charls").lower()]
     if any(key not in header for key in keys):
         fail(results, "analysis person-period rows", {"required_keys": keys, "actual": header})
@@ -445,6 +445,16 @@ def check_identity_values(
                for row in analysis_rows[1:] for name in ["ID", "IDind"]):
             fail(results, "analysis identity values", "CHNS ID and IDind must remain string cells")
             return
+    elif db == "mhas":
+        from mhas_export_contract import IDENTIFIERS
+        identity_columns = [x for x in raw_header if x in IDENTIFIERS]
+        if not set(identity_columns).issubset(analysis_header):
+            fail(results, "analysis identity values", "MHAS default identities must be preserved")
+            return
+        for key in ["ID", "Wave_id"]:
+            if any(not isinstance(row[analysis_header.index(key)], str) for row in analysis_rows[1:]):
+                fail(results, "analysis identity values", "MHAS keys must remain character cells")
+                return
     elif db == "share":
         identity_columns = ["ID", "Wave_id", "mergeid"]
         if not all(name in raw_header and name in analysis_header for name in identity_columns):
@@ -1453,6 +1463,8 @@ def main() -> int:
         print(json.dumps({"ok": passed, "checks": results}, ensure_ascii=False))
         return 0 if passed else 1
     formal_dir = args.formal_dir
+    from mhas_export_contract import RAW_NAME as MHAS_RAW_NAME
+    primary_raw_name = MHAS_RAW_NAME if args.db == "mhas" else "raw_data.csv"
 
     if not formal_dir.exists():
         fail(results, "formal dir exists", str(formal_dir))
@@ -1467,7 +1479,7 @@ def main() -> int:
         except ValueError as error:
             fail(results, "public R discovery", str(error))
     if args.complete:
-        required_names = {"raw_data.csv", "raw_codebook.csv", args.analysis_db, args.analysis_codebook}
+        required_names = {primary_raw_name, "raw_codebook.csv", args.analysis_db, args.analysis_codebook}
         missing = required_names - set(expected_files)
         roles = {"public_r": any(name.lower().endswith(".r") for name in expected_files),
                  "note": any(name.endswith(".md") and name != READER_COPY_NAME for name in expected_files),
@@ -1489,7 +1501,7 @@ def main() -> int:
     required_user_text = split_csv(args.required_user_text)
     criteria_evolution_text = split_csv(args.criteria_evolution_text)
     if raw_vars:
-        raw_data = formal_dir / "raw_data.csv"
+        raw_data = formal_dir / primary_raw_name
         raw_codebook = formal_dir / "raw_codebook.csv"
         expected_header = expected_raw_header(args.db, raw_vars)
         if args.db == "klosa":
@@ -1500,6 +1512,15 @@ def main() -> int:
             except ValueError as exc:
                 fail(results, "KLoSA package contract", str(exc))
         header = read_csv_header(raw_data)
+        mhas_header_matches = False
+        if args.db == "mhas":
+            try:
+                from mhas_export_contract import validate_package
+                contract = validate_package(formal_dir, [p.name for p in formal_dir.glob("raw_data*.csv")], raw_vars)
+                mhas_header_matches = True
+                ok(results, "MHAS Core person-period contract", contract)
+            except (OSError, ValueError) as exc:
+                fail(results, "MHAS Core person-period contract", str(exc))
         chns_header_matches = False
         if args.db == "chns":
             try:
@@ -1570,7 +1591,7 @@ def main() -> int:
                 ok(results, "ELSA default Wave_id", elsa_contract)
             except ValueError as exc:
                 fail(results, "ELSA default Wave_id", str(exc))
-        if (args.db not in {"share", "chns", "elsa"} and (header in layered_headers or hrs_header_matches or klosa_header_matches)) or share_header_matches or knhanes_header_matches or chns_header_matches or elsa_header_matches:
+        if (args.db not in {"share", "chns", "elsa", "mhas"} and (header in layered_headers or hrs_header_matches or klosa_header_matches)) or share_header_matches or knhanes_header_matches or chns_header_matches or elsa_header_matches or mhas_header_matches:
             ok(results, "raw_data header", header)
         elif args.db == "charls" and header == ["ID", "year", *raw_vars]:
             identifier_check = check_charls_household_identifier(raw_data)
@@ -1630,7 +1651,7 @@ def main() -> int:
             ok(results, "analysis_db columns", header)
         ok(results, "analysis_db dimensions", {"rows": len(rows) - 1, "cols": len(header)})
 
-        raw_data_path = formal_dir / "raw_data.csv"
+        raw_data_path = formal_dir / primary_raw_name
         if raw_data_path.exists():
             check_identity_values(
                 raw_data_path,

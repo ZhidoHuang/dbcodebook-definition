@@ -7,10 +7,13 @@ check_public_raw_reads <- function(lines, database = "CHARLS") {
   if (toupper(database) == "KNHANES") identity_names <- c("ID", "id", "year")
   if (toupper(database) == "KLOSA") identity_names <- c("ID", "Harmonized_id", "Wave_id", "pid")
   if (toupper(database) == "CHNS") identity_names <- c("ID", "IDind", "WAVE", "hhid", "COMMID", "Household_ID", "Community_ID")
+  if (toupper(database) == "MHAS") identity_names <- c("ID", "Wave_id", "UNHHIDNP", "CUNICAH", "NP",
+    "cunicah", "np", "unhhid", "ps3", "acthog", "ent2", "codent01", "codent03", "source_file", "source_row")
   boundary <- grep("^# 输出\\s*$", lines)
   if (length(boundary)) lines <- head(lines, boundary[[1]] - 1L)
   expressions <- parse(text = lines, keep.source = FALSE)
   targets <- c(dt = "raw_data.csv", name_z = "raw_codebook.csv")
+  if (toupper(database) == "MHAS") targets[["dt"]] <- "raw_data_MHAS_SURVEY_CORE_RESPONDENT.csv"
   if (toupper(database) == "CHNS") {
     # Static sources remain separate reads, with a literal source filename and personal key.
     for (expr in as.list(expressions)) {
@@ -39,6 +42,7 @@ check_public_raw_reads <- function(lines, database = "CHARLS") {
       stop(target, " must read ", targets[[target]])
     }
     if (length(args) == 1L) {
+      if (target == "dt" && toupper(database) == "MHAS") stop("MHAS must preserve ID and Wave_id as character")
       if (target == "dt" && toupper(database) == "KNHANES") stop("KNHANES must preserve id as character at read time")
       if (target != "name_z" && toupper(database) == "CHNS") stop("CHNS must preserve personal identities as character at read time")
       next
@@ -52,6 +56,7 @@ check_public_raw_reads <- function(lines, database = "CHARLS") {
     }
     values <- as.list(classes)[-1]
     ids <- names(values)
+    if (toupper(database) == "MHAS" && !all(c("ID", "Wave_id") %in% ids)) stop("MHAS must preserve ID and Wave_id as character")
     if (toupper(database) == "KNHANES" && !"id" %in% ids) stop("KNHANES must preserve id as character at read time")
     if (toupper(database) == "CHNS") {
       required <- if (target == "dt") c("ID", "IDind") else "IDind"

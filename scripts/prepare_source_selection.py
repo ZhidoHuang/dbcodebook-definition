@@ -94,7 +94,7 @@ def main():
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument('--input', type=Path, help='Legacy explicit full-identity list')
     source.add_argument('--record', type=Path, help='Primary merged READY source record')
-    parser.add_argument('--database', required=True, choices=['charls', 'elsa', 'hrs', 'share', 'chns', 'knhanes', 'klosa'])
+    parser.add_argument('--database', required=True, choices=['charls', 'elsa', 'hrs', 'share', 'chns', 'knhanes', 'klosa', 'mhas'])
     parser.add_argument('--config', type=Path)
     parser.add_argument('--language', choices=['en', 'ko'])
     parser.add_argument('--action-file', required=True, type=Path)

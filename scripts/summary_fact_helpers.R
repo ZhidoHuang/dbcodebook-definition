@@ -555,7 +555,7 @@ summary_render_parts <- function(parts, theme_color) {
           grepl("[\r\n]", path)) {
         stop("summary_source path must contain only the directory; put explanatory text in note.")
       }
-      if (length(database) != 1L || !database %in% c("charls", "elsa", "hrs", "share", "klosa", "knhanes", "chns")) stop("Invalid source-link database.")
+      if (length(database) != 1L || !database %in% c("charls", "elsa", "hrs", "share", "klosa", "knhanes", "chns", "mhas")) stop("Invalid source-link database.")
       route <- paste0('/home/', database, '/')
       if (database == "klosa") {
         if (length(part$language) != 1L || !part$language %in% c("en", "ko")) stop("KLoSA source link requires explicit language.")

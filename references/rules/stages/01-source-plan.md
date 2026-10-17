@@ -114,7 +114,7 @@
 ### 网页取证固定入口
 
 - 浏览器及标签先按[会话规则](../write-boundaries.md#浏览器会话)绑定。
-- 使用网页取证时，CHARLS、ELSA、HRS、SHARE、KLoSA、CHNS、KNHANES 的目录、普通搜索和单来源逐期详情使用同一 `source-read` 入口。不在主题中另编目录定位、等待刷新或详情解析脚本。
+- 使用网页取证时，CHARLS、ELSA、HRS、SHARE、KLoSA、CHNS、KNHANES、MHAS 的目录、普通搜索和单来源逐期详情使用同一 `source-read` 入口。不在主题中另编目录定位、等待刷新或详情解析脚本。
 - 研究者决定查什么，固定入口负责读对页面并保存原文。
 
 在本分支保存一个动作JSON，按需要选择一种：
@@ -129,7 +129,7 @@
 | 页面来源形式 | 详情动作怎样填写 |
 | --- | --- |
 | CHARLS、ELSA、SHARE、CHNS、KNHANES 的 `Variable` 行 | 使用 `variable`、`file`、`periods` |
-| HRS、KLoSA 的 `Base_Variable` 行 | 使用 `base_variable`、`file`、`periods`；返回结果同时保留变量族和每期实际变量名，不自行推算波次前缀 |
+| HRS、KLoSA、MHAS 的 `Base_Variable` 行 | 使用 `base_variable`、`file`、`periods`；返回结果同时保留变量族和每期实际变量名，不自行推算波次前缀 |
 | KLoSA 英文或韩文入口 | 所有动作另带 `database="klosa"`、`language="en"` 或 `"ko"`；命令同时传相同的 `--language` |
 
 时期使用页面原名，包括年份、Wave、跨年区间或 `Default` 等；`Default` 是静态资料列，不是调查年份。

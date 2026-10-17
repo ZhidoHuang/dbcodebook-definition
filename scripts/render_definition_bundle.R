@@ -1,3 +1,20 @@
+validate_mhas_render_inputs <- function(frames, cycle_order) {
+  periods <- c("2001", "2003", "2012", "2015", "2018", "2021", "2024")
+  if (!is.character(cycle_order) || !length(cycle_order) || anyNA(cycle_order) ||
+      any(!cycle_order %in% periods) || anyDuplicated(cycle_order) ||
+      is.unsorted(match(cycle_order, periods))) stop("Invalid MHAS Core period order.")
+  for (frame in frames) {
+    keys <- c("ID", "Wave_id")
+    if (!all(keys %in% names(frame)) || !all(vapply(frame[keys], is.character, logical(1)))) {
+      stop("MHAS requires character ID and Wave_id.")
+    }
+    if (anyNA(frame[keys]) || any(vapply(frame[keys], function(x) any(!nzchar(trimws(x))), logical(1))) ||
+        anyDuplicated(frame$ID) || anyDuplicated(frame[c("ID", "Wave_id")])) stop("Invalid MHAS person-period identity.")
+    if (any(!startsWith(frame$ID, paste0(frame$Wave_id, "|")))) stop("MHAS ID period prefix differs from Wave_id.")
+    if (any(!frame$Wave_id %in% cycle_order)) stop("MHAS observed period outside declared cycle_order.")
+  }
+}
+
 chns_year_values <- function(values) {
   text <- as.character(values)
   if (anyNA(text) || any(!grepl("^[0-9]{4}(\\.0+)?$", text))) stop("Invalid CHNS integer survey year.")
@@ -484,7 +501,7 @@ definition_source_entry <- function(value, database = "CHARLS", source_count = N
 validate_person_period_outputs <- function(frames, database) {
   keys <- switch(toupper(database), CHARLS=c("id", "year"), ELSA=c("idauniq", "Wave"),
     HRS=c("HHID", "PN", "year"), SHARE=c("mergeid", "Wave_id"),
-    KLOSA=c("Harmonized_id", "Wave_id"), CHNS=c("IDind", "WAVE"), KNHANES=c("id", "year"))
+    KLOSA=c("Harmonized_id", "Wave_id"), CHNS=c("IDind", "WAVE"), KNHANES=c("id", "year"), MHAS=c("ID", "Wave_id"))
   for (frame in frames) {
     if (!all(keys %in% names(frame))) stop("Final data requires person-period long rows: ", paste(keys, collapse=", "))
     identity <- frame[keys]
@@ -542,7 +559,15 @@ render_definition_bundle <- function(
     grDevices::col2rgb(theme_color)
     theme_color
   }, error = function(e) "#A33842")
-  if (!database %in% c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "KLOSA", "CHNS")) stop("Unsupported definition database: ", database)
+  if (!database %in% c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "KLOSA", "CHNS", "MHAS")) stop("Unsupported definition database: ", database)
+  if (database == "MHAS") {
+    if (missing(cycle_order)) stop("MHAS requires explicit evidence-based cycle_order.")
+    validate_mhas_render_inputs(list(data, db_data, analysis_data), cycle_order)
+    # Project periods only in rendering copies. Retain all original identifiers.
+    data$year <- data$Wave_id
+    db_data$year <- db_data$Wave_id
+    analysis_data$year <- analysis_data$Wave_id
+  }
   if (database == "CHNS") {
     if (missing(cycle_order)) stop("CHNS requires explicit, evidence-based cycle_order.")
     validate_chns_render_inputs(list(data, db_data, analysis_data), cycle_order)
@@ -555,7 +580,7 @@ render_definition_bundle <- function(
     if (missing(cycle_order)) stop("KNHANES requires explicit, evidence-based cycle_order.")
     validate_knhanes_render_inputs(list(data, db_data, analysis_data), cycle_order)
   }
-  period_col <- if (database %in% c("ELSA", "KLOSA")) "Wave" else if (database == "SHARE") "Wave_id" else "year"
+  period_col <- if (database %in% c("ELSA", "KLOSA")) "Wave" else if (database %in% c("SHARE", "MHAS")) "Wave_id" else "year"
   if (database == "KLOSA") {
     if (is.null(language) || length(language) != 1L || !language %in% c("en", "ko")) stop("KLoSA requires language=en or ko.")
     if (missing(cycle_order) || !length(cycle_order) || anyNA(cycle_order)) stop("KLoSA requires explicit nonempty cycle_order.")
@@ -767,6 +792,9 @@ render_definition_bundle <- function(
       c("Wave_id", "mergeid", "hhid", "country", "intid", "intidwX", "Record_id",
         grep("^intid[ .(]", names(detail_data), value = TRUE)), names(detail_data)))
   }
+  if (database == "MHAS") identity_columns <- union(identity_columns, intersect(
+    c("Wave_id", "UNHHIDNP", "CUNICAH", "NP", "cunicah", "np", "unhhid", "ps3", "acthog",
+      "ent2", "codent01", "codent03", "source_file", "source_row"), names(detail_data)))
   if (database == "KLOSA") identity_columns <- union(identity_columns, intersect(c("Harmonized_id", "Wave_id", "pid"), names(detail_data)))
   if (database == "CHNS") identity_columns <- union(identity_columns, intersect(
     c("IDind", "WAVE", "hhid", "COMMID", "Household_ID", "Community_ID",

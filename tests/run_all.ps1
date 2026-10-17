@@ -1,4 +1,4 @@
-﻿param([string]$Config = "", [string]$SkillValidator = "")
+param([string]$Config = "", [string]$SkillValidator = "")
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
@@ -73,6 +73,8 @@ if (-not [string]::IsNullOrWhiteSpace($rscript)) {
     if ($LASTEXITCODE -ne 0) { throw "test_share_renderer.R failed." }
     & $rscript --vanilla --encoding=UTF-8 'tests/test_knhanes_renderer.R'
     if ($LASTEXITCODE -ne 0) { throw "test_knhanes_renderer.R failed." }
+    & $rscript --vanilla --encoding=UTF-8 'tests/test_mhas_renderer.R'
+    if ($LASTEXITCODE -ne 0) { throw "test_mhas_renderer.R failed." }
     & $rscript --vanilla --encoding=UTF-8 'tests/test_chns_renderer.R'
     if ($LASTEXITCODE -ne 0) { throw "test_chns_renderer.R failed." }
   } finally { Pop-Location }

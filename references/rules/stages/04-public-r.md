@@ -86,6 +86,7 @@ data[data == ""] <- NA
 | SHARE 普通 Wave 个人唯一文件 | 允许 `ID`、`Wave_id`、`mergeid`、`hhid`、`country`、`intid`、`intidwX`、`Record_id` 及经字典来源文件核实的 `intid (File)` 自动身份列按字符读取；这项许可不套到其他数据库 |
 | KLoSA | `ID`、`Harmonized_id`、`Wave_id` 按字符读取；实际导出含默认 `pid` 时同样按字符保留 |
 | CHNS | 主表 `ID`、`IDind` 和静态表 `IDind` 必须按字符读取。主表还允许字典核实的 `WAVE`、`hhid`、`COMMID`、`Household_ID`、`Community_ID` 及带来源文件后缀的这些自动身份列；静态表当前只支持 `IDind`。不把业务列纳入许可；新增身份结构先核实并适配 |
+| MHAS Core | 读取 `raw_data_MHAS_SURVEY_CORE_RESPONDENT.csv`；`ID`、`Wave_id` 及实际导出的默认身份分量按字符保留，列名及支持范围见MHAS profile |
 | KNHANES | `id` 必须按字符读取；必要时 `ID`、`year` 也可按字符读取 |
 
 不追加 `fileEncoding`、`encoding`、`na.strings`、`col.names` 或 `check.names = FALSE`。

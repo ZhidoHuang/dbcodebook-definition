@@ -7,7 +7,7 @@ import uuid
 
 
 def browser_code(action, url, database):
-    if database not in {"charls", "share", "elsa", "hrs", "klosa", "chns", "knhanes"}:
+    if database not in {"charls", "share", "elsa", "hrs", "klosa", "chns", "knhanes", "mhas"}:
         raise ValueError("Unsupported source-read database")
     if database == "klosa":
         from klosa_adapter_contract import require_context, page_url
@@ -27,7 +27,7 @@ def browser_code(action, url, database):
         if not isinstance(action.get("query"), str) or len(action["query"].strip()) < 2:
             raise ValueError("query must contain at least two characters")
     else:
-        identity_key = "base_variable" if database in {"hrs", "klosa"} else "variable"
+        identity_key = "base_variable" if database in {"hrs", "klosa", "mhas"} else "variable"
         other_key = "variable" if identity_key == "base_variable" else "base_variable"
         if other_key in action:
             raise ValueError(f"{database} detail uses {identity_key} from the search result")
@@ -138,7 +138,7 @@ def run_read(session, action, url, database, out, resume=None):
             return state
     state.update(ok=True, status={"detail":"SOURCE_READ", "directory":"DIRECTORY_READ", "search":"SEARCH_READ"}[action["kind"]])
     if action["kind"] == "detail":
-        identity_key = "base_variable" if database in {"hrs", "klosa"} else "variable"
+        identity_key = "base_variable" if database in {"hrs", "klosa", "mhas"} else "variable"
         state.update({identity_key:action[identity_key], "file":action["file"], "details":[]})
         for item in state["completed"]:
             state["details"].extend(json.loads(Path(item["receipt"]).read_text(encoding="utf-8"))["details"])
