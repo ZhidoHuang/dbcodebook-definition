@@ -18,7 +18,7 @@ from check_reader_copy import Document, validate_note, normalized, route_matches
 from questionnaire_groups import period_keys, original_options, question_matches, unverified_question_periods
 from questionnaire_groups import validate_shared_option_rows
 from questionnaire_groups import question_identity, validate_display_titles
-from questionnaire_display import validate_display_sequence
+from questionnaire_display import validate_display_sequence, display_route_destination
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
     rendered_when_matches, jump_descriptions, is_plain_paraphrase, validate_paraphrase_display)
@@ -428,7 +428,8 @@ def validate_questionnaire_rendering(
                 descriptions = jump_descriptions(jump["when"], rows, instructions)
                 descriptions += [r["destination"] for r in shared_routes if rendered_when_matches(jump["when"], r["when"])]
                 descriptions += jump_descriptions(jump["when"], inherited_jumps, [])
-                if not any(route_matches(jump["destination"], text, period) for text in descriptions):
+                destination = display_route_destination(jump["destination"], item, record, period)
+                if not any(route_matches(destination, text, period) for text in descriptions):
                     fail(f"final note period {period} route differs for {question_id}: {jump['when']} -> {jump['destination']}")
             rendered_pairs.add((question_id, str(period)))
 

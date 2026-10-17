@@ -120,6 +120,8 @@ Copy-operations 保存文案阶段共用的程序操作。
 | `display.options` | 原编码和顺序不变，只译标签 |
 | `display.record_only_option_values` | 代码本把 Blank 或 Web non-response 列入选项表时，不作为问卷选项展示。原始选项仍保留；`record_only_options_note` 记录内部核实依据，不要求放入 `display.instructions` 或正文。不得用于有效回答、拒答、不知道或触发跳题的选项。 |
 | `display.skip_logic` | `source_index` 完整且唯一；原触发代码及目的题号不变 |
+| 合并时期后的跳转题号 | 比较文稿与成品时，用同一时期、同一题组中已登记的 `question_title_source` 对应展示题号。原始去向和触发条件不变；未登记或有歧义的对应不转换。 |
+| `display.skip_logic[].presentation="entry_condition"` | 旧记录把进入本题的说明存为跳题时使用。原分支以 `kind="entry_condition"` 分类，并在 `evidence` 中保留核实依据；去向只能是本题。用 `presentation_reason` 说明为何不作为跳题展示。文稿保留必要的适用对象，实际跳转仍逐条核对。 |
 | `display.skip_logic[].presentation="record_note"` | 旧记录把本字段的空白类别说明误存为跳题时使用；用 `presentation_reason` 说明核实依据，保留原记录。带条件的说明须与原始 Blank 标签一致，且目的字段只能是本字段。它不作为跳转展示；其中实际存在的提问路径仍须核实并在对应题目展示。不能用于隐藏转向另一题的真实跳转。 |
 | `display.skip_logic[].presentation="sequence"` | 已核实为同一时期、同一题组内的正常顺序作答时使用，并用 `display.next_question` 登记原问卷下一题；保留原分支及译文，不要求文案另写跳转提示。检查器核对下一题存在于逐期证据，且在文案和成品中紧接当前题；不能用于跳过题目或结束题组 |
 

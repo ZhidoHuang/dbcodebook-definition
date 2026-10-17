@@ -4,7 +4,7 @@ Checks compare registered display strings; they do not certify translation quali
 Legacy records without a display policy retain their original comparison behavior.
 """
 import re
-from questionnaire_groups import (period_keys, original_options, question_matches,
+from questionnaire_groups import (period_keys, original_options, question_matches, validate_display_titles,
     shared_question_info as _shared_question_info, referenced_options as _referenced_options,
     referenced_jump_options as _referenced_jump_options)
 
@@ -129,6 +129,33 @@ def _question_alias(identifier):
     return match[1] if match else str(identifier)
 
 
+def display_route_destination(destination, item, record, period):
+    """Resolve only verified targets in this period/group to their display titles."""
+    evidence = record.get("questionnaire_evidence", [])
+    validate_display_titles(evidence)
+    candidates = {}
+    for target in evidence:
+        if (not set(period_keys(str(period))).intersection(
+                key for value in target.get("periods", []) for key in period_keys(str(value)))
+                or target.get("questionnaire_module", "") != item.get("questionnaire_module", "")):
+            continue
+        identifier = str(target.get("question_id", ""))
+        if identifier:
+            for alias in {identifier, _question_alias(identifier)}:
+                candidates.setdefault(alias, []).append(target)
+    replacements = {}
+    for identifier, targets in candidates.items():
+        titles = {target.get("display", {}).get("question_title", target["question_id"])
+                  for target in targets}
+        if len(titles) == 1 and all(target.get("display", {}).get("question_title_source") for target in targets):
+            replacements[identifier] = next(iter(titles))
+    if not replacements:
+        return destination
+    pattern = r"(?<![A-Za-z0-9_])(?:" + "|".join(
+        re.escape(identifier) for identifier in sorted(replacements, key=len, reverse=True)) + r")(?![A-Za-z0-9_])"
+    return re.sub(pattern, lambda match: replacements[match[0]], destination)
+
+
 def _question_alias_map(identifiers):
     identifiers = [str(identifier) for identifier in identifiers]
     if len(identifiers) != len(set(identifiers)):
@@ -222,6 +249,15 @@ def display_answers(item, record):
         presentation = jump.get("presentation")
         if presentation is None:
             displayed_jumps.append(jump)
+            continue
+        if presentation == "entry_condition":
+            source = source_jumps[jump['source_index']]
+            own_id = _question_alias(item.get('question_id', ''))
+            if (source.get('kind') != 'entry_condition'
+                    or not str(source.get('evidence', '')).strip()
+                    or _destination_ids(source['destination'], [own_id]) != {own_id}
+                    or not str(jump.get('presentation_reason', '')).strip()):
+                raise ValueError('entry_condition requires evidenced source classification and this question as destination')
             continue
         if presentation == "record_note":
             # A codebook's blank-category explanation describes this field's

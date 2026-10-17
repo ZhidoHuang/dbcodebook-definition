@@ -11,7 +11,7 @@ import re
 from questionnaire_groups import period_keys, original_options, question_matches, question_identifiers, unverified_question_periods
 from questionnaire_groups import validate_shared_option_rows
 from questionnaire_groups import question_identity, validate_display_titles
-from questionnaire_display import validate_display_sequence
+from questionnaire_display import validate_display_sequence, display_route_destination
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
     rendered_when_matches, jump_descriptions, is_plain_paraphrase, validate_paraphrase_display)
@@ -783,7 +783,8 @@ def questionnaire_copy_errors(copy, record):
                 descriptions = jump_descriptions(jump["when"], rows, question["instructions"])
                 descriptions += [r["destination"] for r in shared_routes if rendered_when_matches(jump["when"], r["when"])]
                 descriptions += jump_descriptions(jump["when"], inherited_jumps, [])
-                if not any(route_matches(jump["destination"], s, period) for s in descriptions):
+                destination = display_route_destination(jump["destination"], item, record, period)
+                if not any(route_matches(destination, s, period) for s in descriptions):
                     errors.append(f"{label}: route differs: {jump['when']} -> {jump['destination']}")
     return errors
 

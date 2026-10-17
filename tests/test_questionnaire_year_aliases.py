@@ -106,3 +106,76 @@ for bad in ['2004–2001 年','2001–2003 年；2002年']:
     except ValueError: pass
     else: raise AssertionError('Invalid range accepted: '+bad)
 print('QUESTIONNAIRE_YEAR_ALIASES_PASS: copy/rendered ranges, verified coverage, scoped IDs, ordered codes, conditions and routes')
+
+# Merged periods show first-period IDs, but routes retain their real period IDs.
+merged = {'schema_version': 6, 'questionnaire_display_policy': 'chinese_v1', 'questionnaire_evidence': []}
+for wave, prefix in [(1, 'C10'), (2, 'C20')]:
+    for number in [1, 2, 3]:
+        identifier = prefix + str(number)
+        merged['questionnaire_evidence'].append({
+            'evidence_id': f'w{wave}q{number}', 'question_id': identifier,
+            'periods': [f'Wave {wave}'], 'question_text': f'第{number}个问题。',
+            'response_type': 'closed_options' if number == 1 else 'open_value',
+            'options': [{'value': '1', 'label': '是'}, {'value': '5', 'label': '否'}] if number == 1 else [],
+            'skip_logic': [{'when': '1 是', 'destination': prefix + '3'}] if number == 1 else [],
+            'rendered_in_copy': True, 'copy_locator': identifier,
+            'display': {'question_text': f'第{number}个问题。',
+                        'question_title': 'C10' + str(number),
+                        'question_title_source': f'w1q{number}'}})
+merged_text = '''### Wave 1–2
+#### 问卷设计
+三道问题，回答是时跳过第二题。
+#### C101
+第1个问题。
+- 1 是 → 跳至 C103
+- 5 否
+#### C102
+第2个问题。
+#### C103
+第3个问题。
+'''
+snapshot = copy.deepcopy(merged)
+check(merged_text, merged)
+assert merged == snapshot
+check(merged_text.replace('跳至 C103', '跳至 C102'), merged, False)
+check(merged_text.replace('1 是 →', '5 否 →'), merged, False)
+for field, value in [('question_title_source', 'missing'), ('question_title_source', 'w1q2')]:
+    bad = copy.deepcopy(merged)
+    bad['questionnaire_evidence'][-1]['display'][field] = value
+    check(merged_text, bad, False)
+bad = copy.deepcopy(merged)
+bad['questionnaire_evidence'][-1]['questionnaire_module'] = '另一题组'
+check(merged_text, bad, False)
+bad = copy.deepcopy(merged)
+bad['questionnaire_evidence'][-1]['periods'] = ['Wave 3']
+check(merged_text, bad, False)
+
+# A classified entry note can stay internal; a real outgoing branch still must appear.
+entry = copy.deepcopy(merged)
+for item in entry['questionnaire_evidence']:
+    if item['question_id'] not in ['C101', 'C201']:
+        continue
+    item['skip_logic'].insert(0, {'when': '本题不受前题筛查限制',
+        'destination': item['question_id'], 'kind': 'entry_condition',
+        'evidence': '本期官方问卷入口与相邻筛查分支已核实；本题位于该分支之外。'})
+    item['display']['skip_logic'] = [
+        {'source_index': 0, 'when': '本题不受前题筛查限制',
+         'destination': '进入 ' + item['question_id'], 'presentation': 'entry_condition',
+         'presentation_reason': '入口说明，不是本题回答后跳向另一题。'},
+        {'source_index': 1, 'when': '1 是', 'destination': '跳至 ' + item['skip_logic'][1]['destination']}]
+snapshot = copy.deepcopy(entry)
+check(merged_text, entry)
+assert entry == snapshot
+check(merged_text.replace(' → 跳至 C103', ''), entry, False)
+for field in ['kind', 'evidence']:
+    bad = copy.deepcopy(entry)
+    bad['questionnaire_evidence'][0]['skip_logic'][0].pop(field)
+    check(merged_text, bad, False)
+bad = copy.deepcopy(entry)
+bad['questionnaire_evidence'][0]['skip_logic'][0]['destination'] = 'C103'
+bad['questionnaire_evidence'][0]['display']['skip_logic'][0]['destination'] = '进入 C103'
+check(merged_text, bad, False)
+bad = copy.deepcopy(entry)
+bad['questionnaire_evidence'][0]['display']['skip_logic'][0]['when'] = '本题回答 5 时'
+check(merged_text, bad, False)
+print('MERGED_ROUTES_ENTRY_NOTES_PASS: copy/rendered targets, conditions, periods, groups and source preservation')
