@@ -79,4 +79,29 @@ assert sequential == snapshot
 bad = copy.deepcopy(sequential)
 bad['questionnaire_evidence'][0]['display']['skip_logic'][0]['destination'] = '跳至 Q03'
 assert questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(sequence_copy)}, bad)
+
+# Pure-letter identifiers must obey the same period, group and adjacency checks.
+letter_record = json.loads(json.dumps(sequential).replace('Q01', 'HESKD').replace('Q02', 'HESKE').replace('Q03', 'HESKF'))
+letter_copy = sequence_copy.replace('Q01', 'HESKD').replace('Q02', 'HESKE').replace('Q03', 'HESKF')
+letter_snapshot = copy.deepcopy(letter_record)
+assert not questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(letter_copy)}, letter_record)
+for destination in ['跳至 HESKF', '跳至 HESKE_EXTRA', '跳至 HESKE 或 HESKF', '结束 HESKE']:
+    wrong = copy.deepcopy(letter_record)
+    wrong['questionnaire_evidence'][0]['display']['skip_logic'][0]['destination'] = destination
+    assert questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(letter_copy)}, wrong)
+for field, value in [('periods', ['Wave 2']), ('questionnaire_module', '另一题组')]:
+    wrong = copy.deepcopy(letter_record)
+    wrong['questionnaire_evidence'][2][field] = value
+    assert questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(letter_copy)}, wrong)
+letter_reordered = letter_copy.replace('#### HESKE', '#### TEMP').replace('#### HESKF', '#### HESKE').replace('#### TEMP', '#### HESKF')
+rejects(lambda: questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(letter_reordered)}, letter_record), 'next displayed')
+with tempfile.TemporaryDirectory() as temp:
+    folder = Path(temp)
+    (folder / SOURCE_RECORD_NAME).write_text(json.dumps(letter_record, ensure_ascii=False), encoding='utf-8')
+    letter_markup = markup.replace('Q01', 'HESKD').replace('Q02', 'HESKE').replace('Q03', 'HESKF')
+    (folder / 'note.md').write_text(letter_markup, encoding='utf-8')
+    assert validate_questionnaire_rendering(folder, folder, 'note.md')['rendered_question_periods'] == 3
+    (folder / 'note.md').write_text(letter_markup.replace('>HESKE<', '>TEMP<').replace('>HESKF<', '>HESKE<').replace('>TEMP<', '>HESKF<'), encoding='utf-8')
+    rejects(lambda: validate_questionnaire_rendering(folder, folder, 'note.md'), 'next displayed')
+assert letter_record == letter_snapshot
 print("QUESTIONNAIRE_DISPLAY_PASS: Chinese display, instructions, grouped periods, source preservation")

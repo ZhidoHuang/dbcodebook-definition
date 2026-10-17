@@ -113,9 +113,15 @@ def _condition_ids(text):
             if not re.fullmatch(r"W\d+", identifier)}
 
 
-def _destination_ids(text):
+def _destination_ids(text, registered=()):
     # MN identifiers denote program flags, not destination questions.
-    return {identifier for identifier in _condition_ids(text) if not re.fullmatch(r"MN\d+", identifier)}
+    identifiers = {identifier for identifier in _condition_ids(text) if not re.fullmatch(r"MN\d+", identifier)}
+    # Sequence checks also know the real question identifiers for this period/group.
+    # Match whole identifiers, including names without digits, without treating prose as IDs.
+    identifiers.update(identifier for identifier in registered
+                       if re.search(r"(?<![A-Za-z0-9_])" + re.escape(identifier)
+                                    + r"(?![A-Za-z0-9_])", str(text)))
+    return identifiers
 
 
 def _question_alias(identifier):
@@ -242,7 +248,7 @@ def display_answers(item, record):
                          for question in record.get("questionnaire_evidence", [])
                          if period in question.get("periods", []) and question.get("questionnaire_module") == item.get("questionnaire_module")}
             if (not declared_next or declared_next not in available
-                    or _destination_ids(jump["destination"]) != {declared_next}
+                    or _destination_ids(jump["destination"], available) != {declared_next}
                     or any(word in jump["destination"] for word in ("结束", "退出"))):
                 raise ValueError("sequence must point to the next verified question in the same period/group")
         if not item.get("periods"):
