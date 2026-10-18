@@ -4,7 +4,7 @@ Checks compare registered display strings; they do not certify translation quali
 Legacy records without a display policy retain their original comparison behavior.
 """
 import re
-from questionnaire_groups import (period_keys, original_options, question_matches, validate_display_titles,
+from questionnaire_groups import (period_key, period_keys, original_options, question_matches, validate_display_titles,
     shared_question_info as _shared_question_info, referenced_options as _referenced_options,
     referenced_jump_options as _referenced_jump_options)
 
@@ -55,6 +55,7 @@ def validate_paraphrase_display(item, blocks, normalize, evidence=None):
     if not isinstance(periods, list) or not periods:
         raise ValueError("plain_paraphrase requires periods")
     supported = set()
+    survey_periods = [p for other in evidence or [item] for p in other.get("periods", [])]
     for other in evidence or [item]:
         if (other.get("question_text_mode") == "plain_paraphrase"
                 and other.get("source_group") == item.get("source_group")
@@ -62,17 +63,17 @@ def validate_paraphrase_display(item, blocks, normalize, evidence=None):
                 and normalize(other.get("question_text", "")) == normalize(item["question_text"])
                 and normalize(other.get("paraphrase_reason", "")) == normalize(item["paraphrase_reason"])):
             for period in other.get("periods", []):
-                supported.update(period_keys(str(period)))
+                supported.update(period_keys(str(period), survey_periods))
     for period in periods:
-        keys = set(period_keys(str(period)))
+        keys = set(period_keys(str(period), survey_periods))
         matches = [block for block in blocks
-                   if keys.intersection(period_keys(block["label"]))
+                   if keys.intersection(period_keys(block["label"], survey_periods))
                    and (not item.get("questionnaire_module") or block.get("module") == item["questionnaire_module"])
                    and normalize(item["question_text"]) in normalize(block["design"])
                    and normalize(item["paraphrase_reason"]) in normalize(block["design"])]
         if len(matches) != 1:
             raise ValueError(f"{period}: expected one design with verified paraphrase and reason")
-        if not set(period_keys(matches[0]["label"])).issubset(supported):
+        if not set(period_keys(matches[0]["label"], survey_periods)).issubset(supported):
             raise ValueError(f"{period}: paraphrase includes unverified periods")
         if matches[0].get("design_count", 1) != 1 or matches[0].get("design_title") not in ("问卷设计", "问卷设计变化"):
             raise ValueError(f"{period}: expected exactly one questionnaire design note")
@@ -135,8 +136,8 @@ def display_route_destination(destination, item, record, period):
     validate_display_titles(evidence)
     candidates = {}
     for target in evidence:
-        if (not set(period_keys(str(period))).intersection(
-                key for value in target.get("periods", []) for key in period_keys(str(value)))
+        if (not {period_key(period)}.intersection(
+                period_key(value) for value in target.get("periods", []))
                 or target.get("questionnaire_module", "") != item.get("questionnaire_module", "")):
             continue
         identifier = str(target.get("question_id", ""))

@@ -707,7 +707,7 @@ def questionnaire_copy_errors(copy, record):
     validate_display_titles(evidence)
     periods = {}
     for period in copy.get("questionnaire", {}).values():
-        for key in period_keys(period["label"]):
+        for key in period_keys(period["label"], [x.get("period", "") for x in record.get("questionnaire_coverage", [])]):
             periods.setdefault(key, []).append(period)
     errors = []
     displayed_evidence = [item for item in evidence if item.get("display_required", True) is not False]

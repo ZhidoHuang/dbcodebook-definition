@@ -99,13 +99,21 @@ def referenced_jump_options(question_id, entries):
     return referenced_options("", question_id, scoped)
 
 
-def period_keys(label):
+def period_keys(label, survey_periods=None):
     """Expand declared ranges; evidence checks must separately verify every period."""
     # Module titles are reader-facing labels, not additional period evidence.
     label = re.split(r"[:：]", label, maxsplit=1)[0]
     result = []
+    cycles = {}
+    for value in survey_periods or []:
+        match = re.fullmatch(r"\s*(\d{4})\s*[–—-]\s*(\d{4})\s*", str(value))
+        if match:
+            cycles[period_key(value)] = tuple(map(int, match.groups()))
     for part in re.split(r"[；;、]", label):
         part = part.strip()
+        if period_key(part) in cycles:
+            result.append(period_key(part))
+            continue
         match = re.fullmatch(r"Wave\s*(\d+)\s*[–—-]\s*(?:Wave\s*)?(\d+)", part, re.I)
         if match:
             start, end = map(int, match.groups())
@@ -116,7 +124,15 @@ def period_keys(label):
             start, end = map(int, re.findall(r"\d{4}", part))
             if not 1000 <= start <= end <= 9999:
                 raise ValueError("Invalid questionnaire year range: " + part)
-            result.extend(str(i) for i in range(start, end + 1))
+            if cycles:
+                included = sorted((a, b, key) for key, (a, b) in cycles.items()
+                                  if start <= a <= b <= end)
+                if (not included or included[0][0] != start or included[-1][1] != end
+                        or any(left[1] + 1 != right[0] for left, right in zip(included, included[1:]))):
+                    raise ValueError("Cycle range must cover consecutive non-overlapping registered periods: " + part)
+                result.extend(key for _, _, key in included)
+            else:
+                result.extend(str(i) for i in range(start, end + 1))
         elif part:
             result.append(period_key(part))
     if len(result) != len(set(result)):
@@ -230,7 +246,7 @@ def unverified_question_periods(label, identifiers, evidence, module="", survey_
     if not re.search(r"\d{4}\s*年?\s*[–—-]\s*\d{4}", label) and not has_wave_alias:
         return []
     errors = []
-    declared = set(period_keys(label))
+    declared = set(period_keys(label, survey_periods))
     checked = set(declared)
     known = {period_key(p) for p in (survey_periods or [])}
     for match in re.finditer(r"(\d{4})\s*年?\s*[–—-]\s*(\d{4})", label):

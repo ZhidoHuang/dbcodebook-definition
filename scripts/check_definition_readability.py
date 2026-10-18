@@ -270,7 +270,7 @@ def validate_questionnaire_rendering(
             for value in (section["period"], section["label"])
             if normalized_period(value)
         }
-        keys.update(period_keys(section["label"]))
+        keys.update(period_keys(section["label"], [x.get("period", "") for x in record.get("questionnaire_coverage", [])]))
         for key in keys:
             sections.setdefault(key, []).append(section)
 
