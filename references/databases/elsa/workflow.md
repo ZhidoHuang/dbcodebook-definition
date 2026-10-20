@@ -35,6 +35,6 @@
 ## 结果验证与支持范围
 
 - 在[第6步](../../rules/stages/06-results.md)中核对完整 File 身份、个人—Wave键、特殊文件族、负值解释及覆盖范围。
-- 部分 Wave 来源重叠时，按[公共来源重叠核对](../../rules/stages/06-results.md#来源重叠核对)处理，不另设一套暂停条件。
+- 部分 Wave 来源重叠时，按[公共来源重叠核对](../../rules/stages/02-download.md#来源重叠核对)处理，不另设一套暂停条件。
 
 生成接口及当前边界见[第5步](../../rules/stages/05-generate.md#数据库适配边界)。

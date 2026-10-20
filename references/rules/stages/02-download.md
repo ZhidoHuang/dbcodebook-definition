@@ -208,9 +208,16 @@ $Action = "$Process/download_action.json"
 - 重试前说明已有记录及文件状态；不明确或仍在下载时停止重试。
 - 用户已授权付费复测时，在确认前次未成功且无进行中的下载后沿用授权，不重复确认；该授权不包括改网站、重启服务或切换浏览器。
 
+## 来源重叠核对
+
+- 多个来源在相同时期覆盖同一研究概念，且方案需要将它们视为等值替代或按优先级合并时，比较该时期对应记录的非空值与缺失模式，记录总行数、双方非空可比人数、双方均缺失人数、缺失模式不同人数、有效值不同人数及采用理由。
+- 首次比较在下载后、正式 R 前完成；第6步沿用仍有效的证据，核对实现是否遵循方案。
+- 结果符合已定方案时继续；发现方案未解释的差异时返回来源环节调查，不用合并优先级掩盖问题，也不因已解释的差异固定要求用户重新裁决。
+- 不同对象、不同含义的来源不作等值比较。
+
 ## 记录字段的阶段边界
 
-- 下载后、编写正式 R 前，完成[来源重叠核对](06-results.md#来源重叠核对)中影响来源选择或合并的实际数据比较；未解释的差异先返回来源方案。
+- 下载后、编写正式 R 前，完成本页[来源重叠核对](#来源重叠核对)中影响来源选择或合并的实际数据比较；未解释的差异先返回来源方案。
 - 第6步验证实现与该结论一致，不到成品阶段才首次确定来源关系。
 
 - 下载后某个实际取值涉及哪些时期，直接从逐期统计提取，再用于探索记录和R注释，不手写另一份时期清单。
@@ -224,7 +231,7 @@ $Action = "$Process/download_action.json"
 | status / logic_review.result | READY；clear 或 reported_and_resolved，未决问题不得掩盖 | 继续保留真实结论 |
 | directory_entries / discovery.value | 网页分支：完整 UI 路径且 verified_in_ui=true；本地分支：按[本地证据接口](../local-source-evidence.md)绑定查询结果，不冒称网页观察；discovery 指向已登记条目 | 保留同一来源身份 |
 | 单期 source_group | handling_decision=single_period | 与实际时期核对 |
-| questionnaire_evidence | 完整题文，或符合[题意概括条件](../evidence-and-literature.md#questionnaire-evidence)的已核实概括；两者均须核实必要选项和路径；材料位置按该节的 `local_material_scope` 和 `local_material_path` 登记 | 文案完成后：需展示项的rendered_in_copy=true、copy_locator指向实际文案；省略项按[文案程序操作](../scoped-tasks.md#copy-operations)登记，研究证据仍保留 |
+| questionnaire_evidence | 完整题文，或符合[题意概括条件](../evidence-and-literature.md#questionnaire-evidence)的已核实概括；两者均须核实必要选项和路径；材料位置按该节的 `local_material_scope` 和 `local_material_path` 登记 | 文案完成后：需展示项的rendered_in_copy=true、copy_locator指向实际文案；省略项按[文案程序操作](../copy-update.md#copy-operations)登记，研究证据仍保留 |
 | questionnaire_path_closure | 真实进入/退出条件；未知人数和统计结论用 null | 下载后数据核实、正式 R 前：observed_count 为非负整数，unexplained_count=0，实际闭合有依据 |
 | human_record / evidence_steps | 探索记录存在同号 S001 等步骤标题 | 沿用可追溯步骤，不为过检查编造观察 |
 

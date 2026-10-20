@@ -23,17 +23,18 @@
 
 | 文件 | 接收与完成 | 不在这里重复 |
 | --- | --- | --- |
-| 01-source-plan | 用户约束与待探索问题 → 双路探索、主线程合并方案及来源清单 | 下载控件、公开代码、文案 |
-| 02-download | 方案与别名 → 本次已校验raw/codebook；下载失败找回也在此 | 发布、R实现和展示实现 |
+| 01-source-plan | 用户约束与待探索问题 → 双路探索、主线程合并方案、结果关系及来源清单 | 下载控件、公开代码、文案 |
+| 02-download | 方案与别名 → 本次已校验raw/codebook；下载后首次来源重叠核对与下载失败找回也在此 | 发布、R实现和展示实现 |
 | 03-copy | 方案与实际事实 → 完整文案及首稿快照 | 生成接口、CSS、网站操作 |
 | 04-public-r | 方案与文案 → 实现、预检及实现复核 | 摘要写法、发布步骤 |
 | 05-generate | 稳定源和文案 → 数据、笔记、附件；接口和展示由此负责 | 重新裁决研究事实 |
-| 06-results | 当前产物 → 数据及显示一致性证据 | 重写文案、重新探索 |
+| 06-results | 当前产物 → 数据及显示一致性证据；核对实现遵循已确认的来源比较结论 | 重写文案、首次来源取舍、重新探索 |
 | 07-review | 各步结论与当前产物 → 机械一致性检查及发布许可 | 重新安排全流程审核 |
 | 08-website | 已授权成果及许可 → 单次同步结果 | 研究、写作、数据修复 |
 
 - validation负责何时返回或复核及状态含义；review-roles负责复核角色与证据交接；execution-report负责记录和耗时，不各自再规定一套主题操作。
 - 此表说明职责，不表示每份旧文件已经完成精简；整理进度留在维护记录。
+- 当前架构迁移的设计、逐条原文去向和验收见[维护记录](../../tests/architecture-20261019/design.md)。仅维护时读取，不加入普通生产路径；规则覆盖边界以 SKILL.md 为准。
 
 ## 数据库事实与配置
 
@@ -59,7 +60,7 @@
 | --- | --- |
 | [exploration-record.md](../../templates/exploration-record.md) | 从第一次探索开始，用大白话按时间记录做了什么、看到了什么、说明什么和下一步 |
 | [definition-search-record.json](../../templates/definition-search-record.json) | 保存与同一次探索对应的结构化来源、证据、别名、候选和定义方案，供机器对账 |
-| [reader-copy.md](../../templates/reader-copy.md) | 文案各部分的模板与实例；与03-copy顺序一致，不另设规则 |
+| [reader-copy.md](../../templates/reader-copy.md) | 按操作触发的条件实例；基础模板随copy/任务，不另设规则 |
 | [questionnaire-copy.md](../../templates/questionnaire-copy.md) | 旧入口，指向问卷要求及reader-copy中的对应实例 |
 | [public-r-dictionary.R](../../templates/public-r-dictionary.R) | 正式变量对照表的可执行范例 |
 | [change-impact.md](../../templates/change-impact.md) | 说明如何填写机器生成的变更影响检查表；不代替公共文案和生成规则 |
@@ -72,7 +73,7 @@
 4. 是否需要独立验收、机器闭环和状态含义，写入风险触发验收规则。
 5. 执行环节、耗时、Bug 和异常怎样记录，写入执行报告规则。
 6. 主题自身的来源、公式、结果、例外和用户裁决，只留在主题成果与过程证据，不回填公共规则。普通主题完成不触发 Skill 更新。
-7. 文案的目的、内容和格式统一在03-copy；模板与实例集中在reader-copy，questionnaire-copy只保留跳转。
+7. 文案入口由03-copy负责；普通操作及专项要求位于copy/，基础模板跟随对应任务，条件实例保留在reader-copy；questionnaire-copy只保留跳转。
    - 其它模板不另写内容标准；显示样式和生成接口归第5步，机器验收与状态归validation。
 
 每次整理规则时都要检查：是否已有唯一负责文件、是否只是本主题个例、是否造成两份完整条文并存。若答案不清楚，先停止新增条文，回到本索引确定归属。

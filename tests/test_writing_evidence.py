@@ -5,10 +5,12 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import shutil
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from writing_evidence import digest, skill_version, copy_execution_conclusions, scope_bindings, carry_copy_scopes
+import writing_evidence
 
 
 with tempfile.TemporaryDirectory() as temp:
@@ -116,4 +118,31 @@ with tempfile.TemporaryDirectory() as temp:
     v1 = skill_version(fake_skill)
     (fake_skill / "SKILL.md").write_text("v2", encoding="utf-8")
     assert v1["id"] != skill_version(fake_skill)["id"]
+
+    # Moving rules must not allow an old judgment to survive changed guidance.
+    # Mutate only temporary rule copies; production guidance stays untouched.
+    rule_paths = (
+        "references/rules/stages/03-copy.md", "templates/reader-copy.md",
+        "references/rules/copy/core.md", "references/rules/copy/questionnaire.md",
+        "references/rules/copy/tree.md", "references/rules/copy/basis.md",
+    )
+    for name in rule_paths:
+        target = fake_skill / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / name, target)
+    original_root = writing_evidence.ROOT
+    try:
+        writing_evidence.ROOT = fake_skill
+        baseline = copy.deepcopy(prior)
+        baseline["copy_scope_bindings"] = scope_bindings(formal, process, artifacts)
+        assert set(carry_copy_scopes(baseline, payload())) == set(names)
+        for name in rule_paths:
+            target = fake_skill / name
+            before = target.read_bytes()
+            target.write_bytes(before + b"\nChanged guidance for the isolated regression.\n")
+            assert carry_copy_scopes(baseline, payload()) == [], name
+            target.write_bytes(before)
+            assert set(carry_copy_scopes(baseline, payload())) == set(names), name
+    finally:
+        writing_evidence.ROOT = original_root
 print("WRITING_EVIDENCE_PASS: immutable first copy, missing-first honesty, round history, scoped reuse, content versions")

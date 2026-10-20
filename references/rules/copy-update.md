@@ -1,0 +1,135 @@
+# 文案局部更新与程序操作
+
+路径和 Python 从任务配置取得；下方命令在 Skill 根目录运行。
+
+入口：已有主题只改措辞或展示。新稿从[文案写作](stages/03-copy.md#执行与读取)进入；来源、变量范围、公式、补值条件或 R 有变化时，返回对应阶段。
+
+## 本次读取与范围
+
+1. 先确认用户指定栏目或整篇更新，读取完整原稿。沿用未变的方案、来源和有效结论。
+2. 阅读[通用表达](stages/03-copy.md#通用表达)与[通用格式](stages/03-copy.md#通用格式)两个章节，再按下表选择本次实际修改的任务及相邻模板。
+3. 修改前执行下方 Copy-update 的准备。用户明确限定仅交文案、不生成其他成果时，只执行该范围的修改和本页 [Copy-operations](#copy-operations) 中适用的检查，并据实际输入说明检查限制。
+
+| 修改范围 | 读取任务与写法 |
+| --- | --- |
+| 标题、摘要 | [标题与摘要](copy/core.md#标题与摘要任务)；树受影响时再读[树任务](copy/tree.md)及选定结构的模板 |
+| Criteria | [Criteria](copy/core.md#criteria任务) |
+| 小book | [小book](copy/core.md#小book任务) |
+| 参考资料 | [参考资料](copy/core.md#参考资料任务) |
+| 问卷、定义依据或树 | [文案入口的对应展示判断](stages/03-copy.md#选择条件任务)及对应任务；已有且未受影响的展示决定直接沿用 |
+| 按最新规则更新整篇 | [文案执行与读取](stages/03-copy.md#执行与读取)中的完整文案路径 |
+
+只定位上述章节，不将同文件其他任务纳入本次修改。程序通过只证明实际检查的范围；事实缺口返回来源，已知内容的格式问题留在文案，正确文稿的显示问题返回生成阶段。
+
+## Copy-update
+
+已有主题只改措辞或展示时，按用户指定范围修改文案。要求“按最新规则更新”时，检查整篇文案适用的写作要求；只指定一处修改时，不扩展到其他部分。
+修改前先保存有效依据，再完成该范围内的文案修改并生成。不重新探索或重审未变的R。来源、补值条件、公式、变量范围或R需要变化时，返回对应环节，不使用这个入口。
+
+```powershell
+# 修改文件前运行；程序核对当前成果和既有研究、R复核，保存原稿及数据基线。
+& $Python -X utf8 scripts/update_reader_copy.py prepare --formal-dir $Formal --process-dir $Process --reason "本次具体修改内容，以及研究方案和计算保持不变的范围"
+# 修改文案.md；需要改问卷译文或位置时同步相应展示字段。
+& $Python -X utf8 scripts/update_reader_copy.py run --formal-dir $Formal --process-dir $Process --config $Config
+```
+
+- 已按用户要求删除整节问卷时，第二条加 `--omit-questionnaire "本主题省略问卷展示的具体原因，研究证据和必要定义条件仍保留"`，程序同步展示标记及变更范围。
+- 局部题目取舍仍按[Copy-operations](#copy-operations)登记。
+- PowerShell 7不在PATH时传入实际 `--pwsh` 路径。
+
+- 程序沿用修改前已核实的研究及R结论，运行正式生成、核对数据未变、保留内容未变的工作簿并取得当前发布许可；记录在原过程目录，不创建另一套审核。
+- 它只完成本地更新，不下载或发布。
+- 本地更新完成后接第8步同步，用户明确限定本地时除外。失败保留日志，按具体问题修正，不用重派代理或重建记录绕过失败。
+
+| 固定入口返回 | 下一步 |
+| --- | --- |
+| `LOCAL_UPDATE_COMPLETE` | 本地成果已验证，接第8步；不代表已提交网站 |
+| `READER_REVIEW_REQUIRED` | 旧读者结论不能用于新稿；按第7步复用角色复核受影响内容。通过后运行 `finish`；仍需改稿时，修正后用 `retry` 重新生成，不重做研究 |
+| 执行失败且已保存失败现场 | 修正具体问题后运行下方 `retry`；原基线、失败日志和问题记录继续保留 |
+| 研究、R、raw或本入口以外成果发生变化 | 返回实际受影响环节；不能用 `retry` 掩盖变化 |
+
+```powershell
+& $Python -X utf8 scripts/update_reader_copy.py retry --formal-dir $Formal --process-dir $Process --config $Config --reason "实际失败原因、已经修正的内容，以及研究与计算未变的依据"
+# 已完成要求的读者复核后，只核对当前许可并收口。
+& $Python -X utf8 scripts/update_reader_copy.py finish --formal-dir $Formal --process-dir $Process
+```
+
+旧失败记录没有失败现场指纹时，入口会说明限制；先核实原基线和当前文件，不手改状态强行重试。
+- 已修改而没有修改前基线时，先核实已有版本，不能把当前稿冒充修改前稿。
+- 旧主题未登记双路探索时，先由用户明确接受历史依据，再在 `prepare` 加 `--legacy-report <已完成的历史 R 复核报告>`。
+- 程序仍核对当前 R 复核、完整成果及来源指纹。历史分支默认关闭，不覆盖已有双路登记的失败。
+- 旧包缺少后来增加的默认身份列时，只有原包、raw 和字典仍与已接受基线逐字节一致，才沿用旧包。新下载按当前导出要求检查。
+
+## Copy-operations
+
+问卷是否展示按第3步判断。已有 `questionnaire_evidence` 的展示字段按下表登记：
+
+| 情况 | 字段 |
+| --- | --- |
+| 不展示本题 | `display_required=false`；`display_omission_reason` 写具体理由；`rendered_in_copy=false`；`copy_locator` 写“不展示：”及理由 |
+| 需要展示 | 沿用原字段；缺省 `display_required=true`，兼容旧记录 |
+
+不展示时仍保留原题证据、来源覆盖和路径核验。
+省略理由须符合第3步的题组展示范围；“直接取值”或“Criteria 已说明”不能单独作为已展示题组内相关原题的省略理由。同一原题的重复字段可指向已展示位置。
+检查器只跳过明确省略项的正文匹配，不跳过研究证据，也不判断省略是否合理。
+
+`chinese_v1` 兼容字段：
+
+| 可选字段 | 保留要求 |
+| --- | --- |
+| `display.question_title`、`display.question_title_source` | 合并时期且题目标识变化时，登记首期显示标识及其来源 evidence_id。各期原题号仍留在原记录，不要求在正文逐期展示。两个检查入口核对首期标识、题干、题组和时期，再逐期核对选项与跳转。 |
+| `display.options` | 原编码和顺序不变，只译标签 |
+| `display.record_only_option_values` | 代码本把 Blank 或 Web non-response 列入选项表时，不作为问卷选项展示。原始选项仍保留；`record_only_options_note` 记录内部核实依据，不要求放入 `display.instructions` 或正文。不得用于有效回答、拒答、不知道或触发跳题的选项。 |
+| `display.skip_logic` | `source_index` 完整且唯一；原触发代码及目的题号不变 |
+| 合并时期后的跳转题号 | 比较文稿与成品时，用同一时期、同一题组中已登记的 `question_title_source` 对应展示题号。原始去向和触发条件不变；未登记或有歧义的对应不转换。 |
+| `display.skip_logic[].presentation="entry_condition"` | 旧记录把进入本题的说明存为跳题时使用。原分支以 `kind="entry_condition"` 分类，并在 `evidence` 中保留核实依据；去向只能是本题。用 `presentation_reason` 说明为何不作为跳题展示。文稿保留必要的适用对象，实际跳转仍逐条核对。 |
+| `display.skip_logic[].presentation="record_note"` | 旧记录把本字段的空白类别说明误存为跳题时使用；用 `presentation_reason` 说明核实依据，保留原记录。带条件的说明须与原始 Blank 标签一致，且目的字段只能是本字段。它不作为跳转展示；其中实际存在的提问路径仍须核实并在对应题目展示。不能用于隐藏转向另一题的真实跳转。 |
+| `display.skip_logic[].presentation="sequence"` | 已核实为同一时期、同一题组内的正常顺序作答时使用，并用 `display.next_question` 登记原问卷下一题；保留原分支及译文，不要求文案另写跳转提示。检查器核对下一题存在于逐期证据，且在文案和成品中紧接当前题；不能用于跳过题目或结束题组 |
+| `display.skip_logic[].presentation="topic_exit"` | 已核实跳出本题组且不返回时使用，按下方“结束主题的展示登记”填写。正文可写“→ 结束该主题”。 |
+
+不提供这些字段时，保持旧检查行为。
+两个问卷检查入口使用同一核验规则，并支持同题明确引用先前内容一致的 Wave 选项。
+选项引用不继承跳转；原文及 `routing_verbatim` 保留。
+
+### 结束主题的展示登记
+
+1. 逐期核实该分支离开本题组，后续路径不返回。未核实时，先补齐来源证据。
+2. 原分支和展示字段 `destination` 都保留真实目标题号，不改成“结束该主题”。
+3. 设置 `presentation="topic_exit"`。在同一分支的 `topic_exit_evidence` 中，按本题每个时期各记一项：
+
+| 字段 | 内容 |
+| --- | --- |
+| `period` | 对应时期，与本题时期登记一致 |
+| `destination` | 原目标题号 |
+| `returns_to_topic` | 布尔值 `false` |
+| `evidence` | 材料位置及该路径不返回本题组的核实依据 |
+
+检查器核对时期覆盖、分支身份及目标不在本期本题组。来源审核负责核实“不返回”是否符合原问卷。未登记 `topic_exit` 时，沿用原去向检查。
+
+### 保存与交接
+
+本节是文案阶段的程序操作，正文写法与模板统一见[03-copy](stages/03-copy.md)。不安排固定内容自查，不填写逐栏目PASS或通读声明。
+
+1. **确定修改范围。**
+   - 新主题或定义事实变化时，在正式R前按[变更范围](../../templates/change-impact.md)填写已有definition_change_impact.json。
+   - 只改表达则沿用未变的方案、来源和R复核；只改某栏不顺手修改其它内容。
+   - 未决事实回来源方案；主题过大时按独立研究问题拆分，不拆散同一变量链或删掉必要原题。
+2. **登记问卷展示。**
+   - 来源记录question_text保留原文，逐期证据不因合并展示而删除。
+   - 原问卷题号与变量名不同时，question_id保留题号，question_variable登记已核实的原始变量名，locator注明对应依据；对应随时期变化时分期登记。
+   - 两个问卷检查入口据此匹配正文标题，不从下载别名或题义猜测对应。
+   - 写作时设置questionnaire_display_policy="chinese_v1"；需要展示的证据用display.question_text填完整中文题干，display.instructions填必要中文引导语、访员或测验说明，无则空列表。共用说明也按各题实际适用性登记到instructions，不反复拼进question_text；正文按第3步集中展示。原文证据不因此删改。
+   - 共同说明可以放在该组设计段。
+   - 原始选项编码与标签保留；数据解码方式只在影响对应关系时说明。
+   - 原文、题意或时期有缺口，回到实际材料解决，不反向编造证据。
+3. **保存完整稿并运行机械检查。**
+   - 执行`check_reader_copy.py --copy <文案> --record <来源记录> --process-dir <过程目录>`；当前copy环节须在运行中，程序先保存完整稿，再检查，即使失败也保留真正首稿。
+   - 未启动报告的只读检查省略process-dir。
+   - 处理结构、变量顺序、题文与格式差异；程序不判断表达质量、翻译准确或官方证据是否完整。
+4. **交接。**
+   - 使用`stage-finish --stage-id copy --copy <文案.md> --summary <实际完成内容>`记录真实结果，同次同内容不重复保存快照。
+   - 事实缺口回方案，发现表达错误直接修；不把保存快照当作质量通过。
+   - 生成器读取这份文案，R不另写一份正文。
+   - 结果检查后按[成品交接](stages/07-review.md)取得机械发布许可。
+
+目录入口由第5步生成，不手写进文案。单目录使用完整路径；分散来源的主要路径与说明分开传入，见[生成接口](stages/05-generate.md#文案读取与展示)。

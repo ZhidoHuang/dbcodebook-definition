@@ -312,7 +312,8 @@ definition_html_with_intro <- function(lines, intro) {
          "\n", substring(text, table_start[[1]]))
 }
 
-validate_criteria_markup <- function(criteria, variable_names = character()) {
+validate_criteria_markup <- function(criteria, variable_names = character(), result_values = list()) {
+  criterion_names <- names(criteria)
   criteria <- as.character(criteria)
   invalid_value_code <- grepl(
     "<code\\b[^>]*>[[:space:]]*\\[[^<]*\\][[:space:]]*</code>",
@@ -331,8 +332,13 @@ validate_criteria_markup <- function(criteria, variable_names = character()) {
       paste(invalid_names, collapse = "、")
     )
   }
-  value_markup <- unlist(regmatches(criteria, gregexpr("<u>\\[[^<>]*\\]</u>", criteria)))
-  value_text <- gsub("^<u>\\[|\\]</u>$", "", value_markup)
+  value_text <- unlist(lapply(seq_along(criteria), function(i) {
+    markup <- regmatches(criteria[i], gregexpr("<u>\\[[^<>]*\\]</u>", criteria[i]))[[1]]
+    values <- gsub("^<u>\\[|\\]</u>$", "", markup)
+    # Only an exact value observed in this result is exempt from the name check.
+    allowed <- if (is.null(criterion_names)) character() else result_values[[criterion_names[i]]]
+    values[!values %in% as.character(allowed[!is.na(allowed)])]
+  }))
   identifiers <- unlist(regmatches(value_text, gregexpr("[[:alpha:]_.][[:alnum:]_.]*", value_text)))
   misplaced <- intersect(identifiers, variable_names)
   if (length(misplaced)) {
@@ -706,7 +712,8 @@ render_definition_bundle <- function(
   stopifnot(identical(analysis_vars, analysis_codebook$Variable))
   stopifnot(all(analysis_vars %in% names(criteria)))
   stopifnot(all(nzchar(criteria[analysis_vars])))
-  validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars)))
+  validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars)),
+                           lapply(analysis_data[analysis_vars], unique))
   formatted_card_sources <- format_definition_card_sources(analysis_codebook, raw_codebook, codebook)
 
   format_n <- function(x) {

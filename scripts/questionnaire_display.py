@@ -204,6 +204,47 @@ def _trigger_codes(text):
     return re.findall(r"(?<![A-Za-z0-9_])(?:a)?(-?\d+)(?![A-Za-z0-9_])", str(text))
 
 
+def _validate_topic_exit(item, jump, record):
+    """Validate a declared exit; source review still verifies the cited evidence.
+
+    Absence of the target from a topic is not proof that the route exits it.
+    Keep the real destination and require a non-return finding for every period.
+    """
+    index = jump.get('source_index')
+    if type(index) is not int or not 0 <= index < len(item.get('skip_logic', [])):
+        raise ValueError('topic_exit requires a registered source branch')
+    source = item['skip_logic'][index]
+    findings = jump.get('topic_exit_evidence')
+    periods = item.get('periods', [])
+    module = item.get('questionnaire_module')
+    if not module or not periods or not isinstance(findings, list) or len(findings) != len(periods):
+        raise ValueError('topic_exit requires a topic and evidence for every period')
+    expected = {period_key(str(p)) for p in periods}
+    seen = set()
+    for finding in findings:
+        if not isinstance(finding, dict):
+            raise ValueError('topic_exit evidence must be a period finding')
+        period = period_key(str(finding.get('period', '')))
+        target = finding.get('destination')
+        if period not in expected or period in seen:
+            raise ValueError('topic_exit evidence periods must be complete and unique')
+        seen.add(period)
+        if (finding.get('returns_to_topic') is not False
+                or not isinstance(finding.get('evidence'), str) or not finding['evidence'].strip()):
+            raise ValueError('topic_exit requires verified non-return evidence')
+        if not isinstance(target, str) or not re.fullmatch(r'[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*', target):
+            raise ValueError('topic_exit requires the original destination identifier')
+        if ({_question_alias(x) for x in _destination_ids(source['destination'], [target])} != {_question_alias(target)}
+                or {_question_alias(x) for x in _destination_ids(jump['destination'], [target])} != {_question_alias(target)}):
+            raise ValueError('topic_exit cannot change or hide the original destination')
+        internal = {_question_alias(q.get('question_id', ''))
+                    for q in record.get('questionnaire_evidence', [])
+                    if q.get('questionnaire_module') == module
+                    and period in {period_key(str(p)) for p in q.get('periods', [])}}
+        if _question_alias(target) in internal:
+            raise ValueError('topic_exit destination is inside the same period/topic')
+
+
 def display_answers(item, record):
     """Optional translated answers: preserve source codes and branch identity.
 
@@ -249,6 +290,10 @@ def display_answers(item, record):
     for jump in jumps:
         presentation = jump.get("presentation")
         if presentation is None:
+            displayed_jumps.append(jump)
+            continue
+        if presentation == 'topic_exit':
+            _validate_topic_exit(item, jump, record)
             displayed_jumps.append(jump)
             continue
         if presentation == "entry_condition":

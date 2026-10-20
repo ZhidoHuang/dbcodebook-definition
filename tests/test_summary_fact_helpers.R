@@ -487,6 +487,24 @@ checks <- list(
     TRUE
   ),
   expect_identical(
+    "a real category may share a source name",
+    validate_criteria_markup(c(reason = criteria_item(criteria_value("hysterectomy"))),
+      "hysterectomy", list(reason = c("hysterectomy", NA))),
+    TRUE
+  ),
+  expect_error_contains(
+    "a category in another result does not exempt a variable name",
+    validate_criteria_markup(c(other = criteria_item(criteria_value("hysterectomy"))),
+      "hysterectomy", list(reason = "hysterectomy", other = c(0, 1))),
+    "变量名标成了数据取值"
+  ),
+  expect_error_contains(
+    "a valid category does not exempt a variable expression",
+    validate_criteria_markup(c(reason = criteria_item(criteria_value("hysterectomy = 1"))),
+      "hysterectomy", list(reason = "hysterectomy")),
+    "变量名标成了数据取值"
+  ),
+  expect_identical(
     "summary no longer renders the five-column table",
     any(grepl("| 定义变量 | 含义 | 组成 | 覆盖周期 | 对象 |",
               summary_section_fixture, fixed = TRUE)),
@@ -724,11 +742,13 @@ for (periods in list(2011L, c(2011L, 2013L))) {
 }
 cat("single/multiple period and variable count fixtures PASS\n")
 
-for (database in c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "CHNS")) {
+for (database in c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "CHNS", "NHANES")) {
   source_fixture <- render_summary_selection_paragraph(definition_source_entry(
     list(path = "Core data > Social isolation/loneliness", note = "；另用 pscede。"), database), "#005A9C")
-  expected_href <- paste0('/home/', tolower(database), '/?nav=Core%20data%3ESocial%20isolation%2Floneliness')
+  route <- if (database == "NHANES") '/home/' else paste0('/home/', tolower(database), '/')
+  expected_href <- paste0(route, '?nav=Core%20data%3ESocial%20isolation%2Floneliness')
   stopifnot(grepl(expected_href, source_fixture, fixed = TRUE))
+  if (database == "NHANES") stopifnot(!grepl('/home/nhanes/', source_fixture, fixed = TRUE))
   stopifnot(grepl('</a> 进入检索和查看。另用 pscede。', source_fixture, fixed = TRUE))
   stopifnot(!grepl('nav=[^"]*pscede', source_fixture))
 }

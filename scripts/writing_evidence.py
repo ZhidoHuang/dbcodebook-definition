@@ -98,7 +98,9 @@ def scope_bindings(formal_dir, process_dir, artifacts):
     common = {"source": digest(source.read_bytes()) if source.is_file() else None,
               "artifacts": {k: v["sha256"] for k, v in artifacts.items() if k != "note"},
               "writing_rules": {name: digest((ROOT / name).read_bytes()) for name in (
-                  "references/rules/stages/03-copy.md", "templates/reader-copy.md")}}
+                  "references/rules/stages/03-copy.md", "templates/reader-copy.md",
+                  "references/rules/copy/core.md", "references/rules/copy/questionnaire.md",
+                  "references/rules/copy/tree.md", "references/rules/copy/basis.md")}}
     title = path.read_text(encoding="utf-8-sig").splitlines()[0]
     note_path = artifacts.get("note", {}).get("path")
     note_title = None

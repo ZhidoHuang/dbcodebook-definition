@@ -195,7 +195,7 @@ def insight_markup_content(markup, expected):
 
 
 
-def route_matches(destination, description, period=None):
+def route_matches(destination, description, period=None, *, allow_topic_exit=False):
     # Ignore presentation whitespace symmetrically while retaining identifier
     # boundaries: DA002 must never match DA0020 or XDA002.
     target = normalized(destination)
@@ -205,6 +205,10 @@ def route_matches(destination, description, period=None):
     # here so an English word before DN005 does not become an identifier prefix.
     description = re.sub(r"`([^`]+)`", r"\1", str(description))
     description = re.sub(r"\*\*(.*?)\*\*", r"\1", description)
+    # This exception is enabled only after shared display validation has checked
+    # the period-specific exit evidence. Do not accept arbitrary '结束' prose.
+    if allow_topic_exit and re.fullmatch(r'\s*结束该主题[。.!！]?\s*', description.split('→')[-1]):
+        return True
     pattern = r"(?<![A-Za-z0-9_])" + r"\s*".join(re.escape(c) for c in target) + r"(?![A-Za-z0-9_])"
     if period is not None:
         # A visibly scoped target may carry a different question number in another year.
@@ -790,7 +794,9 @@ def questionnaire_copy_errors(copy, record):
                 descriptions += [r["destination"] for r in shared_routes if rendered_when_matches(jump["when"], r["when"])]
                 descriptions += jump_descriptions(jump["when"], inherited_jumps, [])
                 destination = display_route_destination(jump["destination"], item, record, period)
-                if not any(route_matches(destination, s, period) for s in descriptions):
+                if not any(route_matches(destination, s, period,
+                                         allow_topic_exit=jump.get('presentation') == 'topic_exit')
+                           for s in descriptions):
                     errors.append(f"{label}: route differs: {jump['when']} -> {jump['destination']}")
     return errors
 

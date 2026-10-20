@@ -429,7 +429,9 @@ def validate_questionnaire_rendering(
                 descriptions += [r["destination"] for r in shared_routes if rendered_when_matches(jump["when"], r["when"])]
                 descriptions += jump_descriptions(jump["when"], inherited_jumps, [])
                 destination = display_route_destination(jump["destination"], item, record, period)
-                if not any(route_matches(destination, text, period) for text in descriptions):
+                if not any(route_matches(destination, text, period,
+                                         allow_topic_exit=jump.get('presentation') == 'topic_exit')
+                           for text in descriptions):
                     fail(f"final note period {period} route differs for {question_id}: {jump['when']} -> {jump['destination']}")
             rendered_pairs.add((question_id, str(period)))
 
