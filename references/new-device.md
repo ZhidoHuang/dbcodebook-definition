@@ -2,6 +2,10 @@
 
 只在迁移、新设备或相关依赖失效时读本页。现有配置是本机事实，不从另一台机器复制绝对路径。
 
+Windows 优先选择较短的安装路径。若 Git 报 `Filename too long`，或材料检查无法读取长路径文件，先缩短安装位置，再运行下方材料清单检查；仅启用 Git 的 `core.longpaths` 或取得干净 Git 状态，不证明 Python 和 R 能读取全部材料。
+
+已有主题也换了目录、需要继续局部文案更新时，使用[主题目录迁移](rules/copy-update.md#主题目录迁移)。Skill 安装与主题审核绑定分别处理。
+
 ## R 临时目录和包库
 
 `setup_definition_environment.ps1 -Config $Config`、正式 runner 和环境预检共用 `scripts/r_runtime.py`。配置文件相对路径相对于该配置所在目录。

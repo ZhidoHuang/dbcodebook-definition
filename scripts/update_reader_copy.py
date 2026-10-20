@@ -8,6 +8,7 @@ import argparse
 from copy import deepcopy
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -51,17 +52,45 @@ def reports(process):
                       key=lambda x: x.stat().st_mtime, reverse=True)
 
 
-def find_review(process, required):
+def same_topic(previous, current):
+    return (str(previous.get('database', '')).lower() == str(current.get('database', '')).lower()
+            and previous.get('topic_id') == current.get('topic_id'))
+
+
+def find_review(process, required, relocation=None):
     for path in reports(process):
         report = read(path)
         if er.COMBINED_REVIEW_ROLE in report.get("stage_reviews", {}):
             # A newer pending/failed/stale review must never fall back to an old pass.
+            if relocation:
+                report = relocation.report(path, roles=(er.COMBINED_REVIEW_ROLE,))
+                current = read(process / er.REPORT_NAME)
+                if not same_topic(report, current):
+                    raise ValueError("迁移的 R 复核报告与当前主题不同")
             review = deepcopy(er.validate_stage_review(report, er.COMBINED_REVIEW_ROLE, required))
             agent = review.get("prior_agent_record") or next(
                 a for a in report.get("reviews", []) if a["agent_id"] == review["agent_id"])
             review.update(prior_agent_record=agent, reused_from=str(path))
             return review
     raise ValueError("没有可沿用的独立 R 复核")
+
+
+def inherit_relocated_exploration(report, previous, original_snapshot, source):
+    """Keep verified relocated exploration usable on the next copy-only update."""
+    from exploration_handoff import POLICY, ROLES
+    report['exploration_policy'] = POLICY
+    report['primary_agent_id'] = os.environ.get('CODEX_THREAD_ID', '')
+    exploration = deepcopy(previous['exploration'])
+    exploration.update(from_report=original_snapshot['snapshot'],
+                       from_report_hash=original_snapshot['sha256'], reused_at=er.iso())
+    report['exploration'] = exploration
+    for role in ROLES.values():
+        prior = deepcopy(previous['stage_reviews'][role])
+        agent = prior.get('prior_agent_record') or next(
+            item for item in previous.get('reviews', []) if item['agent_id'] == prior['agent_id'])
+        prior.update(prior_agent_record=deepcopy(agent), reused_from=original_snapshot['snapshot'])
+        report.setdefault('stage_reviews', {})[role] = prior
+    validate_exploration(report, source)
 
 
 def prepare(args):
@@ -78,11 +107,22 @@ def prepare(args):
     source = process / "definition_search_record.json"
     if digest(source) != result["source_sha256"]:
         raise ValueError("来源记录已变化；请先解决原有变化")
+    relocation = None
+    if getattr(args, 'path_map', None):
+        from report_relocation import ReportRelocation
+        relocation = ReportRelocation(args.path_map, formal, process)
     legacy_used = False
+    relocated_exploration = None
     for path in reports(process):
         prior = read(path)
         if prior.get("exploration_policy"):
+            if relocation:
+                prior = relocation.report(path, exploration=True)
+                if not same_topic(prior, current):
+                    raise ValueError("迁移的探索报告与当前主题不同")
             validate_exploration(prior, source)
+            if relocation:
+                relocated_exploration = (str(path.resolve()), prior)
             break
     else:
         legacy_path = getattr(args, 'legacy_report', None)
@@ -101,7 +141,7 @@ def prepare(args):
     rfiles = [n for n in result["artifacts"] if n.lower().endswith('.r')]
     if len(rfiles) != 1:
         raise ValueError("须有唯一正式 R")
-    review = find_review(process, [formal / rfiles[0], source, formal / 'raw_codebook.csv'])
+    review = find_review(process, [formal / rfiles[0], source, formal / 'raw_codebook.csv'], relocation)
     audit = read(process / 'readability_audit.json')
     if audit.get('unresolved_issues') or any(i.get('status') == 'open' for i in current.get('issues', [])):
         raise ValueError("现有问题尚未解决，不能作为纯文案更新")
@@ -115,6 +155,7 @@ def prepare(args):
             shutil.copy2(process / name, folder / name)
     shutil.copy2(source, folder / source.name)
     shutil.copy2(process / 'definition_change_impact.json', folder / 'definition_change_impact.json')
+    relocation_evidence = relocation.save_evidence(folder / 'relocation') if relocation else None
     # Validate legacy bindings while originals still exist, then record explicit
     # migration to the new comparison. This is reuse, not a new reviewer verdict.
     review.update(source_scope=SOURCE_SCOPE,
@@ -129,6 +170,8 @@ def prepare(args):
                'source_hash': digest(folder / source.name), 'result': result,
                'r_script': rfiles[0], 'audit_artifacts': audit['artifacts'],
                'review': review, 'status': 'prepared', 'issue_numbers': [], 'attempts': []}
+    if relocation_evidence:
+        binding['relocation'] = relocation_evidence
     if legacy_used:
         legacy_path = args.legacy_report.resolve()
         if legacy_path == (process / er.REPORT_NAME).resolve():
@@ -136,6 +179,11 @@ def prepare(args):
         binding['legacy_evidence'] = {'path': str(legacy_path), 'sha256': digest(legacy_path)}
     report['copy_update'] = binding
     report['stage_reviews'] = {er.COMBINED_REVIEW_ROLE: review}
+    if relocated_exploration:
+        original_path, previous = relocated_exploration
+        snapshot = next(item for item in relocation_evidence['reports']
+                        if item['original_path'] == original_path)
+        inherit_relocated_exploration(report, previous, snapshot, source)
     er.save(*er.paths(process), report)
     call('execution_report.py', 'stage-start', '--process-dir', process, '--stage-id', 'copy',
          '--name', '局部文案修改', '--role', '主执行')
@@ -366,11 +414,14 @@ def main():
     parser.add_argument('--formal-dir', type=Path, required=True)
     parser.add_argument('--process-dir', type=Path, required=True)
     parser.add_argument('--legacy-report', type=Path, help='用户已明确接受的无双路登记历史R复核报告；默认不启用')
+    parser.add_argument('--path-map', type=Path, help='prepare时显式声明旧主题根目录到当前副本的映射；保留原审核及内容校验')
     parser.add_argument('--reason', help='本次纯表达或展示修改；至少20字')
     parser.add_argument('--omit-questionnaire', help='已删除整节问卷时，给出明确的省略原因（至少20字）')
     parser.add_argument('--config', type=Path)
     parser.add_argument('--pwsh')
     args = parser.parse_args()
+    if args.path_map and args.command != 'prepare':
+        parser.error('--path-map仅用于修改前prepare；后续沿用已保存的新目录绑定')
     if args.command in ('prepare', 'retry') and len(args.reason or '') < 20:
         parser.error('prepare/retry须说明具体修改或修复内容（至少20字）')
     if args.omit_questionnaire and len(args.omit_questionnaire) < 20:
