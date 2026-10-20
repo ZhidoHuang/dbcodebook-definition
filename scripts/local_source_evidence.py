@@ -46,6 +46,7 @@ def validate_local_evidence(record, record_path):
     if not isinstance(receipts, list) or not receipts:
         raise ValueError('No local dictionary receipts')
     directories, sources, keywords = set(), {}, set()
+    scoped_sources = {}
     for ref in receipts:
         data = read_reference(ref, base)
         if (data.get('schema') != 'dbcodebook.local-source.v1' or data.get('ok') is not True
@@ -65,6 +66,18 @@ def validate_local_evidence(record, record_path):
                     directories.add(' > '.join(path))
             if request.get('kind') != 'detail':
                 continue
+            if database == 'mhas' and record.get('mhas_selection'):
+                raw = row.get('raw_row', {})
+                available = {p for p in binding['periods'] if raw.get(p) not in (None, '')}
+                owner = scoped_sources.setdefault(row.get('variable_id'),
+                    {'file': row.get('file'), 'available': available, 'periods': {}})
+                if owner['file'] != row.get('file') or owner['available'] != available:
+                    raise ValueError('Conflicting MHAS identity receipts')
+                for cell in row.get('periods', []):
+                    if cell.get('available'):
+                        previous = owner['periods'].setdefault(cell['period'], cell['actual_variable'])
+                        if previous != cell['actual_variable']:
+                            raise ValueError('Conflicting MHAS period mapping')
             for period in row.get('periods', []):
                 if not period.get('available'):
                     continue
@@ -90,4 +103,22 @@ def validate_local_evidence(record, record_path):
             covered.update(sources[name])
         if not names or not periods.issubset(covered):
             raise ValueError('Local detail does not cover declared source-group periods')
+    if record.get('mhas_selection'):
+        if database != 'mhas' or record['mhas_selection']['dictionary_sha256'] != binding['dictionary_sha256']:
+            raise ValueError('MHAS selection dictionary differs from source binding')
+        from mhas_scoped_selection import build
+        action = build(record, record['dbcodebook_url'])
+        for item in record['mhas_selection']['inputs']:
+            owner = scoped_sources.get(item['variable_id'])
+            if (not owner or owner['file'] != item['file']
+                    or owner['available'] != set(item['available_periods'])
+                    or any(owner['periods'].get(p) != v for p, v in item.get('available_bindings', item['period_bindings']).items())):
+                raise ValueError('MHAS selector is not supported by exact identity/period receipts')
+        by_alias = {}
+        for row in action['selected']:
+            by_alias.setdefault(row['alias'], set()).update(row.get('business_periods', row['periods']))
+        for group in record['source_groups']:
+            covered = {p for a in group['raw_variables'] for p in by_alias[a]}
+            if not set(group['periods']).issubset(covered):
+                raise ValueError('MHAS source-group periods differ from scoped aliases')
     return {'directories': directories, 'sources': sources, 'keywords': keywords}

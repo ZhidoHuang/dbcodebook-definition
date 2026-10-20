@@ -44,6 +44,9 @@ def build_record_action(record, url):
     """Retain concept links in the record; deduplicate only identical sources."""
     if record.get('status') != 'READY':
         raise ValueError('Use the primary merged READY record, not an independent proposal')
+    if str(record.get('database', '')).lower() == 'mhas' and record.get('mhas_selection'):
+        from mhas_scoped_selection import build
+        return build(record, url)
     groups = record.get('source_groups')
     if not isinstance(groups, list) or not groups:
         raise ValueError('source_groups must contain the settled sources')
@@ -78,6 +81,11 @@ def build_record_action(record, url):
 
 def browser_code(action, mode):
     if mode == 'select':
+        if action.get('kind') in ('mhas_scoped_selection_v2', 'mhas_raw_column_selection_v1'):
+            from mhas_scoped_selection import validate_action
+            validate_action(action)
+            source = Path(__file__).with_name('source_selection.js').read_text(encoding='utf-8')
+            return 'async page => (' + source + ')(page, ' + json.dumps(action) + ', ' + json.dumps(mode) + ')'
         rebuilt = build_action(action['input_text'], action['url'])
         if action.get('database') == 'klosa':
             from klosa_adapter_contract import require_wave_source_identities
