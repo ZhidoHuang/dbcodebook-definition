@@ -1,7 +1,5 @@
 # 定义规则材料索引
 
-版本日期：2026-10-08
-
 - 本文件只回答“某类要求应该去哪里找、以后应该写到哪里”，不新增、不复制具体规则。
 - 遇到同一要求出现在两份材料中时，应把完整条文保留在唯一负责该事项的文件，其他文件只保留引用，不能按文件日期自行挑一版执行。
 
@@ -39,10 +37,10 @@
 
 ## 数据库事实与配置
 
-- `databases/<数据库>/`只保存数据库事实、接口差异及验证范围，不另写完整流程。
+- `databases/<数据库>/`只保存数据库事实、接口差异及适用边界，不另写完整流程。主题数量、发布经过和单次故障处理留在相应过程记录。
 - 现有 `profile.md` 保存稳定事实，`workflow.md` 保存各环节如何使用这些差异；保留原文件名以兼容路由，CHNS沿用一份profile。
 - 公共流程要求由 stages、validation、write-boundaries 等负责，数据库文件只引用；`source-materials/<数据库>/`保存问卷、指南等原始材料，统一从[材料索引](../source-materials/材料索引.md)进入。
-- [database-routing.json](../database-routing.json)指定各库规则和材料路径，程序读取同一份路由，不另维护材料位置。
+- [database-routing.json](../database-routing.json)指定各库规则和共用材料根，程序读取同一份路由。主题专用材料按[材料定位要求](evidence-and-literature.md#questionnaire-evidence)保存在主题过程目录。
 
 | 材料 | 唯一职责 | 不负责 |
 | --- | --- | --- |
@@ -50,8 +48,7 @@
 | [ELSA profile](../databases/elsa/profile.md) | ELSA 稳定身份、文件族、Wave、分析单位和编码边界 | 流程步骤和主题裁决 |
 | [HRS profile](../databases/hrs/profile.md) | Full HRS 原始产品身份、文件族、变量命名、分析单位和时期边界 | RAND HRS/Harmonized HRS 事实、流程步骤和主题裁决 |
 
-- 各库差异说明中的接口及验证范围见[SHARE](../databases/share/workflow.md)、[KLoSA](../databases/klosa/workflow.md)、[KNHANES](../databases/knhanes/workflow.md)及[CHNS](../databases/chns/profile.md)。
-- CHNS十期人口学已完成真实下载、完整生成、独立复算及发布；其它来源层级和主题不据此视为通过。
+- 各库差异说明中的接口及适用边界见[SHARE](../databases/share/workflow.md)、[KLoSA](../databases/klosa/workflow.md)、[KNHANES](../databases/knhanes/workflow.md)及[CHNS](../databases/chns/profile.md)。
 - 材料存在或接口测试通过，不代表真实主题已验收。
 
 ## 记录模板
@@ -74,8 +71,10 @@
 3. 任务权限、网站发布和源端保护，写入写入边界规则。
 4. 是否需要独立验收、机器闭环和状态含义，写入风险触发验收规则。
 5. 执行环节、耗时、Bug 和异常怎样记录，写入执行报告规则。
-6. 主题自身的来源、公式、结果、例外和用户裁决，只留在主题成果与过程证据，不回填公共规则。
+6. 主题自身的来源、公式、结果、例外和用户裁决，只留在主题成果与过程证据，不回填公共规则。普通主题完成不触发 Skill 更新。
 7. 文案的目的、内容和格式统一在03-copy；模板与实例集中在reader-copy，questionnaire-copy只保留跳转。
    - 其它模板不另写内容标准；显示样式和生成接口归第5步，机器验收与状态归validation。
 
 每次整理规则时都要检查：是否已有唯一负责文件、是否只是本主题个例、是否造成两份完整条文并存。若答案不清楚，先停止新增条文，回到本索引确定归属。
+
+修复可复现的通用错误时，修改负责该行为的程序，并保留必要的最小回归用例。接口或配置变化时，更新对应适配和说明；只有 Agent 的判断或操作要求变化时才改规则。验证摘要写入[维护记录](../../tests/maintenance/validation-history.md)，不把故障经过再写成通用要求。

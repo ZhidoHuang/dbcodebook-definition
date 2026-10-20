@@ -3,7 +3,9 @@ from __future__ import annotations
 import copy
 import importlib.util
 import json
+import os
 from pathlib import Path
+import subprocess
 import tempfile
 
 
@@ -23,11 +25,12 @@ def load_checker():
 
 
 def expect_failure(
-    checker, record, log, periods, message: str, require_rendered: bool = False
+    checker, record, log, periods, message: str, require_rendered: bool = False,
+    record_dir: Path | None = None,
 ) -> None:
     try:
         checker.validate_questionnaire_evidence(
-            record, log, periods, require_rendered=require_rendered
+            record, log, periods, require_rendered=require_rendered, record_dir=record_dir
         )
     except ValueError as error:
         assert message in str(error), str(error)
@@ -112,6 +115,119 @@ def main() -> int:
             record, exploration_log, source_periods
         )
         assert result == {"questions": 1, "covered_periods": 2}
+
+        # Default and explicit skill scope retain relative and legacy absolute paths.
+        for scope in (None, "skill"):
+            for material_path in (
+                questionnaire.name, str(questionnaire),
+                str(Path(tmp) / "old_checkout" / "CHARLS" / questionnaire.name),
+            ):
+                skill_record = copy.deepcopy(record)
+                skill_question = skill_record["questionnaire_evidence"][0]
+                skill_question["local_material_path"] = material_path
+                if scope is not None:
+                    skill_question["local_material_scope"] = scope
+                assert checker.validate_questionnaire_evidence(
+                    skill_record, exploration_log, source_periods
+                ) == result
+
+        topic_dir = Path(tmp) / "topic"
+        topic_materials = topic_dir / "materials"
+        topic_materials.mkdir(parents=True)
+        topic_material = topic_materials / "official_question.txt"
+        topic_material.write_text("FA002", encoding="utf-8")
+        topic_record = copy.deepcopy(record)
+        topic_record["questionnaire_evidence"][0].update(
+            local_material_scope="topic",
+            local_material_path="materials/official_question.txt",
+        )
+        for relative_path in (
+            "materials/official_question.txt",
+            r"materials\official_question.txt",
+            "materials/../materials/official_question.txt",
+        ):
+            valid_topic = copy.deepcopy(topic_record)
+            valid_topic["questionnaire_evidence"][0]["local_material_path"] = relative_path
+            assert checker.validate_questionnaire_evidence(
+                valid_topic, exploration_log, source_periods, record_dir=topic_dir
+            ) == result
+        expect_failure(
+            checker, topic_record, exploration_log, source_periods,
+            "topic material scope requires record_dir",
+        )
+
+        # An existing topic file must not silently become a fallback for skill paths.
+        implicit_topic = copy.deepcopy(topic_record)
+        del implicit_topic["questionnaire_evidence"][0]["local_material_scope"]
+        expect_failure(
+            checker, implicit_topic, exploration_log, source_periods,
+            "verified local material does not exist", record_dir=topic_dir,
+        )
+        for invalid_scope in ("unknown", "", None, [], {}):
+            invalid = copy.deepcopy(topic_record)
+            invalid["questionnaire_evidence"][0]["local_material_scope"] = invalid_scope
+            expect_failure(
+                checker, invalid, exploration_log, source_periods,
+                "local_material_scope must be skill or topic", record_dir=topic_dir,
+            )
+        for absolute_path in (
+            str(topic_material), "/absolute/question.txt", r"C:\materials\question.txt",
+            r"C:materials\question.txt", r"\\server\share\question.txt",
+            r"\materials\question.txt",
+        ):
+            invalid = copy.deepcopy(topic_record)
+            invalid["questionnaire_evidence"][0]["local_material_path"] = absolute_path
+            expect_failure(
+                checker, invalid, exploration_log, source_periods,
+                "must be relative for topic scope", record_dir=topic_dir,
+            )
+        # Use existing files outside both roots so failure proves boundary checking.
+        for scope, outside_path in (
+            ("topic", "../CHARLS/" + questionnaire.name),
+            ("topic", "..\\CHARLS\\" + questionnaire.name),
+            ("skill", "../topic/materials/official_question.txt"),
+        ):
+            invalid = copy.deepcopy(topic_record)
+            invalid["questionnaire_evidence"][0].update(
+                local_material_scope=scope, local_material_path=outside_path,
+            )
+            expect_failure(
+                checker, invalid, exploration_log, source_periods,
+                "local_material_path must be under", record_dir=topic_dir,
+            )
+        for missing_file in ("materials/absent.txt", "materials"):
+            invalid = copy.deepcopy(topic_record)
+            invalid["questionnaire_evidence"][0]["local_material_path"] = missing_file
+            expect_failure(
+                checker, invalid, exploration_log, source_periods,
+                "verified local material does not exist", record_dir=topic_dir,
+            )
+        outside_link = topic_dir / "outside_link"
+        try:
+            outside_link.symlink_to(local_root, target_is_directory=True)
+        except OSError as error:
+            if os.name != "nt":
+                print(f"SKIP topic material symlink escape: {error}")
+            else:
+                # Junctions exercise resolved directory escapes without symlink privileges.
+                subprocess.run(
+                    ["powershell.exe", "-NoProfile", "-Command",
+                     "New-Item -ItemType Junction -Path $env:TEST_MATERIAL_LINK "
+                     "-Value $env:TEST_MATERIAL_TARGET -ErrorAction Stop | Out-Null"],
+                    env={**os.environ, "TEST_MATERIAL_LINK": str(outside_link),
+                         "TEST_MATERIAL_TARGET": str(local_root)},
+                    check=True, capture_output=True,
+                )
+                print("Windows directory junction escape fixture enabled")
+        if outside_link.is_dir():
+            invalid = copy.deepcopy(topic_record)
+            invalid["questionnaire_evidence"][0]["local_material_path"] = (
+                "outside_link/" + questionnaire.name
+            )
+            expect_failure(
+                checker, invalid, exploration_log, source_periods,
+                "local_material_path must be under", record_dir=topic_dir,
+            )
 
         omitted = copy.deepcopy(record)
         omitted['questionnaire_evidence'][0].update(display_required=False,
@@ -320,6 +436,20 @@ def main() -> int:
         record_path.write_text(json.dumps(download_record), encoding="utf-8")
         selection_path.write_text("fa002_p\nfa003_p\n", encoding="utf-8")
         assert checker.validate_download_selection(record_path, selection_path, "001")["ok"]
+
+        # The public entrypoint supplies the record's own directory for topic scope.
+        topic_download = copy.deepcopy(download_record)
+        topic_download["questionnaire_evidence"] = copy.deepcopy(
+            topic_record["questionnaire_evidence"]
+        )
+        topic_record_path = topic_dir / "definition_search_record.json"
+        (topic_dir / "exploration.md").write_text(
+            "### S001\nReviewed question.\n", encoding="utf-8"
+        )
+        topic_record_path.write_text(json.dumps(topic_download), encoding="utf-8")
+        assert checker.validate_download_selection(
+            topic_record_path, selection_path, "001"
+        )["ok"]
 
         shared = copy.deepcopy(download_record)
         shared["candidate_decisions"].append({**copy.deepcopy(shared["candidate_decisions"][0]), "concept": "shared_work_source"})

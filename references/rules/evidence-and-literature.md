@@ -50,7 +50,7 @@
 - 封闭题的完整选项。
 - 适用人群和回顾期。
 - 实际跳题条件及去向。
-- 仓库材料路径，以及页码、题号或章节定位。
+- 本地材料路径，以及页码、题号或章节定位。
 - 使用该证据的文案位置。
 
 题意概括使用现有 `questionnaire_evidence`，不另建证据记录：
@@ -78,8 +78,10 @@
 
 | 字段或情况 | 要求 |
 | --- | --- |
-| `local_material_path` | 相对于所选数据库材料根，不相对于仓库根 |
-| CHARLS 示例 | 材料根为 `references/source-materials/charls`；填写 `官方问卷/2011/2011 家户问卷.pdf`，不重复材料根前缀 |
+| Skill 共用材料 | `local_material_scope` 填 `skill`。`local_material_path` 相对于所选数据库材料根，不重复材料根前缀；旧记录未填 scope 时沿用此方式 |
+| 主题专用材料 | 材料保存在主题过程目录。`local_material_scope` 填 `topic`；`local_material_path` 相对于本主题 `definition_search_record.json` 所在目录，例如 `official/1999-2000.html` |
+| 路径范围 | 路径必须定位在所选材料根内；主题材料不使用绝对路径，也不通过父目录或链接访问目录外文件 |
+| CHARLS 共用材料示例 | 材料根为 `references/source-materials/charls`；填写 `官方问卷/2011/2011 家户问卷.pdf` |
 | 使用路径示例 | 示例只说明基址；填写前核实实际文件名 |
 | 材料缺失 | 记录实际查过的现存目录及缺件事实，再补充官方网页来源 |
 | `locator` | 写页码、题号或章节，不把这些内容放进文件路径 |

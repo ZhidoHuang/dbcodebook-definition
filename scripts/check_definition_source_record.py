@@ -10,7 +10,7 @@ import re
 import sys
 import zipfile
 from itertools import zip_longest
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from questionnaire_display import requires_questionnaire_display, is_plain_paraphrase, validate_paraphrase
 from local_source_evidence import validate_local_evidence
@@ -274,6 +274,7 @@ def validate_questionnaire_evidence(
     exploration_log: object,
     source_periods: dict[str, set[str]],
     require_rendered: bool = False,
+    record_dir: Path | None = None,
 ) -> dict:
     """Require schema v6+ period copy to have traceable questionnaire evidence."""
 
@@ -383,11 +384,24 @@ def validate_questionnaire_evidence(
         material_text = nonempty_text(
             item.get("local_material_path"), f"{field}.local_material_path"
         )
-        material_path = resolve_material_path(material_text, database, local_root)
+        material_scope = item.get("local_material_scope", "skill")
+        if material_scope not in ("skill", "topic"):
+            fail(f"{field}.local_material_scope must be skill or topic")
+        material_root = local_root
+        if material_scope == "topic":
+            if record_dir is None:
+                fail(f"{field} topic material scope requires record_dir")
+            recorded_path = Path(material_text.replace("\\", "/"))
+            if recorded_path.anchor or PureWindowsPath(material_text).anchor:
+                fail(f"{field}.local_material_path must be relative for topic scope")
+            material_root = Path(record_dir).resolve()
+            material_path = (material_root / recorded_path).resolve()
+        else:
+            material_path = resolve_material_path(material_text, database, local_root)
         try:
-            material_path.relative_to(local_root)
+            material_path.relative_to(material_root)
         except ValueError:
-            fail(f"{field}.local_material_path must be under {local_root}")
+            fail(f"{field}.local_material_path must be under {material_root}")
         if material_status == "verified" and not material_path.is_file():
             fail(f"{field} verified local material does not exist: {material_path}")
         if material_status == "missing" and not material_path.exists():
@@ -1229,7 +1243,8 @@ def validate_record(
     questionnaire_summary = {"questions": 0, "covered_periods": 0}
     if schema_version in {6, 7}:
         questionnaire_summary = validate_questionnaire_evidence(
-            record, exploration_log, source_periods, require_rendered=not pre_download
+            record, exploration_log, source_periods, require_rendered=not pre_download,
+            record_dir=record_path.parent,
         )
     alias_family_count = validate_alias_families(record, recorded_raw)
     raw_vars = selection if pre_download else read_raw_vars(raw_codebook_path)

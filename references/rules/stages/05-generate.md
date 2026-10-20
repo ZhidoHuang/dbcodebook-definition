@@ -41,7 +41,6 @@
 - 旧的全局时期结构通过回归不证明新结构可用；不得把成分名称当作时期、静默丢弃定义依据，或为了适配旧程序把文稿改回整篇合并时期。
 - 同一时期的题号在多个题组重复时，在对应questionnaire_evidence中用questionnaire_module填写文案题组名称；无歧义的旧记录可省略。
 - 不能由检查器猜选其中一组。
-- 当前已测范围见[验收矩阵](../../../tests/acceptance-matrix.md)。
 
 后台调用 `copy <- read_definition_copy(analysis_vars)`。
 将 `criteria`、`criteria_intro`、`summary_entry`、`summary_insight_items`、`reference_lines`、`summary_selection`、`definition_basis` 传给现有生成器。
@@ -64,21 +63,20 @@
 
 ## 数据库适配边界
 
-- NHANES普通来源使用 `database="NHANES"` 和显式 `cycle_order`；保留字符型 `SEQN`、`YEAR`。接入与验证范围见[NHANES流程](../../databases/nhanes/workflow.md)。
+- NHANES普通来源使用 `database="NHANES"` 和显式 `cycle_order`；保留字符型 `SEQN`、`YEAR`。接口及适用范围见[NHANES流程](../../databases/nhanes/workflow.md)。
 
-- MHAS Core使用 `database="MHAS"` 及已核实的 `cycle_order`。原始文件名、字符身份及验证范围见[MHAS流程](../../databases/mhas/workflow.md)。
+- MHAS Core使用 `database="MHAS"` 及已核实的 `cycle_order`。原始文件名、字符身份及适用范围见[MHAS流程](../../databases/mhas/workflow.md)。
 
 - ELSA调用公共render_definition_bundle并设置database="ELSA"、cycle_order为已核实时期顺序，输入保留ID/idauniq/Wave。
 - Full HRS用database="HRS"及本轮核实年份，保留字符型HHID/PN和year；不在主题复制渲染器。
 - 顺序取自证据，不从非缺失行反推；概览和文件前缀随参数生成。
 
 - SHARE、KLoSA与KNHANES的生成接口须显式指定database及cycle_order，身份与文件层级按[SHARE流程](../../databases/share/workflow.md)、[KLoSA流程](../../databases/klosa/workflow.md)、[KNHANES流程](../../databases/knhanes/workflow.md)执行。
-- SHARE普通Wave1–9人口学已完成真实完整流程；KNHANES的Core data人口学21期已完成真实完整流程，其它来源和主题不据此视为通过；KLoSA仍按其workflow所列边界。
 - KLoSA还须显式传入与来源方案相同的language，目录入口沿用该语言。
 - 程序可运行不代表所有来源或主题已验收。
 
 - CHNS同样须显式指定database及cycle_order；静态来源已由网站并入主表时直接使用；仍为独立文件时，生成前在公开R工作对象中接入，生成器只检查个人—年身份并投影WAVE为本地年份。
-- 分文件完整检查与当前候选验收边界见[CHNS接口](../../databases/chns/profile.md)。
+- 分文件完整检查与适用边界见[CHNS接口](../../databases/chns/profile.md)。
 
 - summary_source提供已核实的目录路径，生成器从正式来源清单自动取得原始变量数量，衔接为：“以上问卷问题在数据中对应 N 个原始变量，可从 dbCodeBook 的目录［目录路径］进入检索和查看。”数量取raw_vars在raw_codebook中的完整来源身份，按数据库、文件及原变量名去重；包含必要前置题，同一来源跨期不重复计数，不统计最终变量、下载别名数量或网页搜索结果总数。
 - 来源身份缺失或无法对应时返回来源清单修正，不省略数量或猜数。
@@ -107,7 +105,7 @@ summary_groups <- c(defined_a = "研究概念一", defined_b = "研究概念二"
 
 - CHARLS 五期是当前共同覆盖契约，不能依据本主题恰好出现的年份缩减。
 - Full HRS 的年份覆盖由本轮实际选择的 Tracker、Core 与跨波次文件共同确定；地理等文件落后于 Tracker 时按结构性缺失处理，不把 RAND Wave 契约套到原始库。
-- 升级新波次时先核实正式来源，再同步 renderer 契约与对应测试，运行完整回归后发布；ELSA 与 HRS 的已测范围以 tests/acceptance-matrix.md 为准，不据此宣称其它文件族、产品路线或未来波次均已验收。
+- 升级新波次时先核实正式来源，再同步 renderer 契约与对应测试，运行完整回归后发布。各库文件族、产品路线及时期边界见对应数据库说明；本次验证只证明实际覆盖的范围。
 
 ## 正式输出与图表
 

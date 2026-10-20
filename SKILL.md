@@ -5,7 +5,7 @@ description: Run, revise, audit, or publish variable-definition topics built fro
 
 # dbCodeBook Definition
 
-本仓库是规则、证据、程序和测试的正式来源。
+本仓库维护可复用的规则、数据库接口、程序、模板和测试。主题方案、成果和执行记录留在主题目录。
 
 - 从当前任务和配置确定数据库、主题、正式目录、过程目录、程序路径及网站地址。
 - 这些信息未变时，沿用已有记录，不重复查找。
@@ -60,19 +60,14 @@ description: Run, revise, audit, or publish variable-definition topics built fro
 | 材料已经读过且未变 | 直接沿用 |
 
 各阶段文件规定输入、执行、产出、程序检查、模型判断和失败返回位置。
-数据库 profile/workflow 只补充身份、时期、文件、编码、接口和已验证范围，不另设一套流程。
+数据库 profile/workflow 只补充身份、时期、文件、编码、接口及其适用边界，不另设一套流程。
 
 ### 数据库材料与支持范围
 
 从 [database-routing.json](references/database-routing.json)定位所选数据库规则。
 参考材料从[材料索引](references/source-materials/材料索引.md)进入。
 
-| 数据库 | 当前证据边界 |
-| --- | --- |
-| SHARE | 普通 Wave 1–9 人口学已完成真实完整流程；范围见该库 workflow |
-| KNHANES | Core data 人口学的 1998、2001、2005、2007–2024 年已完成真实下载、生成、独立复算和发布；范围见该库 workflow |
-| KLoSA、CHNS | 以各自 workflow/profile 的当前验证范围为准 |
-| HRS | 正式路线为 `/home/hrs/` 的 Full HRS 原始库；真实下载及完整流程验证范围以该库规则为准 |
+所选库的 profile/workflow 说明当前接口、适用文件和限制。路由只定位这些文件，不登记主题进度或验收履历。
 
 RAND HRS 和 Harmonized HRS 是独立产品，只能作为明确标注的辅助证据。
 材料可读、配置存在、完整流程通过是三种不同证据，不能互相替代。
@@ -141,6 +136,6 @@ RAND HRS 和 Harmonized HRS 是独立产品，只能作为明确标注的辅助�
 每次修改规则后，沿相关引用核对入口、阶段规则、数据库差异、模板、示例和程序：检查适用条件、例外、要求强度及执行顺序是否冲突，修正受影响之处，不只检查改动句子。
 
 共享机制修改或仓库发布时，运行 `tests/run_all.ps1`，使用本机配置的程序及已安装 skill-creator 的 `quick_validate.py`（通过 `-SkillValidator` 传入）。
-将实际覆盖和未验证范围记入[验收矩阵](tests/acceptance-matrix.md)，不把某库通过推广为其他库通过。
+将本次共享变更的实际检查及未验证范围记入[维护验证记录](tests/maintenance/validation-history.md)，详细日志留维护过程目录。普通主题完成时只更新主题记录。
 
 发布到 GitHub 后，核对远端目标分支包含本次提交，再汇报“已同步”及提交号。仅本机保存、提交或测试通过，不表示已发布。新设备排查版本差异时，核对实际使用的 Skill 路径、提交号及未提交修改，不只核对仓库名称。

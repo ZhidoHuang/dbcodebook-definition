@@ -224,13 +224,12 @@ $Action = "$Process/download_action.json"
 | status / logic_review.result | READY；clear 或 reported_and_resolved，未决问题不得掩盖 | 继续保留真实结论 |
 | directory_entries / discovery.value | 网页分支：完整 UI 路径且 verified_in_ui=true；本地分支：按[本地证据接口](../local-source-evidence.md)绑定查询结果，不冒称网页观察；discovery 指向已登记条目 | 保留同一来源身份 |
 | 单期 source_group | handling_decision=single_period | 与实际时期核对 |
-| questionnaire_evidence | 完整题文，或符合[题意概括条件](../evidence-and-literature.md#questionnaire-evidence)的已核实概括；两者均须核实必要选项和路径；local_material_path 相对本数据库材料根 | 文案完成后：需展示项的rendered_in_copy=true、copy_locator指向实际文案；省略项按[文案程序操作](../scoped-tasks.md#copy-operations)登记，研究证据仍保留 |
+| questionnaire_evidence | 完整题文，或符合[题意概括条件](../evidence-and-literature.md#questionnaire-evidence)的已核实概括；两者均须核实必要选项和路径；材料位置按该节的 `local_material_scope` 和 `local_material_path` 登记 | 文案完成后：需展示项的rendered_in_copy=true、copy_locator指向实际文案；省略项按[文案程序操作](../scoped-tasks.md#copy-operations)登记，研究证据仍保留 |
 | questionnaire_path_closure | 真实进入/退出条件；未知人数和统计结论用 null | 下载后数据核实、正式 R 前：observed_count 为非负整数，unexplained_count=0，实际闭合有依据 |
 | human_record / evidence_steps | 探索记录存在同号 S001 等步骤标题 | 沿用可追溯步骤，不为过检查编造观察 |
 
 - 跨期复用同一 raw 列但题义变化时，按研究概念登记来源组，在各组列出准确单期与路由；组间可以共享该 raw，下载清单只保留一次。
 - 不同概念不能合并成一个定义；同一概念的跨期口径差异按[跨期结果合并](01-source-plan.md#跨期结果合并)处理。不在下载后复制来源列以绕过去重。
 
-- 材料路径正例：`官方问卷/2011/2011 家户问卷.pdf`；反例：`references/source-materials/charls/官方问卷/...`。
-- `locator` 是页码/题号/章节定位，不是第二个文件路径；同一个材料文件统一使用前述相对路径。
+- 材料范围、相对路径和 `locator` 的写法见[材料定位要求](../evidence-and-literature.md#questionnaire-evidence)。
 - 校验器提示基址错误时按提示改记录，不自动改选另一份材料。

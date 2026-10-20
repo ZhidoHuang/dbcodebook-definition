@@ -51,7 +51,7 @@
 
 ### 更新已有安装
 
-先检查 Git 状态并保存本地配置和未提交改动，不用 reset/覆盖安装清除现场。修改公共代码后运行 `tests/run_all.ps1 -Config $Config -SkillValidator $Validator`，登记验收矩阵中的实际覆盖和未测边界，再提交可追溯版本。推送、部署按用户授权执行。
+先检查 Git 状态并保存本地配置和未提交改动，不用 reset/覆盖安装清除现场。修改公共代码后运行 `tests/run_all.ps1 -Config $Config -SkillValidator $Validator`，将本次共享变更的实际覆盖和未测边界记入[维护验证记录](../tests/maintenance/validation-history.md)，再提交可追溯版本。推送、部署按用户授权执行。
 
 安装目录若为 junction/symlink，核实目标即维护仓库，修改已直接生效；独立克隆则在保留本机 config.local.json 后更新到同一提交，再运行本机环境预检。比较 `git rev-parse HEAD`，不要用“文件已复制”替代版本核对。目标机有未提交修改时先合并，不强制覆盖。
 
