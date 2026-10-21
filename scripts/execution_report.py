@@ -989,6 +989,82 @@ def command_website_prepare(args: argparse.Namespace) -> dict[str, Any]:
     return begin_website_preparation(Path(args.process_dir), args.database, args.topic_id, args.topic_name)
 
 
+def validate_saved_confirmation(
+    result: dict[str, Any], args: argparse.Namespace,
+    report: dict[str, Any], stage: dict[str, Any], result_path: Path,
+) -> tuple[datetime, list[str]]:
+    """Validate a later read-only confirmation without inventing a browser return."""
+    source = getattr(args, "result", None)
+    if getattr(args, "result_json", None) is not None or source is None or not Path(source).is_file():
+        raise SystemExit("只读确认必须从真实确认结果文件导入，不能使用内联 JSON。")
+    source = Path(source).resolve()
+    original_value = result.get("original_result_path")
+    if not isinstance(original_value, str) or not original_value:
+        raise SystemExit("只读确认缺少原始失败结果文件。")
+    original_path = Path(original_value).expanduser().resolve()
+    if not original_path.is_file():
+        raise SystemExit("只读确认的原始失败结果文件不存在。")
+    # Preserve the original receipt even when either path is an alias or hard link.
+    for target in (source, result_path.resolve()):
+        if original_path == target or (target.exists() and os.path.samefile(original_path, target)):
+            raise SystemExit("只读确认不能覆盖或冒充原始失败结果文件。")
+    try:
+        original = json.loads(original_path.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise SystemExit(f"无法读取原始失败结果：{error}") from error
+    if (not isinstance(original, dict) or
+        original.get("status") not in ("SUBMISSION_UNCERTAIN", "SYNC_FAILED") or
+        original.get("sync_run_id") != report["run_id"] or
+        original.get("sync_attempt") != stage["attempt"] or
+        original.get("sync_started_at") != stage["started_at"]):
+        raise SystemExit("原始结果不是本次提交的失败或返回不明记录。")
+    if ("preload_sha256" in original and
+        original["preload_sha256"] != result["preload_sha256"]):
+        raise SystemExit("只读确认与原始失败结果的程序哈希不一致。")
+    if any(key in result for key in (
+        "dispatch_latency_ms", "browser_elapsed_ms", "sync_elapsed_to_browser_return_ms"
+    )):
+        raise SystemExit("只读确认不能声明原同步直接返回的耗时。")
+    browser = original.get("browser_elapsed_ms")
+    recorded_browser = result.get("original_browser_elapsed_ms")
+    if (type(browser) not in (int, float) or not math.isfinite(browser) or browser < 0 or
+        type(recorded_browser) not in (int, float) or not math.isfinite(recorded_browser) or
+        recorded_browser != browser):
+        raise SystemExit("只读确认必须保留原始 browser_elapsed_ms 为 original_browser_elapsed_ms。")
+    if any(result.get(key) is not True for key in (
+        "saved_content_verified", "saved_attachment_hashes_verified", "read_only"
+    )):
+        raise SystemExit("只读确认缺少正文、附件哈希或只读校验证据。")
+    signatures = result.get("attachment_signatures")
+    if not isinstance(signatures, list) or any(
+        not isinstance(item, dict) or
+        not isinstance(item.get("name"), str) or not item["name"].strip() or
+        not re.fullmatch(r"[0-9a-fA-F]{64}", str(item.get("sha256", "")))
+        for item in signatures
+    ):
+        raise SystemExit("只读确认缺少有效的附件哈希记录。")
+    observation, original_observation = result.get("observation"), original.get("observation")
+    if (not isinstance(observation, dict) or not isinstance(original_observation, dict) or
+        not isinstance(observation.get("receipt_id"), str) or
+        not re.fullmatch(r"[0-9a-f]{32}", observation["receipt_id"]) or
+        not isinstance(observation.get("tab_id"), str) or not observation["tab_id"].strip() or
+        any(observation.get(key) != original_observation.get(key) for key in ("receipt_id", "tab_id"))):
+        raise SystemExit("只读确认缺少与原始失败结果一致的 receipt_id/tab_id。")
+    try:
+        times = [parse_time(value) for value in (
+            stage["started_at"], result.get("confirmation_started_at"),
+            result.get("confirmation_finished_at"),
+        )]
+        if any(value.utcoffset() is None for value in times):
+            raise ValueError("missing timezone")
+        started, confirmation_started, finished = times
+        if not started <= confirmation_started <= finished <= now():
+            raise ValueError("invalid time order")
+    except (TypeError, ValueError, OverflowError) as error:
+        raise SystemExit("只读确认时间必须为带时区的 ISO 时间，且提交开始<=确认开始<=确认结束<=当前时间。") from error
+    return finished, [str(source), str(original_path)]
+
+
 def command_website_finish(args: argparse.Namespace) -> dict[str, Any]:
     report_path, markdown_path = paths(args.process_dir)
     report = load(report_path)
@@ -1011,29 +1087,40 @@ def command_website_finish(args: argparse.Namespace) -> dict[str, Any]:
     checks = ("edit_url_verified", "title_verified", "body_verified",
               "attachment_order_verified", "article_page_returned")
     quality = result.get("quality_checks")
-    if (result.get("ok") is not True or result.get("status") != "ARTICLE_PAGE_RETURNED" or
+    if (result.get("ok") is not True or result.get("status") not in (
+        "ARTICLE_PAGE_RETURNED", "ARTICLE_SAVED_CONFIRMED"
+    ) or
         not isinstance(quality, dict) or any(quality.get(key) is not True for key in checks)):
         raise SystemExit("浏览器没有返回完整的同步成功证据；请记录实际失败。")
     if not re.fullmatch(r"[0-9a-f]{64}", str(result.get("preload_sha256", ""))):
         raise SystemExit("缺少固定提交程序的哈希记录。")
-    values = [result.get(key) for key in ("dispatch_latency_ms", "browser_elapsed_ms",
-                                          "sync_elapsed_to_browser_return_ms")]
-    if any(type(value) not in (int, float) or not math.isfinite(value) or value < 0 for value in values):
-        raise SystemExit("浏览器耗时缺失或无效。")
-    dispatch, browser, total = values
-    if abs(dispatch + browser - total) > 1:
-        raise SystemExit("浏览器计时相互矛盾。")
-    finished = parse_time(stage["started_at"]) + timedelta(milliseconds=total)
-    if finished > now() + timedelta(seconds=1):
-        raise SystemExit("浏览器完成时间在未来；检查原始结果。")
     result_path = report_path.parent / "website_sync_result.json"
+    confirmation = result["status"] == "ARTICLE_SAVED_CONFIRMED"
+    if confirmation:
+        finished, evidence_outputs = validate_saved_confirmation(result, args, report, stage, result_path)
+        stage_status = "completed_with_issues"
+        summary = ["原同步返回不明；已通过只读确认正文和附件保存，未取得原同步直接返回回执。"]
+        duration = elapsed_seconds(stage["started_at"], finished.isoformat())
+    else:
+        values = [result.get(key) for key in ("dispatch_latency_ms", "browser_elapsed_ms",
+                                              "sync_elapsed_to_browser_return_ms")]
+        if any(type(value) not in (int, float) or not math.isfinite(value) or value < 0 for value in values):
+            raise SystemExit("浏览器耗时缺失或无效。")
+        dispatch, browser, total = values
+        if abs(dispatch + browser - total) > 1:
+            raise SystemExit("浏览器计时相互矛盾。")
+        finished = parse_time(stage["started_at"]) + timedelta(milliseconds=total)
+        if finished > now() + timedelta(seconds=1):
+            raise SystemExit("浏览器完成时间在未来；检查原始结果。")
+        stage_status, summary = "completed", ["正文和附件已提交，返回文章页。"]
+        duration, evidence_outputs = round(total / 1000, 3), []
     result_path.write_text(
         json.dumps(result, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    stage.update(status="completed", finished_at=finished.isoformat(timespec="milliseconds"),
-                 elapsed_seconds=round(total / 1000, 3),
-                 summary=["正文和附件已提交，返回文章页。"], outputs=[str(result_path.resolve())],
+    stage.update(status=stage_status, finished_at=finished.isoformat(timespec="milliseconds"),
+                 elapsed_seconds=duration, summary=summary,
+                 outputs=list(dict.fromkeys([str(result_path.resolve()), *evidence_outputs])),
                  browser_result=result)
     report["stages"].append({
         "stage_id": "website_closure", "attempt": stage["attempt"], "name": "网站收口",
@@ -1043,7 +1130,8 @@ def command_website_finish(args: argparse.Namespace) -> dict[str, Any]:
     })
     save(report_path, markdown_path, report)
     return {"ok": True, "submission_seconds": stage["elapsed_seconds"],
-            "next_action": "保存其余记录后执行 finish；提交返回之后的时间单列为网站收口。"}
+            "next_action": ("保存其余记录后执行 finish；只读确认结束之后的时间单列为网站收口。"
+                            if confirmation else "保存其余记录后执行 finish；提交返回之后的时间单列为网站收口。")}
 
 
 def command_check(args: argparse.Namespace) -> dict[str, Any]:

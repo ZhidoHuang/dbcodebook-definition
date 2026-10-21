@@ -53,6 +53,8 @@ console.log('BOUND_DIALOG_PASS');
         subprocess.run(['node',str(path)],check=True)
         session=Session.__new__(Session)
         session.tab_id='A'
+        session.retain_receipts=False
+        session.receipt_scope=None
         session.code_path=Path(folder)/'action.js'
         emitted=[]
         def call(*args):

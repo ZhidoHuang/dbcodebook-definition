@@ -47,7 +47,30 @@ async function prepareWebsite(page, action) {
       const edit = page.locator('.edit-post-btn:visible');
       await edit.waitFor({state: 'visible', timeout: remaining()});
       phase = 'open_editor';
-      await edit.click({timeout: remaining()});
+      const visiblePosition = await edit.evaluate(element => {
+        const rect = element.getBoundingClientRect();
+        const width = window.innerWidth, height = window.innerHeight;
+        // Keep normal scrolling/actionability for controls wholly inside or outside
+        // the viewport. A cropped control may have an unreachable default center.
+        if ((rect.left >= 0 && rect.top >= 0 && rect.right <= width && rect.bottom <= height)
+            || rect.right <= 0 || rect.bottom <= 0 || rect.left >= width || rect.top >= height)
+          return null;
+        const style = getComputedStyle(element);
+        const border = side => Number.parseFloat(style[side]) || 0;
+        const paddingLeft = rect.left + border('borderLeftWidth');
+        const paddingTop = rect.top + border('borderTopWidth');
+        const left = Math.max(0, paddingLeft), top = Math.max(0, paddingTop);
+        const right = Math.min(width, rect.right - border('borderRightWidth'));
+        const bottom = Math.min(height, rect.bottom - border('borderBottomWidth'));
+        if (right <= left || bottom <= top) throw new Error('Edit button has no visible clickable area');
+        const x = (left + right) / 2, y = (top + bottom) / 2;
+        const hit = document.elementFromPoint(x, y);
+        if (!hit || (hit !== element && !element.contains(hit)))
+          throw new Error('Visible edit button area is obscured');
+        // Playwright position is relative to the element padding box.
+        return {x: x - paddingLeft, y: y - paddingTop};
+      });
+      await edit.click({timeout: remaining(), ...(visiblePosition ? {position: visiblePosition} : {})});
       await page.waitForURL(url => url.origin === action.base_url && editorPath.test(url.pathname)
         && !!url.pathname.match(editorPath)[1], {timeout: remaining(), waitUntil: 'domcontentloaded'});
       editId = new URL(page.url()).pathname.match(editorPath)[1];

@@ -478,8 +478,145 @@ with tempfile.TemporaryDirectory() as temp_dir:
             process_dir=str(process), status="completed", summary=[]))
     final = json.loads(report_path.read_text(encoding="utf-8"))
     assert [s["elapsed_seconds"] for s in final["stages"]] == [300, 2.55, 153.45]
+    returned = execution_report.latest_stage(final, "website_sync")
+    assert returned["status"] == "completed" and returned["browser_result"] == good
+    assert returned["finished_at"] == (t0 + timedelta(seconds=302.55)).isoformat(timespec="milliseconds")
     assert "456.000" in (process / "执行报告.md").read_text(encoding="utf-8")
     run("website-finish", "--process-dir", str(process), "--result", str(path), ok=False)
+
+with tempfile.TemporaryDirectory() as temp_dir:
+    from datetime import datetime, timedelta, timezone
+    from unittest.mock import patch
+
+    t0 = datetime(2026, 9, 7, tzinfo=timezone.utc)
+    for original_status in ("SUBMISSION_UNCERTAIN", "SYNC_FAILED"):
+        process = Path(temp_dir) / original_status
+        with patch.object(execution_report, "now", return_value=t0):
+            execution_report.begin_website_preparation(process, "CHARLS", "043", "fixture")
+        with patch.object(execution_report, "now", return_value=t0 + timedelta(seconds=10)):
+            execution_report.begin_website_sync(process, "CHARLS", "043", "fixture")
+            execution_report.command_issue(execution_report.argparse.Namespace(
+                process_dir=str(process), stage_id="website_sync", kind="abnormal",
+                description="提交返回超时", impact="保存结果待核对", resolution="原因为返回超时",
+                status="mitigated"))
+        report_path = process / "execution_report.json"
+        markdown_path = process / "执行报告.md"
+        current = json.loads(report_path.read_text(encoding="utf-8"))
+        stage = execution_report.latest_stage(current, "website_sync")
+        original_path = process / "original-failure.json"
+        original = {
+            "ok": False, "status": original_status, "sync_run_id": current["run_id"],
+            "sync_attempt": stage["attempt"], "sync_started_at": stage["started_at"],
+            "browser_elapsed_ms": 30000,
+            "observation": {"receipt_id": "a" * 32, "tab_id": "fixture-tab"},
+        }
+        path = process / "saved-confirmation.json"
+        good = {
+            "ok": True, "status": "ARTICLE_SAVED_CONFIRMED", "sync_run_id": current["run_id"],
+            "sync_attempt": stage["attempt"], "sync_started_at": stage["started_at"],
+            "preload_sha256": "0" * 64, "original_result_path": str(original_path.resolve()),
+            "original_browser_elapsed_ms": original["browser_elapsed_ms"],
+            "confirmation_started_at": (t0 + timedelta(seconds=60)).isoformat(),
+            "confirmation_finished_at": (t0 + timedelta(seconds=120)).isoformat(),
+            "saved_content_verified": True, "saved_attachment_hashes_verified": True, "read_only": True,
+            "observation": copy.deepcopy(original["observation"]),
+            "attachment_signatures": [{"name": "fixture.R", "sha256": "A" * 64}],
+            "quality_checks": {key: True for key in (
+                "edit_url_verified", "title_verified", "body_verified",
+                "attachment_order_verified", "article_page_returned")},
+        }
+        original_path.write_text(json.dumps(original), encoding="utf-8")
+        original_bytes = original_path.read_bytes()
+        before_report, before_markdown = report_path.read_bytes(), markdown_path.read_bytes()
+        standard_path = process / "website_sync_result.json"
+        args = execution_report.argparse.Namespace(process_dir=str(process), result=path)
+
+        def rejected(result, expected, failed=original):
+            path.write_text(json.dumps(result), encoding="utf-8")
+            original_path.write_text(json.dumps(failed), encoding="utf-8")
+            source_before, failure_before = path.read_bytes(), original_path.read_bytes()
+            with patch.object(execution_report, "now", return_value=t0 + timedelta(seconds=130)):
+                expect_system_exit(lambda: execution_report.command_website_finish(args), expected)
+            assert report_path.read_bytes() == before_report
+            assert markdown_path.read_bytes() == before_markdown
+            assert path.read_bytes() == source_before and original_path.read_bytes() == failure_before
+            assert not standard_path.exists()
+
+        if original_status == "SUBMISSION_UNCERTAIN":
+            for invalid in (
+                dict(good, sync_run_id="another-run"), dict(good, sync_attempt=100),
+                dict(good, sync_started_at=t0.isoformat()),
+            ):
+                rejected(invalid, "不属于本次")
+            for invalid in (
+                dict(good, saved_attachment_hashes_verified=None),
+                dict(good, saved_content_verified=False), dict(good, read_only=False),
+            ):
+                rejected(invalid, "正文、附件哈希或只读")
+            for invalid in (dict(good, attachment_signatures=None),
+                            dict(good, attachment_signatures=[{"name": "fixture.R", "sha256": "short"}])):
+                rejected(invalid, "附件哈希记录")
+            rejected(dict(good, quality_checks={**good["quality_checks"], "body_verified": False}), "完整的同步成功证据")
+            rejected(dict(good, preload_sha256="invalid"), "哈希记录")
+            for invalid in (
+                dict(good, observation={}),
+                dict(good, observation={"receipt_id": "b" * 32, "tab_id": "fixture-tab"}),
+                dict(good, observation={"receipt_id": "a" * 32, "tab_id": "other-tab"}),
+            ):
+                rejected(invalid, "receipt_id/tab_id")
+            rejected(dict(good, original_browser_elapsed_ms=29999), "original_browser_elapsed_ms")
+            rejected(dict(good, browser_elapsed_ms=120000), "不能声明原同步直接返回")
+            for invalid in (
+                dict(good, confirmation_started_at="2026-09-07T00:01:00"),
+                dict(good, confirmation_finished_at="2026-09-07T00:02:00"),
+                dict(good, confirmation_started_at=(t0 + timedelta(seconds=5)).isoformat()),
+                dict(good, confirmation_finished_at=(t0 + timedelta(seconds=59)).isoformat()),
+                dict(good, confirmation_finished_at=(t0 + timedelta(seconds=131)).isoformat()),
+                dict(good, confirmation_started_at="invalid"),
+            ):
+                rejected(invalid, "只读确认时间")
+            for invalid_original in (
+                dict(original, status="ARTICLE_PAGE_RETURNED"),
+                dict(original, sync_run_id="another-run"), dict(original, sync_attempt=100),
+                dict(original, sync_started_at=t0.isoformat()),
+            ):
+                rejected(good, "原始结果不是本次提交", invalid_original)
+            rejected(good, "程序哈希不一致", dict(original, preload_sha256="1" * 64))
+            rejected(dict(good, original_result_path=str(process / "missing.json")), "原始失败结果文件不存在")
+            rejected(dict(good, original_result_path=str(path.resolve())), "不能覆盖或冒充")
+            path.write_text(json.dumps(good), encoding="utf-8")
+            original_path.write_bytes(original_bytes)
+            with patch.object(execution_report, "now", return_value=t0 + timedelta(seconds=130)):
+                expect_system_exit(lambda: execution_report.command_website_finish(
+                    execution_report.argparse.Namespace(process_dir=str(process), result_json=json.dumps(good))),
+                    "真实确认结果文件")
+            assert report_path.read_bytes() == before_report and original_path.read_bytes() == original_bytes
+            standard_path.write_bytes(original_bytes)
+            path.write_text(json.dumps(dict(good, original_result_path=str(standard_path.resolve()))), encoding="utf-8")
+            with patch.object(execution_report, "now", return_value=t0 + timedelta(seconds=130)):
+                expect_system_exit(lambda: execution_report.command_website_finish(args), "不能覆盖或冒充")
+            assert standard_path.read_bytes() == original_bytes and report_path.read_bytes() == before_report
+            standard_path.unlink()
+
+        path.write_text(json.dumps(good), encoding="utf-8")
+        original_path.write_bytes(original_bytes)
+        confirmation_bytes = path.read_bytes()
+        with patch.object(execution_report, "now", return_value=t0 + timedelta(seconds=130)):
+            imported = execution_report.command_website_finish(args)
+            execution_report.command_finish(execution_report.argparse.Namespace(
+                process_dir=str(process), status="completed_with_issues", summary=[]))
+        final = json.loads(report_path.read_text(encoding="utf-8"))
+        saved = execution_report.latest_stage(final, "website_sync")
+        assert saved["status"] == "completed_with_issues" and saved["browser_result"] == good
+        assert saved["elapsed_seconds"] == imported["submission_seconds"] == 110
+        assert "只读确认" in saved["summary"][0] and "直接返回回执" in saved["summary"][0]
+        assert [s["elapsed_seconds"] for s in final["stages"]] == [10, 110, 10]
+        assert final["issues"] == current["issues"]
+        assert json.loads(standard_path.read_text(encoding="utf-8")) == good
+        assert original_path.read_bytes() == original_bytes and path.read_bytes() == confirmation_bytes
+        assert saved["finished_at"] == execution_report.latest_stage(final, "website_closure")["started_at"]
+        assert not any(key in saved["browser_result"] for key in (
+            "dispatch_latency_ms", "browser_elapsed_ms", "sync_elapsed_to_browser_return_ms"))
 
 with tempfile.TemporaryDirectory() as temp_dir:
     from unittest.mock import patch

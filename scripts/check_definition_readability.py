@@ -1533,7 +1533,7 @@ def verify_existing_readiness(
     previous_sync = process_dir / "website_sync_result.json"
     if previous_sync.is_file():
         previous = json.loads(previous_sync.read_text(encoding="utf-8-sig"))
-        if previous.get("ok") is True and previous.get("status") == "ARTICLE_PAGE_RETURNED":
+        if previous.get("ok") is True and previous.get("status") in ("ARTICLE_PAGE_RETURNED", "ARTICLE_SAVED_CONFIRMED"):
             upload["previous_sync"] = previous
     return {
         "ok": True,
@@ -1698,6 +1698,9 @@ async function chooseVisibleFile(tab, selector, filePath) {{
 }}
 async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
   const phase = checkpoint?.phase;
+  if (typeof dbCodeBookOperationReceipt !== 'undefined') {{
+    dbCodeBookOperationReceipt.submission_requested = false;
+  }}
   const startedAt = checkpoint?.startedAt || Date.now();
   const syncStartedAt = payload.sync_started_at
     ? Date.parse(payload.sync_started_at)
@@ -1870,6 +1873,11 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
       payload.success_url_pattern, {{ timeoutMs: 30000, waitUntil: "commit" }}
     );
     submissionStarted = true;
+    if (typeof dbCodeBookOperationReceipt !== 'undefined') {{
+      dbCodeBookOperationReceipt.submission_requested = true;
+      dbCodeBookOperationReceipt.verified = {{edit_url_verified:true, title_verified:true,
+        body_verified:true, attachment_order_verified:true}};
+    }}
     if (payload.create) {{
       await tab.playwright.getByRole("button", {{ name: /发布文章/ }}).click({{ noWaitAfter: true }});
     }} else {{

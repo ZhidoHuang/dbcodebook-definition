@@ -11,6 +11,8 @@ import subprocess
 import re
 import time
 import uuid
+import zipfile
+from datetime import datetime, timezone
 from skill_config import load_config, playwright_command, database_url
 
 
@@ -76,7 +78,7 @@ const nodeRepl = {write: value => {actionResult = JSON.parse(value);}};
 '''
 
 
-def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None):
+def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None, retain_receipt=False, receipt_scope=None):
     if not tab_id:
         return code
     return """async defaultPage => {
@@ -114,6 +116,15 @@ def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None):
           error => {record.error = String(error);}));
       };
       selected.on('dialog', onDialog);
+      const receiptId = %s;
+      const dbCodeBookOperationReceipt = {id:receiptId, tab_id:%s, scope:%s,
+        state:'running', started_at:new Date().toISOString(), submission_requested:null};
+      if (%s) {
+        const context = selected.context();
+        const key = Symbol.for('dbCodeBook.syncReceipts');
+        const receipts = context[key] || (context[key] = new Map());
+        receipts.set(receiptId, dbCodeBookOperationReceipt);
+      }
       const operation = (async () => { try {
         const result = await (%s)(selected);
         await Promise.all(pending);
@@ -125,10 +136,15 @@ def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None):
         return result && typeof result === 'object' && !Array.isArray(result)
           ? {...result, native_dialogs: cancellations} : {result, native_dialogs: cancellations};
       } finally { selected.off('dialog', onDialog); } })();
-      const receiptId = %s;
-      if (receiptId) selected[Symbol.for('dbCodeBook.boundAction')] = {id:receiptId, operation};
+      dbCodeBookOperationReceipt.operation = operation;
+      operation.then(result => Object.assign(dbCodeBookOperationReceipt,
+        {state:'completed', result, finished_at:new Date().toISOString()}), error =>
+        Object.assign(dbCodeBookOperationReceipt,
+          {state:'failed', error:String(error), finished_at:new Date().toISOString()}));
+      if (receiptId) selected[Symbol.for('dbCodeBook.boundAction')] = dbCodeBookOperationReceipt;
       return await operation;
-    }""" % (json.dumps(tab_id), json.dumps(expires_at_ms), code, json.dumps(receipt_id))
+    }""" % (json.dumps(tab_id), json.dumps(expires_at_ms), json.dumps(receipt_id), json.dumps(tab_id),
+           json.dumps(receipt_scope), str(bool(retain_receipt)).lower(), code)
 
 
 def read_action(path: Path) -> dict:
@@ -198,12 +214,18 @@ class Session:
         self.workdir, self.code_path = workdir, code_path
         self.deadline = None
         self.tab_id = tab_id
+        self.operation_timeout = 40
+        self.retain_receipts = False
+        self.receipt_scope = None
+        self.last_receipt_id = None
+        self.body_check = None
 
-    def call(self, *args, timeout=40):
+    def call(self, *args, timeout=None):
+        timeout = self.operation_timeout if timeout is None else timeout
         if self.deadline is not None:
             timeout = min(timeout, self.deadline - time.monotonic())
             if timeout <= 0:
-                raise TimeoutError("Website operation exceeded 60 seconds")
+                raise TimeoutError("Website phase exceeded its execution limit")
         result = subprocess.run(self.command + list(args), cwd=self.workdir,
                                 capture_output=True, encoding="utf-8", timeout=timeout,
                                 stdin=subprocess.DEVNULL)
@@ -213,18 +235,26 @@ class Session:
 
     def code(self, code):
         receipt_id = uuid.uuid4().hex
+        self.last_receipt_id = receipt_id
+        if self.retain_receipts and self.tab_id:
+            self.code_path.with_suffix('.receipt.json').write_text(json.dumps({
+                'receipt_id':receipt_id, 'tab_id':self.tab_id, 'scope':self.receipt_scope,
+                'recorded_at':time.time(), 'phase_timeout_seconds':self.operation_timeout,
+            }, ensure_ascii=False, indent=2), encoding='utf-8')
         self.code_path.write_text(bind_code(code, self.tab_id, receipt_id,
-                                           int((time.time() + 40) * 1000)), encoding="utf-8")
+                                           int((time.time() + 40) * 1000),
+                                           self.retain_receipts, self.receipt_scope), encoding="utf-8")
         output = self.call("--raw", "run-code", "--filename", str(self.code_path.resolve()))
         # The CLI returns early when its selected tab opens a dialog, even if
         # our bound handler dismisses it. Retrieve that same operation only;
         # never replay the click/upload/submit to obtain a result.
         if not output.strip() and self.tab_id:
             recovery = '''async page => {
-              const receipt = page[Symbol.for('dbCodeBook.boundAction')];
+              const receipt = page.context()[Symbol.for('dbCodeBook.syncReceipts')]?.get(%s)
+                || page[Symbol.for('dbCodeBook.boundAction')];
               if (!receipt || receipt.id !== %s) throw new Error('Bound action receipt unavailable; do not replay');
               return await receipt.operation;
-            }''' % json.dumps(receipt_id)
+            }''' % (json.dumps(receipt_id), json.dumps(receipt_id))
             self.code_path.write_text(bind_code(recovery, self.tab_id), encoding="utf-8")
             output = self.call("--raw", "run-code", "--filename", str(self.code_path.resolve()))
         try:
@@ -241,19 +271,21 @@ class Session:
         read_names = """() => document.querySelector('#documents-sidebar-list').innerText
           .split(/\\r?\\n/).map(line => line.trim())
           .filter(line => /\\.(xlsx|xls|csv|docx?|txt|pdf)$/i.test(line))"""
+        wait_ms = 60000
         wait_code = """async page => {
           await page.waitForFunction(expected => {
             const actual = document.querySelector('#documents-sidebar-list').innerText
               .split(/\\r?\\n/).map(line => line.trim())
               .filter(line => /\\.(xlsx|xls|csv|docx?|txt|pdf)$/i.test(line));
             return JSON.stringify(actual) === JSON.stringify(expected);
-          }, EXPECTED, {timeout: 15000});
+          }, EXPECTED, {timeout: ATTACHMENT_WAIT_MS});
           return {ok:true};
         }"""
+        wait_code = wait_code.replace('ATTACHMENT_WAIT_MS', str(wait_ms))
         if self.tab_id:
             prefix = ('const expected = await page.evaluate(' + read_names + ');'
                       + ' expected.push(' + json.dumps(Path(path).name) + ');') if attachment else ''
-            wait = wait_code.split('async page => {', 1)[1].rsplit('}', 1)[0].replace('EXPECTED', 'expected') if attachment else 'return {ok:true};'
+            wait = wait_code.split('async page => {', 1)[1].rsplit('}', 1)[0].replace('EXPECTED', 'expected') if attachment else '''await page.waitForFunction(expected => {const text=document.querySelector('#editor').value; return expected ? text.length===expected.length_utf16 && text.slice(0,160)===expected.head && text.slice(-150)===expected.tail : text.length>0;}, BODY_CHECK, {timeout:30000}); return {ok:true};'''.replace('BODY_CHECK',json.dumps(self.body_check))
             self.code('async page => {' + prefix + ' await page.locator(' + json.dumps(selector)
                       + ').setInputFiles(' + json.dumps(file_path) + ');' + wait + '}')
             return
@@ -314,7 +346,24 @@ def run_sync(session, action, preflight):
     state = {"phase": "prepare"}
     submitted = False
     started = time.monotonic()
-    session.deadline = started + 60
+    session.deadline = None
+    session.retain_receipts = True
+    session.body_check = payload.get('body_check')
+    session.receipt_scope = {key:payload.get(key) for key in
+                             ('sync_run_id','sync_attempt','sync_started_at','preload_sha256')}
+    active_step = 'identity'
+    phase_timings = {}
+
+    def perform(name, operation, timeout=40):
+        nonlocal active_step
+        active_step = name
+        session.receipt_scope['step'] = name
+        session.operation_timeout = timeout
+        phase_started = time.monotonic()
+        try:
+            return operation()
+        finally:
+            phase_timings[name] = round((time.monotonic() - phase_started) * 1000)
 
     def step():
         script = ("async page => { const downloadTarget = null;\n" + ADAPTER + helper
@@ -325,18 +374,19 @@ def run_sync(session, action, preflight):
 
     try:
         validate_sync_files(payload)
-        session.select_target(action["existing_tab_match"])
-        state = step()
+        perform('identity', lambda: session.select_target(action["existing_tab_match"]))
+        state = perform('prepare', step)
         validate_sync_files(payload)
-        session.upload("#content-import-input", payload["note"])
-        state = step()
-        for attachment in payload["attachments"][state["keep"]:]:
+        perform('body_import', lambda: session.upload("#content-import-input", payload["note"]))
+        state = perform('body_check', step)
+        for index, attachment in enumerate(payload["attachments"][state["keep"]:]):
             validate_sync_files(payload)
-            session.upload("#documents-sidebar-input", attachment["path"])
+            perform('attachment_' + str(index + state['keep'] + 1),
+                    lambda: session.upload("#documents-sidebar-input", attachment["path"]), 65)
         validate_sync_files(payload)
         # A failed submit call may already have written remotely; never retry or discard it.
         submitted = True
-        return step()
+        return perform('submit', step)
     except Exception as exc:
         session.deadline = None  # Recovery is disclosed separately, not a second submission.
         result = {"ok": False, "status": "SUBMISSION_UNCERTAIN" if submitted else "SYNC_FAILED",
@@ -349,28 +399,227 @@ def run_sync(session, action, preflight):
                   "recovery_scope": "editor_page_only",
                   "editor_page_restored": False,
                   "content_rollback_status": "NOT_VERIFIED"}
-        if not submitted and state["phase"] != "prepare":
-            result["recovery_attempted"] = True
-            try:
-                restored = session.discard(payload["edit_url"])
-                result["recovery_confirmed"] = restored == {"url": payload["edit_url"], "editor": 1}
-                result["editor_page_restored"] = result["recovery_confirmed"]
-            except Exception as recovery:
-                result["recovery_error"] = str(recovery)
+        # The CLI may time out while the original browser operation is still running.
+        # Do not reload or replay it. The fixed observer reads that exact receipt.
+        result['preload_sha256'] = payload.get('preload_sha256')
+        result['phase_timings_ms'] = phase_timings
+        result['observation'] = {
+            'receipt_id':getattr(session, 'last_receipt_id', None),
+            'tab_id':getattr(session, 'tab_id', None), 'step':active_step,
+            'scope':dict(session.receipt_scope),
+        }
+        result['next_action'] = 'sync-observe'
         return result
     finally:
         session.deadline = None
+        session.retain_receipts = False
+        session.operation_timeout = 40
+
+
+def observe_sync(session, action, failed_result):
+    """Read the original operation; never upload, submit, discard, or reload."""
+    payload = action['payload']
+    observation = failed_result.get('observation') or {}
+    keys = ('sync_run_id','sync_attempt','sync_started_at')
+    if any(failed_result.get(key) != payload.get(key) for key in keys):
+        raise ValueError('Observation does not belong to the prepared synchronization')
+    if not observation.get('receipt_id'):
+        return {**{key:payload.get(key) for key in keys}, 'ok':False,
+                'status':'SYNC_RECEIPT_UNAVAILABLE', 'read_only':True,
+                'next_action':'read_only_saved_state_check'}
+    if not session.tab_id or observation.get('tab_id') != session.tab_id:
+        raise ValueError('Observation requires the original bound tab')
+    receipt_id = observation.get('receipt_id')
+    if not isinstance(receipt_id,str) or not re.fullmatch('[0-9a-f]{32}',receipt_id):
+        raise ValueError('Original operation receipt is missing; do not replay')
+    expected_scope = observation['scope']
+    expected_scope = dict(expected_scope)
+    if any(expected_scope.get(key) != payload.get(key) for key in (*keys,'preload_sha256')):
+        raise ValueError('Observation scope does not match the prepared synchronization')
+    observed = session.code('''async page => {
+      const receipt = page.context()[Symbol.for('dbCodeBook.syncReceipts')]?.get(RECEIPT);
+      if (!receipt) return {state:'unavailable'};
+      const expectedScope = SCOPE;
+      if (receipt.tab_id !== TAB || !receipt.scope ||
+          Object.keys(receipt.scope).length !== Object.keys(expectedScope).length ||
+          !Object.keys(expectedScope).every(key => receipt.scope[key] === expectedScope[key]))
+        throw new Error('Original receipt identity does not match');
+      let timer;
+      if (receipt.state === 'running') {
+        try { await Promise.race([receipt.operation.catch(() => {}), new Promise(resolve => {
+          timer = setTimeout(resolve, 10000);
+        })]); } finally {clearTimeout(timer);}
+      }
+      return {state:receipt.state, result:receipt.result, error:receipt.error,
+        submission_requested:receipt.submission_requested,
+        verified:receipt.verified, finished_at:receipt.finished_at};
+    }'''.replace('RECEIPT',json.dumps(receipt_id)).replace('TAB',json.dumps(session.tab_id))
+        .replace('SCOPE',json.dumps(expected_scope)))
+    common = {key:payload.get(key) for key in keys}
+    common.update(observation=observation, observed_at=time.time(), read_only=True,
+                  original_status=failed_result.get('status'))
+    if observed['state'] == 'completed' and observation['step'] == 'submit':
+        result = observed.get('result') or {}
+        if result.get('status') == 'ARTICLE_PAGE_RETURNED' and result.get('ok') is True:
+            if any(result.get(key) != payload.get(key) for key in keys):
+                raise ValueError('Recovered result belongs to another synchronization')
+            return {**result, 'recovered_original_result':True, 'recovery':common}
+    status = {'running':'SYNC_ACTION_PENDING','unavailable':'SYNC_RECEIPT_UNAVAILABLE'}
+    result = {**common, 'ok':False, 'status':status.get(observed['state'],
+              'SYNC_SAVE_CHECK_REQUIRED' if observed.get('submission_requested') or
+              (observation['step']=='submit' and observed.get('submission_requested') is None)
+              else 'SYNC_NOT_SUBMITTED'), 'operation_state':observed['state'],
+              'operation_error':observed.get('error'), 'verified':observed.get('verified')}
+    result['next_action'] = {
+        'SYNC_ACTION_PENDING':'observe_same_receipt_later',
+        'SYNC_RECEIPT_UNAVAILABLE':'read_only_saved_state_check',
+        'SYNC_SAVE_CHECK_REQUIRED':'read_only_saved_state_check',
+        'SYNC_NOT_SUBMITTED':'prepare_after_original_operation_ended',
+    }[result['status']]
+    return result
+
+
+def saved_note_sections(note):
+    """Compare the site's public lazy sections without depending on website code."""
+    section_headings = ('定义的组分概览','定义的组分详情')
+    sections = {}
+    for heading in section_headings:
+        candidates = []
+        for match in re.finditer(r'^##[ \t]+' + re.escape(heading) + r'[ \t]*$',note,re.M):
+            end = re.search(r'^##[ \t]+',note[match.end():],re.M)
+            end = match.end()+end.start() if end else len(note)
+            candidates.append((end-match.end(),match.start(),match.end(),end))
+        if not candidates:
+            continue
+        _,start,body_start,end=max(candidates)
+        part=note[body_start:end].strip()
+        opening=re.match(r'^\s*<details\b(?=[^>]*\bcustom-details\b)[^>]*>',part,re.I)
+        if opening:
+            summary=re.search(r'<summary\b[^>]*>.*?</summary>',part[opening.end():],re.I|re.S)
+            if not summary:
+                raise ValueError('Lazy section has no summary')
+            body=opening.end()+summary.end(); depth=0; close=None
+            for tag in re.finditer(r'<\s*(/?)details\b[^>]*>',part,re.I):
+                depth += -1 if tag[1] else 1
+                if depth==0:
+                    close=tag.start();break
+            if close is None or close<=body:
+                raise ValueError('Lazy section has unbalanced details')
+            part=part[body:close].strip()
+        sections[heading]=part
+        # Preserve heading boundaries. Only section body is replaced in this view.
+        note=note[:body_start]+'\n\n__LAZY_SECTION__\n\n'+note[end:]
+    return note,sections
+
+
+def confirm_saved_sync(session, action, failed_result, original_result_path, out):
+    """Confirm an ended uncertain submission through normal read-only page controls."""
+    observed=observe_sync(session,action,failed_result)
+    if observed.get('status')!='SYNC_SAVE_CHECK_REQUIRED':
+        return observed
+    if not all((observed.get('verified') or {}).get(k) is True for k in
+               ('edit_url_verified','title_verified','body_verified','attachment_order_verified')):
+        raise ValueError('Original submission has no complete pre-submit checks')
+    payload=action['payload'];validate_sync_files(payload)
+    started=datetime.now(timezone.utc).isoformat(timespec='milliseconds')
+    evidence_path=out.with_suffix('.saved-page.json')
+    archive=out.with_suffix('.attachments.zip')
+    code=r"""async boundPage => {
+      const payload=PAYLOAD;
+      const target=payload.create ? boundPage.url() : payload.post_url;
+      const targetUrl=new URL(target), expected=new URL(payload.post_url || payload.edit_url);
+      if (targetUrl.origin!==expected.origin || !/^\/nodes\/post\/(?:local-)?[1-9][0-9]*\/$/.test(targetUrl.pathname))
+        throw new Error('No confirmed article URL is available; keep the original page');
+      const page=await boundPage.context().newPage();
+      try {
+      await page.goto(target,{waitUntil:'domcontentloaded',timeout:20000});
+      const current=new URL(page.url());
+      if (current.origin!==expected.origin || !/^\/nodes\/post\/(?:local-)?[1-9][0-9]*\/$/.test(current.pathname))
+        throw new Error('Read-only confirmation is not on a task article');
+      if (!payload.create && current.pathname.replace('/local-','/')!==new URL(payload.post_url).pathname.replace('/local-','/'))
+        throw new Error('Read-only confirmation article identity mismatch');
+      const post=JSON.parse(await page.locator('#post-data').textContent({timeout:15000}));
+      if (post.title!==payload.desired_title) throw new Error('Saved title differs');
+      const documents=(post.documents || []).filter(d=>(d.displayIn || 'sidebar')==='sidebar');
+      if (JSON.stringify(documents.map(d=>d.name))!==JSON.stringify(payload.attachments.map(d=>d.name)))
+        throw new Error('Saved attachment order differs');
+      const sections=[];
+      if (post.lazy_component_sections?.length)
+        await page.waitForFunction(n => document.querySelectorAll('details[data-component-details-url]').length === n,
+          post.lazy_component_sections.length, {timeout:15000});
+      const nodes=page.locator('details[data-component-details-url]');
+      for(let i=0;i<await nodes.count();i++) {
+        const node=nodes.nth(i), path=await node.getAttribute('data-component-details-url');
+        const responsePromise=page.waitForResponse(r=>new URL(r.url()).pathname===path,{timeout:20000});
+        await node.locator(':scope > summary').click({noWaitAfter:true});
+        const response=await responsePromise;
+        const part=await response.json();
+        if (!response.ok() || part.status!=='success') throw new Error('Saved lazy section could not load');
+        sections.push({url:path,markdown:part.markdown});
+      }
+      const downloadPromise=page.waitForEvent('download',{timeout:30000});
+      await page.getByRole('button',{name:'下载全部',exact:true}).click({noWaitAfter:true});
+      const download=await downloadPromise;await download.saveAs(payload.confirmation_archive);
+      if (await download.failure()) throw new Error('Saved attachment download failed');
+      return {url:page.url(),title:post.title,content:post.content,documents,sections};
+      } finally { await page.close({runBeforeUnload:false}); }
+    }""".replace('PAYLOAD',json.dumps({
+        **{k:payload.get(k) for k in ('create','post_url','edit_url','desired_title','attachments')},
+        'confirmation_archive':str(archive.resolve())},ensure_ascii=False))
+    previous_timeout=session.operation_timeout;session.operation_timeout=120
+    try:
+        saved=session.code(code)
+    finally:
+        session.operation_timeout=previous_timeout
+    evidence_path.write_text(json.dumps(saved,ensure_ascii=False,indent=2),encoding='utf-8')
+    expected=Path(payload['note']).read_text(encoding='utf-8-sig').strip()
+    expected_outside,expected_sections=saved_note_sections(expected)
+    styles=lambda text: {style for style in re.findall(r'<style\b[^>]*>.*?</style>',text,re.I|re.S) if '.custom-details' in style}
+    if styles(expected)!=styles(saved['content']):
+        raise ValueError('Saved component styles differ')
+    actual_outside,actual_sections=saved_note_sections(saved['content'].strip())
+    if expected_outside!=actual_outside or set(expected_sections)!=set(actual_sections):
+        raise ValueError('Saved article content differs outside lazy sections')
+    for heading,key in (('定义的组分概览','overview'),('定义的组分详情','details')):
+        if heading not in expected_sections:
+            continue
+        candidates=[s for s in saved['sections'] if s['url'].rstrip('/').endswith('/'+key)]
+        if candidates:
+            if len(candidates)!=1 or candidates[0]['markdown']!=expected_sections[heading]:
+                raise ValueError('Saved lazy section differs: '+heading)
+        elif actual_sections[heading]!=expected_sections[heading]:
+            raise ValueError('Saved component section differs: '+heading)
+    attachment_checks=[]
+    with zipfile.ZipFile(archive) as z:
+        for item in payload['attachments']:
+            names=[name for name in z.namelist() if Path(name).name==item['name']]
+            if len(names)!=1 or hashlib.sha256(z.read(names[0])).hexdigest().upper()!=item['sha256'].upper():
+                raise ValueError('Saved attachment bytes differ: '+item['name'])
+            attachment_checks.append({'name':item['name'],'sha256':item['sha256']})
+    validate_sync_files(payload)
+    return {'ok':True,'status':'ARTICLE_SAVED_CONFIRMED',
+        **{key:payload.get(key) for key in ('sync_run_id','sync_attempt','sync_started_at','preload_sha256')},
+        'post_url':saved['url'],'confirmation_started_at':started,
+        'confirmation_finished_at':datetime.now(timezone.utc).isoformat(timespec='milliseconds'),
+        'original_result_path':str(original_result_path.resolve()),
+        'original_browser_elapsed_ms':failed_result['browser_elapsed_ms'],
+        'read_only':True,'saved_content_verified':True,'saved_attachment_hashes_verified':True,
+        'observation':failed_result['observation'], 'evidence_path':str(evidence_path.resolve()),
+        'quality_checks':{k:True for k in ('edit_url_verified','title_verified','body_verified',
+                         'attachment_order_verified','article_page_returned')},
+        'attachment_signatures':attachment_checks}
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--action", type=Path)
-    parser.add_argument("--mode", choices=["bind", "tab-code", "source-read", "website-prepare", "taxonomy-options", "login-status", "login-open", "select", "download", "download-observe", "preflight", "sync"], required=True)
+    parser.add_argument("--mode", choices=["bind", "tab-code", "source-read", "website-prepare", "taxonomy-options", "login-status", "login-open", "select", "download", "download-observe", "preflight", "sync", "sync-observe", "sync-confirm"], required=True)
     parser.add_argument("--database", choices=['charls', 'elsa', 'hrs', 'share', 'chns', 'knhanes', 'klosa', 'mhas', 'nhanes'])
     parser.add_argument("--script", type=Path, help="tab-code: async page function restricted to the bound page")
     parser.add_argument("--tab-index", type=int, help="Observed tab-list index; only used to create a binding")
     parser.add_argument("--tab-id", help="Stable Chromium target id from mode bind; never an index")
     parser.add_argument("--preflight", type=Path)
+    parser.add_argument("--result", type=Path, help="sync-observe: original unmodified failure result")
     parser.add_argument("--resume", type=Path, help="source-read: reuse completed receipts from an earlier identical request")
     parser.add_argument("--session", required=True)
     parser.add_argument("--session-workdir", required=True, type=Path)
@@ -498,6 +747,25 @@ def main() -> None:
         require_context(action, args.language, database_url(config, "klosa", args.language))
     preflight = read_action(args.preflight) if args.preflight else None
     target = args.out.parent / ("download-" + action.get("attempt_id", "unused") + ".zip")
+    if args.mode in {'sync-observe','sync-confirm'}:
+        if not args.result or not args.tab_id:
+            parser.error('sync-observe requires --result and the original --tab-id')
+        if args.result.resolve() == args.out.resolve():
+            parser.error('Keep the original failure result; use a separate --out')
+        session = Session(args.session, args.session_workdir, args.out.with_suffix('.browser.js'), config, args.tab_id)
+        try:
+            if args.mode == 'sync-confirm':
+                payload = confirm_saved_sync(session, action, read_action(args.result),args.result,args.out)
+            else:
+                payload = observe_sync(session, action, read_action(args.result))
+        except (ValueError, RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
+            payload = {'ok':False, 'status':'SYNC_CONFIRMATION_INCOMPLETE',
+                       'error':str(exc), 'read_only':True, 'allow_resubmit':False,
+                       'next_action':'resolve_the_reported_evidence_gap',
+                       'original_result_path':str(args.result.resolve())}
+        args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2),encoding='utf-8')
+        print(json.dumps(payload, ensure_ascii=False))
+        raise SystemExit(0 if payload.get('ok') else 1)
     if args.mode == "sync":
         payload = run_sync(Session(args.session, args.session_workdir, args.out.with_suffix(".browser.js"), config, args.tab_id),
                            action, preflight)
