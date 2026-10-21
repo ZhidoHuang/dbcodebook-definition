@@ -93,15 +93,17 @@ def scope_bindings(formal_dir, process_dir, artifacts):
     from check_reader_copy import read_copy
     formal_dir, process_dir = Path(formal_dir), Path(process_dir)
     path = formal_dir / "文案.md"
-    content = read_copy(path)
     source = process_dir / "definition_search_record.json"
+    record = json.loads(source.read_text(encoding="utf-8-sig")) if source.is_file() else None
+    content = read_copy(path, record=record)
     common = {"source": digest(source.read_bytes()) if source.is_file() else None,
               "artifacts": {k: v["sha256"] for k, v in artifacts.items() if k != "note"},
               "writing_rules": {name: digest((ROOT / name).read_bytes()) for name in (
                   "references/rules/stages/03-copy.md", "templates/reader-copy.md",
                   "references/rules/copy/core.md", "references/rules/copy/questionnaire.md",
                   "references/rules/copy/tree.md", "references/rules/copy/basis.md")}}
-    title = path.read_text(encoding="utf-8-sig").splitlines()[0]
+    title_match = re.search(r"(?m)^# (.+)$", path.read_text(encoding="utf-8-sig"))
+    title = title_match[1] if title_match else None
     note_path = artifacts.get("note", {}).get("path")
     note_title = None
     if note_path and (formal_dir / note_path).is_file():

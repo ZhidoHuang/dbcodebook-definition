@@ -245,7 +245,7 @@ def _validate_topic_exit(item, jump, record):
             raise ValueError('topic_exit destination is inside the same period/topic')
 
 
-def display_answers(item, record):
+def display_answers(item, record, *, _combine=True):
     """Optional translated answers: preserve source codes and branch identity.
 
     Older chinese_v1 records keep their original answers when a new field is
@@ -348,6 +348,8 @@ def display_answers(item, record):
         if any(code in _trigger_codes(jump['when']) for code in record_codes for jump in source_jumps):
             raise ValueError('a routing response cannot be removed from question options')
         options = [option for option in options if str(option['value']) not in record_codes]
+    if _combine and "combined_options" in display:
+        options = _combined_options(item, record)
     return options, displayed_jumps
 
 
@@ -430,3 +432,50 @@ def cross_period_options(text, current_label, question_id, periods):
     if not candidates or any(normalize(c) != normalize(candidates[0]) for c in candidates[1:]):
         raise ValueError("cross-period option contents differ")
     return candidates[0]
+
+def _combined_options(item, record):
+    declaration = item.get("display", {}).get("combined_options")
+    if not isinstance(declaration, dict) or not str(declaration.get("evidence", "")).strip():
+        raise ValueError("combined options require verified same-question evidence")
+    ids = declaration.get("evidence_ids")
+    order = declaration.get("values")
+    if (not isinstance(ids, list) or len(ids) < 2 or len(set(ids)) != len(ids)
+            or item.get("evidence_id") not in ids):
+        raise ValueError("combined options require unique member evidence identities")
+    all_items = record.get("questionnaire_evidence", [])
+    members = []
+    for identity in ids:
+        found = [entry for entry in all_items if entry.get("evidence_id") == identity]
+        if len(found) != 1:
+            raise ValueError("combined option member is missing or ambiguous")
+        members.append(found[0])
+    norm = lambda value: re.sub(r"\s+", " ", str(value)).strip()
+    options = {}
+    labels = {}
+    member_orders = []
+    for member in members:
+        if member.get("display", {}).get("combined_options") != declaration:
+            raise ValueError("combined option membership must be explicit on every field")
+        if member.get("response_type") != "closed_options" or not requires_questionnaire_display(member):
+            raise ValueError("combined options require displayed categorical source fields")
+        if (not item.get("periods") or set(member.get("periods", [])) != set(item["periods"])
+                or any(not norm(item.get(key, "")) or norm(member.get(key, "")) != norm(item[key])
+                       for key in ("question_text", "questionnaire_module", "applicable_population", "recall_period"))
+                or norm(member.get("display", {}).get("question_title")) != norm(item.get("display", {}).get("question_title"))):
+            raise ValueError("combined options cannot cross questions, periods, populations or modules")
+        translated, unused_jumps = display_answers(member, record, _combine=False)
+        member_orders.append([str(option['value']) for option in translated])
+        original = {str(option["value"]): norm(option["label"]) for option in member.get("options", [])}
+        for option in translated:
+            value = str(option["value"])
+            if value in options and (labels[value] != original[value] or norm(options[value]["label"]) != norm(option["label"])):
+                raise ValueError("combined option code has conflicting labels")
+            options[value] = option
+            labels[value] = original[value]
+    if (not isinstance(order, list) or len(set(order)) != len(order)
+            or set(order) != set(options)):
+        raise ValueError("combined options must preserve the complete source-code union")
+    positions = {value: i for i, value in enumerate(order)}
+    if any([positions[value] for value in values] != sorted(positions[value] for value in values) for values in member_orders):
+        raise ValueError("combined options cannot reverse source option order")
+    return [options[value] for value in order]

@@ -18,6 +18,7 @@ import re
 import sys
 import zipfile
 from pathlib import Path
+from html.parser import HTMLParser
 from xml.etree import ElementTree as ET
 
 
@@ -25,6 +26,84 @@ NS_MAIN = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 NS_REL = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
 NS_PACKAGE_REL = "{http://schemas.openxmlformats.org/package/2006/relationships}"
 READER_COPY_NAME = "文案.md"
+
+
+def display_policy(formal_dir: Path, analysis_vars: list[str] | None = None, record: dict | None = None) -> dict:
+    """Resolve the explicit copy/plan contract, never infer a module from its prose."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from definition_display import resolve_display_policy
+    copy_path = formal_dir / READER_COPY_NAME
+    text = copy_path.read_text(encoding="utf-8-sig") if copy_path.is_file() else ""
+    return resolve_display_policy(text, analysis_vars=analysis_vars, record=record)
+
+
+class DefinedSurfaceParser(HTMLParser):
+    """Read renderer-owned variable identifiers independently of visible labels."""
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.variables: list[str] = []
+        self.invalid_detail_markers: list[dict] = []
+        self.overview_variables: list[str] = []
+        self.overview_count = 0
+        self.overview_depth = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        values = dict(attrs)
+        if tag == "table":
+            if values.get("data-defined-overview") == "true":
+                self.overview_count += 1
+                self.overview_depth = 1
+            elif self.overview_depth:
+                self.overview_depth += 1
+        href = values.get("href", "") or ""
+        if self.overview_depth and tag == "a" and href.startswith("#var-"):
+            self.overview_variables.append(href[len("#var-"):])
+        variable = values.get("data-defined-variable")
+        is_detail = tag == "span" and "var-name" in (values.get("class", "") or "").split()
+        if variable is not None or is_detail:
+            if not is_detail or not variable or values.get("id") != f"var-{variable}":
+                self.invalid_detail_markers.append(values)
+        if variable:
+            self.variables.append(variable)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "table" and self.overview_depth:
+            self.overview_depth -= 1
+
+
+def check_compact_surfaces(formal_dir: Path, note_text: str, variables: list[str], results: list[dict]) -> None:
+    """Compact modules omit Criteria but retain a complete Defined display."""
+    forbidden = sorted(path.name for path in formal_dir.glob("*_definition.html"))
+    if forbidden:
+        fail(results, "compact module omitted definition artifact", forbidden)
+    else:
+        ok(results, "compact module omitted definition artifact")
+    detail_files = sorted(formal_dir.glob("*_detail.html"))
+    if len(detail_files) != 1:
+        fail(results, "compact module detail artifact", [path.name for path in detail_files])
+        return
+    for label, text in (("note", note_text), ("detail", detail_files[0].read_text(encoding="utf-8-sig"))):
+        if (re.search(r"(?mi)^##\s+(?:定义|Definition|Criteria)\s*$", text)
+                or re.search(r'<td\b[^>]*\bclass=[\"\'][^\"\']*\bplain-cell\b', text, re.I)
+                or re.search(r'<th\b[^>]*>\s*(?:Definition|Criteria)\s*</th>', text, re.I)):
+            fail(results, f"compact module {label} omitted definition table", "Definition/Criteria table remains")
+        else:
+            ok(results, f"compact module {label} omitted definition table")
+        pairs = extract_category_pairs(text)
+        if not pairs or any(role != "defined" for _, role in pairs):
+            fail(results, f"compact module {label} categories", pairs)
+        else:
+            ok(results, f"compact module {label} categories", pairs)
+        parser = DefinedSurfaceParser()
+        parser.feed(text)
+        if parser.invalid_detail_markers or Counter(parser.variables) != Counter(variables):
+            fail(results, f"compact module {label} variable coverage", {"expected": variables, "actual": parser.variables, "invalid_markers": parser.invalid_detail_markers})
+        else:
+            ok(results, f"compact module {label} variable coverage", variables)
+        if parser.overview_count != 1 or Counter(parser.overview_variables) != Counter(variables):
+            fail(results, f"compact module {label} overview coverage", {"expected": variables, "actual": parser.overview_variables, "overview_tables": parser.overview_count})
+        else:
+            ok(results, f"compact module {label} overview coverage", variables)
 
 
 def formal_note_files(formal_dir: Path) -> list[Path]:
@@ -706,9 +785,10 @@ def parse_definition_table(note_text: str) -> list[str]:
     return variables
 
 
-def check_summary_prose(note_text: str, results: list[dict]) -> None:
+def check_summary_prose(note_text: str, results: list[dict], compact_module: bool = False) -> None:
+    end_heading = r"(?:定义的组分概览|定义的组分详情|材料)" if compact_module else "定义"
     section = re.search(
-        r"(?ms)^## 摘要导读\s*$\n(.*?)^## 定义\s*$",
+        r"(?ms)^## 摘要导读\s*$\n(.*?)^## " + end_heading + r"\s*$",
         note_text,
     )
     if not section:
@@ -1264,7 +1344,7 @@ def extract_category_pairs(text: str) -> list[tuple[str, str]]:
     return pairs
 
 
-def check_category_order(formal_dir: Path, note_text: str, results: list[dict]) -> None:
+def check_category_order(formal_dir: Path, note_text: str, results: list[dict], compact_module: bool = False) -> None:
     detail_files = sorted(formal_dir.glob("*_detail.html"))
     if len(detail_files) != 1:
         fail(results, "detail category order source", [path.name for path in detail_files])
@@ -1286,6 +1366,8 @@ def check_category_order(formal_dir: Path, note_text: str, results: list[dict]) 
             for category in categories:
                 roles = [role for current, role in visible_order if current == category]
                 valid = valid and roles in (["defined"], ["source", "defined"])
+                if compact_module:
+                    valid = valid and roles == ["defined"]
         if not valid:
             failures[name] = pairs
     if failures:
@@ -1300,6 +1382,7 @@ def check_summary_facts(
     results: list[dict],
     db: str,
     formal_r: Path | None = None,
+    record: dict | None = None,
 ) -> None:
     """Check the current summary and definition table without a legacy five-list."""
     if not analysis_db_name or not analysis_codebook_name:
@@ -1329,13 +1412,6 @@ def check_summary_facts(
     else:
         ok(results, "summary prose indentation", "&emsp; indentation entities = 0")
 
-    check_summary_prose(note_text, results)
-    try:
-        definition_variables = parse_definition_table(note_text)
-    except ValueError as exc:
-        fail(results, "definition table structure", str(exc))
-        return
-
     db_rows = read_xlsx_rows(formal_dir / analysis_db_name)
     cb_rows = read_xlsx_rows(formal_dir / analysis_codebook_name)
     if not db_rows or not cb_rows:
@@ -1352,14 +1428,28 @@ def check_summary_facts(
         for row in cb_rows[1:]
         if len(row) > var_idx and is_nonmissing(row[var_idx])
     ]
-    if definition_variables == codebook_variables:
-        ok(results, "definition table variables and order", definition_variables)
+    try:
+        policy = display_policy(formal_dir, codebook_variables, record)
+    except ValueError as exc:
+        fail(results, "definition display policy", str(exc))
+        return
+    check_summary_prose(note_text, results, policy["compact_module"])
+    if policy["compact_module"]:
+        check_compact_surfaces(formal_dir, note_text, codebook_variables, results)
     else:
-        fail(
-            results,
-            "definition table variables and order",
-            {"expected": codebook_variables, "actual": definition_variables},
-        )
+        try:
+            definition_variables = parse_definition_table(note_text)
+        except ValueError as exc:
+            fail(results, "definition table structure", str(exc))
+            return
+        if definition_variables == codebook_variables:
+            ok(results, "definition table variables and order", definition_variables)
+        else:
+            fail(
+                results,
+                "definition table variables and order",
+                {"expected": codebook_variables, "actual": definition_variables},
+            )
     missing_from_db = [name for name in codebook_variables if name not in db_header]
     if missing_from_db:
         fail(results, "definition variables in analysis_db", missing_from_db)
@@ -1367,17 +1457,29 @@ def check_summary_facts(
         ok(results, "definition variables in analysis_db", codebook_variables)
 
     check_public_code_outline(formal_dir, note_text, results, db, formal_r)
-    check_category_order(formal_dir, note_text, results)
+    check_category_order(formal_dir, note_text, results, policy["compact_module"])
 
 
 def visible_text(value: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", value))).strip()
 
 
-def check_required_user_text(formal_dir: Path, required: list[str], results: list[dict]) -> None:
+def check_required_user_text(formal_dir: Path, required: list[str], results: list[dict], policy: dict | None = None) -> None:
     if not required:
         return
     notes = formal_note_files(formal_dir)
+    if policy and policy["compact_module"]:
+        if len(notes) != 1:
+            fail(results, "required user text sources", "Expected one rendered note")
+            return
+        # Detail HTML contains variable details, not the note's summary prose.
+        missing = {path.name: [item for item in required if item not in visible_text(path.read_text(encoding="utf-8-sig"))] for path in notes}
+        missing = {name: values for name, values in missing.items() if values}
+        if missing:
+            fail(results, "required user text", missing)
+        else:
+            ok(results, "required user text", required)
+        return
     definitions = sorted(formal_dir.glob("*definition*.html"))
     if len(notes) != 1 or len(definitions) != 1:
         fail(results, "required user text sources", {
@@ -1404,8 +1506,11 @@ def visible_text_with_breaks(value: str) -> str:
     return re.sub(r"[ \t]+", " ", value)
 
 
-def check_criteria_evolution(formal_dir: Path, required: list[str], results: list[dict]) -> None:
+def check_criteria_evolution(formal_dir: Path, required: list[str], results: list[dict], policy: dict | None = None) -> None:
     if not required:
+        return
+    if policy and policy["compact_module"]:
+        fail(results, "Criteria evolution scope", "compact modules cannot request omitted Criteria checks")
         return
     definitions = sorted(formal_dir.glob("*definition*.html"))
     notes = formal_note_files(formal_dir)
@@ -1485,6 +1590,18 @@ def main() -> int:
     ok(results, "formal dir exists", str(formal_dir))
 
     expected_files = split_csv(args.expected_files)
+    source_record = None
+    if args.process_dir is not None:
+        source_path = args.process_dir / "definition_search_record.json"
+        if source_path.is_file():
+            source_record = json.loads(source_path.read_text(encoding="utf-8-sig"))
+    try:
+        policy = display_policy(formal_dir, split_csv(args.analysis_vars) or None, source_record)
+    except ValueError as exc:
+        fail(results, "definition display policy", str(exc))
+        policy = {"compact_module": False}
+    if policy["compact_module"]:
+        expected_files = [name for name in expected_files if not name.endswith("_definition.html")]
     if args.complete:
         try:
             expected_files = include_formal_r(formal_dir, expected_files)
@@ -1719,6 +1836,7 @@ def main() -> int:
             results,
             args.db,
             selected_r,
+            source_record,
         )
     if args.complete:
         from check_definition_source_record import load_json
@@ -1731,8 +1849,8 @@ def main() -> int:
             except ValueError as exc: fail(results, "approved language", str(exc))
         if str(record.get("database", "")).lower() != args.db:
             fail(results, "approved database", "database differs from the source plan")
-    check_required_user_text(formal_dir, required_user_text, results)
-    check_criteria_evolution(formal_dir, criteria_evolution_text, results)
+    check_required_user_text(formal_dir, required_user_text, results, policy)
+    check_criteria_evolution(formal_dir, criteria_evolution_text, results, policy)
     check_forbidden_formal_content(formal_dir, forbid_vars, results)
 
     check_logs(formal_dir, args.log_prefix, args.require_log_exit_code, results)

@@ -63,10 +63,10 @@ if (-not [string]::IsNullOrWhiteSpace($rscript)) {
   Remove-Item Env:LC_CTYPE -ErrorAction SilentlyContinue
   & $rscript --vanilla --encoding=UTF-8 (Join-Path $PSScriptRoot "test_summary_fact_helpers.R")
   if ($LASTEXITCODE -ne 0) { throw "test_summary_fact_helpers.R failed." }
-  & $rscript --vanilla --encoding=UTF-8 (Join-Path $PSScriptRoot "test_hrs_renderer.R")
-  if ($LASTEXITCODE -ne 0) { throw "test_hrs_renderer.R failed." }
   Push-Location $repoRoot
   try {
+    & $rscript --vanilla --encoding=UTF-8 'tests/test_compact_module_renderer.R'
+    if ($LASTEXITCODE -ne 0) { throw "test_compact_module_renderer.R failed." }
     & $rscript --vanilla --encoding=UTF-8 'tests/test_klosa_renderer.R'
     if ($LASTEXITCODE -ne 0) { throw "test_klosa_renderer.R failed." }
     & $rscript --vanilla --encoding=UTF-8 'tests/test_share_renderer.R'

@@ -78,6 +78,23 @@ def main():
         note.write_text(render_note(content), encoding="utf-8")
         assert validate_note(path, note)["ok"]
 
+        # Legacy result names can contain dots. Preserve them exactly; keep
+        # rejecting prose headings, renamed results and changed result order.
+        dotted = original.replace("fall_status", "Lab_value_ng.ml")
+        path.write_text(dotted, encoding="utf-8")
+        dotted_content = read_copy(path, ["Lab_value_ng.ml", "fall_count"])
+        assert list(dotted_content["criteria"]) == ["Lab_value_ng.ml", "fall_count"]
+        note.write_text(render_note(dotted_content), encoding="utf-8")
+        assert validate_note(path, note)["ok"]
+        rejects(lambda: read_copy(path, ["Lab_value_ng_ml", "fall_count"]), "变量或顺序不一致")
+        rejects(lambda: read_copy(path, ["fall_count", "Lab_value_ng.ml"]), "变量或顺序不一致")
+        path.write_text(dotted.replace("### Lab_value_ng.ml", "### `Lab_value_ng.ml`"), encoding="utf-8")
+        assert list(read_copy(path)["criteria"]) == ["Lab_value_ng.ml", "fall_count"]
+        for invalid in ("1value", "value label", "value-name", "value/units"):
+            path.write_text(original.replace("### fall_status", "### " + invalid), encoding="utf-8")
+            rejects(lambda: read_copy(path), "Criteria 应按实际分析变量逐项列出")
+        path.write_text(original, encoding="utf-8")
+
         # Correct formatting differences pass, while actual content loss fails.
         styled = copy.deepcopy(content)
         styled["summary"] = styled["summary"].replace("**是否发生跌倒**", "<strong>是否发生跌倒</strong>")
@@ -151,6 +168,16 @@ cat("R_COPY_FORWARD_PASS\\n")
         assert run.returncode == 0, run.stdout + run.stderr
         assert "R_COPY_FORWARD_PASS" in run.stdout
         assert validate_note(path, note)["ok"]
+        # Exercise the same dotted name through the real Python -> R loader,
+        # source comparison and rendered-note comparison, without renaming it.
+        path.write_text(path.read_text(encoding="utf-8").replace("fall_status", "Lab_value_ng.ml"), encoding="utf-8")
+        script.write_text(script.read_text(encoding="utf-8").replace("fall_status", "Lab_value_ng.ml"), encoding="utf-8")
+        run = subprocess.run([rscript, "--vanilla", "--encoding=UTF-8", str(script)], cwd=folder,
+                             env=env, capture_output=True, text=True, encoding="utf-8")
+        assert run.returncode == 0, run.stdout + run.stderr
+        assert "R_COPY_FORWARD_PASS" in run.stdout
+        assert validate_note(path, note)["ok"]
+        assert "Lab_value_ng.ml" in note.read_text(encoding="utf-8")
         questionnaire_copy = (ROOT / "tests/fixtures/writing-inputs/questionnaire-copy.md").read_text(encoding="utf-8")
         # Exercise the accepted heading through the actual R loader and renderer.
         questionnaire_copy = questionnaire_copy.replace("### 2011年\n", "### 2011年\n\n#### 问卷设计变化\n", 1)

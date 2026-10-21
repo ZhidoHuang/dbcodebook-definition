@@ -78,3 +78,38 @@ assert unverified_question_periods('2004–2024 年', ['D110'], ev, survey_perio
 assert unverified_question_periods('2004–2022 年', ['D110'], ev)
 assert not unverified_question_periods('2004–2010、2014 年', ['D110'], ev, survey_periods=years)
 print('REGULAR_YEAR_LABEL_PASS: fixed interval, missing evidence, irregular scope and boundaries')
+
+from questionnaire_display import display_answers
+
+def combined_options_fixture():
+    declaration = dict(evidence_ids=['first','second'], values=['10','11','99'], evidence='Same original multiple-response question, verified order.')
+    entries=[]
+    for ident, options in [('first',[{'value':'10','label':'Tablet'},{'value':'99','label':'Unknown'}]),
+                           ('second',[{'value':'11','label':'Patch'}])]:
+        entries.append(dict(evidence_id=ident,question_id=ident,question_text='Which forms have you used?',
+            periods=['2011'],questionnaire_module='Treatment',applicable_population='Adults',recall_period='Ever',
+            response_type='closed_options',options=options,skip_logic=[],
+            display=dict(question_title='first',options=[dict(value=o['value'],label={'10':'片剂','11':'贴片','99':'不知道'}[o['value']]) for o in options],skip_logic=[],combined_options=copy.deepcopy(declaration))))
+    return dict(questionnaire_display_policy='chinese_v1',questionnaire_evidence=entries)
+
+combined=combined_options_fixture()
+for member in combined['questionnaire_evidence']:
+    answers,jumps=display_answers(member,combined)
+    assert [a['value'] for a in answers]==['10','11','99'] and jumps==[]
+for change in ('missing_member','period','question','population','module','undeclared_member','missing_code','changed_code','reversed_order'):
+    broken=combined_options_fixture(); a,b=broken['questionnaire_evidence']
+    if change=='missing_member': broken['questionnaire_evidence'].pop()
+    elif change=='period': b['periods']=['2013']
+    elif change=='question': b['question_text']='Different question'
+    elif change=='population': b['applicable_population']='Children'
+    elif change=='module': b['questionnaire_module']='Another module'
+    elif change=='undeclared_member': b['display'].pop('combined_options')
+    elif change=='missing_code':
+        for m in (a,b):m['display']['combined_options']['values']=['10','11']
+    elif change=='reversed_order':
+        for m in (a,b):m['display']['combined_options']['values']=['99','10','11']
+    else: b['display']['options'][0]['value']='12'
+    try:display_answers(a,broken)
+    except ValueError:pass
+    else:raise AssertionError('Invalid combined options accepted: '+change)
+print('COMBINED_QUESTION_OPTIONS_PASS: exact union/order; missing member, period, question, population, module, incomplete union, recoding and reversed source order rejected')

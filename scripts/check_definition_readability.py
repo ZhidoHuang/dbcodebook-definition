@@ -15,6 +15,7 @@ from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_reader_copy import Document, validate_note, normalized, route_matches
+from definition_display import resolve_display_policy
 from questionnaire_groups import period_keys, original_options, question_matches, unverified_question_periods
 from questionnaire_groups import validate_shared_option_rows
 from questionnaire_groups import question_identity, validate_display_titles
@@ -542,11 +543,15 @@ def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
     if not copy_path.is_file():
         fail(f"{READER_COPY_NAME} does not exist in the formal topic directory")
     copy_text = copy_path.read_text(encoding="utf-8-sig")
-    for heading in (
-        "## 摘要导读",
-        "## Criteria",
-        "## 小book提示",
-    ):
+    source_path = process_dir / SOURCE_RECORD_NAME
+    source_record = json.loads(source_path.read_text(encoding="utf-8-sig")) if source_path.is_file() else None
+    policy = resolve_display_policy(copy_text, record=source_record)
+    required_headings = ["## 摘要导读", "## 小book提示"]
+    if not policy["compact_module"]:
+        required_headings.append("## Criteria")
+    elif re.search(r"(?m)^##\s+Criteria\s*$", copy_text):
+        fail("compact module reader copy must omit Criteria")
+    for heading in required_headings:
         if heading not in copy_text:
             fail(f"reader copy is missing required heading: {heading}")
 
@@ -674,6 +679,12 @@ def validate_result_check(formal_dir: Path, process_dir: Path, artifacts: dict) 
         target = (formal_dir / name).resolve()
         if target.parent != formal_dir.resolve() or not target.is_file() or sha256_file(target) != expected:
             fail("结果检查的输入或产物已变化：" + name)
+    if record.get('validation_mode') == 'copy_sections' or 'copy_sections' in record:
+        from update_reader_copy import validate_text_result
+        try:
+            validate_text_result(record, formal_dir, process_dir)
+        except (ValueError, OSError, KeyError) as exc:
+            fail('局部文案检查复用无效：' + str(exc))
     return {"path": RESULT_CHECK_NAME, "sha256": sha256_file(path), "scope": "complete"}
 
 
@@ -1321,6 +1332,7 @@ def validate_audit(
         formal_dir / READER_COPY_NAME,
         formal_dir / current_hashes["note"]["path"],
         formal_dir / current_hashes["analysis_codebook"]["path"],
+        record=json.loads((process_dir / SOURCE_RECORD_NAME).read_text(encoding="utf-8-sig")),
     )
     if audit.get("questionnaire_rendering") != questionnaire_rendering:
         fail(

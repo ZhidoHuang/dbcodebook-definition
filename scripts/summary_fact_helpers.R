@@ -581,9 +581,13 @@ summary_render_parts <- function(parts, theme_color) {
       }
       # The URL uses only the path, never the adjacent explanatory note.
       nav <- gsub("\\s*>\\s*", ">", trimws(path), perl = TRUE)
+      label <- if (is.null(part$label)) path else part$label
+      if (!is.character(label) || length(label) != 1L || is.na(label) || !nzchar(label)) {
+        stop("source-link label must be one nonempty string.")
+      }
       return(paste0('<a data-summary-path="true" href="', route,
         '?nav=', utils::URLencode(enc2utf8(nav), reserved = TRUE), '">',
-        summary_escape_html(path), '</a>'))
+        summary_escape_html(label), '</a>'))
     }
     if (identical(part$type, "search")) {
       return(summary_search_span(part$value, theme_color))
@@ -748,6 +752,42 @@ render_summary_selection_paragraph <- function(selection, theme_color) {
     }
     rendered <- vapply(seq_along(lines), function(line_index) {
       line <- lines[[line_index]]
+      if (is.list(line) && identical(line$type, "source_directory_tree")) {
+        connector <- function(value) paste0(
+          '<span data-tree-role="connector" aria-hidden="true" style="white-space:pre;font-family:monospace;flex:none;">',
+          value, '</span>')
+        render_nodes <- function(nodes, prefix = "", depth = 0L) {
+          paste0(vapply(seq_along(nodes), function(i) {
+            chain <- list(nodes[[i]])
+            tail <- nodes[[i]]
+            while (length(tail$children) == 1L) {
+              tail <- tail$children[[1]]
+              chain <- c(chain, list(tail))
+            }
+            last <- i == length(nodes)
+            labels <- vapply(seq_along(chain), function(j) {
+              node <- chain[[j]]
+              link <- summary_render_parts(list(list(type = "source_link", value = node$path,
+                label = node$label, database = line$database, language = line$language)), theme_color)
+              paste0('<span data-source-directory-node="true" data-depth="', depth + j - 1L,
+                '" data-source-entry="', if (node$source_entry) 'true' else 'false', '">', link, '</span>')
+            }, character(1))
+            branch <- if (!depth) "" else if (last) "└─ " else "├─ "
+            row <- paste0('<span data-source-directory-row="true" style="display:flex;text-indent:0;">',
+              prefix, connector(branch), '<span style="min-width:0;overflow-wrap:anywhere;">',
+              paste(labels, collapse = connector(" ── ")), '</span></span>')
+            # Keep the first renderer's independent rows. Blank label-width spans align
+            # descendants with the chain tail without multiline HTML or nested subtrees.
+            tail_offset <- paste0(vapply(head(chain, -1L), function(node) paste0(
+              '<span data-source-directory-offset="true" aria-hidden="true" style="visibility:hidden;white-space:pre;flex:none;">',
+              summary_escape_html(node$label), connector(" ── "), '</span>'), character(1)), collapse = "")
+            child_prefix <- paste0(prefix, if (!depth) "" else connector(if (last) "   " else "│  "), tail_offset)
+            paste0(row, render_nodes(tail$children, child_prefix, depth + length(chain)))
+          }, character(1)), collapse = "")
+        }
+        return(paste0('<span class="source-directory-tree" data-source-directory-tree="true" style="display:block;">',
+                      render_nodes(line$nodes), '</span>'))
+      }
       if (is.list(line) && identical(line$type, "questionnaire_flow")) {
         return(paste0('<pre data-questionnaire-flow="true" style="white-space:pre;overflow-x:auto;">',
                       summary_escape_html(line$text), '</pre>'))

@@ -55,3 +55,8 @@ openxlsx::write.xlsx(analysis_codebook, "analysis_codebook_topic.xlsx", overwrit
 
 # 输出
 # 后台 QA、HTML 与笔记生成放在此处；上面的四份正式工作簿属于公开代码。
+# 按第5步加载公共helper后读取文案，完整生成调用须包含以下展示参数：
+# copy <- read_definition_copy(analysis_vars)
+# render_definition_bundle(..., display_policy = copy$display_policy)
+# summary_source 传已核实的完整路径；多条路径用字符向量，生成器自动合并共同目录。
+# summary_source = c("目录甲 > 子目录一", "目录甲 > 子目录二")

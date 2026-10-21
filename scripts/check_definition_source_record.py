@@ -14,6 +14,7 @@ from pathlib import Path, PureWindowsPath
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from questionnaire_display import requires_questionnaire_display, is_plain_paraphrase, validate_paraphrase
 from local_source_evidence import validate_local_evidence
+from definition_display import topic_kind
 
 
 READY_STATUS = "READY"
@@ -781,6 +782,7 @@ def validate_download_selection(
     """Check the final page selection before any download is started."""
 
     record = load_json(record_path)
+    topic_kind(record.get("topic_kind", "standard"))
     schema_version = record.get("schema_version")
     if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
         fail(f"schema_version must be one of {sorted(SUPPORTED_SCHEMA_VERSIONS)}")
@@ -1051,6 +1053,7 @@ def validate_record(
     selection: list[str] | None = None,
 ) -> dict:
     record = load_json(record_path)
+    topic_kind(record.get("topic_kind", "standard"))
     pre_download = selection is not None
     source = "" if pre_download else r_script_path.read_text(encoding="utf-8")
 

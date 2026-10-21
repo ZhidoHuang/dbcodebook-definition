@@ -316,6 +316,32 @@ checks <- list(
     ),
     c(result = "raw1 (file)=raw1, raw2 (file)=raw2, raw3 (file)=raw3")
   ),
+  expect_identical(
+    "declared default keys remain terminal formal dependencies",
+    format_definition_card_sources(
+      data.frame(Variable="result", processed_vars="raw1, YEAR"),
+      source_display_raw_codebook,
+      data.frame(Variable="YEAR", processed_vars="YEAR"),
+      default_sources="YEAR"
+    ),
+    c(result="raw1 (file)=raw1, YEAR=YEAR")
+  ),
+  expect_error_contains(
+    "undeclared default-looking names are not inferred",
+    format_definition_card_sources(
+      data.frame(Variable="result", processed_vars="raw1, YEAR"),
+      source_display_raw_codebook
+    ),
+    "YEAR"
+  ),
+  expect_error_contains(
+    "declaring a default does not permit unknown aliases",
+    format_definition_card_sources(
+      data.frame(Variable="result", processed_vars="raw1, raw5, YEAR"),
+      source_display_raw_codebook, default_sources="YEAR"
+    ),
+    "raw5"
+  ),
   expect_error_contains(
     "cyclic source relationships fail with their path",
     format_definition_card_sources(
@@ -793,8 +819,72 @@ expect_error_contains("stale manual count", definition_source_entry(
 auto_source <- render_summary_selection_paragraph(definition_source_entry(
   c("Core data > ADL", "Core data > Physical function"), "CHARLS", source_n), "#005A9C")
 stopifnot(grepl('对应 2 个原始变量', auto_source, fixed = TRUE),
-  grepl("可分别从", auto_source, fixed = TRUE),
-  length(regmatches(auto_source, gregexpr('href=', auto_source))[[1]]) == 2L)
+  grepl('data-source-directory-tree="true"', auto_source, fixed = TRUE),
+  length(regmatches(auto_source, gregexpr('href=', auto_source))[[1]]) == 3L)
+# Shared prefixes merge, while complete navigation targets and selected ancestors survive.
+source_paths <- c("A > B > C & D", "A > B > E/F", "A > B", "Z > B > C & D")
+source_tree <- definition_source_tree(c(source_paths, " A>B>E/F "))
+tree_paths <- function(nodes, selected_only = FALSE) {
+  unlist(lapply(nodes, function(node) c(
+    if (!selected_only || node$source_entry) node$path,
+    tree_paths(node$children, selected_only))), use.names = FALSE)
+}
+stopifnot(setequal(tree_paths(source_tree, TRUE), source_paths),
+  !anyDuplicated(tree_paths(source_tree)), length(source_tree) == 2L,
+  identical(source_tree[[1]]$children[[1]]$label, "B"),
+  isTRUE(source_tree[[1]]$children[[1]]$source_entry))
+tree_html <- render_summary_selection_paragraph(definition_source_entry(
+  list(path = source_paths, note = "；保留既有说明。"), "NHANES", 113, FALSE), "#005A9C")
+for (path in source_paths) {
+  target <- paste0('/home/?nav=', URLencode(gsub(" > ", ">", path, fixed = TRUE), reserved = TRUE))
+  stopifnot(grepl(target, tree_html, fixed = TRUE))
+}
+stopifnot(grepl('C &amp; D</a>', tree_html, fixed = TRUE),
+  grepl('本主题在数据中对应 113 个原始变量', tree_html, fixed = TRUE),
+  grepl('保留既有说明。', tree_html, fixed = TRUE),
+  length(regmatches(tree_html, gregexpr('data-source-entry="true"', tree_html, fixed = TRUE))[[1]]) == 4L)
+flat <- render_summary_selection_paragraph(definition_source_entry(
+  c("A > Same", "Z > Same"), "CHARLS", 2), "#005A9C")
+stopifnot(!grepl('source-directory-tree', flat, fixed = TRUE),
+  grepl('可分别从', flat, fixed = TRUE),
+  grepl('A &gt; Same</a>', flat, fixed = TRUE),
+  grepl('Z &gt; Same</a>', flat, fixed = TRUE))
+# Duplicate spellings alone do not create a branch; a selected parent stays reachable.
+stopifnot(is.null(definition_source_tree(c("A > B", "A>B"))),
+          !is.null(definition_source_tree(c("A", "A > B"))))
+duplicate_flat <- render_summary_selection_paragraph(definition_source_entry(
+  c("A > B", " A>B "), "NHANES", 2), "#005A9C")
+stopifnot(!grepl('source-directory-tree', duplicate_flat, fixed=TRUE),
+  length(regmatches(duplicate_flat, gregexpr('href=', duplicate_flat))[[1]]) == 1L)
+for (bad_path in c("A >> B", "A >", "> A")) {
+  expect_error_contains("empty directory level", definition_source_entry(bad_path), "empty directory level")
+}
+for (language in c("en", "ko")) {
+  source_html <- render_summary_selection_paragraph(definition_source_entry(
+    list(path = c("Core > A", "Core > B"), language = language), "KLoSA", 2), "#005A9C")
+  stopifnot(grepl(paste0('/home/klosa/', language, '/?nav=Core%3EB'), source_html, fixed = TRUE))
+}
+cat("source directory tree and flat paths PASS\n")
+# Compress single-child chains at any depth without losing linked ancestors.
+chain_paths <- c("根 > 分支 > 甲 > 中间 > 末级", "根 > 分支 > 乙 > 终点一",
+                 "根 > 分支 > 乙 > 终点二", "根 > 分支 > 甲")
+chain_nodes <- definition_source_tree(chain_paths)
+chain_html <- render_summary_selection_paragraph(definition_source_entry(
+  chain_paths, "NHANES", 4, FALSE), "#005A9C")
+stopifnot(setequal(tree_paths(chain_nodes, TRUE), chain_paths),
+  length(regmatches(chain_html, gregexpr('data-source-entry="true"', chain_html, fixed=TRUE))[[1]]) == 4L,
+  length(regmatches(chain_html, gregexpr('data-source-directory-row="true"', chain_html, fixed=TRUE))[[1]]) == 5L,
+  !grepl('[\r\n]', chain_html),
+  grepl('data-tree-role="connector"', chain_html, fixed=TRUE),
+  grepl('├─ ', chain_html, fixed=TRUE), grepl('└─ ', chain_html, fixed=TRUE),
+  !grepl('border-', chain_html, fixed=TRUE),
+  length(regmatches(chain_html, gregexpr('href=', chain_html, fixed=TRUE))[[1]]) == length(tree_paths(chain_nodes)),
+  # raw-source-link must remain the only div so the existing review extractor sees every link.
+  length(regmatches(chain_html, gregexpr('</div>', chain_html, fixed=TRUE))[[1]]) == 1L)
+continuation_html <- render_summary_selection_paragraph(definition_source_entry(
+  c("R > A > B", "R > A > C", "R > D"), "NHANES", 3, FALSE), "#005A9C")
+stopifnot(grepl('│  ', continuation_html, fixed=TRUE), !grepl('[\r\n]', continuation_html))
+cat("source directory single-child chains PASS\n")
 legacy_source <- definition_source_entry(list(lines = list("既有来源说明")), "CHARLS", source_n)
 stopifnot(length(legacy_source$lines) == 2L)
 cat("source path and note separation PASS\n")

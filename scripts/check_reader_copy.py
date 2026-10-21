@@ -8,6 +8,7 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
+from definition_display import resolve_display_policy
 from reference_format import reference_items, render_references
 from questionnaire_groups import period_keys, original_options, question_matches, question_identifiers, unverified_question_periods
 from questionnaire_groups import validate_shared_option_rows
@@ -321,17 +322,23 @@ def rendered_summary_trees(markup):
     return trees
 
 
-def read_copy(path, expected_vars=None):
+def read_copy(path, expected_vars=None, record=None):
     text = Path(path).read_text(encoding="utf-8-sig")
+    policy = resolve_display_policy(text, expected_vars, record)
+    if expected_vars is None and policy["analysis_vars"]:
+        expected_vars = policy["analysis_vars"]
     if re.search(r"<(?:div|span|section|style)\b", text, re.I):
         raise ValueError("文案.md 只能保存纯文案，不能含展示 HTML。")
     parts = sections(text, 2)
-    for key in ("摘要导读", "Criteria", "小book提示"):
+    required = ("摘要导读", "小book提示") if policy["compact_module"] else ("摘要导读", "Criteria", "小book提示")
+    for key in required:
         if not normalized(parts.get(key, "")):
             raise ValueError(f"文案缺少内容：{key}")
     criteria = {}
-    for variable, body in sections(parts["Criteria"], 3).items():
-        if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", variable):
+    if policy["compact_module"] and "Criteria" in parts:
+        raise ValueError("模块最终变量超过 30 个时，不编写 Criteria 栏目")
+    for variable, body in sections(parts.get("Criteria", ""), 3).items():
+        if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", variable):
             raise ValueError(f"Criteria 应按实际分析变量逐项列出：{variable}")
         fields = sections(body, 4)
         for field in REQUIRED_FIELDS:
@@ -344,16 +351,19 @@ def read_copy(path, expected_vars=None):
         if "注意点" in fields and not normalized(fields["注意点"]):
             raise ValueError(f"Criteria/{variable}/注意点 为空；无内容时省略栏目")
         criteria[variable] = fields
-    if not criteria:
+    if not criteria and not policy["compact_module"]:
         raise ValueError("Criteria 没有按最终分析变量逐项填写")
-    if expected_vars is not None and list(criteria) != list(expected_vars):
+    if not policy["compact_module"] and expected_vars is not None and list(criteria) != list(expected_vars):
         raise ValueError(f"Criteria 变量或顺序不一致：文案={list(criteria)}，定义={list(expected_vars)}")
+    if not policy["analysis_vars"]:
+        policy = resolve_display_policy(text, list(criteria), record)
     insight = parts["小book提示"]
     if normalized(insight) == NO_INSIGHT:
         insight = ""
     result = {"summary": parts["摘要导读"], "criteria": criteria,
-              "criteria_intro": re.split(r"(?m)^### ", parts["Criteria"], maxsplit=1)[0].strip(),
+              "criteria_intro": re.split(r"(?m)^### ", parts.get("Criteria", ""), maxsplit=1)[0].strip(),
               "insight": insight, "references": render_references(parts.get("参考资料说明", ""))}
+    result["display_policy"] = policy
     result["definition_basis"] = parts.get("定义依据", "")
     result["criteria_blocks"] = {v: {f: criteria_blocks(t) for f, t in fields.items()}
                                  for v, fields in criteria.items()}
@@ -612,10 +622,12 @@ def compare_content(copy, actual, *, source=False):
                 raise ValueError("问卷流程图的内容、顺序或缩进与文案不一致")
         elif "questionnaire_flows" in actual and expected_flows != actual["questionnaire_flows"]:
             raise ValueError("问卷流程图的内容、顺序或缩进与文案不一致")
-    return {"ok": True, "variables": list(copy["criteria"]), "checked": ["summary", "criteria", "insight", "references"]}
+    policy = copy.get("display_policy", {})
+    criteria_check = "criteria_omission" if policy.get("compact_module") else "criteria"
+    return {"ok": True, "variables": policy.get("analysis_vars", list(copy["criteria"])), "checked": ["summary", criteria_check, "insight", "references"]}
 
 
-def note_content(text):
+def note_content(text, *, compact_module=False):
     text = re.sub(r"(?ms)^```.*?^```\s*$", "", text)
     parts = sections(text, 2)
     summary = parts.get("摘要导读", "")
@@ -625,10 +637,12 @@ def note_content(text):
     if len(insight) > 1:
         raise ValueError("成品有重复的小book提示卡")
     tables = list(root.find(lambda e: e.tag == "table" and any(c.tag == "tr" and "".join(t.text() for t in c.children if isinstance(t, Element) and t.tag == "th") == "DefinitionCriteriadetail" for c in e.children if isinstance(c, Element))))
-    if len(tables) != 1:
+    if compact_module and (tables or "定义" in parts or "Criteria" in parts):
+        raise ValueError("简化模块成品不生成 Definition / Criteria / detail 定义表及其栏目")
+    if not compact_module and len(tables) != 1:
         raise ValueError("成品必须有一份 Definition / Criteria / detail 定义表")
     criteria = {}
-    for row in tables[0].children:
+    for row in tables[0].children if tables else []:
         if not isinstance(row, Element) or row.tag != "tr":
             continue
         cells = [c for c in row.children if isinstance(c, Element) and c.tag == "td"]
@@ -658,17 +672,25 @@ def note_content(text):
             "questionnaire": questionnaire_content(text)}
 
 
-def validate_note(copy_path, note_path, codebook_path=None):
-    expected = None
+def codebook_variables(codebook_path, expected=None):
+    from check_definition_output import read_xlsx_rows
+    rows = read_xlsx_rows(Path(codebook_path))
+    column = rows[0].index("Variable")
+    actual = [str(row[column]) for row in rows[1:]]
+    if expected is not None and list(expected) != actual:
+        raise ValueError("analysis_vars 与实际分析字典不一致")
+    return actual
+
+
+def validate_note(copy_path, note_path, codebook_path=None, record=None, analysis_vars=None):
+    expected = analysis_vars
     if codebook_path:
-        from check_definition_output import read_xlsx_rows
-        rows = read_xlsx_rows(Path(codebook_path))
-        column = rows[0].index("Variable")
-        expected = [str(row[column]) for row in rows[1:]]
-    copy = read_copy(copy_path, expected)
+        actual = codebook_variables(codebook_path, expected)
+        expected = actual
+    copy = read_copy(copy_path, expected, record)
     text = Path(note_path).read_text(encoding="utf-8-sig")
     insight_markup_content(text, copy["insight"])
-    result = compare_content(copy, note_content(text))
+    result = compare_content(copy, note_content(text, compact_module=copy["display_policy"]["compact_module"]))
     errors = summary_markup_errors(copy["summary"])
     if errors:
         raise ValueError("；".join(errors))
@@ -820,30 +842,32 @@ def main():
     parser.add_argument("--source-json")
     parser.add_argument("--note")
     parser.add_argument("--analysis-codebook")
+    parser.add_argument("--analysis-vars", help="Comma-separated actual final result names, in output order")
     parser.add_argument("--export")
     args = parser.parse_args()
     try:
         if args.process_dir:
             from writing_evidence import capture_before_check
             capture_before_check(args.process_dir, args.copy)
-        expected = None
+        expected = args.analysis_vars.split(",") if args.analysis_vars is not None else None
         record = None
         if args.record:
             record = json.loads(Path(args.record).read_text(encoding="utf-8-sig"))
-            expected = record["approved_analysis_vars"]
-        copy = read_copy(args.copy, expected)
+        if args.analysis_codebook:
+            expected = codebook_variables(args.analysis_codebook, expected)
+        copy = read_copy(args.copy, expected, record)
         errors = questionnaire_copy_errors(copy, record) if record else []
         # Only verify declared markup; semantic completeness remains an author's judgment.
         errors.extend(summary_markup_errors(copy["summary"]))
         if errors:
             print(json.dumps({"ok": False, "errors": errors}, ensure_ascii=False))
             return 1
-        result = {"ok": True, "variables": list(copy["criteria"])}
+        result = {"ok": True, "variables": copy["display_policy"]["analysis_vars"]}
         if args.source_json:
             actual = json.loads(Path(args.source_json).read_text(encoding="utf-8-sig"))
             result = compare_content(copy, actual, source=True)
         if args.note:
-            result = validate_note(args.copy, args.note, args.analysis_codebook)
+            result = validate_note(args.copy, args.note, args.analysis_codebook, record, expected)
         if args.export:
             Path(args.export).write_text(json.dumps(copy, ensure_ascii=False, indent=2), encoding="utf-8")
         if record is not None:

@@ -33,7 +33,7 @@ for case in ['explicit_pass','current_report_pass','default_reject','wrong_topic
   if case=='current_report_pass':
    current.update(stage_reviews=old['stage_reviews'],reviews=old['reviews']);u.write(p/er.REPORT_NAME,current);args.legacy_report=p/er.REPORT_NAME
    result=u.prepare(args);assert result['status']=='PREPARED';saved=u.read(p/er.REPORT_NAME);bound=saved['copy_update']['legacy_evidence'];assert Path(bound['path']).parent.name=='current' and bound['sha256']==u.digest(bound['path'])
-  elif case=='default_reject':args.legacy_report=None;reject(lambda:u.prepare(args),'没有可沿用的探索方案')
+  elif case=='default_reject':args.legacy_report=None;reject(lambda:u.prepare(args),'--legacy-report')
   elif case=='wrong_topic':old['topic_id']='998';u.write(legacy,old);reject(lambda:u.prepare(args),'历史报告')
   elif case=='missing_review':old['stage_reviews']={};u.write(legacy,old);reject(lambda:u.prepare(args),'历史报告')
   elif case=='invalid_r':

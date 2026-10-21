@@ -169,7 +169,7 @@ criteria_table <- function(block, render_values) {
 }
 
 definition_copy_check <- function(copy_path = "文案.md", source = NULL,
-                                  note = NULL, export = NULL) {
+                                  note = NULL, export = NULL, analysis_vars = NULL) {
   root <- Sys.getenv("DBCODEBOOK_DEFINITION_SKILL_ROOT")
   if (!nzchar(root)) {
     home <- Sys.getenv("CODEX_HOME")
@@ -196,6 +196,9 @@ definition_copy_check <- function(copy_path = "文案.md", source = NULL,
   if (!nzchar(python)) stop("请在 Skill 配置中设置 Python 路径。")
   args <- c("-X", "utf8", shQuote(file.path(root, "scripts", "check_reader_copy.py")),
             "--copy", shQuote(copy_path))
+  if (!is.null(analysis_vars)) {
+    args <- c(args, "--analysis-vars", shQuote(paste(analysis_vars, collapse = ",")))
+  }
   temporary <- character()
   on.exit(unlink(temporary), add = TRUE)
   if (!is.null(source)) {
@@ -211,12 +214,28 @@ definition_copy_check <- function(copy_path = "文案.md", source = NULL,
   invisible(output)
 }
 
+validate_definition_display_policy <- function(display_policy, analysis_vars) {
+  # Python resolves the topic policy. R only checks that it belongs to this output.
+  if (is.null(display_policy)) return(NULL)
+  policy_vars <- as.character(unlist(display_policy$analysis_vars, use.names = FALSE))
+  if (!identical(policy_vars, analysis_vars)) {
+    stop("display_policy analysis_vars differs from the actual analysis_vars or order.")
+  }
+  if (!is.character(display_policy$topic_kind) || length(display_policy$topic_kind) != 1L ||
+      !display_policy$topic_kind %in% c("module", "standard") ||
+      !is.logical(display_policy$compact_module) || length(display_policy$compact_module) != 1L ||
+      is.na(display_policy$compact_module)) stop("Invalid definition display_policy.")
+  display_policy
+}
+
 read_definition_copy <- function(analysis_vars, path = "文案.md") {
   exported <- tempfile(fileext = ".json")
   on.exit(unlink(exported), add = TRUE)
-  definition_copy_check(path, export = exported)
+  definition_copy_check(path, export = exported, analysis_vars = analysis_vars)
   copy <- jsonlite::read_json(exported)
-  if (!identical(names(copy$criteria), analysis_vars)) {
+  display_policy <- validate_definition_display_policy(copy$display_policy, analysis_vars)
+  compact_module <- !is.null(display_policy) && isTRUE(display_policy$compact_module)
+  if (!compact_module && !identical(names(copy$criteria), analysis_vars)) {
     stop("文案 Criteria 的变量或顺序与 analysis_vars 不一致。")
   }
   paragraphs <- function(text) strsplit(text, "\n[[:blank:]]*\n", perl = TRUE)[[1]]
@@ -251,6 +270,7 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
   })
   names(criteria) <- names(copy$criteria)
   result <- list(
+    display_policy = display_policy,
     criteria = criteria,
     criteria_intro = copy$criteria_intro,
     definition_basis = if (is.null(copy$definition_basis)) "" else copy$definition_basis,
@@ -293,6 +313,18 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
     }
   }
   result
+}
+
+render_copy_fragments <- function(copy_path, analysis_vars, theme_color) {
+  copy <- read_definition_copy(analysis_vars, path = copy_path)
+  list(
+    summary = render_summary_entry_paragraph(copy$summary_entry, theme_color),
+    insight = if (is.null(copy$summary_insight_items)) "" else paste(
+      render_summary_insight_card(copy$summary_insight_items, theme_color, variant = "compact"),
+      collapse = "\n"
+    ),
+    references = paste(copy$reference_lines, collapse = "\n")
+  )
 }
 
 render_criteria_intro <- function(text) {
@@ -363,7 +395,8 @@ definition_card_default_sources <- function(analysis_codebook) {
 }
 
 format_definition_card_sources <- function(analysis_codebook, raw_codebook,
-                                           source_codebook = analysis_codebook) {
+                                           source_codebook = analysis_codebook,
+                                           default_sources = character()) {
   if (!all(c("Variable", "newname") %in% names(raw_codebook))) {
     stop("raw_codebook 必须包含 Variable 和 newname。")
   }
@@ -372,7 +405,7 @@ format_definition_card_sources <- function(analysis_codebook, raw_codebook,
     definition_card_default_sources(analysis_codebook)
   resolve_sources <- function(aliases, visiting = character()) {
     resolved <- lapply(aliases, function(alias) {
-      if (alias %in% raw_codebook$newname) return(alias)
+      if (alias %in% raw_codebook$newname || alias %in% default_sources) return(alias)
       if (alias %in% visiting) stop("正式来源关系存在循环：", paste(c(visiting, alias), collapse = " -> "))
       if (!alias %in% names(sources)) {
         stop("raw_codebook 或正式来源关系中找不到变量：", alias)
@@ -382,8 +415,11 @@ format_definition_card_sources <- function(analysis_codebook, raw_codebook,
     unique(unlist(resolved, use.names = FALSE))
   }
   vapply(analysis_codebook$Variable, function(variable) {
-    rows <- match(resolve_sources(sources[[variable]], variable), raw_codebook$newname)
-    paste0(raw_codebook$Variable[rows], "=", raw_codebook$newname[rows], collapse = ", ")
+    aliases <- resolve_sources(sources[[variable]], variable)
+    rows <- match(aliases, raw_codebook$newname)
+    original_names <- as.character(raw_codebook$Variable[rows])
+    original_names[is.na(rows)] <- aliases[is.na(rows)]
+    paste0(original_names, "=", aliases, collapse = ", ")
   }, character(1))
 }
 
@@ -428,7 +464,8 @@ compose_definition_note_lines <- function(
     reference_lines,
     extract_box,
     publish_code,
-    detail_html_lines) {
+    detail_html_lines,
+    include_definition = TRUE) {
   visible_code <- trimws(publish_code[nzchar(trimws(publish_code))])
   if (length(visible_code) && grepl("^#[- #]*[0-9]+[ .、_-]", tail(visible_code, 1))) {
     warning("公开代码以空小节标题结束；请把正式工作簿写出放在 # 输出 之前。", call. = FALSE)
@@ -436,7 +473,7 @@ compose_definition_note_lines <- function(
   c(
     summary_section,
     if (length(summary_extra_lines) > 0) c(summary_extra_lines, "") else character(),
-    "## 定义", "", definition_html_lines, "",
+    if (include_definition) c("## 定义", "", definition_html_lines, "") else character(),
     if (length(reference_lines) > 0) c(reference_lines, "") else character(),
     detail_html_lines, "",
     "## 材料", "", "### 1-提取变量", "", extract_box, "",
@@ -474,14 +511,44 @@ definition_source_count <- function(raw_vars, raw_codebook, database) {
   length(unique(paste(toupper(database), identities, sep = "::")))
 }
 
+definition_source_paths <- function(paths) {
+  if (!is.character(paths) || !length(paths) || anyNA(paths) || any(!nzchar(trimws(paths)))) {
+    stop("summary_source path must contain verified nonempty directory paths.")
+  }
+  if (any(grepl("[\r\n]", paths))) {
+    stop("summary_source path must contain only the directory; put explanatory text in note.")
+  }
+  segments <- lapply(paths, function(path) trimws(strsplit(path, ">", fixed = TRUE)[[1]]))
+  if (any(vapply(segments, function(parts) !length(parts) || any(!nzchar(parts)), logical(1))) ||
+      any(grepl(">\\s*$", paths))) stop("summary_source path has an empty directory level.")
+  unique(vapply(segments, paste, character(1), collapse = " > "))
+}
+
+definition_source_tree <- function(paths) {
+  paths <- definition_source_paths(paths)
+  segments <- strsplit(paths, " > ", fixed = TRUE)
+  # A shared directory is an identical prefix, not a name found under another parent.
+  if (!anyDuplicated(vapply(segments, `[[`, character(1), 1L))) return(NULL)
+  build <- function(items, prefix = character()) {
+    heads <- vapply(items, `[[`, character(1), 1L)
+    lapply(unique(heads), function(label) {
+      members <- items[heads == label]
+      full_path <- c(prefix, label)
+      tails <- lapply(members[lengths(members) > 1L], function(parts) parts[-1L])
+      list(label = label, path = paste(full_path, collapse = " > "),
+           source_entry = any(lengths(members) == 1L),
+           children = if (length(tails)) build(tails, full_path) else list())
+    })
+  }
+  build(segments)
+}
+
 definition_source_entry <- function(value, database = "CHARLS", source_count = NULL, questionnaire_shown = TRUE) {
   if (is.null(value)) return(NULL)
   if (is.character(value)) value <- list(path = value)
   if (is.list(value) && !is.null(value$path)) {
-    paths <- unique(value$path)
-    if (!is.character(paths) || !length(paths) || anyNA(paths) || any(!nzchar(trimws(paths)))) {
-      stop("summary_source path must contain verified nonempty directory paths.")
-    }
+    paths <- definition_source_paths(value$path)
+    tree <- definition_source_tree(paths)
     note <- if (is.null(value$note)) "" else value$note
     if (!is.character(note) || length(note) != 1L || is.na(note)) stop("summary_source note must be one string.")
     for (count in list(value$variable_count, source_count)) {
@@ -495,6 +562,16 @@ definition_source_entry <- function(value, database = "CHARLS", source_count = N
     }
     count <- if (is.null(source_count)) value$variable_count else source_count
     subject <- if (questionnaire_shown) "以上问卷问题" else "本主题"
+    note <- sub("^[；;]", "", trimws(note))
+    if (!is.null(tree)) {
+      intro <- if (is.null(count)) paste0(subject, "对应的原始变量") else
+        paste0(subject, "在数据中对应 ", count, " 个原始变量")
+      lines <- list(list(parts = list(paste0(intro, "，可从 dbCodeBook 的以下目录进入检索和查看："))),
+                    list(type = "source_directory_tree", nodes = tree,
+                         database = database, language = value$language))
+      if (nzchar(note)) lines <- c(lines, list(list(parts = list(note))))
+      return(list(class = "raw-source-link", lines = lines))
+    }
     prefix <- if (is.null(count)) {
       list(paste0(subject, "对应的原始变量，可从 dbCodeBook 的目录 "))
     } else {
@@ -507,7 +584,6 @@ definition_source_entry <- function(value, database = "CHARLS", source_count = N
       links <- c(links, list(list(type = "source_link", value = path, database = database,
                                  language = value$language)))
     }
-    note <- sub("^[；;]", "", trimws(note))
     return(list(class = "raw-source-link", lines = list(list(parts = c(prefix, links,
       list(" 进入检索和查看。", note))))))
   }
@@ -571,7 +647,10 @@ render_definition_bundle <- function(
     database = "CHARLS",
     criteria_intro = "",
     language = NULL,
-    definition_basis = "") {
+    definition_basis = "",
+    display_policy = NULL) {
+  display_policy <- validate_definition_display_policy(display_policy, analysis_vars)
+  compact_module <- !is.null(display_policy) && isTRUE(display_policy$compact_module)
   database <- toupper(database)
   if (!is.character(theme_color) || length(theme_color) != 1L ||
       is.na(theme_color) || !nzchar(trimws(theme_color))) {
@@ -686,13 +765,13 @@ render_definition_bundle <- function(
   if (!is.null(summary_source)) render_summary_selection_paragraph(summary_source, theme_color)
   definition_copy_check(source = list(
     summary = render_summary_entry_paragraph(summary_entry, theme_color),
-    criteria = as.list(criteria[analysis_vars]),
+    criteria = if (compact_module) structure(list(), names = character()) else as.list(criteria[analysis_vars]),
     criteria_intro = paste(render_criteria_intro(criteria_intro), collapse = ""),
     definition_basis = definition_basis,
     insight = paste(summary_insight_items, collapse = "\n\n"),
     references = paste(reference_lines[!grepl("^## 参考资料说明$", reference_lines)], collapse = "\n"),
     questionnaire = if (missing(summary_selection)) "" else render_summary_selection_paragraph(summary_selection, theme_color)
-  ))
+  ), analysis_vars = analysis_vars)
   validate_person_period_outputs(list(db_data, analysis_data), database)
   for (pkg in c("dplyr", "tidyr", "dbCodeBookr")) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -710,11 +789,15 @@ render_definition_bundle <- function(
     )
   }
   stopifnot(identical(analysis_vars, analysis_codebook$Variable))
-  stopifnot(all(analysis_vars %in% names(criteria)))
-  stopifnot(all(nzchar(criteria[analysis_vars])))
-  validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars)),
-                           lapply(analysis_data[analysis_vars], unique))
-  formatted_card_sources <- format_definition_card_sources(analysis_codebook, raw_codebook, codebook)
+  if (!compact_module) {
+    stopifnot(all(analysis_vars %in% names(criteria)))
+    stopifnot(all(nzchar(criteria[analysis_vars])))
+    validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars)),
+                             lapply(analysis_data[analysis_vars], unique))
+  }
+  formatted_card_sources <- format_definition_card_sources(
+    analysis_codebook, raw_codebook, codebook,
+    default_sources = if (database == "NHANES") intersect(c("SEQN", "YEAR"), names(db_data)) else character())
 
   format_n <- function(x) {
     format(x, big.mark = ",", scientific = FALSE)
@@ -774,7 +857,9 @@ render_definition_bundle <- function(
     useBytes = TRUE
   )
 
-  detail_data <- db_data
+  # Filter only the display copy, before chart/detail generation. Source data and
+  # workbook objects remain intact; compact modules show defined variables only.
+  detail_data <- if (compact_module) db_data[c("year", analysis_vars)] else db_data
   if (!is.null(raw_source_years)) {
     for (var_name in intersect(names(raw_source_years), names(detail_data))) {
       active <- as.character(detail_data$year) %in%
@@ -794,7 +879,7 @@ render_definition_bundle <- function(
   )
   details <- vapply(details, append_linear_histogram_endpoint, character(1))
   date_detail_vars <- names(detail_data)[vapply(detail_data, inherits, logical(1), "Date")]
-  date_detail_positions <- match(date_detail_vars, names(db_data))
+  date_detail_positions <- match(date_detail_vars, names(detail_data))
   date_detail_positions <- date_detail_positions[!is.na(date_detail_positions)]
   if (length(date_detail_vars) > 0L) {
     details[date_detail_positions] <- gsub(
@@ -804,7 +889,7 @@ render_definition_bundle <- function(
       fixed = TRUE
     )
   }
-  names(details) <- names(db_data)
+  names(details) <- names(detail_data)
   analysis_source_rows <- match(codebook$Variable, names(formatted_card_sources))
   has_analysis_source <- !is.na(analysis_source_rows)
   codebook$original_vars[has_analysis_source] <- unname(
@@ -872,52 +957,58 @@ render_definition_bundle <- function(
     theme_color
   )
 
-  definition_data <- meta_df[
-    meta_df$Variable %in% analysis_vars,
-    c("Variable", "original_vars", "detail")
-  ]
-  definition_data <- definition_data[
-    match(analysis_vars, definition_data$Variable),
-  ]
-  definition_details <- generate_var_details(
-    detail_data,
-    bar_color = paste0(theme_color, "90"),
-    show_hist = TRUE,
-    hist_binwidth = hist_binwidth,
-    hist_mode = hist_mode,
-    show_distribution_nav = TRUE,
-    show_cycle_heatmap = TRUE,
-    cycle_col = "year",
-    cycle_order = cycle_order,
-    heatmap_color = theme_color
-  )
-  definition_details <- vapply(
-    definition_details,
-    append_linear_histogram_endpoint,
-    character(1)
-  )
-  if (length(date_detail_positions) > 0L) {
-    definition_details[date_detail_positions] <- gsub(
-      "Unsupported type",
-      "日期变量（近似构造）",
-      definition_details[date_detail_positions],
-      fixed = TRUE
+  definition_path <- paste0(database, "_", file_stem, "_definition.html")
+  if (compact_module) {
+    # Remove only this generated artifact if a previous full render left it behind.
+    if (file.exists(definition_path)) unlink(definition_path)
+  } else {
+    definition_data <- meta_df[
+      meta_df$Variable %in% analysis_vars,
+      c("Variable", "original_vars", "detail")
+    ]
+    definition_data <- definition_data[
+      match(analysis_vars, definition_data$Variable),
+    ]
+    definition_details <- generate_var_details(
+      detail_data,
+      bar_color = paste0(theme_color, "90"),
+      show_hist = TRUE,
+      hist_binwidth = hist_binwidth,
+      hist_mode = hist_mode,
+      show_distribution_nav = TRUE,
+      show_cycle_heatmap = TRUE,
+      cycle_col = "year",
+      cycle_order = cycle_order,
+      heatmap_color = theme_color
+    )
+    definition_details <- vapply(
+      definition_details,
+      append_linear_histogram_endpoint,
+      character(1)
+    )
+    if (length(date_detail_positions) > 0L) {
+      definition_details[date_detail_positions] <- gsub(
+        "Unsupported type",
+        "日期变量（近似构造）",
+        definition_details[date_detail_positions],
+        fixed = TRUE
+      )
+    }
+    names(definition_details) <- names(db_data)
+    definition_data$detail <- unname(
+      definition_details[definition_data$Variable]
+    )
+    definition_data$Definition <- definition_data$Variable
+    definition_data$Criteria <- unname(criteria[definition_data$Variable])
+    definition_data <- definition_data[
+      c("Variable", "original_vars", "Definition", "Criteria", "detail")
+    ]
+    generate_html_definition(
+      definition_data,
+      paste0(database, "_", file_stem, "_definition.html"),
+      theme_color
     )
   }
-  names(definition_details) <- names(db_data)
-  definition_data$detail <- unname(
-    definition_details[definition_data$Variable]
-  )
-  definition_data$Definition <- definition_data$Variable
-  definition_data$Criteria <- unname(criteria[definition_data$Variable])
-  definition_data <- definition_data[
-    c("Variable", "original_vars", "Definition", "Criteria", "detail")
-  ]
-  generate_html_definition(
-    definition_data,
-    paste0(database, "_", file_stem, "_definition.html"),
-    theme_color
-  )
 
   clean_html <- function(path) {
     text <- readLines(path, encoding = "UTF-8", warn = FALSE)
@@ -926,8 +1017,21 @@ render_definition_bundle <- function(
     writeLines(text, path, useBytes = TRUE)
   }
   clean_html(paste0(database, "_", file_stem, "_detail.html"))
-  clean_html(paste0(database, "_", file_stem, "_definition.html"))
-  if (nzchar(trimws(criteria_intro))) {
+  if (compact_module) {
+    detail_path <- paste0(database, "_", file_stem, "_detail.html")
+    detail_text <- readLines(detail_path, encoding = "UTF-8", warn = FALSE)
+    detail_text <- sub('<table class="heatmap-table">',
+      '<table class="heatmap-table" data-defined-overview="true">', detail_text, fixed = TRUE)
+    for (variable in analysis_vars) {
+      escaped <- criteria_escape_code(variable)
+      target <- paste0('<span class="var-name" id="var-', escaped, '">')
+      detail_text <- sub(target, paste0('<span class="var-name" id="var-', escaped,
+        '" data-defined-variable="', escaped, '">'), detail_text, fixed = TRUE)
+    }
+    writeLines(detail_text, detail_path, useBytes = TRUE)
+  }
+  if (!compact_module) clean_html(definition_path)
+  if (!compact_module && nzchar(trimws(criteria_intro))) {
     definition_path <- paste0(database, "_", file_stem, "_definition.html")
     definition_text <- definition_html_with_intro(
       readLines(definition_path, encoding = "UTF-8", warn = FALSE), criteria_intro)
@@ -958,7 +1062,7 @@ render_definition_bundle <- function(
   } else {
     script_lines[seq_len(output_idx[1] - 1)]
   }
-  definition_html_lines <- readLines(
+  definition_html_lines <- if (compact_module) character() else readLines(
     paste0(database, "_", file_stem, "_definition.html"),
     encoding = "UTF-8",
     warn = FALSE
@@ -985,8 +1089,9 @@ render_definition_bundle <- function(
     reference_lines,
     extract_box,
     publish_code,
-    detail_html_lines
+    detail_html_lines,
+    include_definition = !compact_module
   )
   writeLines(note_lines, note_name, useBytes = TRUE)
-  definition_copy_check(note = note_name)
+  definition_copy_check(note = note_name, analysis_vars = analysis_vars)
 }

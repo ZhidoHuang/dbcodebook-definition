@@ -304,7 +304,6 @@ $readerCopyText = [System.IO.File]::ReadAllText(
 )
 $requiredReaderCopyHeadings = @(
   "## 摘要导读",
-  "## Criteria",
   "## 小book提示"
 )
 foreach ($heading in $requiredReaderCopyHeadings) {

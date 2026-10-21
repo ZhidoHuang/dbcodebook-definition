@@ -9,6 +9,7 @@ from copy import deepcopy
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -127,7 +128,7 @@ def prepare(args):
     else:
         legacy_path = getattr(args, 'legacy_report', None)
         if legacy_path is None:
-            raise ValueError("没有可沿用的探索方案")
+            raise ValueError("未找到双路探索登记；旧主题核对既有方案和证据后，可用 --legacy-report 指定已完成的历史 R 复核报告；实质证据缺口或未决研究问题须先解决")
         legacy = read(legacy_path)
         if (legacy.get('exploration_policy') or
                 legacy.get('status') not in ('completed', 'completed_with_issues') or
@@ -148,8 +149,9 @@ def prepare(args):
     folder = process / 'copy_updates' / str(uuid.uuid4())
     folder.mkdir(parents=True)
     for name in result['artifacts']:
-        if name.endswith('.xlsx') or name == '文案.md':
+        if name.endswith('.xlsx') or name in ('文案.md', audit['artifacts'].get('note', {}).get('path')):
             shutil.copy2(formal / name, folder / name)
+    write(folder / 'result_check.json', result)
     for name in ('reader_comprehension_review.json', 'ordinary_reader_input.md'):
         if (process / name).is_file():
             shutil.copy2(process / name, folder / name)
@@ -228,6 +230,253 @@ def previous_raw_order(result, planned):
     return previous
 
 
+TEXT_SECTIONS = ('摘要导读', '小book提示', '参考资料说明')
+TEXT_FIELDS = ('summary', 'summary_blocks', 'insight', 'references')
+
+
+def outside_text_sections(text):
+    pattern = r'(?ms)^## (' + '|'.join(TEXT_SECTIONS) + r')\s*\n.*?(?=^## |\Z)'
+    return re.sub(pattern, lambda m: '## ' + m[1] + '\n', text)
+
+
+def text_update_changes(before, after, source, variables):
+    """Return supported display changes, never infer that a formula edit is prose."""
+    from check_reader_copy import read_copy
+    if outside_text_sections(before.read_text(encoding='utf-8-sig')) != outside_text_sections(after.read_text(encoding='utf-8-sig')):
+        return None
+    old, new = (read_copy(path, variables, source) for path in (before, after))
+    if {k:v for k,v in old.items() if k not in TEXT_FIELDS} != {k:v for k,v in new.items() if k not in TEXT_FIELDS}:
+        return None
+    return [key for key in ('summary', 'insight', 'references') if old[key] != new[key]]
+
+
+def apply_fragment_patches(note, patches):
+    spans = []
+    for patch in patches:
+        before = patch['before']
+        if not before or note.count(before) != 1:
+            raise ValueError('旧笔记不能唯一匹配当前生成器的栏目：' + patch['field'])
+        start = note.index(before)
+        spans.append((start, start + len(before), patch['after']))
+    spans.sort()
+    if any(left[1] > right[0] for left, right in zip(spans, spans[1:])):
+        raise ValueError('文案栏目替换范围重叠')
+    for start, end, replacement in reversed(spans):
+        note = note[:start] + replacement + note[end:]
+    return note
+
+
+def complete_result(record):
+    return (record.get('ok') is True and record.get('scope') == 'complete'
+            and record.get('status') == 'MACHINE_CHECK_PASS' and record.get('checks')
+            and all(item.get('ok') is True for item in record['checks'])
+            and record.get('checker_sha256') == digest(ROOT/'scripts/check_definition_output.py'))
+
+
+def original_result(record, process):
+    seen = set()
+    while record.get('copy_sections'):
+        receipt = record['copy_sections']
+        path = (process/receipt['baseline']).resolve()
+        path.relative_to(process.resolve())
+        if path in seen or digest(path) != receipt['baseline_sha256']:
+            raise ValueError('完整检查基线链无效')
+        seen.add(path)
+        record = read(path)
+    return record
+
+
+def text_tool_hashes():
+    return {name: digest(ROOT/'scripts'/name) for name in (
+        'update_reader_copy.py', 'render_definition_bundle.R', 'summary_fact_helpers.R',
+        'check_reader_copy.py', 'reference_format.py')}
+
+
+def previous_check_options(baseline):
+    options = {'forbidden formal content': '--forbid-vars',
+               'required user text': '--required-user-text',
+               'Criteria evolution structure': '--criteria-evolution-text'}
+    args = []
+    for item in baseline['checks']:
+        if item['check'] not in options:
+            continue
+        values = item.get('detail')
+        if not isinstance(values, list) or not all(isinstance(x, str) for x in values):
+            raise ValueError('旧检查缺少可复用的约束：' + item['check'])
+        args += [options[item['check']], ','.join(values)]
+    return args
+
+
+def text_constraints(baseline, copy_text, note_text):
+    from check_definition_output import visible_text
+    checks = [{'check':'summary prose indentation', 'ok':'&emsp;' not in copy_text + note_text}]
+    for item in baseline['checks']:
+        if item['check'] not in ('forbidden formal content', 'required user text'):
+            continue
+        values = item.get('detail')
+        if not isinstance(values, list) or not all(isinstance(x, str) for x in values):
+            raise ValueError('旧文本检查缺少可复用的约束：' + item['check'])
+        passed = (all(x not in copy_text + note_text for x in values)
+                  if item['check'] == 'forbidden formal content'
+                  else all(x in visible_text(note_text) for x in values))
+        checks.append({'check':item['check'], 'ok':passed, 'detail':values})
+    if not all(item['ok'] for item in checks):
+        raise ValueError('修改后的文本不满足原检查条件：' + json.dumps(checks, ensure_ascii=False))
+    return checks
+
+
+def validate_text_result(record, formal, process, note_path=None, copy_path=None, seen=None):
+    """Verify inherited checks against retained evidence, not a relabelled old PASS."""
+    if not complete_result(record):
+        raise ValueError('局部更新缺少有效完整检查基线')
+    receipt = record.get('copy_sections')
+    if receipt is None:
+        if record.get('validation_mode') == 'copy_sections':
+            raise ValueError('局部更新缺少继承证据')
+        return
+    if record.get('validation_mode') != 'copy_sections' or not isinstance(receipt, dict):
+        raise ValueError('局部更新证据与检查模式不一致')
+    if receipt.get('tools') != text_tool_hashes():
+        raise ValueError('局部更新检查或生成器已变化，需重新核对受影响成果')
+    baseline_path = (process/receipt['baseline']).resolve()
+    baseline_path.relative_to(process.resolve())
+    seen = set() if seen is None else seen
+    if baseline_path in seen:
+        raise ValueError('局部更新证据循环引用')
+    seen.add(baseline_path)
+    if digest(baseline_path) != receipt['baseline_sha256']:
+        raise ValueError('局部更新检查基线已变化')
+    baseline = read(baseline_path)
+    folder = baseline_path.parent
+    note_name = receipt['note']
+    if Path(note_name).name != note_name or note_name == '文案.md':
+        raise ValueError('局部更新笔记名称无效')
+    old_copy, old_note = folder/'文案.md', folder/note_name
+    if not complete_result(baseline) or set(baseline['artifacts']) != set(record['artifacts']):
+        raise ValueError('局部更新成果清单或完整基线无效')
+    source_path = process/'definition_search_record.json'
+    if not (baseline['source_sha256'] == record['source_sha256'] == digest(source_path)):
+        raise ValueError('局部更新来源记录已变化')
+    if baseline['analysis_vars'] != record['analysis_vars'] or baseline['database'] != record['database']:
+        raise ValueError('局部更新定义范围已变化')
+    for name, sha in baseline['artifacts'].items():
+        if Path(name).name != name:
+            raise ValueError('基线成果路径无效')
+        path = folder/name if name in ('文案.md', note_name) else formal/name
+        if digest(path) != sha:
+            raise ValueError('局部更新基线输入已变化：' + name)
+        if name not in ('文案.md', note_name) and record['artifacts'][name] != sha:
+            raise ValueError('局部更新包含数据或其他产物变化：' + name)
+    validate_text_result(baseline, formal, process, old_note, old_copy, seen)
+    copy_path, note_path = copy_path or formal/'文案.md', note_path or formal/note_name
+    changes = text_update_changes(old_copy, copy_path, read(source_path), record['analysis_vars'])
+    if changes is None or changes != receipt['changed_fields']:
+        raise ValueError('局部更新超出已验证栏目')
+    if [p['field'] for p in receipt['patches']] != changes:
+        raise ValueError('局部更新栏目与生成片段不一致')
+    expected = apply_fragment_patches(old_note.read_text(encoding='utf-8-sig'), receipt['patches'])
+    if expected != note_path.read_text(encoding='utf-8-sig'):
+        raise ValueError('局部更新笔记在生成范围外发生变化')
+    text_constraints(original_result(baseline, process), copy_path.read_text(encoding='utf-8-sig'), expected)
+
+
+def render_text_update(args, formal, process, binding, attempt):
+    """Try the existing renderers without calculating data; unsupported layouts fall back."""
+    from skill_config import load_config, configured_executable
+    from r_runtime import runtime_plan
+    from check_definition_output import check_summary_prose
+    folder, baseline = Path(binding['folder']), binding['result']
+    note_name = binding['audit_artifacts']['note']['path']
+    old_note = folder/note_name
+    source = process/'definition_search_record.json'
+    if (not complete_result(baseline) or not old_note.is_file()
+            or not (folder/'result_check.json').is_file()
+            or digest(source) != binding['source_hash']
+            or {p.name for p in formal.iterdir() if p.is_file()} != set(baseline['artifacts'])):
+        return False
+    if baseline.get('copy_sections', {}).get('tools', text_tool_hashes()) != text_tool_hashes():
+        return False
+    if any(digest(formal/name) != sha for name, sha in baseline['artifacts'].items()
+           if name not in ('文案.md', note_name)):
+        return False
+    try:
+        changes = text_update_changes(folder/'文案.md', formal/'文案.md', read(source), baseline['analysis_vars'])
+    except ValueError as exc:
+        write(attempt/'text-fallback.json', {'reason': '旧文案不适用局部渲染：' + str(exc)})
+        return False
+    if changes is None:
+        return False
+    text = old_note.read_text(encoding='utf-8-sig')
+    # This is the actual theme recorded in the generated card, not a database guess.
+    title = re.search(r'<div\b[^>]*data-summary-insight-title="true"[^>]*>', text)
+    color = re.search(r'(?:[;"\s])color:([^;" ]+)', title[0]) if title else None
+    if not color:
+        return False
+    config = load_config(args.config)
+    rscript = configured_executable(config, 'rscript') or shutil.which('Rscript')
+    if not rscript:
+        raise ValueError('未找到 Rscript，无法调用现有文案生成器')
+    request = attempt/'text-render-input.json'
+    output = attempt/'text-fragments.json'
+    write(request, {'root': str(ROOT), 'before': str(folder/'文案.md'),
+                   'after': str(formal/'文案.md'), 'variables': baseline['analysis_vars'],
+                   'color': color[1], 'output': str(output)})
+    script = attempt/'render-text.R'
+    script.write_text('''x <- jsonlite::read_json(commandArgs(TRUE)[1])
+source(file.path(x$root, "scripts", "summary_fact_helpers.R"), encoding="UTF-8")
+source(file.path(x$root, "scripts", "render_definition_bundle.R"), encoding="UTF-8")
+v <- unlist(x$variables, use.names=FALSE)
+out <- list(before=render_copy_fragments(x$before, v, x$color), after=render_copy_fragments(x$after, v, x$color))
+jsonlite::write_json(out, x$output, auto_unbox=TRUE)
+''', encoding='utf-8')
+    env = dict(os.environ, DBCODEBOOK_DEFINITION_SKILL_ROOT=str(ROOT),
+               DBCODEBOOK_DEFINITION_PYTHON=sys.executable)
+    for key, value in runtime_plan(config)['environment'].items():
+        if value is None: env.pop(key, None)
+        else: env[key] = value
+    if args.config:
+        env['DBCODEBOOK_DEFINITION_CONFIG'] = str(args.config.resolve())
+    with (attempt/'text-render.log').open('w', encoding='utf-8') as log:
+        outcome = subprocess.run([rscript, '--vanilla', '--encoding=UTF-8', str(script), str(request)],
+                                 cwd=formal, env=env, stdout=log, stderr=subprocess.STDOUT)
+    if outcome.returncode:
+        raise ValueError('局部文案渲染失败，见 ' + str(attempt/'text-render.log'))
+    fragments = read(output)
+    patches = [{'field': key, 'before': fragments['before'][key], 'after': fragments['after'][key]} for key in changes]
+    try:
+        candidate = apply_fragment_patches(text, patches)
+    except ValueError as exc:
+        write(attempt/'text-fallback.json', {'reason': str(exc)})
+        return False
+    candidate_path = attempt/note_name
+    candidate_path.write_text(candidate, encoding='utf-8')
+    call('check_reader_copy.py', '--copy', formal/'文案.md', '--record', source,
+         '--analysis-vars', ','.join(baseline['analysis_vars']), '--note', candidate_path,
+         log=attempt/'text-note-check.log')
+    checks = text_constraints(original_result(baseline, process), formal.joinpath('文案.md').read_text(encoding='utf-8-sig'), candidate)
+    from check_reader_copy import read_copy
+    policy = read_copy(formal/'文案.md', baseline['analysis_vars'], read(source))['display_policy']
+    check_summary_prose(candidate, checks, policy['compact_module'])
+    if not all(item['ok'] for item in checks):
+        raise ValueError('局部文案显示检查失败：' + json.dumps(checks, ensure_ascii=False))
+    current = deepcopy(baseline)
+    current.update(validation_mode='copy_sections', checks=[
+        {'check':'unchanged baseline data and calculation', 'ok': True},
+        {'check':'current copy and generated note', 'ok': True}, *checks],
+        reused_checks=[item for item in baseline['checks'] if item['check'] not in {c['check'] for c in checks}], copy_sections={
+            'baseline': str((folder/'result_check.json').relative_to(process)),
+            'baseline_sha256': digest(folder/'result_check.json'), 'note': note_name,
+            'changed_fields': changes, 'patches': patches, 'tools': text_tool_hashes()})
+    current['artifacts']['文案.md'] = digest(formal/'文案.md')
+    current['artifacts'][note_name] = digest(candidate_path)
+    validate_text_result(current, formal, process, candidate_path)
+    # Commit only after all fragment and unchanged-input checks passed.
+    shutil.copy2(candidate_path, formal/note_name)
+    write(process/'result_check.json', current)
+    write(attempt/'result-check.json', current)
+    return True
+
+
 def run(args):
     formal, process = args.formal_dir.resolve(), args.process_dir.resolve()
     report = read(process / er.REPORT_NAME)
@@ -267,45 +516,49 @@ def run(args):
         stage = 'generate'
         call('execution_report.py', 'stage-start', '--process-dir', process, '--stage-id', stage,
              '--name', '重新生成并核对成果', '--role', '固定程序')
-        lognames = [n for n in binding['result']['artifacts'] if '_run_' in n and n.endswith('.log')]
-        if len(lognames) != 1:
-            raise ValueError('原成果日志前缀不唯一')
-        prefix = lognames[0].rsplit('_run_', 1)[0]
-        pwsh = args.pwsh or shutil.which('pwsh')
-        if not pwsh:
-            raise ValueError('未找到 PowerShell 7，请传入 --pwsh')
-        cmd = [pwsh, '-NoProfile', '-File', str(ROOT / 'scripts/run_r_definition.ps1'),
-               '-WorkDir', str(formal), '-Script', binding['r_script'], '-LogPrefix', prefix,
-               '-ProcessDir', str(process), '-Database', source['database']]
-        if args.config:
-            cmd += ['-Config', str(args.config.resolve())]
-        with (attempt_folder / 'generate.log').open('w', encoding='utf-8') as log:
-            outcome = subprocess.run(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
-        if outcome.returncode:
-            raise ValueError('正式生成失败，见 ' + str(attempt_folder / 'generate.log'))
-        for name in binding['result']['artifacts']:
-            if not name.endswith('.xlsx'):
-                continue
-            same = workbook_content(formal / name) == workbook_content(folder / name)
-            if (name.startswith('db_') or name.startswith('analysis_db_')) and not same:
-                raise ValueError('纯文案修改产生数据变化：' + name)
-            if same:
-                shutil.copy2(folder / name, formal / name)
-        old = binding['result']
-        columns = next(c['detail'] for c in old['checks'] if c['check'] == 'analysis_db columns')
         art = binding['audit_artifacts']
-        defaults = record_defaults(source)
-        raw = list(dict.fromkeys(v for group in source['source_groups'] for v in group['raw_variables'] if v not in defaults))
-        raw = previous_raw_order(old, raw)
-        params = ['--complete', '--db', source['database'].lower(), '--formal-dir', formal,
-                  '--process-dir', process, '--expected-files', ','.join(n for n in old['artifacts'] if not n.endswith('.log')),
-                  '--raw-vars', ','.join(raw), '--analysis-db', art['analysis_db']['path'],
-                  '--analysis-codebook', art['analysis_codebook']['path'], '--analysis-columns', ','.join(columns),
-                  '--analysis-vars', ','.join(old['analysis_vars']), '--check-summary-facts',
-                  '--require-log-exit-code', '--log-prefix', prefix, '--report', process / 'result_check.json']
-        if source.get('language'):
-            params += ['--language', source['language']]
-        call('check_definition_output.py', *params, log=attempt_folder / 'result-check.log')
+        incremental = render_text_update(args, formal, process, binding, attempt_folder)
+        if not incremental:
+            lognames = [n for n in binding['result']['artifacts'] if '_run_' in n and n.endswith('.log')]
+            if len(lognames) != 1:
+                raise ValueError('原成果日志前缀不唯一')
+            prefix = lognames[0].rsplit('_run_', 1)[0]
+            pwsh = args.pwsh or shutil.which('pwsh')
+            if not pwsh:
+                raise ValueError('未找到 PowerShell 7，请传入 --pwsh')
+            cmd = [pwsh, '-NoProfile', '-File', str(ROOT / 'scripts/run_r_definition.ps1'),
+                   '-WorkDir', str(formal), '-Script', binding['r_script'], '-LogPrefix', prefix,
+                   '-ProcessDir', str(process), '-Database', source['database']]
+            if args.config:
+                cmd += ['-Config', str(args.config.resolve())]
+            with (attempt_folder / 'generate.log').open('w', encoding='utf-8') as log:
+                outcome = subprocess.run(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
+            if outcome.returncode:
+                raise ValueError('正式生成失败，见 ' + str(attempt_folder / 'generate.log'))
+            for name in binding['result']['artifacts']:
+                if not name.endswith('.xlsx'):
+                    continue
+                same = workbook_content(formal / name) == workbook_content(folder / name)
+                if (name.startswith('db_') or name.startswith('analysis_db_')) and not same:
+                    raise ValueError('纯文案修改产生数据变化：' + name)
+                if same:
+                    shutil.copy2(folder / name, formal / name)
+            old = original_result(binding['result'], process)
+            columns = next(c['detail'] for c in old['checks'] if c['check'] == 'analysis_db columns')
+            art = binding['audit_artifacts']
+            defaults = record_defaults(source)
+            raw = list(dict.fromkeys(v for group in source['source_groups'] for v in group['raw_variables'] if v not in defaults))
+            raw = previous_raw_order(old, raw)
+            params = ['--complete', '--db', source['database'].lower(), '--formal-dir', formal,
+                      '--process-dir', process, '--expected-files', ','.join(n for n in old['artifacts'] if not n.endswith('.log')),
+                      '--raw-vars', ','.join(raw), '--analysis-db', art['analysis_db']['path'],
+                      '--analysis-codebook', art['analysis_codebook']['path'], '--analysis-columns', ','.join(columns),
+                      '--analysis-vars', ','.join(old['analysis_vars']), '--check-summary-facts',
+                      '--require-log-exit-code', '--log-prefix', prefix, '--report', process / 'result_check.json']
+            if source.get('language'):
+                params += ['--language', source['language']]
+            params += previous_check_options(old)
+            call('check_definition_output.py', *params, log=attempt_folder / 'result-check.log')
         reader_exists = (process / 'reader_comprehension_review.json').exists()
         previous_audit = read(process / 'readability_audit.json')
         previous_note = previous_audit.get('artifacts', {}).get('note', {})
@@ -334,7 +587,9 @@ def run(args):
         call('check_definition_readability.py', 'check', '--formal-dir', formal, '--process-dir', process,
              '--topic-id', report['topic_id'], log=attempt_folder / 'delivery-check.log')
         call('execution_report.py', 'stage-finish', '--process-dir', process, '--stage-id', stage,
-             '--status', 'completed', '--summary', '当前成果检查通过；未变的数据及附件沿用原文件。')
+             '--status', 'completed', '--summary',
+             '仅重建并核对指定文案栏目；数据与计算检查沿用有效完整基线，未重跑正式R或重读数据表；交付检查仍读取分析字典。'
+             if incremental else '完整生成与成果检查通过；内容未变的数据附件沿用原文件。')
         return complete_update(process)
     except (Exception, SystemExit) as exc:
         # Full checker output stays in the attempt logs; do not exceed Windows argv limits.
@@ -413,7 +668,7 @@ def main():
     parser.add_argument('command', choices=['prepare', 'run', 'retry', 'finish'])
     parser.add_argument('--formal-dir', type=Path, required=True)
     parser.add_argument('--process-dir', type=Path, required=True)
-    parser.add_argument('--legacy-report', type=Path, help='用户已明确接受的无双路登记历史R复核报告；默认不启用')
+    parser.add_argument('--legacy-report', type=Path, help='旧主题仅缺双路探索登记时，指定经核对的已完成历史 R 复核报告；仍核对当前 R、来源及成果')
     parser.add_argument('--path-map', type=Path, help='prepare时显式声明旧主题根目录到当前副本的映射；保留原审核及内容校验')
     parser.add_argument('--reason', help='本次纯表达或展示修改；至少20字')
     parser.add_argument('--omit-questionnaire', help='已删除整节问卷时，给出明确的省略原因（至少20字）')
