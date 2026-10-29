@@ -77,6 +77,8 @@ if (-not [string]::IsNullOrWhiteSpace($rscript)) {
     if ($LASTEXITCODE -ne 0) { throw "test_knhanes_renderer.R failed." }
     & $rscript --vanilla --encoding=UTF-8 'tests/test_mhas_renderer.R'
     if ($LASTEXITCODE -ne 0) { throw "test_mhas_renderer.R failed." }
+    & $rscript --vanilla --encoding=UTF-8 'tests/test_mhas_mexcog_renderer.R'
+    if ($LASTEXITCODE -ne 0) { throw "test_mhas_mexcog_renderer.R failed." }
     & $rscript --vanilla --encoding=UTF-8 'tests/test_chns_renderer.R'
     if ($LASTEXITCODE -ne 0) { throw "test_chns_renderer.R failed." }
   } finally { Pop-Location }

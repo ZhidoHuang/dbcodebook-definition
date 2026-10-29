@@ -38,16 +38,16 @@ with tempfile.TemporaryDirectory() as temp:
 
     cli("init", "--process-dir", process, "--database", "test", "--topic-id", "fixture", "--topic-name", "fixture", "--task", "evidence test", "--workflow", "general")
     handoff()
-    first = report()["first_copy"]
-    assert Path(first["snapshot_path"]).read_bytes() == original
-    assert ":" not in Path(first["snapshot_path"]).name
+    first = report()["current_copy"]
+    assert not (process / "copy_versions").exists()
     assert first["sha256"] == digest(original)
     assert copy_execution_conclusions(process, document)["semantic_pass_inferred"] is False
     document.write_bytes(original + b"\n")
     assert copy_execution_conclusions(process, document)["status"] == "stale"
     handoff()
-    assert report()["first_copy"] == first and len(report()["copy_history"]) == 2
-    assert Path(first["snapshot_path"]).read_bytes() == original
+    assert report()["current_copy"]["sha256"] != first["sha256"]
+    assert "copy_history" not in report() and "first_copy" not in report()
+    assert not (process / "copy_versions").exists()
     assert copy_execution_conclusions(process, document)["status"] == "available"
 
     source = root / "input.txt"
@@ -104,13 +104,14 @@ with tempfile.TemporaryDirectory() as temp:
     old.pop("copy_scope_bindings")
     assert carry_copy_scopes(old, payload()) == []
 
-    # An unrecorded first handoff cannot later be relabelled as a captured first.
+    # Only the current handoff is recorded; no first-draft claim is made.
     cli("finish", "--process-dir", process, "--status", "completed")
     cli("init", "--process-dir", process, "--database", "test", "--topic-id", "fixture", "--topic-name", "fixture", "--task", "missing first", "--workflow", "general")
     cli("stage-start", "--process-dir", process, "--stage-id", "copy", "--name", "文案", "--role", "test")
     cli("stage-finish", "--process-dir", process, "--stage-id", "copy", "--status", "completed")
     handoff()
-    assert report()["first_copy"]["status"] == "not_recorded"
+    assert report()["current_copy"]["status"] == "captured"
+    assert "first_copy" not in report()
 
     fake_skill = root / "skill"
     fake_skill.mkdir()
@@ -145,4 +146,4 @@ with tempfile.TemporaryDirectory() as temp:
             assert set(carry_copy_scopes(baseline, payload())) == set(names), name
     finally:
         writing_evidence.ROOT = original_root
-print("WRITING_EVIDENCE_PASS: immutable first copy, missing-first honesty, round history, scoped reuse, content versions")
+print("WRITING_EVIDENCE_PASS: current file binding, no version copies, round history, scoped reuse, content versions")

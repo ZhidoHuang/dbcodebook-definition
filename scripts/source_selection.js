@@ -16,6 +16,7 @@ async (page, action, mode) => {
       return fail('LOGIN_REQUIRED');
     }
     if (mode !== 'select') return {ok: true, status: 'LOGGED_IN'};
+    const nhisExact = action.kind === 'nhis_identity_selection_v1';
     const scoped = action.kind === 'mhas_scoped_selection_v2';
     const rawColumns = action.kind === 'mhas_raw_column_selection_v1';
     let validatedSources;
@@ -27,20 +28,33 @@ async (page, action, mode) => {
     if (action.rename_offset === undefined && !action.selection_resume) {
     phase = 'input';
     const modal = page.locator('#input-modal');
-    if (await modal.isVisible()) return fail('INPUT_DIALOG_ALREADY_OPEN');
-    const open = page.getByRole('button', {name: '批量输入标签', exact: true});
-    if (await open.count() !== 1) return fail('SELECTION_CONTROL_CHANGED');
-    await open.click({timeout: 3000});
-    await page.locator('#tag-input').fill(action.input_text, {timeout: 3000});
+    if (action.selection_input_resume === true) {
+      if (!await modal.isVisible()) return fail('INPUT_DIALOG_NOT_OPEN');
+      if (await page.locator('#tag-input').inputValue() !== action.input_text)
+        return fail('INPUT_CONTENT_MISMATCH');
+      if (await page.locator('#tag-area .tag').count() !== 0)
+        return fail('INPUT_RESUME_SELECTION_PRESENT');
+    } else {
+      if (await modal.isVisible()) return fail('INPUT_DIALOG_ALREADY_OPEN');
+      const open = page.getByRole('button', {name: '批量输入标签', exact: true});
+      if (await open.count() !== 1) return fail('SELECTION_CONTROL_CHANGED');
+      await open.click({timeout: 3000});
+      await page.locator('#tag-input').fill(action.input_text, {timeout: 15000});
+    }
     const confirm = page.locator('#input-modal .bili-btn.confirm');
     if (await confirm.count() !== 1) return fail('SELECTION_CONTROL_CHANGED');
     phase = 'submit_selection';
     // Attach the response listener before the one UI click; never call the API directly.
     const pending = page.waitForResponse(response => {
       const url = new URL(response.url());
-      return url.origin === expected.origin &&
-        url.pathname === expected.pathname + 'validate_tags/' &&
-        response.request().method() === 'POST';
+      const request = response.request();
+      if (url.origin !== expected.origin ||
+          url.pathname !== expected.pathname + 'validate_tags/' || request.method() !== 'POST') return false;
+      // Renaming uses the same endpoint but does not return selected sources.
+      if (typeof request.postDataJSON === 'function') {
+        try { if (request.postDataJSON()?.validate_names === true) return false; } catch (_) {}
+      }
+      return true;
     }, {timeout: 12000}).then(response => response.ok() ? response.json() : null)
       .catch(() => null);
     await confirm.click({timeout: 3000});
@@ -139,16 +153,17 @@ async (page, action, mode) => {
     const selected = await page.locator('#tag-area .tag').evaluateAll((tags, database) => tags.map(tag => ({
       variable: tag.getAttribute('data-variable'), file: tag.getAttribute(database === 'nhanes' ? 'data-source-type' : 'data-file'),
       alias: tag.getAttribute('data-display'), text: tag.querySelector('.tag-text')?.textContent?.trim(),
+      ...(database === 'nhis' ? {variable_id:tag.dataset.variableId} : {}),
       ...(database === 'mhas' && tag.dataset.identity ? {variable_id: tag.dataset.identity, periods: JSON.parse(tag.dataset.periods || JSON.stringify([tag.dataset.period])).sort(),
         dictionary_sha256: tag.dataset.dictionarySha256} : {})
     })), action.database);
-    const expectedRows = scoped || rawColumns ? action.selected : action.input_text.split('\n').map(line => {
+    const expectedRows = scoped || rawColumns || nhisExact ? action.selected : action.input_text.split('\n').map(line => {
       const [identity, alias] = line.split('=');
       const match = identity.match(/^([^()\s]+)\s+\((.+)\)$/);
       return {variable: match[1], file: match[2].trim(), alias};
     });
     const key = row => JSON.stringify([row.variable, row.file, row.alias,
-      ...(scoped ? [row.variable_id, row.periods, row.dictionary_sha256] : [])]);
+      ...(scoped ? [row.variable_id, row.periods, row.dictionary_sha256] : nhisExact ? [row.variable_id] : [])]);
     if (selected.some(row => !row.variable || !row.file || !row.alias || row.text !== row.alias) ||
         JSON.stringify(selected.map(key).sort()) !== JSON.stringify(expectedRows.map(key).sort()))
       return fail('SELECTION_CONTENT_MISMATCH', {expected: expectedRows, selected});

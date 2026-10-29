@@ -15,7 +15,7 @@
 | [CHARLS 差异说明](../databases/charls/workflow.md) | CHARLS 特有的网页探索、年份、来源身份、选择与下载、特殊编码及输出事实 | 重新定义跨数据库命名、文案、函数或网站发布操作 |
 | [ELSA 差异说明](../databases/elsa/workflow.md) | ELSA 特有的 `Variable (File)`、Wave、文件族、选择与恢复、负值和分析单位 | 复制 CHARLS 规则或另写一套共同文案和代码规范 |
 | [HRS 差异说明](../databases/hrs/workflow.md) | Full HRS 原始库的 Tracker、Core、Cross-Wave 文件、时期映射、选择和下载验收边界 | 把 RAND HRS/Harmonized HRS 当作正式 raw 或混用数据库身份 |
-| [write-boundaries.md](write-boundaries.md) | 任务权限、来源缺口和共用浏览器会话 | 下载或发布的逐步操作、变量定义、独立验收触发 |
+| [write-boundaries.md](write-boundaries.md) | 任务权限、执行材料、来源缺口和共用浏览器会话 | 下载或发布的逐步操作、变量定义、独立验收触发 |
 | [validation.md](validation.md) | 唯一环节顺序、修正后的复核范围、独立验收触发条件和状态含义 | 网站控件操作、数据库特有事实、主题公式 |
 | [execution-report.md](execution-report.md) | 主题执行过程、环节耗时、角色、模型、Bug 与异常的自动记录 | 主题定义、读者文案和网站正文 |
 
@@ -25,7 +25,7 @@
 | --- | --- | --- |
 | 01-source-plan | 用户约束与待探索问题 → 双路探索、主线程合并方案、最终变量命名与取值、结果关系及来源清单 | 下载控件、公开代码、文案 |
 | 02-download | 方案与别名 → 本次已校验raw/codebook；下载后首次来源重叠核对与下载失败找回也在此 | 发布、R实现和展示实现 |
-| 03-copy | 方案与实际事实 → 完整文案及首稿快照 | 生成接口、CSS、网站操作 |
+| 03-copy | 方案与实际事实 → 当前完整文案及文件绑定 | 生成接口、CSS、网站操作 |
 | 04-public-r | 方案与文案 → 实现、预检及实现复核 | 摘要写法、发布步骤 |
 | 05-generate | 稳定源和文案 → 数据、笔记、附件；接口和展示由此负责 | 重新裁决研究事实 |
 | 06-results | 当前产物 → 数据及显示一致性证据；核对实现遵循已确认的来源比较结论 | 重写文案、首次来源取舍、重新探索 |

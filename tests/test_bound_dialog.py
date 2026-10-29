@@ -55,15 +55,35 @@ console.log('BOUND_DIALOG_PASS');
         session.tab_id='A'
         session.retain_receipts=False
         session.receipt_scope=None
+        session.operation_timeout=40
         session.code_path=Path(folder)/'action.js'
         emitted=[]
+        scripts=[]
         def call(*args):
-            emitted.append(session.code_path.read_text(encoding='utf-8'))
+            scripts.append(Path(args[-1]))
+            emitted.append(scripts[-1].read_text(encoding='utf-8'))
             return '' if len(emitted)==1 else '{"ok":true}'
         with patch.object(session,'call',side_effect=call):
             assert session.code('async page=>{await page.locator("#once").click();return {ok:true};}')=={'ok':True}
         assert '#once' in emitted[0] and '#once' not in emitted[1]
         assert 'receipt.id !==' in emitted[1] and 'receipt.operation' in emitted[1]
+        assert all(not path.exists() for path in scripts)
+        assert not session.code_path.exists()
+        def timeout(*args):
+            scripts.append(Path(args[-1]))
+            assert scripts[-1].is_file()
+            raise subprocess.TimeoutExpired('fixture', 40)
+        session.retain_receipts=True
+        session.receipt_scope={'operation':'fixture'}
+        with patch.object(session,'call',side_effect=timeout):
+            try:
+                session.code('async page=>({ok:true})')
+            except subprocess.TimeoutExpired:
+                pass
+            else:
+                raise AssertionError('Timeout swallowed')
+        assert all(not path.exists() for path in scripts)
+        assert session.code_path.with_suffix('.receipt.json').is_file(), 'Recovery receipt was removed'
 
 
 if __name__=='__main__': main()

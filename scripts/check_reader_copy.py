@@ -16,7 +16,7 @@ from questionnaire_groups import question_identity, validate_display_titles
 from questionnaire_display import validate_display_sequence, display_route_destination
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
-    rendered_when_matches, jump_descriptions, is_plain_paraphrase, validate_paraphrase_display)
+    rendered_when_matches, jump_descriptions, is_plain_paraphrase, validate_paraphrase, validate_paraphrase_display)
 
 
 NO_INSIGHT = "本主题没有需要单独提示的主题级边界"
@@ -222,7 +222,21 @@ def route_matches(destination, description, period=None, *, allow_topic_exit=Fal
 
 
 def sections(text, level):
-    matches = list(re.finditer(rf"(?m)^{'#' * level} (.+?)\s*$", text))
+    # Keep source offsets while excluding fenced code from document headings.
+    view = []
+    fence = None
+    for line in text.splitlines(keepends=True):
+        opening = re.match(r"^ {0,3}(`{3,}|~{3,})(.*?)(?:\r?\n)?$", line)
+        if fence is None and opening:
+            fence = opening[1]
+            view.append(re.sub(r"[^\r\n]", " ", line))
+        elif fence is not None:
+            view.append(re.sub(r"[^\r\n]", " ", line))
+            if re.fullmatch(r" {0,3}" + re.escape(fence[0]) + "{" + str(len(fence)) + r",}[ \t]*(?:\r?\n)?", line):
+                fence = None
+        else:
+            view.append(line)
+    matches = list(re.finditer(rf"(?m)^{'#' * level} (.+?)[ \t\r]*$", "".join(view)))
     result = {}
     for i, match in enumerate(matches):
         name = match[1].strip().strip("`")
@@ -233,14 +247,94 @@ def sections(text, level):
     return result
 
 
+def check_tree_result_order(summary, variables, display_names, *, require_explicit=False,
+                            tree_omission_reason=None):
+    """Use explicit result identities; retain exact-name matching for old trees."""
+    def identity_text(text):
+        return re.sub(r"\s+", "", text).translate(str.maketrans({"（": "(", "）": ")", "μ": "µ"}))
+
+    nodes = []
+    has_tree = False
+    for block in summary_blocks(summary):
+        if block["type"] != "code_tree":
+            continue
+        has_tree = True
+        root = Document(block.get("role_html", "")).root
+        for i, node in enumerate(root.children):
+            if not isinstance(node, Element) or node.attrs.get("data-tree-role") != "result":
+                continue
+            meta = ""
+            for sibling in root.children[i + 1:]:
+                if isinstance(sibling, str):
+                    if sibling.strip() or "\n" in sibling:
+                        break
+                elif sibling.attrs.get("data-tree-role") == "meta":
+                    meta += sibling.text()
+                    if not require_explicit:
+                        break
+                else:
+                    break
+            nodes.append((node.text(), meta, node.attrs.get("data-tree-variable")))
+    if not has_tree:
+        if require_explicit:
+            if not isinstance(tree_omission_reason, str) or not tree_omission_reason.strip():
+                raise ValueError("未展示关系树：须按树使用条件作出判断，并在来源记录 tree_omission_reason 中填写具体省略理由")
+            return {"scope": "no_tree", "omission_reason": tree_omission_reason.strip()}
+        return {"scope": "no_tree"}
+    if not nodes:
+        raise ValueError("关系树没有 result 标记，无法核对最终变量及顺序")
+    if require_explicit and any(variable is None for _, _, variable in nodes):
+        raise ValueError("关系树最终结果须显式绑定变量：[[result:变量名|显示名称]]")
+    if any(variable is not None for _, _, variable in nodes):
+        mapped = [variable for _, _, variable in nodes]
+        if any(variable not in variables for variable in mapped):
+            raise ValueError(f"关系树变量身份未登记或缺失：{[v for v in mapped if v not in variables]}")
+        actual = list(dict.fromkeys(mapped))
+        if actual != list(variables):
+            raise ValueError(f"关系树最终变量或顺序不一致：树={actual}，定义={list(variables)}")
+        if require_explicit:
+            for label, meta, variable in nodes:
+                confirmed = display_names.get(variable)
+                if not isinstance(confirmed, str) or identity_text(label) != identity_text(confirmed):
+                    raise ValueError(f"关系树/{variable} 显示名与已确认 display_name 不一致：树={label}，方案={confirmed}")
+                values = re.findall(r"[（(]([^（）()]+)[）)]", meta)
+                if not any(value.strip() for value in values):
+                    raise ValueError(f"关系树/{variable} 缺少取值或单位 meta：在名称旁用圆括号填写，不以时期代替")
+        return {"scope": "explicit_results", "variables": actual, "references": len(nodes) - len(actual)}
+    if set(display_names) != set(variables) or any(not isinstance(v, str) or not v.strip() for v in display_names.values()):
+        raise ValueError("最终变量缺少完整 display_name 对应，不能猜测树节点身份")
+    lookup = {identity_text(label): variable for variable, label in display_names.items()}
+    if len(lookup) != len(display_names):
+        raise ValueError("最终变量 display_name 重复，不能唯一对应树节点")
+    mapped, unknown = [], []
+    for label, meta, _ in nodes:
+        candidates = {lookup[key] for key in {identity_text(label), identity_text(label + meta)} if key in lookup}
+        if len(candidates) != 1:
+            unknown.append(label + meta)
+        else:
+            mapped.append(next(iter(candidates)))
+    if unknown:
+        raise ValueError(f"关系树名称不在已确认显示名中或对应不唯一：{list(dict.fromkeys(unknown))}")
+    actual = list(dict.fromkeys(mapped))
+    if actual != list(variables):
+        raise ValueError(f"关系树最终变量或顺序不一致：树={actual}，定义={list(variables)}")
+    return {"scope": "marked_results", "variables": actual, "references": len(nodes) - len(actual)}
+
+
 def semantic_tree(text):
     """Explicit roles only; connectors are syntax, never inferred result names."""
     roles = {"result", "component", "relation", "meta"}
     pieces, plain = [], []
     def add(value, role=None):
+        variable = None
+        if role == "result" and "|" in value:
+            variable, value = value.split("|", 1)
+            if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", variable) or not value.strip():
+                raise ValueError("关系树 result 需填写有效变量名和非空显示名")
         plain.append(value)
         if role:
-            pieces.append(f'<span data-tree-role="{role}">{escape(value)}</span>')
+            identity = f' data-tree-variable="{escape(variable, quote=True)}"' if variable else ""
+            pieces.append(f'<span data-tree-role="{role}"{identity}>{escape(value)}</span>')
         else:
             pieces.append(re.sub(r'([│├└─┐┘┬┤→←]+)', r'<span data-tree-role="connector">\1</span>', escape(value)))
     offset = 0
@@ -322,7 +416,26 @@ def rendered_summary_trees(markup):
     return trees
 
 
-def read_copy(path, expected_vars=None, record=None):
+def format_category_label(value):
+    """Typography only: retain wording, acronyms and proper-name capitalization."""
+    value = re.sub(r"[\s_]+", " ", value).strip()
+    return value[:1].upper() + value[1:]
+
+
+def format_copy_categories(criteria, summary):
+    """Format actual Criteria values; tree meta keeps its reader-facing wording."""
+    for variable, fields in criteria.items():
+        text = fields["分类"]
+        pattern = r"(?m)^(\s*-\s*\[)([^\]\n]+)(\])"
+        original = [m[2] for m in re.finditer(pattern, text)]
+        formatted = [format_category_label(x) for x in original]
+        if any(not x for x in formatted) or len(set(formatted)) != len(formatted):
+            raise ValueError(f"分类标签为空或格式统一后重名：{variable}")
+        fields["分类"] = re.sub(pattern, lambda m: m[1] + format_category_label(m[2]) + m[3], text)
+    return summary
+
+
+def read_copy(path, expected_vars=None, record=None, *, require_result_identity=False):
     text = Path(path).read_text(encoding="utf-8-sig")
     policy = resolve_display_policy(text, expected_vars, record)
     if expected_vars is None and policy["analysis_vars"]:
@@ -336,7 +449,7 @@ def read_copy(path, expected_vars=None, record=None):
             raise ValueError(f"文案缺少内容：{key}")
     criteria = {}
     if policy["compact_module"] and "Criteria" in parts:
-        raise ValueError("模块最终变量超过 30 个时，不编写 Criteria 栏目")
+        raise ValueError("不含问卷定义的模块最终变量超过 10 个时，不编写 Criteria 栏目")
     for variable, body in sections(parts.get("Criteria", ""), 3).items():
         if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", variable):
             raise ValueError(f"Criteria 应按实际分析变量逐项列出：{variable}")
@@ -358,6 +471,7 @@ def read_copy(path, expected_vars=None, record=None):
     if not policy["analysis_vars"]:
         policy = resolve_display_policy(text, list(criteria), record)
     insight = parts["小book提示"]
+    parts["摘要导读"] = format_copy_categories(criteria, parts["摘要导读"])
     if normalized(insight) == NO_INSIGHT:
         insight = ""
     result = {"summary": parts["摘要导读"], "criteria": criteria,
@@ -368,6 +482,25 @@ def read_copy(path, expected_vars=None, record=None):
     result["criteria_blocks"] = {v: {f: criteria_blocks(t) for f, t in fields.items()}
                                  for v, fields in criteria.items()}
     result["summary_blocks"] = summary_blocks(result["summary"])
+    plan = (record or {}).get("definition_plan", [])
+    if require_result_identity:
+        variables = policy["analysis_vars"]
+        if not isinstance(plan, list) or not plan or any(not isinstance(item, dict) for item in plan):
+            raise ValueError("首次生成须提供已确认的 definition_plan 和 display_name")
+        if [item.get("analysis_var") for item in plan] != variables:
+            raise ValueError("definition_plan 的变量及顺序须与最终变量清单一致")
+        labels = [item.get("display_name") for item in plan]
+        if any(not isinstance(label, str) or not label.strip() for label in labels):
+            raise ValueError("definition_plan 每个最终变量都须填写已确认的 display_name")
+        if len({label.strip() for label in labels}) != len(labels):
+            raise ValueError("definition_plan.display_name 须能唯一区分最终结果")
+    if require_result_identity or any("display_name" in item for item in plan) or any(
+            'data-tree-variable=' in block.get("role_html", "") for block in result["summary_blocks"]):
+        result["result_order_check"] = check_tree_result_order(
+            result["summary"], policy["analysis_vars"],
+            {item.get("analysis_var", item.get("analysis_variable")): item.get("display_name") for item in plan},
+            require_explicit=require_result_identity,
+            tree_omission_reason=(record or {}).get("tree_omission_reason"))
     if "问卷" in parts:
         result["questionnaire"] = read_questionnaire_copy(parts["问卷"])
     return result
@@ -444,7 +577,7 @@ def read_questionnaire_copy(text):
                     question["instructions"].append(line.removeprefix("跳题说明：").strip())
                 elif line.startswith("共同跳题（"):
                     question["instructions"].append(line)
-                elif (re.search(r"(?:选项|跳题规则)与\s*[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*\s*相同。", re.sub(r"`([^`]+)`", r"\1", line))
+                elif (re.search(r"(?:选项|跳题规则)与\s*[A-Za-z0-9_][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*\s*相同。", re.sub(r"`([^`]+)`", r"\1", line))
                       or re.search(r"的选项设置相同，(?:(?:该范围内的后续题目|下列题目)不再逐一展开选项|后续题目仅列有跳转的选项)。", line)):
                     question["instructions"].append(line)
                 elif line.startswith("- "):
@@ -567,6 +700,11 @@ def criteria_fields(markup):
     return fields
 
 
+def tree_result_bindings(markup):
+    return [(e.attrs.get("data-tree-variable"), e.text()) for e in Document(markup).root.find(
+        lambda e: e.attrs.get("data-tree-role") == "result")]
+
+
 def compare_content(copy, actual, *, source=False):
     blocks = summary_blocks(copy["summary"])
     expected_trees = [b["text"] for b in blocks if b["type"] == "code_tree"]
@@ -577,6 +715,13 @@ def compare_content(copy, actual, *, source=False):
         actual_trees = [b["text"] for b in summary_blocks(actual["summary"]) if b["type"] == "code_tree"]
     if expected_trees != actual_trees:
         raise ValueError("summary 代码树的节点、顺序、换行或缩进与文案不一致")
+    expected_bindings = tree_result_bindings("".join(b.get("role_html", "") for b in blocks))
+    if any(v is not None for v, _ in expected_bindings):
+        bindings = tree_result_bindings(actual.get("summary", "")) if source else actual.get("tree_result_bindings")
+        if not source and "summary_blocks" in actual and "summary_trees" not in actual:
+            bindings = tree_result_bindings("".join(b.get("role_html", "") for b in summary_blocks(actual["summary"])))
+        if bindings != expected_bindings:
+            raise ValueError("summary 关系树变量身份对应与文案不一致")
     for field in ("summary", "insight", "references", "criteria_intro", "definition_basis"):
         value = actual.get(field, "")
         if source:
@@ -664,6 +809,7 @@ def note_content(text, *, compact_module=False):
     return {"summary": visible_markup(summary), "criteria": criteria, "definition_basis": visible_markup(basis),
             "criteria_intro": intros[0].text() if intros else "",
             "summary_trees": rendered_summary_trees(summary),
+            "tree_result_bindings": tree_result_bindings(summary),
             "questionnaire_flows": [e.text() for e in root.find(lambda e: e.attrs.get("data-questionnaire-flow") == "true")],
             "insight": "\n\n".join(e.text() for e in insight[0].find(
                 lambda e: "summary-insight-text" in e.attrs.get("class", "").split()))
@@ -733,14 +879,14 @@ def questionnaire_copy_errors(copy, record):
     validate_display_titles(evidence)
     periods = {}
     for period in copy.get("questionnaire", {}).values():
-        for key in period_keys(period["label"], [x.get("period", "") for x in record.get("questionnaire_coverage", [])]):
+        for key in period_keys(period["label"], [x.get("period", "") for x in record.get("questionnaire_coverage", []) if x.get("status") != "not_applicable"]):
             periods.setdefault(key, []).append(period)
     errors = []
     displayed_evidence = [item for item in evidence if item.get("display_required", True) is not False]
     for block in copy.get("questionnaire", {}).values():
         errors.extend(unverified_question_periods(block["label"], [q["id"] for q in block["questions"]],
                                                  displayed_evidence, block.get("module", ""),
-                                                 [x.get("period", "") for x in record.get("questionnaire_coverage", [])]))
+                                                 [x.get("period", "") for x in record.get("questionnaire_coverage", []) if x.get("status") != "not_applicable"]))
     cross_periods = [(p["label"], [(q["id"], [o["text"] for o in q["options"]]) for q in p["questions"]], p["design"], p.get("module", ""))
                      for p in copy.get("questionnaire", {}).values()]
     for item in evidence:
@@ -749,6 +895,8 @@ def questionnaire_copy_errors(copy, record):
             if not requires_questionnaire_display(item):
                 continue
             if is_plain_paraphrase(item):
+                validate_paraphrase(item)
+            if is_plain_paraphrase(item) and (item.get("display") or {}).get("presentation") != "question":
                 validate_paraphrase_display(item, list(copy.get("questionnaire", {}).values()), normalized_evidence_text, displayed_evidence)
                 continue
             display_text, display_instructions = display_question(item, record)
@@ -843,6 +991,8 @@ def main():
     parser.add_argument("--note")
     parser.add_argument("--analysis-codebook")
     parser.add_argument("--analysis-vars", help="Comma-separated actual final result names, in output order")
+    parser.add_argument("--require-result-identity", action="store_true",
+                        help="Require the current result plan and explicit tree bindings before generation.")
     parser.add_argument("--export")
     args = parser.parse_args()
     try:
@@ -855,7 +1005,11 @@ def main():
             record = json.loads(Path(args.record).read_text(encoding="utf-8-sig"))
         if args.analysis_codebook:
             expected = codebook_variables(args.analysis_codebook, expected)
-        copy = read_copy(args.copy, expected, record)
+        require_identity = args.require_result_identity
+        if args.process_dir:
+            report = json.loads((Path(args.process_dir) / "execution_report.json").read_text(encoding="utf-8-sig"))
+            require_identity = require_identity or report.get("workflow") == "full_definition"
+        copy = read_copy(args.copy, expected, record, require_result_identity=require_identity)
         errors = questionnaire_copy_errors(copy, record) if record else []
         # Only verify declared markup; semantic completeness remains an author's judgment.
         errors.extend(summary_markup_errors(copy["summary"]))
@@ -866,6 +1020,9 @@ def main():
         if args.source_json:
             actual = json.loads(Path(args.source_json).read_text(encoding="utf-8-sig"))
             result = compare_content(copy, actual, source=True)
+            if actual.get("result_display_names") is not None:
+                result["result_order_check"] = check_tree_result_order(
+                    copy["summary"], copy["display_policy"]["analysis_vars"], actual["result_display_names"])
         if args.note:
             result = validate_note(args.copy, args.note, args.analysis_codebook, record, expected)
         if args.export:

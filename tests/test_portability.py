@@ -16,8 +16,8 @@ def main(*, routes_only: bool = False) -> int:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     routes = module.validate_routes()
-    assert routes["databases"] == ["charls", "chns", "elsa", "hrs", "klosa", "knhanes", "mhas", "nhanes", "share"]
-    assert routes["database_themes"] == ["CHARLS", "CHNS", "ELSA", "HRS", "KLOSA", "KNHANES", "MHAS", "NHANES", "SHARE"]
+    assert routes["databases"] == ["charls", "chns", "elsa", "hrs", "klosa", "knhanes", "mhas", "nhanes", "nhanesiii", "nhis", "share"]
+    assert routes["database_themes"] == ["CHARLS", "CHNS", "ELSA", "HRS", "KLOSA", "KNHANES", "MHAS", "NHANES", "NHANESIII", "NHIS", "SHARE"]
     for invalid_path in (
         "references/databases/__missing_route__/profile.md",
         "../SKILL.md",

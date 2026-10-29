@@ -94,6 +94,46 @@ class LocalEvidence(unittest.TestCase):
                                          'verified_in_local_dictionary': True, 'purpose': 'x'}],
                                        'SHARE', self.validate())
 
+    def test_explicit_prior_binding_preserves_unchanged_receipts(self):
+        current = copy.deepcopy(self.binding)
+        current['created_at'] = 'current runtime check'
+        self.record['source_access']['binding'] = self.save('current.json', current)
+        with self.assertRaises(ValueError):
+            self.validate()
+        self.record['source_access']['receipt_bindings'] = [self.bref]
+        self.assertIn('euro1 (F)', self.validate()['sources'])
+        self.assertEqual(self.receipt['binding_sha256'], self.bref['sha256'])
+
+    def test_prior_binding_cannot_change_dictionary_database_site_or_mapping(self):
+        for field, value in [('dictionary_sha256', 'b'*64), ('database', 'hrs'),
+                             ('dictionary', '/different/file.db'), ('language', 'ko'),
+                             ('dataset_id', 'different'), ('website_url', 'http://other/home/share/'),
+                             ('ok', False), ('mapping', {'kind': 'unverified'})]:
+            prior = copy.deepcopy(self.binding)
+            prior[field] = value
+            ref = self.save('prior.json', prior)
+            receipt = copy.deepcopy(self.receipt)
+            receipt['binding_sha256'] = ref['sha256']
+            self.record['source_access']['receipt_bindings'] = [ref]
+            self.record['source_access']['receipts'] = [self.save('prior-detail.json', receipt)]
+            with self.assertRaises(ValueError, msg=field):
+                self.validate()
+
+    def test_changed_or_implicit_prior_binding_rejected(self):
+        prior = copy.deepcopy(self.binding)
+        prior['created_at'] = 'historical check'
+        ref = self.save('prior.json', prior)
+        receipt = copy.deepcopy(self.receipt)
+        receipt['binding_sha256'] = ref['sha256']
+        self.record['source_access']['receipts'] = [self.save('prior-detail.json', receipt)]
+        with self.assertRaises(ValueError):
+            self.validate()
+        self.record['source_access']['receipt_bindings'] = [ref]
+        self.validate()
+        (self.root/'prior.json').write_text('{}')
+        with self.assertRaises(ValueError):
+            self.validate()
+
 
 if __name__ == '__main__':
     unittest.main()

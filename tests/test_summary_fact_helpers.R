@@ -21,6 +21,14 @@ expect_identical <- function(name, actual, expected) {
   list(name = name, expected = expected, actual = actual, ok = TRUE)
 }
 
+stopifnot(identical(validate_hrs_period_order(c("1992", "2001-2003", "2002", "2002-2005", "2017", "2017 Spring", "2019 Spring", "2019 Fall")),
+                    c("1992", "2001-2003", "2002", "2002-2005", "2017", "2017 Spring", "2019 Spring", "2019 Fall")))
+for (bad_periods in list(character(), NA_character_, c("1992", "1992"), c("2004", "2002"),
+                         "2003-2001", "1899", "2101", "2099-2101", "2017 Autumn", "2017 spring",
+                         "2017.0", "1992-2022 extra", c("2019 Fall", "2019 Spring"))) {
+  stopifnot(inherits(try(validate_hrs_period_order(bad_periods), silent = TRUE), "try-error"))
+}
+
 expect_error_contains <- function(name, expression, expected) {
   message <- tryCatch(
     {
@@ -104,6 +112,14 @@ expect_error_contains("SHARE Wave_id rejects unknown period",
   suppressWarnings(share_summary_fixture("Wave_id", c("Wave 1", "unknown"))), "无法识别")
 expect_error_contains("SHARE Wave_id rejects extra wave",
   share_summary_fixture("Wave_id", c("Wave 1", "Wave 3")), "目标周期之外")
+
+corona_summary <- share_summary_fixture("Wave_id", c("Wave 1", "Corona Survey 1"),
+  expected=c("Wave 1", "Corona Survey 1", "Corona Survey 2"))
+stopifnot(identical(corona_summary$period, "Wave 1、Corona Survey 1"))
+expect_error_contains("SHARE rejects unknown Corona period",
+  share_summary_fixture("Wave_id",c("Wave 1","Corona Survey 3")),"无法识别")
+expect_error_contains("SHARE rejects undeclared Corona period",
+  share_summary_fixture("Wave_id",c("Wave 1","Corona Survey 2"),expected=c("Wave 1","Corona Survey 1")),"目标周期之外")
 
 note_order_fixture <- compose_definition_note_lines(
   summary_section = "SUMMARY",
@@ -263,7 +279,49 @@ source_display_raw_codebook <- data.frame(
   stringsAsFactors = FALSE
 )
 
+# Evaluate only the renderer's actual source-formatting call, without generation.
+renderer_source_call <- Filter(function(x) is.call(x) &&
+  identical(x[[1]], as.name("<-")) &&
+  identical(x[[2]], as.name("formatted_card_sources")),
+  as.list(body(render_definition_bundle)))[[1]]
+renderer_source_fixture <- function(database, analysis_codebook, raw_codebook,
+                                    codebook, db_data) {
+  analysis_vars <- analysis_codebook$Variable
+  eval(renderer_source_call, envir = environment())
+}
+charls_key_result <- data.frame(Variable="result", processed_vars="raw1, respondent_id")
+charls_key_source <- data.frame(Variable="respondent_id", processed_vars="respondent_id")
+charls_key_data <- data.frame(respondent_id="001")
 checks <- list(
+  expect_identical(
+    "CHARLS renderer recognizes only its published respondent default identity",
+    renderer_source_fixture("CHARLS",charls_key_result,source_display_raw_codebook,
+                            charls_key_source,charls_key_data),
+    c(result="raw1 (file)=raw1, respondent_id=respondent_id")
+  ),
+  expect_error_contains(
+    "CHARLS renderer still rejects unknown self-referencing helpers",
+    renderer_source_fixture("CHARLS",data.frame(Variable="result",processed_vars="helper"),
+      source_display_raw_codebook,data.frame(Variable="helper",processed_vars="helper"),
+      data.frame(helper="001")), "result -> helper -> helper"
+  ),
+  expect_error_contains(
+    "CHARLS result named respondent_id is not a default identity terminal",
+    renderer_source_fixture("CHARLS",data.frame(Variable="respondent_id",processed_vars="respondent_id"),
+      source_display_raw_codebook,charls_key_source,charls_key_data),
+      "respondent_id -> respondent_id"
+  ),
+  expect_error_contains(
+    "CHARLS renderer still rejects genuine business dependency cycles",
+    renderer_source_fixture("CHARLS",data.frame(Variable="result",processed_vars="middle"),
+      source_display_raw_codebook,data.frame(Variable="middle",processed_vars="result"),
+      charls_key_data), "result -> middle -> result"
+  ),
+  expect_error_contains(
+    "CHARLS default identity exception is not granted to ELSA",
+    renderer_source_fixture("ELSA",charls_key_result,source_display_raw_codebook,
+      charls_key_source,charls_key_data), "result -> respondent_id -> respondent_id"
+  ),
   expect_error_contains(
     "HRS requires an explicit cycle order",
     render_definition_bundle(database = "HRS"),
@@ -487,6 +545,17 @@ checks <- list(
       c(test_var = "回答来自 <code>da005</code>。")
     ),
     TRUE
+  ),
+  expect_identical(
+    "official name retained rather than download alias",
+    criteria_render_inline_code("题义（`OFFICIAL_A`）"),
+    "题义（<code>OFFICIAL_A</code>）"
+  ),
+  expect_error_contains(
+    "official source name with file suffix is checked as a variable",
+    validate_criteria_markup(criteria_item(criteria_value("OFFICIAL_A")),
+      unique(c("download_alias", "result", trimws(sub("[[:space:]]*\\(.*$", "", "OFFICIAL_A (File)"))))),
+    "变量名标成了数据取值"
   ),
   expect_error_contains(
     "criteria value inline code rejected",
@@ -768,131 +837,37 @@ for (periods in list(2011L, c(2011L, 2013L))) {
 }
 cat("single/multiple period and variable count fixtures PASS\n")
 
-for (database in c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "CHNS", "NHANES")) {
-  source_fixture <- render_summary_selection_paragraph(definition_source_entry(
-    list(path = "Core data > Social isolation/loneliness", note = "；另用 pscede。"), database), "#005A9C")
-  route <- if (database == "NHANES") '/home/' else paste0('/home/', tolower(database), '/')
-  expected_href <- paste0(route, '?nav=Core%20data%3ESocial%20isolation%2Floneliness')
-  stopifnot(grepl(expected_href, source_fixture, fixed = TRUE))
-  if (database == "NHANES") stopifnot(!grepl('/home/nhanes/', source_fixture, fixed = TRUE))
-  stopifnot(grepl('</a> 进入检索和查看。另用 pscede。', source_fixture, fixed = TRUE))
-  stopifnot(!grepl('nav=[^"]*pscede', source_fixture))
+# Retired navigation inputs must not affect the generated note section.
+entry <- list(paragraphs = list(
+  list(parts = list("本主题定义测试结果。")),
+  list(type = "code_tree", text = "测试结果\n└─ 测试成分", label = "结果关系")))
+questionnaire <- list(class = "raw-source-structure", lines = list("测试问卷题干。"))
+legacy_sources <- list(NULL, "Core > ADL", c("Core > ADL", "Core > IADL"),
+  list(path = "Core > ADL", variable_count = 88, language = "en"),
+  list(lines = list("本主题在数据中对应 88 个原始变量，可从目录进入检索。")))
+for (selection in list(NULL, questionnaire)) {
+  expected <- render_summary_note_section(entry, selection, "#005A9C",
+    insight_items = "1. 测试结果说明。", definition_basis = "测试定义依据。")
+  for (source in legacy_sources) {
+    actual <- render_summary_note_section(entry, selection, "#005A9C",
+      insight_items = "1. 测试结果说明。", definition_basis = "测试定义依据。",
+      summary_source = source)
+    stopifnot(identical(actual, expected),
+      !any(grepl("raw-source-link|source-directory-tree|进入检索|88 个原始变量", actual)),
+      any(grepl('data-summary-tree="true"', actual, fixed = TRUE)),
+      any(grepl("测试成分", actual, fixed = TRUE)),
+      "## 定义依据" %in% actual,
+      any(grepl('data-summary-insight-card="true"', actual, fixed = TRUE)),
+      identical("## 问卷" %in% actual, !is.null(selection)))
+  }
 }
-punctuated_path <- "Core data > Disabilities: activities. aids used; sources of help; who pays"
-for (language in c("en", "ko")) {
-  linked_klosa <- render_summary_selection_paragraph(definition_source_entry(
-    list(path="Core data > Demographics", language=language), "KLoSA"), "#CE7095")
-  stopifnot(grepl(paste0('/home/klosa/', language, '/?nav='), linked_klosa, fixed=TRUE))
+# Older summary entry APIs also keep content without injecting navigation.
+for (type in c("directory", "search")) {
+  actual <- render_summary_entry_paragraph(list(type = type, paths = "Core > ADL",
+    keyword = "ADL", count = 88, description = "测试定义内容。"), "#005A9C")
+  stopifnot(identical(actual, "测试定义内容。"))
 }
-expect_error_contains("KLoSA language cannot be guessed", render_summary_selection_paragraph(
-  definition_source_entry("Core data > Demographics", "KLoSA"), "#CE7095"), "explicit language")
-linked <- render_summary_selection_paragraph(definition_source_entry(
-  list(path = punctuated_path, note = "；另用其它来源。"), "CHARLS"), "#005A9C")
-stopifnot(grepl("%3B", linked, fixed = TRUE), grepl("</a> 进入检索和查看。另用其它来源。", linked, fixed = TRUE))
-expect_error_contains("multiline source is rejected", render_summary_selection_paragraph(
-  definition_source_entry("Core data > ADL\nextra", "CHARLS"), "#005A9C"), "put explanatory text in note")
-stopifnot(grepl('href="/home/elsa/', render_summary_selection_paragraph(
-  definition_source_entry("Core data > Loneliness", "ELSA"), "#005A9C"), fixed = TRUE))
-counted_source <- render_summary_selection_paragraph(definition_source_entry(
-  list(path = punctuated_path, variable_count = 77), "CHARLS"), "#005A9C")
-stopifnot(grepl("以上问卷问题在数据中对应", counted_source, fixed = TRUE),
-          grepl('对应 77 个原始变量', counted_source, fixed = TRUE),
-          grepl('</a> 进入检索和查看。', counted_source, fixed = TRUE),
-          !grepl('nav=[^"]*77', counted_source),
-          !grepl('data-summary-count=', counted_source, fixed = TRUE))
-stopifnot(grepl("以上问卷问题对应的原始变量", linked, fixed = TRUE),
-          !grepl('data-summary-count=', linked, fixed = TRUE))
-for (bad_count in list(0, -1, 1.5, NA_real_, Inf, "77", c(1, 2))) {
-  expect_error_contains("unverified or invalid variable count", definition_source_entry(
-    list(path = punctuated_path, variable_count = bad_count)), "verified positive integer")
-}
-# Count full source identities, not periods, aliases, or unused dictionary rows.
-source_map <- data.frame(Variable = c("v (file_a)", "v (file_a)", "v (file_b)", "unused (file_c)"),
-  newname = c("a", "a_again", "b", "unused"))
-source_n <- definition_source_count(c("a", "a", "a_again", "b"), source_map, "ELSA")
-stopifnot(source_n == 2L)
-expect_error_contains("missing identity", definition_source_count("absent", source_map, "ELSA"), "missing or ambiguous")
-ambiguous <- rbind(source_map, data.frame(Variable = "other (file_a)", newname = "a"))
-expect_error_contains("ambiguous alias", definition_source_count("a", ambiguous, "ELSA"), "missing or ambiguous")
-expect_error_contains("stale manual count", definition_source_entry(
-  list(path = "Core data > ADL", variable_count = 77), "CHARLS", source_n), "differs")
-auto_source <- render_summary_selection_paragraph(definition_source_entry(
-  c("Core data > ADL", "Core data > Physical function"), "CHARLS", source_n), "#005A9C")
-stopifnot(grepl('对应 2 个原始变量', auto_source, fixed = TRUE),
-  grepl('data-source-directory-tree="true"', auto_source, fixed = TRUE),
-  length(regmatches(auto_source, gregexpr('href=', auto_source))[[1]]) == 3L)
-# Shared prefixes merge, while complete navigation targets and selected ancestors survive.
-source_paths <- c("A > B > C & D", "A > B > E/F", "A > B", "Z > B > C & D")
-source_tree <- definition_source_tree(c(source_paths, " A>B>E/F "))
-tree_paths <- function(nodes, selected_only = FALSE) {
-  unlist(lapply(nodes, function(node) c(
-    if (!selected_only || node$source_entry) node$path,
-    tree_paths(node$children, selected_only))), use.names = FALSE)
-}
-stopifnot(setequal(tree_paths(source_tree, TRUE), source_paths),
-  !anyDuplicated(tree_paths(source_tree)), length(source_tree) == 2L,
-  identical(source_tree[[1]]$children[[1]]$label, "B"),
-  isTRUE(source_tree[[1]]$children[[1]]$source_entry))
-tree_html <- render_summary_selection_paragraph(definition_source_entry(
-  list(path = source_paths, note = "；保留既有说明。"), "NHANES", 113, FALSE), "#005A9C")
-for (path in source_paths) {
-  target <- paste0('/home/?nav=', URLencode(gsub(" > ", ">", path, fixed = TRUE), reserved = TRUE))
-  stopifnot(grepl(target, tree_html, fixed = TRUE))
-}
-stopifnot(grepl('C &amp; D</a>', tree_html, fixed = TRUE),
-  grepl('本主题在数据中对应 113 个原始变量', tree_html, fixed = TRUE),
-  grepl('保留既有说明。', tree_html, fixed = TRUE),
-  length(regmatches(tree_html, gregexpr('data-source-entry="true"', tree_html, fixed = TRUE))[[1]]) == 4L)
-flat <- render_summary_selection_paragraph(definition_source_entry(
-  c("A > Same", "Z > Same"), "CHARLS", 2), "#005A9C")
-stopifnot(!grepl('source-directory-tree', flat, fixed = TRUE),
-  grepl('可分别从', flat, fixed = TRUE),
-  grepl('A &gt; Same</a>', flat, fixed = TRUE),
-  grepl('Z &gt; Same</a>', flat, fixed = TRUE))
-# Duplicate spellings alone do not create a branch; a selected parent stays reachable.
-stopifnot(is.null(definition_source_tree(c("A > B", "A>B"))),
-          !is.null(definition_source_tree(c("A", "A > B"))))
-duplicate_flat <- render_summary_selection_paragraph(definition_source_entry(
-  c("A > B", " A>B "), "NHANES", 2), "#005A9C")
-stopifnot(!grepl('source-directory-tree', duplicate_flat, fixed=TRUE),
-  length(regmatches(duplicate_flat, gregexpr('href=', duplicate_flat))[[1]]) == 1L)
-for (bad_path in c("A >> B", "A >", "> A")) {
-  expect_error_contains("empty directory level", definition_source_entry(bad_path), "empty directory level")
-}
-for (language in c("en", "ko")) {
-  source_html <- render_summary_selection_paragraph(definition_source_entry(
-    list(path = c("Core > A", "Core > B"), language = language), "KLoSA", 2), "#005A9C")
-  stopifnot(grepl(paste0('/home/klosa/', language, '/?nav=Core%3EB'), source_html, fixed = TRUE))
-}
-cat("source directory tree and flat paths PASS\n")
-# Compress single-child chains at any depth without losing linked ancestors.
-chain_paths <- c("根 > 分支 > 甲 > 中间 > 末级", "根 > 分支 > 乙 > 终点一",
-                 "根 > 分支 > 乙 > 终点二", "根 > 分支 > 甲")
-chain_nodes <- definition_source_tree(chain_paths)
-chain_html <- render_summary_selection_paragraph(definition_source_entry(
-  chain_paths, "NHANES", 4, FALSE), "#005A9C")
-stopifnot(setequal(tree_paths(chain_nodes, TRUE), chain_paths),
-  length(regmatches(chain_html, gregexpr('data-source-entry="true"', chain_html, fixed=TRUE))[[1]]) == 4L,
-  length(regmatches(chain_html, gregexpr('data-source-directory-row="true"', chain_html, fixed=TRUE))[[1]]) == 5L,
-  !grepl('[\r\n]', chain_html),
-  grepl('data-tree-role="connector"', chain_html, fixed=TRUE),
-  grepl('├─ ', chain_html, fixed=TRUE), grepl('└─ ', chain_html, fixed=TRUE),
-  !grepl('border-', chain_html, fixed=TRUE),
-  length(regmatches(chain_html, gregexpr('href=', chain_html, fixed=TRUE))[[1]]) == length(tree_paths(chain_nodes)),
-  # raw-source-link must remain the only div so the existing review extractor sees every link.
-  length(regmatches(chain_html, gregexpr('</div>', chain_html, fixed=TRUE))[[1]]) == 1L)
-continuation_html <- render_summary_selection_paragraph(definition_source_entry(
-  c("R > A > B", "R > A > C", "R > D"), "NHANES", 3, FALSE), "#005A9C")
-stopifnot(grepl('│  ', continuation_html, fixed=TRUE), !grepl('[\r\n]', continuation_html))
-cat("source directory single-child chains PASS\n")
-legacy_source <- definition_source_entry(list(lines = list("既有来源说明")), "CHARLS", source_n)
-stopifnot(length(legacy_source$lines) == 2L)
-cat("source path and note separation PASS\n")
-
-no_question_source <- render_summary_selection_paragraph(definition_source_entry(
-  "Core data > Demographics", "CHARLS", 2, questionnaire_shown = FALSE), "#005A9C")
-stopifnot(grepl("本主题在数据中对应 2 个原始变量", no_question_source, fixed = TRUE),
-          !grepl("以上问卷", no_question_source, fixed = TRUE))
+cat("retired source navigation omitted; questionnaire, relationship tree and notes retained PASS\n")
 
 for (variant in c("standard", "compact")) {
   expected_items <- c("1. 第一项。\n这是同一条的续行。", "2. 第二项。", "3. 第三项。")
@@ -905,8 +880,114 @@ for (variant in c("standard", "compact")) {
 }
 
 report <- list(ok = TRUE, checks = checks, questionnaire_html = question_layout_fixture)
+nhis <- data.frame(ID=c("1968FY:adult:1","1968CY:adult:1"),Wave_id=c("1968FY","1968CY"),Survey_year="1968",value=c(10,NA_real_))
+validate_nhis_render_inputs(list(nhis),c("1968FY","1968CY"),"nhis_pre1997")
+expect_error_contains("NHIS wrong data set",validate_nhis_render_inputs(list(nhis),c("1968FY","1968CY"),"nhis_2019_plus"),"Invalid NHIS")
+expect_error_contains("NHIS default year mismatch",validate_nhis_render_inputs(list(transform(nhis,Survey_year="1969")),c("1968FY","1968CY"),"nhis_pre1997"),"Invalid NHIS")
+nhis$Survey_period <- nhis$Wave_id
+nhis_facts <- build_summary_facts(nhis,data.frame(Variable="value",original_vars="source",Label="Value"),
+  c(value="值"),c(value="人口学"),c(value=TRUE),period_col="Survey_period",expected_periods=c("1968FY","1968CY"))
+stopifnot(identical(nhis_facts$period,"1968FY"),identical(nhis_facts$coverage_period_count,1L))
+check_public_reads <- file.path(repo_root,"scripts","check_public_raw_reads.R")
+eval(parse(file=check_public_reads,encoding="UTF-8"))
+check_public_raw_reads(c('dt <- read.csv("raw_data.csv", colClasses=c(ID="character",Wave_id="character",Survey_year="character"))',
+  'name_z <- read.csv("raw_codebook.csv")'),"NHIS")
+expect_error_contains("NHIS raw keys must be character",check_public_raw_reads(c('dt <- read.csv("raw_data.csv")','name_z <- read.csv("raw_codebook.csv")'),"NHIS"),"NHIS must preserve")
+# HRS Tracker default identity reader: package and record must agree.
+local({
+  hrs_reader_fixture <- tempfile("hrs_reader_")
+  dir.create(hrs_reader_fixture)
+  on.exit(unlink(hrs_reader_fixture, recursive = TRUE))
+  tracker <- "TRACKER_FILE_HRS_2022_EARLY_RELEASE_TRACKER_FILE_VERSION_2_RESPONDENT"
+  defaults <- c("OVHHID", "OVPN", "OVRESULT", "OVYEAR")
+  source_identity <- paste0("APROXY (", tracker, ")")
+  record_path <- file.path(hrs_reader_fixture, "record.json")
+  write_fixture <- function(file = tracker, header = c("HHID", "PN", defaults, "proxy92"),
+                            record_db = "HRS", record_file = tracker,
+                            record_defaults = defaults, business = TRUE, record_business = TRUE) {
+    dictionary <- data.frame(Variable = if (business) paste0("APROXY (", file, ")") else paste0("OVHHID (", file, ")"))
+    write.csv(dictionary, file.path(hrs_reader_fixture, "raw_codebook.csv"), row.names = FALSE)
+    raw <- as.data.frame(setNames(rep(list("001"), length(header)), header), check.names = FALSE)
+    write.csv(raw, file.path(hrs_reader_fixture, "raw_data.csv"), row.names = FALSE)
+    groups <- list(list(source_identities = as.list(paste0(record_defaults, " (", record_file, ")")),
+                        raw_variables = as.list(record_defaults)))
+    if (record_business) groups <- c(groups, list(list(source_identities = list(source_identity), raw_variables = list("proxy92"))))
+    write_json(list(database = record_db, source_groups = groups), record_path, auto_unbox = TRUE)
+  }
+  reader <- function(extra = c(OVHHID = "character", OVPN = "character"), database = "HRS", record = record_path) {
+    classes <- c(HHID = "character", PN = "character", extra)
+    code <- paste0('dt <- read.csv("raw_data.csv", colClasses=c(',
+      paste(sprintf('%s="%s"', names(classes), classes), collapse = ","), '))')
+    check_public_raw_reads(c(code, 'name_z <- read.csv("raw_codebook.csv")'), database,
+      source_dir = hrs_reader_fixture, source_record_path = record)
+  }
+  reject <- function(label, expression) expect_error_contains(label, expression, "identity columns")
+  write_fixture()
+  reader(); reader(c(OVHHID = "character")); reader(c(OVPN = "character"))
+  reader(character(), record = "") # HRS without OV keys keeps its existing optional contract.
+  raw <- read.csv(file.path(hrs_reader_fixture, "raw_data.csv"),
+    colClasses = c(HHID = "character", PN = "character", OVHHID = "character", OVPN = "character"))
+  stopifnot(identical(raw$OVHHID, "001"), identical(raw$OVPN, "001"))
+  reject("HRS no source record", reader(record = ""))
+  for (field in c("OVRESULT", "OVYEAR", "proxy92"))
+    reject(paste("HRS nonidentity", field), reader(setNames("character", field)))
+  reject("HRS wrong character type", reader(c(OVHHID = "numeric")))
+  reject("other database OV keys", reader(database = "CHARLS"))
+  write_fixture(file = "OTHER_FILE"); reject("non Tracker file", reader())
+  write_fixture(business = FALSE); reject("defaults only dictionary", reader())
+  write_fixture(record_business = FALSE); reject("record missing selected business source", reader())
+  write_fixture(record_db = "ELSA"); reject("wrong record database", reader())
+  write_fixture(record_file = "OTHER_FILE"); reject("fake default identity", reader())
+  write_fixture(record_defaults = defaults[-4]); reject("incomplete declared defaults", reader())
+  for (field in defaults) {
+    write_fixture(header = c("HHID", "PN", setdiff(defaults, field), "proxy92"))
+    reject(paste("missing actual default", field), reader())
+  }
+  write_fixture()
+  unlink(file.path(hrs_reader_fixture, "raw_data.csv")); reject("no raw header evidence", reader())
+  write_fixture()
+  unlink(file.path(hrs_reader_fixture, "raw_codebook.csv")); reject("no dictionary evidence", reader())
+  cat("HRS Tracker default identity reader fixtures PASS\n")
+})
+
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 1 && nzchar(args[1])) {
   write_json(report, args[1], pretty = TRUE, auto_unbox = TRUE)
 }
 cat("summary helper fixtures PASS\n")
+
+local({
+p <- c("2001-2003", "2002-2005", "2006-2008", "2008-2009", "2019", "2022")
+book <- data.frame(Variable="x", original_vars="raw_x", Label="结果")
+db <- data.frame(year=p, x=c(1,NA,1,NA,0,1))
+make_facts <- function(periods=p, mode="hrs_original", frame=db) build_summary_facts(
+  frame, book, c(x="结果"), c(x="定义"), c(x=TRUE), period_col="year",
+  expected_periods=periods, period_mode=mode)
+original <- db
+facts <- make_facts()
+stopifnot(identical(db,original), !grepl("NA", facts$period, fixed=TRUE),
+  grepl("2001-2003",facts$period,fixed=TRUE), grepl("2006-2008",facts$period,fixed=TRUE))
+seasons <- c("2017 Spring", "2017 Fall", "2019", "2019 Winter")
+season_db <- data.frame(year=seasons, x=c(1,0,1,NA))
+season_facts <- make_facts(seasons,frame=season_db)
+stopifnot(grepl("2017 Spring",season_facts$period,fixed=TRUE), identical(season_db$year,seasons))
+stopifnot(identical(summary_period_text("2019","",p),"2019"))
+stopifnot(identical(summary_period_text(p,"",p),"全周期"))
+reject <- function(expr) stopifnot(inherits(tryCatch({force(expr);NULL},error=identity),"error"))
+for (bad in c("2003-2001","2019 Autumn","1899","2101","2099-2101","2019.0"))
+  reject(make_facts(c(p,bad)))
+reject(make_facts(c(p,p[1])))
+reject(make_facts(p[-1]))
+reject(make_facts(mode="anything"))
+reject(make_facts(mode=NULL))
+cat("HRS_ORIGINAL_PERIOD_SUMMARY_TARGETS_PASS\n")
+})
+
+local({
+original <- c('<style>.var-name{flex-shrink:0}</style>', '<table class="hm-table"><tr><td class="card-cell"><div class="var-name-line"><span class="var-name">Very_long_defined_variable</span><span class="varlink-block"><span class="varlink-info">FULL_ORIGINAL (FULL_FILE)=alias</span></span></div></td></tr></table>')
+wrapped <- definition_wrap_source_cards(original)
+stopifnot(identical(head(wrapped,length(original)),original), length(wrapped)>length(original),
+  identical(definition_wrap_source_cards(wrapped),wrapped),
+  identical(definition_wrap_source_cards('plain unchanged HTML'),'plain unchanged HTML'))
+cat("SOURCE_CARD_LAYOUT_WRAP_FIXTURE_PASS\n")
+})

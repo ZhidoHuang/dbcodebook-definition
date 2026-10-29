@@ -11,4 +11,52 @@ x<-d;x$Wave_id[2]<-"2001";bad(validate_mhas_render_inputs(list(x),c("2001","2003
 reader <- 'dt <- read.csv("raw_data_MHAS_SURVEY_CORE_RESPONDENT.csv", colClasses=c(ID="character",UNHHIDNP="character",Wave_id="character"))'
 check_public_raw_reads(c(reader,'name_z <- read.csv("raw_codebook.csv")'),"MHAS")
 bad(check_public_raw_reads(c(sub('ID="character",','',reader,fixed=TRUE),'name_z <- read.csv("raw_codebook.csv")'),"MHAS"))
-cat("MHAS Core renderer identity and read contract PASS\n")
+ancillary <- c(
+ 'blood <- read.csv("raw_data_MHAS_ANCILLARY_ANTHROPOMETRICS_BIOMARKERS.csv", colClasses=c(ID="character",Wave_id="character",cunicah="character",np="character"))',
+ 'hair <- read.csv("raw_data_MHAS_ANCILLARY_HEAVY_METALS.csv", colClasses=c(ID="character",Wave_id="character",cunicah="character",np="character"))',
+ 'name_z <- read.csv("raw_codebook.csv")')
+check_public_raw_reads(ancillary,"MHAS")
+bad(check_public_raw_reads(c(reader,ancillary),"MHAS"))
+bad(check_public_raw_reads(sub('HEAVY_METALS','OTHER',ancillary,fixed=TRUE),"MHAS"))
+bad(check_public_raw_reads(sub('Wave_id="character",','',ancillary,fixed=TRUE),"MHAS"))
+x<-data.frame(ID=c("2012|100|10","2016|100|10","2018|200|20"),Wave_id=c("2012","2016","2018"))
+validate_mhas_render_inputs(list(x),c("2012","2016","2018"))
+bad(validate_mhas_render_inputs(list(x),c("2012","2018")))
+bad(validate_mhas_render_inputs(list(x),c("2012","2017","2018")))
+cat("MHAS Core and Ancillary renderer identities and direct-read contracts PASS\n")
+
+nok <- 'nok <- read.csv("raw_data_MHAS_SURVEY_NEXT_OF_KIN.csv", colClasses=c(ID="character",Wave_id="character",cunicah="character",acthog="character",ent2="character"))'
+check_public_raw_reads(c(reader,nok,'name_z <- read.csv("raw_codebook.csv")'),"MHAS")
+bad(check_public_raw_reads(c(nok,ancillary),"MHAS"))
+x<-data.frame(source_module=c("MHAS_SURVEY_CORE_RESPONDENT","MHAS_SURVEY_NEXT_OF_KIN"),ID=rep("2003|001|1|2",2),Wave_id=rep("2003",2))
+validate_mhas_render_inputs(list(x),"2003")
+validate_person_period_outputs(list(x),"MHAS")
+bad(validate_mhas_render_inputs(list(rbind(x,x[2,])),"2003"))
+x$source_module[2]<-"OTHER";bad(validate_mhas_render_inputs(list(x),"2003"))
+cat("MHAS Core/NOK source partitions PASS\n")
+
+x<-data.frame(source_module=c("MHAS_SURVEY_CORE_RESPONDENT","MHAS_SURVEY_NEXT_OF_KIN"),ID=rep("2003|001|1|2",2),Wave_id=rep("2003",2),core_result=c(1,NA),nok_result=c(NA,1))
+scopes<-list(MHAS_SURVEY_CORE_RESPONDENT=list(analysis_periods="2003",result_variables="core_result"),MHAS_SURVEY_NEXT_OF_KIN=list(analysis_periods="2003",result_variables="nok_result"))
+validate_mhas_analysis_scope(list(x),scopes)
+bad(validate_mhas_analysis_scope(list(x)))
+y<-x;y$Wave_id[2]<-"2018";bad(validate_mhas_analysis_scope(list(y),scopes))
+y<-x;y$core_result[2]<-1;bad(validate_mhas_analysis_scope(list(y),scopes))
+cat("MHAS module applicability and result ownership PASS\n")
+
+contract <- definition_analysis_identity_contract("MHAS", identity_keys=c("source_module","ID","Wave_id"), record_path="")
+validate_person_period_outputs(list(x),"MHAS",contract)
+bad(validate_person_period_outputs(list(x[,setdiff(names(x),"source_module")]),"MHAS",contract))
+bad(validate_mhas_analysis_scope(list(x),scopes,c("core_result","nok_result","omitted")))
+cat("MHAS explicit module identity and complete result ownership PASS\n")
+
+bad(validate_mhas_analysis_scope(list(x[,setdiff(names(x),"source_module")]),scopes))
+record_file <- tempfile(fileext=".json")
+jsonlite::write_json(list(mhas_analysis_scope=scopes),record_file,auto_unbox=FALSE)
+old_record <- Sys.getenv("DBCODEBOOK_DEFINITION_SOURCE_RECORD")
+Sys.setenv(DBCODEBOOK_DEFINITION_SOURCE_RECORD=record_file)
+validate_mhas_analysis_scope(list(x),scopes)
+wrong_scopes <- scopes; wrong_scopes[[1]]$analysis_periods <- "2001"
+bad(validate_mhas_analysis_scope(list(x),wrong_scopes))
+Sys.setenv(DBCODEBOOK_DEFINITION_SOURCE_RECORD=old_record)
+unlink(record_file)
+cat("MHAS bound source scope consistency PASS\n")

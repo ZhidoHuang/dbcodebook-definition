@@ -221,6 +221,33 @@ class DisplayAnswersTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             read_questionnaire_copy(text.replace('DN004 相同','DN0040 相同'))
 
+        # A jump target at one block's end must not join the next declaration's
+        # first identifier. The jump skips DN006; all three share options.
+        routed = evidence(['Wave 1'], qid='DN004', jump=False)
+        first = routed['questionnaire_evidence'][0]
+        first['skip_logic'] = [{'when': '5 No', 'destination': 'DN007'}]
+        first['display']['skip_logic'] = [
+            {'source_index': 0, 'when': '5 否', 'destination': '跳至 DN007'}]
+        for qid in ('DN006', 'DN007'):
+            later = copy.deepcopy(evidence(['Wave 1'], qid=qid, jump=False)['questionnaire_evidence'][0])
+            routed['questionnaire_evidence'].append(later)
+        routed_text = ('### Wave 1\n问卷设计说明。\n\n#### DN004\n请回答这个问题。\n'
+                       '- 1 是\n- 5 否 → 跳至 DN007\n'
+                       'DN006、DN007 的选项与 DN004 相同。\n\n'
+                       '#### DN006\n请回答这个问题。\n\n'
+                       '#### DN007\n请回答这个问题。\n')
+        self.check_both(routed_text, routed, True)
+        invalid_scope = routed_text.replace('DN006、DN007 的选项', 'DN099、DN007 的选项')
+        with self.assertRaisesRegex(ValueError, '共同选项说明须列出'):
+            read_questionnaire_copy(invalid_scope)
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)
+            (path/'definition_search_record.json').write_text(json.dumps(routed), encoding='utf-8')
+            (path/'note.md').write_text(markup(routed_text).replace(
+                'DN006、DN007 的选项', 'DN099、DN007 的选项'), encoding='utf-8')
+            with self.assertRaisesRegex(ValueError, '共同选项说明须列出'):
+                validate_questionnaire_rendering(path, path, 'note.md')
+
     def test_same_wave_different_chinese_modules(self):
         ref = 'DN014 的两个选项与 Wave 1 的 DN014 相同。'
         text = block('Wave 1：出生模块', route=False).replace('#### DN014\n','#### DN004_CountryOfBirth\n')

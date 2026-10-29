@@ -52,12 +52,15 @@ def main():
     fixture = r'''
 const assert = require('node:assert/strict');
 const run = ACTION_CODE;
+const resumeRun = RESUME_CODE;
+const resumeInputRun = RESUME_INPUT_CODE;
 const loginStatus = LOGIN_STATUS_CODE;
 const loginOpen = LOGIN_OPEN_CODE;
 async function scenario(options = {}) {
   const calls = [];
+  let selectionSubmitted = false;
   const locator = selector => ({
-    count: async () => selector === '#tag-area .tag' ? (options.count ?? 2) : 1,
+    count: async () => selector === '#tag-area .tag' ? (options.resumeInput && selectionSubmitted ? 2 : (options.count ?? 2)) : 1,
     evaluateAll: async fn => {
       let rows = [{variable:'q1',file:'Core data',alias:'q1'},
                   {variable:'q1',file:'Other file',alias:'q1_other'}];
@@ -71,11 +74,13 @@ async function scenario(options = {}) {
       })));
     },
     isVisible: async () => !!options.open,
+    inputValue: async () => options.wrongInput ? 'unrelated input' : __INPUT_TEXT__,
     waitFor: async () => {if (options.stuck) throw Error('still loading');},
     fill: async value => {assert.equal(value, __INPUT_TEXT__); calls.push('fill');},
     click: async () => {
       calls.push(selector);
       if (selector.includes('confirm')) assert.ok(calls.includes('listen'));
+      if (selector.includes('confirm')) selectionSubmitted = true;
     }
   });
   const page = {
@@ -90,19 +95,20 @@ async function scenario(options = {}) {
       calls.push('listen');
       const response = {
         url: () => 'http://localhost:8000/home/elsa/validate_tags/',
-        request: () => ({method: () => 'POST'}),
+        request: () => ({method: () => 'POST',postDataJSON:()=>({tags:['q1','q1_other']})}),
         ok: () => true,
         json: async () => options.reject ? {valid_tags:[{}],invalid_tags:['missing']} :
           options.malformed ? {} : {valid_tags:[{},{}],invalid_tags:[]}
       };
       assert.ok(predicate(response));
+      assert.equal(predicate({...response,request:()=>({method:()=> 'POST',postDataJSON:()=>({validate_names:true})})}),false);
       assert.equal(predicate({...response,url:()=> 'http://other/home/elsa/validate_tags/'}),false);
       if (options.timeout) throw Error('timeout');
       return response;
     }
   };
   const result = await (options.mode === 'login-status' ? loginStatus :
-    options.mode === 'login-open' ? loginOpen : run)(page);
+    options.mode === 'login-open' ? loginOpen : options.resumeInput ? resumeInputRun : options.resume ? resumeRun : run)(page);
   assert.ok(calls.filter(x => x.includes('confirm')).length <= 1);
   return {result,calls};
 }
@@ -126,11 +132,26 @@ async function scenario(options = {}) {
   assert.equal(login.result.status,'LOGIN_REQUIRED');
   assert.deepEqual(login.calls,['.auth-panel-trigger[data-mode="login"]:visible']);
   assert.deepEqual((await scenario({mode:'login-open'})).calls,[]);
+  const resumed = await scenario({resume:true});
+  assert.equal(resumed.result.status,'SELECTION_READY');
+  assert.deepEqual(resumed.calls,[], 'Observing selection must not refill or submit');
+  for (const [opts,status] of [
+    [{resumeInput:true,open:true,count:0},'SELECTION_READY'],
+    [{resumeInput:true,open:true,count:0,wrongInput:true},'INPUT_CONTENT_MISMATCH'],
+    [{resumeInput:true,open:true,count:2},'INPUT_RESUME_SELECTION_PRESENT'],
+    [{resumeInput:true,open:false,count:0},'INPUT_DIALOG_NOT_OPEN']]) {
+    const {result,calls} = await scenario(opts);
+    assert.equal(result.status,status);
+    assert.ok(!calls.includes('fill') && !calls.includes('open'));
+    assert.equal(calls.filter(x=>x.includes('confirm')).length,status==='SELECTION_READY'?1:0);
+  }
 })().catch(error => {console.error(error);process.exitCode=1;});
 '''
     with tempfile.TemporaryDirectory() as folder:
         test = Path(folder) / 'test.cjs'
         test.write_text(fixture.replace('ACTION_CODE', browser_code(action, 'select'))
+                        .replace('RESUME_CODE', browser_code({**action, 'selection_resume': True}, 'select'))
+                        .replace('RESUME_INPUT_CODE', browser_code({**action, 'selection_input_resume': True}, 'select'))
                         .replace('LOGIN_STATUS_CODE', browser_code({'url': action['url']}, 'login-status'))
                         .replace('LOGIN_OPEN_CODE', browser_code({'url': action['url']}, 'login-open'))
                         .replace('__INPUT_TEXT__', json.dumps(action['input_text'])), encoding='utf-8')

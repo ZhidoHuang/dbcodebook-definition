@@ -32,7 +32,7 @@
 - 原变量名简短易懂时可以保留；需要改善可读性时可设简短别名，完整原始身份仍保存在来源记录和映射中。
 - 合理词干可以保留；区分来源身份、跨期合并关系及重复成员所需的词干和后缀，按下节确定。
 - 不把处理步骤或解释性长句塞进变量名，也不能删掉区分即时/延迟、状态/数量、单项/汇总等含义所需的核心维度。
-- 最终结果按[最终分析变量命名](01-source-plan.md#最终分析变量命名)区分模块前缀与常用分析变量前缀，不套用到来源变量。
+- 最终结果按[最终分析变量命名](01-source-plan.md#最终分析变量命名)使用模块前缀，不套用到来源变量。
 
 ### 1.2 来源别名必须在下载前确定
 
@@ -48,6 +48,7 @@
 - 按成员编号重复展开的变量按完整变量族处理。
 - 只要其中一个成员需要调查时期、模块或来源后缀，整组成员都使用同一后缀；不得只给发生重名的个别成员改名。
 - 完整别名模式和编号范围写入 `definition_search_record.json` 的 `alias_families`。
+- 连续数字成员用 `template`（含 `{n}`）与整数 `start/end`；字母、跳号或不连续成员用 `members` 明确列出全部最终别名，两种声明不混用。逐成员仍核对存在、唯一及不同族不重叠；原始槽位是否完整由实际目录和问卷证据判断。
 - 最终别名在 dbCodeBook 页面选择变量时设置。
 - 重新下载后的 `raw_data.csv` 和 `raw_codebook.csv` 必须直接带有这些别名；不得下载后修改 CSV 表头，也不得在正式 R 中复制、改名或按列位置制造别名。
 - 正式 raw、codebook、公开 R、mapping 和完整定义链路保留每个来源的完整别名。
@@ -129,9 +130,9 @@ ztooth (health status and functioning)=ztooth
 | `SELECTION_READY` | 选择完成，继续已有下载步骤；仍须通过原有包内来源核对 |
 | `LOGIN_REQUIRED` | 按共用登录步骤交还用户，登录后再执行选择 |
 | `SOURCE_REJECTED` / `SELECTION_COUNT_MISMATCH` / `SELECTION_CONTENT_MISMATCH` | 不下载；只调查返回的缺项、身份、别名或数量差异，需要修改方案时返回来源探索 |
-| `INPUT_DIALOG_ALREADY_OPEN` | 保留现场，确认是本任务未提交的输入后关闭，再运行固定动作 |
+| `INPUT_DIALOG_ALREADY_OPEN` | 保留现场。输入已完整填好、尚未提交且标签区为空时，在原动作副本中加 `selection_input_resume=true`；固定入口逐字核对输入后只确认一次。不符合时保留现场核实，不覆盖其它输入 |
 | `WRONG_PAGE` / 控件变化 / 登录状态未知 | 核实绑定页或页面结构，不换页猜选项 |
-| `SELECTION_UNCERTAIN` / `SESSION_UNAVAILABLE_OR_UNCERTAIN` | 保存结果并检查原页是否仍在处理；未确认结束前不重发。已结束但状态不明时重新按完整清单选择，不触发下载 |
+| `SELECTION_UNCERTAIN` / `SESSION_UNAVAILABLE_OR_UNCERTAIN` | 保存结果并检查原动作。动作未结束时不重发；已结束且页面已有本批标签时，在原动作中加 `selection_resume=true`，用同一固定入口等待加载并核对完整身份和别名，不重复输入或确认。确实尚未选择时，才按完整清单重新选择，不触发下载 |
 
 - 此入口适用于已配置数据库的现有批量输入页面。NHANES 普通来源的完整身份为 `Variable (常规(唯一SEQN))`，固定入口核对 `data-source-type`；其他来源类型不在当前接入范围。
 - 已有独立 `Variable (File)=alias` 清单仍可用兼容参数 `--input`，新流程不再另抄一份。
@@ -231,7 +232,7 @@ $Action = "$Process/download_action.json"
 | status / logic_review.result | READY；clear 或 reported_and_resolved，未决问题不得掩盖 | 继续保留真实结论 |
 | directory_entries / discovery.value | 网页分支：完整 UI 路径且 verified_in_ui=true；本地分支：按[本地证据接口](../local-source-evidence.md)绑定查询结果，不冒称网页观察；discovery 指向已登记条目 | 保留同一来源身份 |
 | 单期 source_group | handling_decision=single_period | 与实际时期核对 |
-| questionnaire_evidence | 完整题文，或符合[题意概括条件](../evidence-and-literature.md#questionnaire-evidence)的已核实概括；两者均须核实必要选项和路径；材料位置按该节的 `local_material_scope` 和 `local_material_path` 登记 | 文案完成后：需展示项的rendered_in_copy=true、copy_locator指向实际文案；省略项按[文案程序操作](../copy-update.md#copy-operations)登记，研究证据仍保留 |
+| questionnaire_evidence | 完整题文，或符合[题意概括条件](../evidence-and-literature.md#questionnaire-evidence)的已核实概括；两者均须核实必要选项和路径；材料位置按该节的 `local_material_scope` 和 `local_material_path` 登记 | 文案完成后：需展示项的rendered_in_copy=true、copy_locator指向实际文案；省略项按[问卷证据登记](../copy/questionnaire.md#问卷证据登记)登记，研究证据仍保留 |
 | questionnaire_path_closure | 真实进入/退出条件；未知人数和统计结论用 null | 下载后数据核实、正式 R 前：observed_count 为非负整数，unexplained_count=0，实际闭合有依据 |
 | human_record / evidence_steps | 探索记录存在同号 S001 等步骤标题 | 沿用可追溯步骤，不为过检查编造观察 |
 

@@ -105,7 +105,7 @@ with tempfile.TemporaryDirectory() as temp:
         "--output", root / "a.md", "--evidence", "test", ok=False)
     assert saved.read_bytes() == initial
     cli("exploration-start", "--process-dir", process, "--input", request)
-    assert len(json.loads(saved.read_text(encoding="utf-8"))["exploration_history"]) == 1
+    assert "exploration_history" not in json.loads(saved.read_text(encoding="utf-8"))
     # Synthetic completed sessions stand in for the independently tested log importer.
     current = json.loads(saved.read_text(encoding="utf-8"))
     current["reviews"] = copy.deepcopy(report["reviews"])
@@ -127,7 +127,7 @@ with tempfile.TemporaryDirectory() as temp:
     cli("exploration-merge", "--process-dir", process, "--record", plan,
         "--decision", decision, "--result", "ready")
     cli("exploration-check", "--process-dir", process, "--record", plan)
-    assert json.loads(saved.read_text(encoding="utf-8"))["exploration"]["merge_history"][0]["status"] == "blocked"
+    assert "merge_history" not in json.loads(saved.read_text(encoding="utf-8"))["exploration"]
     # A separate continuation explicitly reuses frozen evidence, never its merge.
     source = root / "prior-report.json"
     source.write_bytes(saved.read_bytes())
@@ -191,7 +191,7 @@ with tempfile.TemporaryDirectory() as temp:
     assert inherited["exploration"]["branches"] == original["exploration"]["branches"]
     assert inherited["exploration"]["from_report"] == str(source.resolve())
     assert inherited["exploration"]["from_report_hash"] and inherited["exploration"]["reused_at"]
-    assert inherited["exploration_history"][-1] == pending["exploration"]
+    assert "exploration_history" not in inherited
     assert "merge" not in inherited["exploration"]
     for role in ROLES.values():
         for field in ("started_at", "finished_at", "inputs", "agent_id"):
@@ -204,9 +204,27 @@ with tempfile.TemporaryDirectory() as temp:
     source.write_bytes(original_bytes + b"\n")
     cli("exploration-check", "--process-dir", continued, ok=False)
     source.write_bytes(original_bytes)
-    # Updating a branch clears the ready verdict, preserving the earlier decision.
+    # Updating a branch clears the old ready verdict.
     cli("exploration-result", "--process-dir", process, "--branch", "a", "--agent-id", "a",
         "--output", root / "a.md", "--evidence", "Updated fixture result")
     cli("exploration-check", "--process-dir", process, ok=False)
+
+    cli("exploration-merge", "--process-dir", process, "--record", plan,
+        "--decision", decision, "--result", "ready")
+    finished = json.loads(saved.read_text(encoding="utf-8"))
+    finished["status"] = "completed"  # Synthetic fixture; no production completion claim.
+    saved.write_text(json.dumps(finished), encoding="utf-8")
+    cli("init", "--process-dir", process, "--database", "test", "--topic-id", "001",
+        "--topic-name", "fixture", "--task", "continue", "--workflow", "general")
+    cli("exploration-check", "--process-dir", process, "--record", plan)
+    assert not (process / "archived_runs").exists()
+    (root / "a.md").write_text("changed evidence", encoding="utf-8")
+    cli("exploration-check", "--process-dir", process, "--record", plan, ok=False)
+    invalid = json.loads(saved.read_text(encoding="utf-8"))
+    invalid["status"] = "stopped"
+    saved.write_text(json.dumps(invalid), encoding="utf-8")
+    cli("init", "--process-dir", process, "--database", "test", "--topic-id", "001",
+        "--topic-name", "fixture", "--task", "continue invalid", "--workflow", "general")
+    cli("exploration-check", "--process-dir", process, "--record", plan, ok=False)
 
 print("DUAL_EXPLORATION_TESTS_PASS: independent completion, stale inputs/results/plan, dynamic observations, legacy, truthful CLI, explicit frozen reuse and conflicts")

@@ -11,7 +11,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from check_reader_copy import compare_content, read_copy, validate_note, require_equal, criteria_fields, read_questionnaire_copy
+from check_reader_copy import compare_content, read_copy, validate_note, require_equal, criteria_fields, read_questionnaire_copy, sections
 
 
 def rejects(action, reason):
@@ -40,6 +40,37 @@ def render_note(content):
 
 
 def main():
+    from check_reader_copy import format_category_label, format_copy_categories
+    assert format_category_label("  less   than 1 ") == "Less than 1"
+    assert format_category_label("with COPD") == "With COPD"
+    assert format_category_label("  McDonald ") == "McDonald"
+    fields = {"A": {"分类": "- [less than 1]：少于一次\n- [About usual]：照常"}}
+    tree_source = "[[result:A|类别]] [[meta:（少于一次／照常）]]"
+    assert format_copy_categories(fields, tree_source) == tree_source
+    assert "[Less than 1]" in fields["A"]["分类"]
+    binary = "[[result:A|类别]] [[meta:（0/1）]]"
+    assert format_copy_categories(fields, binary) == binary
+    rejects(lambda: format_copy_categories({"A": {"分类": "- [one]\n- [One]"}}, ""), "重名")
+    rscript_categories = os.environ.get("RSCRIPT")
+    if rscript_categories:
+        template = (ROOT / "templates" / "public-r-dictionary.R").read_text(encoding="utf-8")
+        function = template[template.index("format_category_values <-"):template.index("for (variable in analysis_vars)")]
+        probe = function + '''
+stopifnot(identical(format_category_values(c(" less   than 1 ", "with COPD", NA_character_)),
+                    c("Less than 1", "With COPD", NA_character_)))
+x <- ordered(c("low", NA), levels=c("low", "high"))
+y <- format_category_values(x)
+stopifnot(is.ordered(y), identical(levels(y), c("Low", "High")), is.na(y[2]))
+stopifnot(inherits(try(format_category_values(c("one", "One")), silent=TRUE), "try-error"))
+stopifnot(identical(format_category_values(c(NA_character_)), NA_character_))
+'''
+        run = subprocess.run([rscript_categories, "--vanilla", "-"], input=probe, capture_output=True, text=True, encoding="utf-8")
+        assert run.returncode == 0, run.stdout + run.stderr
+    fenced = "## 摘要导读\n```text 示例\n## 同名\n## 同名\n```\n## 材料\n```r\n## 同名\n## 同名\n```\n"
+    parsed = sections(fenced, 2)
+    assert list(parsed) == ["摘要导读", "材料"] and "## 同名" in parsed["摘要导读"]
+    assert sections(fenced.replace("```", "~~~~"), 2) == {k:v.replace("```","~~~~") for k,v in parsed.items()}
+    rejects(lambda: sections("## 正文\na\n## 正文\nb", 2), "文案重复栏目")
     base_questionnaire = "### 2011 年\n\n询问当前健康。\n\n#### DA001\n\n您的健康怎么样？\n\n- 1 好\n"
     expected = read_questionnaire_copy(base_questionnaire)
     mapping_note = "各个时期的变量名：2004 年 `JD111`；2006 年 `KD111`。"
@@ -78,7 +109,7 @@ def main():
         note.write_text(render_note(content), encoding="utf-8")
         assert validate_note(path, note)["ok"]
 
-        # Legacy result names can contain dots. Preserve them exactly; keep
+        # Unit suffixes and legacy result names can contain dots. Preserve them exactly; keep
         # rejecting prose headings, renamed results and changed result order.
         dotted = original.replace("fall_status", "Lab_value_ng.ml")
         path.write_text(dotted, encoding="utf-8")
@@ -90,6 +121,15 @@ def main():
         rejects(lambda: read_copy(path, ["fall_count", "Lab_value_ng.ml"]), "变量或顺序不一致")
         path.write_text(dotted.replace("### Lab_value_ng.ml", "### `Lab_value_ng.ml`"), encoding="utf-8")
         assert list(read_copy(path)["criteria"]) == ["Lab_value_ng.ml", "fall_count"]
+        # Current names retain unit scales, conventional case and time suffixes.
+        for name in ("JY_HDL_mg.dl", "JY_WBC_1e9.l", "JY_RBC_1e12.l",
+                     "JY_HbA1c_p", "ZS_TyG_BMI", "Sleep_aid_2w", "Sleep_onset_freq"):
+            path.write_text(original.replace("fall_status", name), encoding="utf-8")
+            named = read_copy(path, [name, "fall_count"])
+            assert list(named["criteria"]) == [name, "fall_count"]
+            note.write_text(render_note(named), encoding="utf-8")
+            assert validate_note(path, note)["ok"]
+            rejects(lambda: read_copy(path, [name + "_changed", "fall_count"]), "变量或顺序不一致")
         for invalid in ("1value", "value label", "value-name", "value/units"):
             path.write_text(original.replace("### fall_status", "### " + invalid), encoding="utf-8")
             rejects(lambda: read_copy(path), "Criteria 应按实际分析变量逐项列出")
@@ -246,6 +286,17 @@ cat("QUESTIONNAIRE_COPY_FORWARD_PASS\\n")
         assert validate_note(path, generated)["ok"]
         rendered_modules = generated.read_text(encoding="utf-8")
         assert rendered_modules.count("身体活动</") == 1
+        numeric_questions = ('## 问卷\n\n### 核实项目\n\n#### 2011 年\n\n##### 问卷设计\n\n两题分别作答。\n\n'
+            '##### 12\n\n第一项回答？\n\n- 0 否\n- 1 是\n\n14 的选项与 12 相同。\n\n'
+            '##### 14\n\n第二项回答？\n')
+        path.write_text(original + "\n\n" + numeric_questions, encoding="utf-8")
+        run = subprocess.run([rscript, "--vanilla", "--encoding=UTF-8", str(questionnaire_script)],
+                             cwd=folder, env=env, capture_output=True, text=True, encoding="utf-8")
+        assert run.returncode == 0, run.stdout + run.stderr
+        assert validate_note(path, generated)["ok"]
+        numeric_markup = generated.read_text(encoding="utf-8")
+        assert numeric_markup.count('data-summary-question-option="true"') == 2
+        assert "14 的选项与 12 相同。" in numeric_markup
     print("READER_COPY_TESTS_PASS: copy, actual R inputs, rendered output, optional notes, missing fields, extra insight, order, values")
     return 0
 

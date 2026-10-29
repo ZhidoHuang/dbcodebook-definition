@@ -368,7 +368,7 @@ def main() -> int:
             "## 摘要导读\n"
             "本主题分别记录两次调查中受访者是否工作，保留每个时期的结果，便于比较工作状态。\n"
             '<div class="raw-source-structure">' + first_period + later_period
-            + '</div><div class="raw-source-link">工作模块。</div>\n## 定义\n'
+            + '</div>\n## 定义\n'
         )
         multi_note = multi_note.replace(
             "本期询问上周工作情况。",
@@ -381,6 +381,11 @@ def main() -> int:
         results = []
         check_summary_prose(multi_note, results)
         assert all(item["ok"] for item in results), results
+        stale_results = []
+        check_summary_prose(multi_note.replace(
+            "\n## 定义\n", '<div class="raw-source-link">旧目录导航</div>\n## 定义\n'
+        ), stale_results)
+        assert any(not item["ok"] for item in stale_results), stale_results
         assert checker.validate_questionnaire_rendering(
             questionnaire_formal, questionnaire_process, questionnaire_note.name
         )["rendered_question_periods"] == 2
@@ -541,6 +546,18 @@ def main() -> int:
         assert "\r" not in upload["body_check"]["head"]
         assert [item["role"] for item in upload["attachments"]] == ["analysis_db", "analysis_codebook"]
         assert all(Path(item["path"]).is_absolute() for item in upload["attachments"])
+        codebook_only = checker.verify_existing_readiness(formal, process, "025", without_data_attachment=True)
+        assert [item["role"] for item in codebook_only["upload"]["attachments"]] == ["analysis_codebook"]
+        assert codebook_only["upload"]["omitted_attachment_roles"] == ["analysis_db"]
+        assert codebook_only["artifacts"]["analysis_db"] == verified["artifacts"]["analysis_db"]
+        omission_cli = subprocess.run(
+            [sys.executable, str(CHECKER_PATH), "verify-ready", "--formal-dir", str(formal),
+             "--process-dir", str(process), "--topic-id", "025", "--without-data-attachment"],
+            capture_output=True, text=True, encoding="utf-8",
+            env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
+        )
+        assert omission_cli.returncode == 0, omission_cli.stderr
+        assert [item["role"] for item in json.loads(omission_cli.stdout)["upload"]["attachments"]] == ["analysis_codebook"]
         assert not (process / "execution_report.json").exists()
 
         missing_browser_target = subprocess.run(
@@ -632,6 +649,23 @@ def main() -> int:
         assert created["payload"]["directory_tag"] == "medical"
         assert created["payload"]["desired_title"] == "CHARLS 家庭支持"
         assert created["payload"]["database_category"] == "CHARLS"
+        historical = checker.build_cua_sync_action(
+            upload, "http://localhost:8000", "", "NHANESIII", "001", "人口学",
+            "NHANES III — 人口学（Demographics）", create=True, directory_tag="常用模块",
+        )
+        assert historical["payload"]["database_category"] == "NHANES III"
+        assert historical["payload"]["expected_title_parts"] == ["NHANES III", "人口学"]
+        for dataset_id, category in (("nhis_pre1997", "NHIS 1996年及以前"), ("nhis_1997_2018", "NHIS 1997—2018"), ("nhis_2019_plus", "NHIS 2019年及以后")):
+            nhis_action = checker.build_cua_sync_action(
+                upload, "http://localhost:8000", "", "NHIS", "001", "人口学",
+                "NHIS — 人口学（Demographics）", create=True, directory_tag="常用模块", dataset_id=dataset_id,
+            )
+            assert nhis_action["payload"]["database_category"] == category
+            assert nhis_action["payload"]["expected_title_parts"] == ["NHIS", "人口学"]
+        expect_failure(lambda: checker.build_cua_sync_action(
+            upload, "http://localhost:8000", "", "NHIS", "001", "人口学",
+            "NHIS — 人口学（Demographics）", create=True, directory_tag="常用模块",
+        ), "explicit supported dataset_id")
         for language, category in (("ko", "KLoSA（韩文）"), ("en", "KLoSA（英文）")):
             korean_action = checker.build_cua_sync_action(
                 upload, "http://localhost:8000", "", "klosa", "004", "吸烟",
@@ -660,6 +694,18 @@ def main() -> int:
         assert local_action["payload"]["desired_title"] == "ELSA 孤独感"
         assert local_action["payload"]["identity_title_parts"] == ["ELSA", "孤独感"]
         assert local_action["payload"]["taxonomy_plan"] == {}
+        with tempfile.TemporaryDirectory() as nav_folder:
+            nav_before = Path(nav_folder)/'before.md'
+            nav_after = Path(nav_folder)/'after.md'
+            nav_before.write_text('正文<div class="raw-source-link">dbCodeBook 目录</div>尾部', encoding='utf-8')
+            nav_after.write_text('正文尾部', encoding='utf-8')
+            nav_upload = dict(upload, note=str(nav_after), attachments=[], navigation_removal={
+                'before':str(nav_before), 'before_sha256':checker.sha256_file(nav_before), 'attachment_names':['data.xlsx']})
+            nav_action = checker.build_cua_sync_action(nav_upload, 'http://localhost:8000', 'local-384', 'ELSA', '004', '孤独感')
+            assert nav_action['payload']['attachments'] == []
+            assert nav_action['payload']['navigation_removal']['attachment_names'] == ['data.xlsx']
+            nav_after.write_text('其他正文尾部', encoding='utf-8')
+            expect_failure(lambda: checker.build_cua_sync_action(nav_upload, 'http://localhost:8000', 'local-384', 'ELSA', '004', '孤独感'), '之外的正文')
         mapped_action = checker.build_cua_sync_action(
             upload, "http://localhost:8000", "134", "CHARLS", "009", "IADL", edit_id="337",
         )
@@ -802,14 +848,37 @@ async function run(create, outcome) {
             )[0]
             category_test = r'''
 const assert = require("node:assert/strict");
-async function selectDatabase(database, options) {
+async function selectDatabase(database, options, visible = true, alreadyOpen = false) {
   const payload = { database, database_category: database };
-  let selected;
+  let selected, buttonClicks = 0, menuClicks = 0, groupOpened = null;
   const tab = { playwright: {
     evaluate: async () => options,
-    locator: () => ({ selectOption: async option => { selected = option.value; } })
+    locator: () => ({
+      isVisible: async () => visible,
+      selectOption: async option => { assert.equal(visible, true); selected = option.value; }
+    }),
+    getByRole: (role, option) => {
+      assert.equal(option.exact, true);
+      if (role === "button") {
+        assert.equal(option.name, "数据库");
+        return {getAttribute: async name => {
+          assert.equal(name, "aria-expanded"); return alreadyOpen ? "true" : "false";
+        }, click: async () => {buttonClicks++;}};
+      }
+      assert.equal(role, "menuitem");
+      return {click: async () => {
+        if (options.some(item => item.group === option.name)) {
+          groupOpened = option.name; menuClicks++; return;
+        }
+        const match = options.filter(item => item.label === option.name);
+        if (match[0]?.group) assert.equal(groupOpened, match[0].group);
+        assert.equal(match.length, 1); selected = match[0].value; menuClicks++;
+      }};
+    }
   } };
   CATEGORY_CODE
+  assert.equal(menuClicks, visible ? 0 : options.some(item => item.group) ? 2 : 1);
+  assert.equal(buttonClicks, visible || alreadyOpen ? 0 : 1);
   return selected;
 }
 (async () => {
@@ -820,6 +889,12 @@ async function selectDatabase(database, options) {
   const languageOptions = [{label: "KLoSA（韩文）", value: "ko"}, {label: "KLoSA（英文）", value: "en"}];
   assert.equal(await selectDatabase("KLoSA（韩文）", languageOptions), "ko");
   assert.equal(await selectDatabase("KLoSA（英文）", languageOptions), "en");
+  const menuOptions = [{label:"HRS", value:"HRS"}, {label:"RAND HRS", value:"RAND HRS"}];
+  assert.equal(await selectDatabase("hrs", menuOptions, false), "HRS");
+  assert.equal(await selectDatabase("HRS", menuOptions, false, true), "HRS");
+  assert.equal(await selectDatabase("NHIS 2019年及以后", [{label:"NHIS 2019年及以后",value:"nhis-modern",group:"NHIS"}], false), "nhis-modern");
+  await assert.rejects(selectDatabase("HRS", [...menuOptions, menuOptions[0]], false));
+  await assert.rejects(selectDatabase("MHAS", menuOptions, false));
   await assert.rejects(selectDatabase("KLoSA", languageOptions));
   await assert.rejects(selectDatabase("ELSA", options));
   await assert.rejects(selectDatabase("charls", [...options, options[0]]));
@@ -921,6 +996,10 @@ async function run(initial, previousResult, changes = {}) {
         )
         expect_failure(
             lambda: checker.verify_existing_readiness(formal, process, "025"),
+            "audit is stale",
+        )
+        expect_failure(
+            lambda: checker.verify_existing_readiness(formal, process, "025", without_data_attachment=True),
             "audit is stale",
         )
         report_bytes_before_failed_preflight = report_path.read_bytes()

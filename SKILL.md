@@ -10,6 +10,7 @@ description: Run, revise, audit, or publish variable-definition topics built fro
 - 从当前任务和配置确定数据库、主题、正式目录、过程目录、程序路径及网站地址。
 - 这些信息未变时，沿用已有记录，不重复查找。
 - 共享规则不写入本机路径。
+- 工作文件按[执行材料](references/rules/write-boundaries.md#执行材料)维护当前版本。
 
 ## Choose The Entry
 
@@ -22,7 +23,8 @@ description: Run, revise, audit, or publish variable-definition topics built fro
 | 离线准备下载文件 | [离线准备](references/rules/scoped-tasks.md#offline-download) | 生成本地动作和快照；不连接浏览器、不登录、不联网下载 |
 | 检查历史阶段登记 | [历史报告检查](references/rules/scoped-tasks.md#historical-report) | 只读检查；不重跑生产、不改历史 |
 | 新建、重做或改变来源 | [1. 选题与来源方案](references/rules/stages/01-source-plan.md) | 按完整流程执行；来源或别名变化时重新全量下载 |
-| 审核或修改文案 | 既有主题只改表达或展示时读[局部文案更新](references/rules/copy-update.md)；写完整新稿时读[3. 文案写作](references/rules/stages/03-copy.md) | 读取完整文案；重新生成并检查受影响成果，继续已授权的网站同步 |
+| 调整组分概览、详情或其他生成显示 | [5. 成果生成](references/rules/stages/05-generate.md) | 按明确范围处理显示，核对受影响成果；不重定方案 |
+| 审核或修改文案 | [3. 文案写作](references/rules/stages/03-copy.md#执行与读取)，按完整新稿或指定栏目选择任务 | 读取完整文案；重新生成并检查受影响成果，继续已授权的网站同步 |
 | 修改 R 或计算 | [4. 公开 R](references/rules/stages/04-public-r.md) | 沿用未变来源；生成前同步修改受影响文案 |
 | 上传已检查成果 | 只读[8. 网站同步](references/rules/stages/08-website.md) | 不加载探索、问卷、R 或写作规则，不重建主题 |
 | 修改本 Skill | [规则归属](references/rules/index.md)及本次修改范围 | 不因维护 Skill 而运行主题或修改网站 |
@@ -127,7 +129,7 @@ RAND HRS 和 Harmonized HRS 是独立产品，只能作为明确标注的辅助�
 | 检查结论 | 程序通过只证明实际比较过的内容；未执行不能记通过，存在、长度或哈希不证明内容正确易读 |
 | 网站提交 | 必要本地检查通过后才提交；返回文章地址后停止浏览器操作，不再次审页 |
 | 正式 R | 保留独立运行入口，读者从头运行即可生成完整笔记 |
-| 最终数据 | 按[第5步](references/rules/stages/05-generate.md#正式输出与图表)统一为每人每期一行的长表；原始来源可以是其他结构 |
+| 最终数据 | 按[第5步](references/rules/stages/05-generate.md#正式输出与图表)默认每人每期一行的长表；来源记录显式声明的 CHARLS 家庭年度主题按家庭键验收；原始来源可以是其他结构 |
 | 主题事实 | 不把单主题选择变成公共规则，不套用其他数据库的身份或时期假设 |
 | 颜色与宣传 | 网站决定笔记最终主题色；本地生成允许默认色。宣传配色见[主题配置](references/database-themes.json)，使用对应专用 Skill |
 

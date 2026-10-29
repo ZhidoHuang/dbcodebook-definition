@@ -1,4 +1,4 @@
-﻿#requires -Version 7.0
+#requires -Version 7.0
 param(
   [Parameter(Mandatory = $true)]
   [string]$WorkDir,
@@ -178,7 +178,21 @@ if ($usesCheckNamesFalse) {
 }
 
 if ($isCharls) {
-  $rawDataPath = Join-Path $resolvedWorkDir 'raw_data.csv'
+  $rawDataName = 'raw_data.csv'
+  if (-not [string]::IsNullOrWhiteSpace($ProcessDir)) {
+    $rawRecordPath = Join-Path $ProcessDir 'definition_search_record.json'
+    if (Test-Path -LiteralPath $rawRecordPath) {
+      $rawRecord = Get-Content -LiteralPath $rawRecordPath -Raw | ConvertFrom-Json -AsHashtable
+      if ($rawRecord.analysis_unit -eq 'household_period') {
+        if ($rawRecord.database -ine 'CHARLS' -or
+            ($rawRecord.identity_keys -join ',') -cne 'householdid,year') {
+          throw 'Invalid CHARLS household identity contract.'
+        }
+        $rawDataName = 'raw_data_household.csv'
+      }
+    }
+  }
+  $rawDataPath = Join-Path $resolvedWorkDir $rawDataName
   if (Test-Path -LiteralPath $rawDataPath) {
     $rawHeader = [System.IO.File]::ReadLines($rawDataPath, [System.Text.Encoding]::UTF8) |
       Select-Object -First 1
@@ -199,7 +213,7 @@ if ($isCharls) {
     )
     if ($duplicateRawHeader) {
       $publicIssues.Add(
-        "raw_data.csv contains duplicate columns. Assign unique aliases in dbCodeBook before download: $($duplicateRawHeader -join ', ')"
+        "$rawDataName contains duplicate columns. Assign unique aliases in dbCodeBook before download: $($duplicateRawHeader -join ', ')"
       )
     }
   }
@@ -342,11 +356,14 @@ if (length(missing)) {
   ))
 }
 "@
-  if ($Database -ieq "CHARLS" -or $Database -ieq "SHARE" -or $Database -ieq "KNHANES" -or $Database -ieq "KLOSA" -or $Database -ieq "CHNS") {
+  if ($Database -ieq "CHARLS" -or $Database -ieq "SHARE" -or $Database -ieq "KNHANES" -or $Database -ieq "KLOSA" -or $Database -ieq "CHNS" -or $Database -ieq "NHANESIII" -or $Database -ieq "NHIS") {
     $rawReadHelper = ConvertTo-Json -InputObject (Join-Path $PSScriptRoot "check_public_raw_reads.R") -Compress
     $rawReadScript = ConvertTo-Json -InputObject $resolvedScript -Compress
     $rawReadDatabase = ConvertTo-Json -InputObject $Database.ToUpperInvariant() -Compress
-    $packageCheckExpression += "`nsource($rawReadHelper, encoding='UTF-8')`ncheck_public_raw_reads(readLines($rawReadScript, encoding='UTF-8', warn=FALSE), database=$rawReadDatabase)`n"
+    $rawReadDirectory = ConvertTo-Json -InputObject $resolvedWorkDir -Compress
+    $rawReadRecord = if (-not [string]::IsNullOrWhiteSpace($ProcessDir)) { Join-Path $ProcessDir "definition_search_record.json" } else { "" }
+    $rawReadRecordLiteral = ConvertTo-Json -InputObject $rawReadRecord -Compress
+    $packageCheckExpression += "`nsource($rawReadHelper, encoding='UTF-8')`ncheck_public_raw_reads(readLines($rawReadScript, encoding='UTF-8', warn=FALSE), database=$rawReadDatabase, source_dir=$rawReadDirectory, source_record_path=$rawReadRecordLiteral)`n"
   }
   Invoke-RCode `
     -RscriptPath $resolvedRscript `
@@ -382,7 +399,7 @@ if ($definitionTask) {
 
   $resolvedSourceRecord = Resolve-RequiredPath -Path $sourceRecord -Kind "Definition source-search record"
   if (-not $numberedTopic) {
-    $topicId = [string]((Get-Content -LiteralPath $resolvedSourceRecord -Raw | ConvertFrom-Json).topic_id)
+    $topicId = [string]((Get-Content -LiteralPath $resolvedSourceRecord -Raw | ConvertFrom-Json -AsHashtable).topic_id)
     if ([string]::IsNullOrWhiteSpace($topicId)) { throw "Source record topic_id is required." }
     $topicId = $topicId.PadLeft(3, '0')
   }
@@ -390,7 +407,7 @@ if ($definitionTask) {
   $resolvedRawCodebook = Resolve-RequiredPath -Path $rawCodebook -Kind "raw_codebook.csv"
 
   & $resolvedPython @pythonArguments -X utf8 (Join-Path $PSScriptRoot "check_reader_copy.py") `
-    --copy $resolvedReaderCopy --record $resolvedSourceRecord
+    --copy $resolvedReaderCopy --record $resolvedSourceRecord --require-result-identity
   if ($LASTEXITCODE -ne 0) {
     throw "Reader copy content check failed; formal R was not executed."
   }
@@ -461,15 +478,16 @@ if ($definitionTask) {
   }
 }
 
-if ([string]::IsNullOrWhiteSpace($ArchiveDir)) {
-  $ArchiveDir = Join-Path $resolvedWorkDir "archived_logs"
+$logName = "${LogPrefix}_run_current.log"
+$existingLogs = @(Get-ChildItem -LiteralPath $resolvedWorkDir -Filter "${LogPrefix}_run_*.log" -File)
+if ($existingLogs.Count -eq 1 -and [string]::IsNullOrWhiteSpace($ArchiveDir)) {
+  $logName = $existingLogs[0].Name
 }
-
-$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$logName = "${LogPrefix}_run_${timestamp}.log"
 $logPath = Join-Path $resolvedWorkDir $logName
 
-if (-not $NoArchiveOldLogs) {
+if (-not [string]::IsNullOrWhiteSpace($ArchiveDir) -and -not $NoArchiveOldLogs) {
+  $logName = "${LogPrefix}_run_$(Get-Date -Format 'yyyyMMdd_HHmmssfff').log"
+  $logPath = Join-Path $resolvedWorkDir $logName
   $resolvedArchiveDir = $ArchiveDir
   if (-not [System.IO.Path]::IsPathRooted($resolvedArchiveDir)) {
     $resolvedArchiveDir = Join-Path $resolvedWorkDir $resolvedArchiveDir
@@ -520,6 +538,12 @@ if ($null -ne $psi.ArgumentList) {
   $psi.Arguments = "--encoding=UTF-8 `"$runtimeScriptPath`""
 }
 
+# Bind rendering to the same real source record already validated above.
+if ($resolvedSourceRecord) {
+  $psi.EnvironmentVariables["DBCODEBOOK_DEFINITION_SOURCE_RECORD"] = $resolvedSourceRecord
+} else {
+  $psi.EnvironmentVariables.Remove("DBCODEBOOK_DEFINITION_SOURCE_RECORD")
+}
 $process = [System.Diagnostics.Process]::new()
 $process.StartInfo = $psi
 

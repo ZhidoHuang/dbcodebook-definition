@@ -173,6 +173,13 @@ name_z<-read.csv('raw_codebook.csv')
     throw "Runner fixture failed with exit code $LASTEXITCODE."
   }
 
+  & $runner -Python $Python -WorkDir $tempDir -Script "fixture.R" -LogPrefix "fixture" -Rscript $Rscript
+  if ($LASTEXITCODE -ne 0) { throw "Repeated fixture run failed." }
+  if (@(Get-ChildItem -LiteralPath $tempDir -Filter "fixture_run_*.log" -File).Count -ne 1) {
+    throw "Ordinary rerun accumulated logs."
+  }
+  if (Test-Path -LiteralPath (Join-Path $tempDir "archived_logs")) { throw "Ordinary rerun archived logs." }
+
   $log = Get-ChildItem -LiteralPath $tempDir -Filter "fixture_run_*.log" |
     Sort-Object LastWriteTime -Descending |
     Select-Object -First 1

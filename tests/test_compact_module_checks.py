@@ -3,6 +3,8 @@ from pathlib import Path
 import html
 import importlib.util
 import json
+import re
+from collections import Counter
 import sys
 import tempfile
 import zipfile
@@ -55,10 +57,38 @@ def assert_failure(fn):
 
 def main():
     c = load_output()
+    from definition_order import xlsx_permute, xlsx_signature, reorder_html, reorder_r, reorder_flat_tree
+    with tempfile.TemporaryDirectory() as tmp:
+        from openpyxl import Workbook, load_workbook
+        path=Path(tmp);book=Workbook();sheet=book.active
+        sheet.append(['ID','B','A']);sheet.append(['001',3.25,None]);sheet.append(['002',0,'Never'])
+        book.save(path/'before.xlsx');book.close()
+        xlsx_permute(path/'before.xlsx',path/'after.xlsx',['A','B'])
+        assert xlsx_signature(path/'before.xlsx')==xlsx_signature(path/'after.xlsx')
+        from io import BytesIO
+        actual=load_workbook(BytesIO((path/'after.xlsx').read_bytes()));assert list(actual.active.values)[0]==('ID','A','B')
+        actual.active['B2']=4;actual.save(path/'changed.xlsx');actual.close()
+        assert xlsx_signature(path/'before.xlsx')!=xlsx_signature(path/'changed.xlsx')
+        markup='<table class="heatmap-table"><tr><th>Variable</th></tr><tr><td><a href="#var-B">B</a></td></tr><tr><td><a href="#var-A">A</a></td></tr></table><div class="data-card"><span class="var-name" id="var-B">B</span><p>unchanged B</p></div><div class="data-card"><span class="var-name" id="var-A">A</span><p>unchanged A</p></div>'
+        ordered=reorder_html(markup,['A','B'],{})
+        assert ordered.index('#var-A')<ordered.index('#var-B') and ordered.index('id="var-A"')<ordered.index('id="var-B"')
+        assert 'unchanged A' in ordered and 'unchanged B' in ordered
+        source='analysis_vars <- c("B", "A")\nwrite.xlsx(db_data,"out.xlsx")\nrender_definition_bundle(summary_groups=c(B="一",A="一"))'
+        ordered=reorder_r(source,['A','B'],dict(A='一',B='一'))
+        assert 'analysis_vars <- c("A", "B")' in ordered and 'write.xlsx(db_data,"out.xlsx")' in ordered
+        flat='```text 结果\n结果\n├─ [[result:乙]] [[meta:（0/1）]]\n└─ [[result:甲]] [[meta:（0/1）]]\n```'
+        changed=reorder_flat_tree(flat,['A','B'],{'甲':'A','乙':'B'})
+        assert '├─ [[result:甲]]' in changed and '└─ [[result:乙]]' in changed
+        assert Counter(re.findall(r'\[\[(?:result|meta):.*?\]\]',flat))==Counter(re.findall(r'\[\[(?:result|meta):.*?\]\]',changed))
+        bound=flat.replace('result:乙','result:B|乙').replace('result:甲','result:A|甲')
+        assert '├─ [[result:A|甲]]' in reorder_flat_tree(bound,['A','B'],{})
+        rendered='<pre data-summary-tree="true"><code>结果\n<span data-tree-role="connector">├─</span> <span data-tree-role="result" data-tree-variable="B">乙</span>\n<span data-tree-role="connector">└─</span> <span data-tree-role="result" data-tree-variable="A">甲</span></code></pre>'
+        reordered=reorder_flat_tree(rendered,['A','B'],{},True)
+        assert reordered.index('data-tree-variable="A"') < reordered.index('data-tree-variable="B"')
     names = [f"V.{i}" for i in range(31)]
-    for kind, count, compact in (("module", 30, False), ("module", 31, True), ("standard", 31, False)):
+    for kind, count, compact in (("module", 10, False), ("module", 11, True), ("module", 30, True), ("questionnaire_module", 11, False), ("standard", 11, False)):
         copy = f"---\ntopic_kind: {kind}\n---\n"
-        record = dict(topic_kind=kind, approved_analysis_vars=names[:count])
+        record = dict(topic_kind="module" if kind=="questionnaire_module" else kind, approved_analysis_vars=names[:count])
         assert resolve_display_policy(copy, record=record)["compact_module"] is compact
     assert not resolve_display_policy("legacy module with 100 results", names)["compact_module"]
     assert_failure(lambda: resolve_display_policy("---\ntopic_kind: module\n---\n"))
@@ -77,12 +107,37 @@ def main():
             return results
 
         assert all(r["ok"] for r in checks())
+        # Business titles carry their role as metadata; never infer it from Chinese text.
+        (formal / "文案.md").write_text("---\ntopic_kind: module\n---\n", encoding="utf-8")
+        mapping = {n: "肝功能" if i < 15 else "肾功能" for i, n in enumerate(names)}
+        def grouped_surface():
+            overview, details = [], []
+            for i, group in enumerate(dict.fromkeys(mapping.values())):
+                subset = [n for n in names if mapping[n] == group]
+                mark = f'data-component-group="{group}" data-variable-role="defined"'
+                overview.append(f'<tr><td><a href="#cat-{i}" {mark}>{group}</a></td></tr>' + ''.join(
+                    f'<tr><td><a href="#var-{n}">{n}</a></td></tr>' for n in subset))
+                details.append(f'<summary {mark}>{group}</summary>' + ''.join(
+                    f'<span class="var-name" id="var-{n}" data-defined-variable="{n}">{n}</span>' for n in subset))
+            return '<table data-defined-overview="true">' + ''.join(overview) + '</table>' + ''.join(details)
+        grouped = grouped_surface()
+        planned = dict(topic_kind="module", approved_analysis_vars=names,
+                       definition_plan=[dict(analysis_var=n, display_group=g) for n,g in mapping.items()])
+        assert all(r["ok"] for r in checks(grouped,grouped))
+        detail.write_text(grouped,encoding="utf-8")
+        result=[];c.check_component_group_membership(formal,grouped,names,result,planned)
+        assert result and all(r["ok"] for r in result),result
+        for broken in (grouped.replace('>肝功能</summary>','>错误标题</summary>'),
+                       grouped.replace('data-component-group="肝功能"','data-component-group="肾功能"',1),
+                       grouped.replace('href="#var-V.0"','href="#var-V.30"')):
+            result=[];c.check_component_group_membership(formal,broken,names,result,planned)
+            assert any(not r['ok'] for r in result),result
         # Dots and escaped attribute values are identifiers, not CSS selectors.
         escaped = ['V.a&b', 'V."quoted"']
         parser = c.DefinedSurfaceParser()
         parser.feed(surface(escaped))
         assert parser.variables == parser.overview_variables == escaped
-        for broken in (surface(names[:-1]), surface(names + [names[0]]), surface(names + ['Extra']),
+        for broken in (surface(names[:-1]), surface(names + [names[0]]), surface(names + ['Extra']), surface(list(reversed(names))),
                        good.replace('href="#var-V.0"', 'href="#var-Other"'),
                        good + '<span class="var-name" id="var-raw">raw</span>',
                        good.replace('id="var-V.0"', 'id="var-Other"'),
@@ -94,11 +149,28 @@ def main():
         assert any(not r["ok"] for r in checks())
         (formal / "topic_definition.html").unlink()
 
+        # Full mode also compares actual result order, ignoring source rows.
+        result = []
+        (formal / "文案.md").write_text("## 摘要导读\n无需关系树。", encoding="utf-8")
+        detail.write_text(surface(list(reversed(names))), encoding="utf-8")
+        c.check_result_presentation(formal, surface(names), names, {}, result)
+        assert any(not r['ok'] and r['check'] == 'topic_detail.html final result order' for r in result), result
+
+        # Final validation uses explicit variable identity, not Label equality.
+        two = names[:2]
+        detail.write_text(surface(two), encoding='utf-8')
+        tree = '## 摘要导读\n```text 检验\n' + '\n'.join('[[result:' + v + '|中文指标]]' for v in two) + '\n```'
+        (formal / '文案.md').write_text(tree, encoding='utf-8')
+        result = []
+        plan = {'definition_plan': [{'analysis_var': v, 'display_name': '中文' + str(i)} for i,v in enumerate(two)]}
+        c.check_result_presentation(formal, surface(two), two, dict.fromkeys(two, 'English label'), result, plan)
+        assert all(r['ok'] for r in result), result
+
         copy = "---\ntopic_kind: module\n---\n"
         (formal / "文案.md").write_text(copy, encoding="utf-8")
         record = dict(topic_kind="module", approved_analysis_vars=names)
         note = ('## 摘要导读\n' + '这是对变量模块、适用人群、调查时期和结果用途的完整说明。' * 3
-                + '\n<div class="raw-source-link">来源</div>\n## 定义的组分概览\n' + good)
+                + '\n## 定义的组分概览\n' + good)
         (formal / "note.md").write_text(note, encoding="utf-8")
         detail.write_text(good, encoding="utf-8")
         workbook(formal / "cb.xlsx", [["Variable"]] + [[n] for n in names])
@@ -116,11 +188,11 @@ def main():
         results = []
         c.check_summary_facts(formal, "db.xlsx", "cb.xlsx", results, "nhanes", record=record)
         assert any(not r["ok"] and r["check"] == "definition variables in analysis_db" for r in results)
-        for kind, subset in (("module", names[:30]), ("standard", names)):
+        for kind, subset in (("module", names[:10]), ("questionnaire_module", names), ("standard", names)):
             (formal / "文案.md").write_text(f"---\ntopic_kind: {kind}\n---\n", encoding="utf-8")
             workbook(formal / "cb.xlsx", [["Variable"]] + [[n] for n in subset])
             results = []
-            c.check_summary_facts(formal, "db.xlsx", "cb.xlsx", results, "nhanes", record=dict(topic_kind=kind, approved_analysis_vars=subset))
+            c.check_summary_facts(formal, "db.xlsx", "cb.xlsx", results, "nhanes", record=dict(topic_kind="module" if kind=="questionnaire_module" else kind, approved_analysis_vars=subset))
             assert any(not r["ok"] and r["check"] == "definition table structure" for r in results)
 
     r = load_readability()
@@ -130,9 +202,9 @@ def main():
         complete_impact(r, formal, process)
         original = (formal / "文案.md").read_text(encoding="utf-8")
         without_criteria = original[:original.index("## Criteria")] + original[original.index("## 小book提示"):]
-        for kind, count, accepted in (("module", 30, False), ("module", 31, True), ("standard", 31, False)):
+        for kind, count, accepted in (("module", 10, False), ("module", 11, True), ("questionnaire_module", 11, False), ("standard", 11, False)):
             (formal / "文案.md").write_text(f"---\ntopic_kind: {kind}\n---\n" + without_criteria, encoding="utf-8")
-            (process / r.SOURCE_RECORD_NAME).write_text(json.dumps(dict(topic_kind=kind, approved_analysis_vars=names[:count])), encoding="utf-8")
+            (process / r.SOURCE_RECORD_NAME).write_text(json.dumps(dict(topic_kind="module" if kind=="questionnaire_module" else kind, approved_analysis_vars=names[:count])), encoding="utf-8")
             if accepted:
                 r.validate_impact(formal, process, "025")
             else:
@@ -175,7 +247,7 @@ def main():
         assert checked["writing_quality"] == "NOT_ASSESSED" and checked["scope_count"] == 0
         assert r.verify_existing_readiness(formal, process, "025")["ok"]
         assert not list(formal.glob("*_definition.html"))
-    print("COMPACT_MODULE_CHECKS_PASS: 30/31/standard boundaries, exact coverage, stale/source/duplicate rejection, real workbooks, scope_bindings and compact init/check/verify-ready")
+    print("COMPACT_MODULE_CHECKS_PASS: module10/11, questionnaire11 and standard11 boundaries, exact coverage, stale/source/duplicate rejection, real workbooks, scope_bindings and compact init/check/verify-ready")
 
 
 if __name__ == "__main__":

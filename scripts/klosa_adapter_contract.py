@@ -6,10 +6,12 @@ from urllib.parse import urlsplit
 
 LANGUAGES = {'en': 9, 'ko': 10}
 IDENTIFIERS = ['ID', 'Harmonized_id', 'Wave_id']
+EXIT_MEMBER = 'raw_data_KLoSA_Exit.csv'
 REPEAT_MEMBER = 'raw_data_KLoSA_Imputation.csv'
 REPEAT_IDENTIFIERS = ['RowIndex', *IDENTIFIERS, 'v_imputation_']
 FILES = {'KLoSA_Core', 'KLoSA_Exit', 'KLoSA_str', 'KLoSA_Lt', 'KLoSA_Imputation'}
 DICT_HEADER = ['Easy label', 'Base_Variable', 'Wave', 'Variable', 'File type', 'newname']
+CURRENT_DICT_HEADER = ['Easy label', 'Base_Variable', 'Variable', 'File type', 'newname']
 
 def identity_columns(header, repeated=False):
     """Accept the verified pid default, retaining already downloaded old exports."""
@@ -76,24 +78,38 @@ def validate_package(staging, members, expected, lang):
     expected = list(expected)
     if not expected or len(set(expected)) != len(expected):
         raise ValueError('expected aliases must be nonempty and unique')
-    if not members or len(set(members)) != len(members) or set(members) - {'raw_data.csv', REPEAT_MEMBER}:
+    if not members or len(set(members)) != len(members) or set(members) - {'raw_data.csv', EXIT_MEMBER, REPEAT_MEMBER}:
         raise ValueError('unexpected or duplicate KLoSA raw members')
     header, dictionary = _rows(staging/'raw_codebook.csv')
-    if header != DICT_HEADER:
+    if header not in (DICT_HEADER, CURRENT_DICT_HEADER):
         raise ValueError('KLoSA dictionary header differs from website contract')
-    aliases, owners = [], {}
+    current_dictionary = header == CURRENT_DICT_HEADER
+    aliases, owners, source_waves = [], {}, {}
     for row in dictionary:
         alias = row['newname']; source = re.fullmatch(r'(.+) \(([^()]+)\)', row['Variable'])
         if not source or source[2] not in FILES or not row['Base_Variable'] or not alias:
             raise ValueError('dictionary source identity or alias missing')
-        waves = row['Wave'].split(', ')
+        if current_dictionary:
+            actual = re.fullmatch(r'w(\d{2})[^\s()]+', source[1])
+            if not actual:
+                raise ValueError('current dictionary requires actual wave field identity')
+            waves = ['Wave ' + str(int(actual[1]))]
+            source_waves[alias] = _wave(waves[0], lang)
+        else:
+            waves = row['Wave'].split(', ')
         if any(not re.fullmatch(r'Wave ([1-9]|10)', x) for x in waves):
             raise ValueError('dictionary Wave must use website Wave N labels')
         for wave in waves:_wave(wave, lang)
         repeated = source[2] == 'KLoSA_Imputation'
         if row['File type'] != ('reID' if repeated else 'uniqID'):
             raise ValueError('dictionary file classification mismatch')
-        aliases.append(alias); owners[alias] = REPEAT_MEMBER if repeated else 'raw_data.csv'
+        aliases.append(alias)
+        if repeated:
+            owners[alias] = REPEAT_MEMBER
+        elif source[2] == 'KLoSA_Exit' and EXIT_MEMBER in members:
+            owners[alias] = EXIT_MEMBER
+        else:
+            owners[alias] = 'raw_data.csv'
     if len(aliases) != len(set(aliases)) or set(aliases) != set(expected):
         raise ValueError('dictionary aliases differ from approved selection')
     seen, reports, id_metadata = set(), {}, {}
@@ -110,6 +126,8 @@ def validate_package(staging, members, expected, lang):
             if any(not row[x] or row[x].strip() != row[x] for x in identities):
                 raise ValueError('blank or whitespace identity')
             wave = _wave(row['Wave_id'], lang)
+            if current_dictionary and any(row[v] and source_waves[v] != wave for v in variables):
+                raise ValueError('nonempty source field outside its actual wave identity')
             meta = (row['Harmonized_id'], wave)
             if row['ID'] in id_metadata and id_metadata[row['ID']] != meta:
                 raise ValueError('same ID has conflicting person/wave metadata')

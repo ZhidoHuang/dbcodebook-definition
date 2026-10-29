@@ -33,7 +33,7 @@ for (database in names(themes)) {
   grDevices::col2rgb(color)
 }
 observed_color <- NULL
-definition_source_entry <- function(...) {
+definition_copy_check <- function(...) {
   observed_color <<- get("theme_color", envir=parent.frame())
   stop("CHNS_IDENTITY_CONTRACT_ACCEPTED")
 }
@@ -73,9 +73,21 @@ raw_codebook <- data.frame(Variable=c("age (rst_12)","sex (mast_pub_12)"),
 analysis_codebook <- data.frame(Variable="defined_sex", original_vars="sex (mast_pub_12)",
   processed_vars="sex", count=1L)
 stopifnot(identical(unname(format_definition_card_sources(analysis_codebook,raw_codebook)),
-  "sex (mast_pub_12)=sex"), definition_source_count(c("age","sex"),raw_codebook,"CHNS") == 2L,
+  "sex (mast_pub_12)=sex"),
   !"sex" %in% names(dt))
 static_person <- rbind(static_person, static_person)
 reject(dplyr::left_join(dt,static_person,by="IDind",relationship="many-to-one"), "at most 1 row")
+# Qualified identities must bind the actual default read.csv names and remain strings.
+writeLines(c('ID,IDind,WAVE,hhid (file_a),hhid (file_b),value',
+  'opaque,0001,1991,0006.0,0007.0,5'),file.path(temp,"raw_data.csv"))
+writeLines(c('Variable,newname','x (file_a),x','y (file_b),y'),file.path(temp,"raw_codebook.csv"))
+qualified_reader <- c('dt <- read.csv("raw_data.csv", colClasses=c(ID="character",IDind="character",hhid..file_a.="character",hhid..file_b.="character"))',
+  'name_z <- read.csv("raw_codebook.csv")')
+check_public_raw_reads(qualified_reader,"CHNS",temp)
+old <- getwd();setwd(temp);eval(parse(text=qualified_reader[[1]]));setwd(old)
+stopifnot(identical(dt$hhid..file_a.,"0006.0"),identical(dt$hhid..file_b.,"0007.0"),is.integer(dt$value))
+reject(check_public_raw_reads(sub('hhid..file_a.=', '"hhid (file_a)"=', qualified_reader,fixed=TRUE),"CHNS",temp),"Only declared CHNS")
+reject(check_public_raw_reads(sub('hhid..file_a.=', 'hhid..missing_file.=', qualified_reader,fixed=TRUE),"CHNS",temp),"Only declared CHNS")
+reject(check_public_raw_reads(sub('hhid..file_a.=', 'value=', qualified_reader,fixed=TRUE),"CHNS",temp),"Only declared CHNS")
 unlink(temp, recursive=TRUE)
 cat("CHNS ten-period identity, static read and many-to-one fixtures PASS; full note generation untested\n")

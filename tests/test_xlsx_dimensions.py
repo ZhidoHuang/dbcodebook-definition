@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from check_definition_output import read_xlsx_rows
+from check_definition_output import read_xlsx_rows, read_table_rows
 
 # A deliberately stale dimension must not truncate real sheet cells.
 with tempfile.TemporaryDirectory() as tmp:
@@ -22,4 +22,11 @@ with tempfile.TemporaryDirectory() as tmp:
         return original_read(archive, name, *args, **kwargs)
     with patch.object(zipfile.ZipFile, "read", reject_whole_sheet_read):
         assert read_xlsx_rows(path) == [["id", "value"], ["001", 7], [None, 0]]
+    csv_path=Path(tmp)/'analysis_db_large.csv'
+    csv_path.write_text('ID,Wave_id,value\n001,1968FY,0\n002,1968CY,\n',encoding='utf-8-sig')
+    assert read_table_rows(csv_path)==[['ID','Wave_id','value'],['001','1968FY','0'],['002','1968CY',None]]
+    csv_path.write_text('ID,value\n001,1,extra\n',encoding='utf-8')
+    try: read_table_rows(csv_path)
+    except ValueError: pass
+    else: raise AssertionError('Malformed final CSV accepted')
 print("XLSX_STALE_DIMENSIONS_PASS")

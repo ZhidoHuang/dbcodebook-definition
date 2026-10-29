@@ -23,7 +23,10 @@ MANAGED_REPORT = "recover_dbcodebook_export_QA.json"
 PARTIAL_SUFFIXES = {".crdownload", ".part", ".download"}
 
 
-def database_page_url(base_url: str, database: str, language=None) -> str:
+def database_page_url(base_url: str, database: str, language=None, dataset_id=None) -> str:
+    if database == 'nhis':
+        from nhis_export_contract import page_url
+        return page_url(base_url, dataset_id)
     if database == "klosa":
         from klosa_adapter_contract import page_url
         return page_url(base_url, language)
@@ -41,8 +44,9 @@ def build_download_browser_action(
     expected_variable_count: int,
     attempt_file: Path,
     language=None,
+    dataset_id=None,
 ) -> dict:
-    page_url = database_page_url(base_url, database, language)
+    page_url = database_page_url(base_url, database, language, dataset_id)
     page_url_json = json.dumps(page_url, ensure_ascii=False)
     attempt_id_json = json.dumps(attempt_id, ensure_ascii=False)
     attempt_file_json = json.dumps(str(attempt_file.resolve()), ensure_ascii=False)
@@ -204,6 +208,7 @@ nodeRepl.write(JSON.stringify(dbCodeBookDownloadResult));'''
         "existing_tab_path": page_url,
         "database": database,
         "language": language,
+        "dataset_id": dataset_id,
         "timeout_ms": 165000,
         "attempt_id": attempt_id,
         "attempt_file": str(attempt_file.resolve()),
@@ -359,6 +364,13 @@ def validate_data_members(
         if duplicates:
             fail(f"{member} contains duplicated columns", detail=duplicates)
         identities = identity_columns_for_member(member)
+        if member in {
+            "raw_data_repeat_ADAMS_MEDICAL_CONDITIONS_INITIAL_VISIT_CONDITION.csv",
+            "raw_data_repeat_ADAMS_MEDICAL_CONDITIONS_FOLLOW_UP_VISIT_CONDITION.csv",
+            "raw_data_repeat_INTERNET_SURVEY_INTERNET_QUESTIONNAIRE_RESPONDENT.csv",
+        }:
+            from hrs_export_contract import validate_hrs_repeat
+            identities |= validate_hrs_repeat(out_dir, member, header)
         if member == "raw_data.csv" and header[:4] == ["ID", "HHID", "PN", "Wave_id"]:
             from hrs_export_contract import validate_defaults
             identities |= validate_defaults(out_dir / "raw_codebook.csv", header)
@@ -414,21 +426,33 @@ def validate_codebook(out_dir: Path, expected_vars: list[str]) -> dict[str, obje
     return {"rows": len(aliases), "aliases": aliases}
 
 
-def inspect_archive(archive_path: Path, expected: list[str], database: str | None = None, language=None) -> dict:
+def inspect_archive(archive_path: Path, expected: list[str], database: str | None = None, language=None, dataset_id=None, selection=None) -> dict:
     # Validate outside the destination so a bad download cannot replace good raw.
     with tempfile.TemporaryDirectory(prefix="dbcodebook_check_") as temp:
         staging = Path(temp)
         names, members = install_archive(archive_path, staging)
+        if database == 'nhis':
+            from nhis_export_contract import validate_package
+            if selection is None:
+                raise ValueError('NHIS archive verification needs the exact source selection')
+            contract = validate_package(staging, members, expected, dataset_id, selection)
+            return {'zip_members':names, 'codebook':validate_codebook(staging, expected),
+                    'data':contract['files'], 'nhis_context':{k:v for k,v in contract.items() if k != 'files'}}
+        if database == "nhanesiii":
+            from nhanesiii_export_contract import validate_package
+            contract = validate_package(staging, members, expected)
+            return {"zip_members": names, "codebook": validate_codebook(staging, expected),
+                    "data": contract['files']}
         if database == "nhanes":
             from nhanes_export_contract import validate_package
             contract = validate_package(staging, members, expected)
             return {"zip_members": names, "codebook": validate_codebook(staging, expected),
-                    "data": {"raw_data.csv": contract}}
+                    "data": contract.get('files', {"raw_data.csv": contract})}
         if database == "mhas":
             from mhas_export_contract import validate_package, RAW_NAME
             contract = validate_package(staging, members, expected)
             return {"zip_members": names, "codebook": validate_codebook(staging, expected),
-                    "data": {RAW_NAME: contract}}
+                    "data": contract.get('files', {RAW_NAME: contract})}
         if database == "knhanes":
             from knhanes_export import validate_bundle
             return {"zip_members": names, **validate_bundle(staging, members, expected)}
@@ -479,6 +503,7 @@ def download_snapshot(directory: Path) -> dict:
 
 def prepare_download(args: argparse.Namespace) -> dict:
     language = getattr(args, "language", None)
+    dataset_id = getattr(args, 'dataset_id', None)
     expected = read_expected_vars_file(args.expect_vars_file)
     from check_definition_source_record import load_json, validate_download_selection
     record_path = args.expect_vars_file.parent / "definition_search_record.json"
@@ -495,6 +520,11 @@ def prepare_download(args: argparse.Namespace) -> dict:
     if args.database == "klosa":
         from klosa_adapter_contract import require_context
         require_context(record, language)
+    selection = None
+    if args.database == 'nhis':
+        from nhis_export_contract import require_context, build_selection
+        require_context(record, dataset_id)
+        selection = build_selection(record, database_page_url(args.base_url, 'nhis', dataset_id=dataset_id))
     check_output_replacement(args.out, args.overwrite)
     if args.snapshot_file.exists():
         raise ValueError("Snapshot file must be new; preserve the previous attempt and use a new snapshot filename.")
@@ -502,6 +532,8 @@ def prepare_download(args: argparse.Namespace) -> dict:
     snapshot = download_snapshot(args.prepare_download)
     snapshot["expected_vars"] = expected
     snapshot.update(database=args.database, language=language)
+    if args.database == 'nhis':
+        snapshot.update(dataset_id=dataset_id, nhis_selection=selection)
     attempt_id = str(uuid.uuid4())
     snapshot["attempt_id"] = attempt_id
     args.snapshot_file.parent.mkdir(parents=True, exist_ok=True)
@@ -514,19 +546,21 @@ def prepare_download(args: argparse.Namespace) -> dict:
                "--wait-seconds", str(args.wait_seconds)]
     if language:
         command.extend(["--language", language])
+    if dataset_id:
+        command.extend(['--dataset-id', dataset_id])
     if args.overwrite:
         command.append("--overwrite")
     return {"ok": True, "next_action": "run_browser_action_once",
             "snapshot_file": str(args.snapshot_file.resolve()),
             "browser_action": build_download_browser_action(
                 args.base_url, args.database, attempt_id, len(expected),
-                args.snapshot_file.with_name(f"download_attempt_{attempt_id}.json"), language,
+                args.snapshot_file.with_name(f"download_attempt_{attempt_id}.json"), language, dataset_id,
             ),
             "watch_command": "& " + " ".join("'" + arg.replace("'", "''") + "'" for arg in command)}
 
 
 def wait_for_download(directory: Path, baseline: dict, expected: list[str],
-                      timeout: float, poll_interval: float = 0.25, database: str | None = None, language=None) -> dict:
+                      timeout: float, poll_interval: float = 0.25, database: str | None = None, language=None, dataset_id=None, selection=None) -> dict:
     if str(directory.resolve(strict=True)) != baseline["directory"]:
         raise ValueError("download directory differs from the saved snapshot")
     if timeout < 0 or poll_interval <= 0:
@@ -538,6 +572,8 @@ def wait_for_download(directory: Path, baseline: dict, expected: list[str],
     if database == "klosa":
         from klosa_adapter_contract import require_context
         require_context(baseline, language)
+    if database == 'nhis' and (baseline.get('dataset_id') != dataset_id or baseline.get('nhis_selection') != selection):
+        raise ValueError('NHIS dataset or exact selection changed after download preparation')
     started = time.monotonic()
     previous = {}
     checked = {}
@@ -557,7 +593,8 @@ def wait_for_download(directory: Path, baseline: dict, expected: list[str],
             if key not in checked:
                 try:
                     with contextlib.redirect_stderr(io.StringIO()):
-                        report = (inspect_archive(directory / name, expected, database, language) if database else inspect_archive(directory / name, expected))
+                        report = (inspect_archive(directory / name, expected, database, language, dataset_id, selection) if database == 'nhis' else
+                                  inspect_archive(directory / name, expected, database, language) if database else inspect_archive(directory / name, expected))
                     # A concurrent write invalidates this inspection.
                     after = (directory / name).stat()
                     if [after.st_size, after.st_mtime_ns] != stat:
@@ -610,9 +647,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--action-file", type=Path,
                         help="Save the prepared CLI payload and print a compact receipt (prepare only).")
     parser.add_argument("--wait-seconds", type=float, default=20)
-    parser.add_argument("--database", type=str.lower, choices=("charls", "elsa", "hrs", "share", "chns", "knhanes", "klosa", "mhas", "nhanes"))
+    parser.add_argument("--database", type=str.lower, choices=("charls", "elsa", "hrs", "share", "chns", "knhanes", "klosa", "mhas", "nhanes", "nhanesiii", "nhis"))
     parser.add_argument("--base-url")
     parser.add_argument('--language', choices=['en', 'ko'])
+    parser.add_argument('--dataset-id')
     parser.add_argument("--out", type=Path)
     parser.add_argument("--expect-vars-file", type=Path)
     parser.add_argument("--overwrite", action="store_true")
@@ -628,6 +666,10 @@ def parse_args() -> argparse.Namespace:
     if args.database == "klosa":
         from klosa_adapter_contract import language
         try: language(args.language)
+        except ValueError as exc: parser.error(str(exc))
+    if args.database == 'nhis':
+        from nhis_export_contract import require_dataset
+        try: require_dataset(args.dataset_id)
         except ValueError as exc: parser.error(str(exc))
     if args.wait_seconds < 0:
         parser.error("--wait-seconds must be nonnegative")
@@ -661,10 +703,16 @@ def main() -> int:
                               "existing_zip_count": len(snapshot["files"])}))
             return 0
         expected = read_expected_vars_file(args.expect_vars_file)
+        selection = None
+        if args.database == 'nhis':
+            from nhis_export_contract import build_selection, require_context
+            record = json.loads((args.expect_vars_file.parent/'definition_search_record.json').read_text(encoding='utf-8-sig'))
+            require_context(record, args.dataset_id)
+            selection = build_selection(record, record['dbcodebook_url'])
         archive_path = args.archive
         if args.watch_downloads:
             baseline = json.loads(args.snapshot_file.read_text(encoding="utf-8"))
-            observation = wait_for_download(args.watch_downloads, baseline, expected, args.wait_seconds, database=args.database, language=args.language)
+            observation = wait_for_download(args.watch_downloads, baseline, expected, args.wait_seconds, database=args.database, language=args.language, dataset_id=args.dataset_id, selection=selection)
             args.snapshot_file.with_name(args.snapshot_file.stem + "_result.json").write_text(
                 json.dumps(observation, ensure_ascii=False, indent=2), encoding="utf-8")
             if not observation["ok"]:
@@ -672,7 +720,7 @@ def main() -> int:
                 return 1
             archive_path = Path(observation["archive_source"])
         validated = ({key: observation[key] for key in ("zip_members", "codebook", "data")}
-                     if args.watch_downloads else inspect_archive(archive_path, expected, args.database, args.language))
+                     if args.watch_downloads else inspect_archive(archive_path, expected, args.database, args.language, args.dataset_id, selection))
         if archive_path.resolve() == (args.out / "bookapp_download.zip").resolve():
             raise ValueError("archive must be outside the managed output files")
         prepare_output_dir(args.out, args.overwrite)
@@ -684,6 +732,7 @@ def main() -> int:
             "allow_new_export": False,
             "database": args.database,
             "language": args.language,
+            "dataset_id": args.dataset_id,
             "archive_source": str(archive_path.resolve()),
             **validated,
         }

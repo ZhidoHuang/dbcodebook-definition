@@ -36,7 +36,7 @@ def main():
         must_fail(lambda:validate_unique_package(d,['raw_data.csv','raw_data_country.csv'],['answer']),'one personal')
         for altered,fragment in [([rows[0],rows[0]],'duplicate'),
                                  ([rows[0],['different','Wave 1',*rows[0][2:]]],'duplicate'),
-                                 ([['x','Corona Survey 1',*rows[0][2:]]],'unsupported period'),
+                                 ([['x','Corona Survey 3',*rows[0][2:]]],'unsupported period'),
                                  ([['x','Wave 1','',*rows[0][3:]]],'empty identity')]:
             write_csv(d/'raw_data.csv',[header,*altered]);must_fail(lambda:validate_unique_package(d,['raw_data.csv'],['answer']),fragment)
         write_csv(d/'raw_data.csv',[header,*rows])
@@ -75,13 +75,28 @@ def main():
         newpreview['total_files']=3
         assert validate_unique_preview(newpreview,{'x (A)':'answer'})['full_file_verified'] is False
         for altered,fragment in [(note.replace('mergeid','country'),'match key/unit'),
-                                 (note.replace('Wave 2','Wave 10'),'ordinary Wave'),
+                                 (note.replace('Wave 2','Wave 10'),'supports Wave'),
                                  (note.replace('─ x','─ other'),'provenance'),
                                  (note.replace('→ answer','→ wrong_alias'),'provenance')]:
             save_note(altered)
             must_fail(lambda:validate_unique_package(d,['raw_data.csv'],['answer']),fragment)
         save_note(note.split('└─ sharew2')[0])
         must_fail(lambda:validate_unique_package(d,['raw_data.csv'],['answer']),'raw periods differ')
+        # Same-person Corona rows are separate supported periods, with explicit provenance.
+        corona_rows=[rows[0],['corona-one','Corona Survey 1',*rows[0][2:]],
+                     ['corona-two','Corona Survey 2',*rows[0][2:]]]
+        corona_note=note + 'sharew8ca_ca.dta [Corona Survey 1]\n └─ x → answer\nsharew9ca_ca.dta [Corona Survey 2]\n └─ x → answer\n'
+        save_note(corona_note)
+        write_csv(d/'raw_data.csv',[header,*corona_rows])
+        assert validate_unique_package(d,['raw_data.csv'],['answer'])['rows']==3
+        write_csv(d/'raw_data.csv',[header,*corona_rows,corona_rows[1]])
+        must_fail(lambda:validate_unique_package(d,['raw_data.csv'],['answer']),'duplicate')
+        write_csv(d/'raw_data.csv',[header,*corona_rows])
+        save_note(corona_note.replace('Corona Survey 2','Corona Survey 3'))
+        must_fail(lambda:validate_unique_package(d,['raw_data.csv'],['answer']),'supports Wave')
+        save_note(note)
+        must_fail(lambda:validate_unique_package(d,['raw_data.csv'],['answer']),'raw periods differ')
+        write_csv(d/'raw_data.csv',[header,*rows])
         save_note(note)
         write_csv(d/'raw_codebook.csv',[newheader+['Period'],newrows[0]+['Wave 1, Wave 2']])
         must_fail(lambda:validate_unique_package(d,['raw_data.csv'],['answer']),'both Period and Match key')

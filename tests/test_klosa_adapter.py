@@ -47,9 +47,39 @@ class ContractTests(unittest.TestCase):
  def test_package_regular_and_imputation(self):
   result=self.runvalid();self.assertEqual(result['language'],'ko');self.assertEqual(result['data'][k.REPEAT_MEMBER]['rows'],2)
   self.assertEqual((self.root/'raw_data.csv').read_text(encoding='utf-8-sig').splitlines()[1],'00001_10,00001,10,1')
+  # Current website omits Wave; actual wNN identity still determines scope.
+  rows=[row[:2]+row[3:] for row in self.dictrows]
+  self.csv('raw_codebook.csv',k.CURRENT_DICT_HEADER,rows)
+  self.assertEqual(self.runvalid()['codebook']['rows'],2)
+  with self.assertRaises(ValueError):self.runvalid('en')
+  self.csv('raw_data.csv',k.IDENTIFIERS+['sex10'],[['00001_9','00001','9','1']])
+  with self.assertRaises(ValueError):self.runvalid()
+  self.csv('raw_data.csv',k.IDENTIFIERS+['sex10'],self.reg)
+  rows[0][2]='gender1 (KLoSA_str)'
+  self.csv('raw_codebook.csv',k.CURRENT_DICT_HEADER,rows)
+  with self.assertRaises(ValueError):self.runvalid()
  def test_ordinary_duplicate(self):
   self.reg.append(self.reg[0]);self.write()
   with self.assertRaises(ValueError):self.runvalid()
+ def test_exit_separate_file_and_legacy(self):
+  def setup():
+   self.csv('raw_codebook.csv',k.CURRENT_DICT_HEADER,[['core','C019','w01C019 (KLoSA_Core)','uniqID','core'],['exit','X_C110','w02X_C110 (KLoSA_Exit)','uniqID','exit']])
+   self.csv('raw_data.csv',k.IDENTIFIERS+['core'],[['1_001','001','1','1']])
+   self.csv(k.EXIT_MEMBER,k.IDENTIFIERS+['exit'],[['2_001','001','2','1']])
+  def validate():return k.validate_package(self.root,['raw_data.csv',k.EXIT_MEMBER],['core','exit'],'ko')
+  setup();self.assertEqual(validate()['data'][k.EXIT_MEMBER]['rows'],1)
+  for case in ['misplaced_source','duplicate_exit','wrong_wave','missing_exit']:
+   with self.subTest(case=case):
+    setup()
+    if case=='misplaced_source':self.csv(k.EXIT_MEMBER,k.IDENTIFIERS+['core'],[['2_001','001','2','1']])
+    elif case=='duplicate_exit':self.csv(k.EXIT_MEMBER,k.IDENTIFIERS+['exit'],[['2_001','001','2','1']]*2)
+    elif case=='wrong_wave':self.csv(k.EXIT_MEMBER,k.IDENTIFIERS+['exit'],[['3_001','001','3','1']])
+    with self.assertRaises(ValueError):
+     if case=='missing_exit':k.validate_package(self.root,['raw_data.csv'],['core','exit'],'ko')
+     else:validate()
+  setup()
+  self.csv('raw_data.csv',k.IDENTIFIERS+['core','exit'],[['1_001','001','1','1',''],['2_001','001','2','','1']])
+  self.assertEqual(k.validate_package(self.root,['raw_data.csv'],['core','exit'],'ko')['data']['raw_data.csv']['rows'],2)
  def test_default_pid_preserved(self):
   header=k.IDENTIFIERS+['pid','sex10']
   self.csv('raw_data.csv',header,[['00001_10','00001','10','00001.0','1']])

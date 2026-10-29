@@ -227,7 +227,8 @@ with tempfile.TemporaryDirectory() as temp_dir:
         "--topic-id", "036", "--topic-name", "工作属性", "--task", "重新运行",
         "--workflow", "general")
     archived = Path(temp_dir) / "archived_runs" / previous_id / "execution_report.json"
-    assert json.loads(archived.read_text(encoding="utf-8")) == report
+    assert not archived.exists()
+    assert json.loads(report_path.read_text(encoding="utf-8"))["continued_from_run"] == previous_id
     run("init", "--process-dir", temp_dir, "--database", "CHARLS",
         "--topic-id", "036", "--topic-name", "工作属性", "--task", "覆盖",
         "--workflow", "general", ok=False)
@@ -277,7 +278,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
     restarted = execution_report.begin_website_preparation(root, "CHARLS", "036", "工作属性")
     assert restarted["run_id"] != started["run_id"]
     archive = root / "archived_runs" / started["run_id"] / "execution_report.json"
-    assert archive.read_bytes() == finished
+    assert not archive.exists()
 
 with tempfile.TemporaryDirectory() as temp_dir:
     run("init", "--process-dir", temp_dir, "--database", "CHARLS",
@@ -484,6 +485,30 @@ with tempfile.TemporaryDirectory() as temp_dir:
     assert "456.000" in (process / "执行报告.md").read_text(encoding="utf-8")
     run("website-finish", "--process-dir", str(process), "--result", str(path), ok=False)
 
+    late_process=home / "late-return"
+    with patch.object(execution_report,"now",return_value=t0):
+        execution_report.begin_website_preparation(late_process,"CHARLS","043","fixture")
+    with patch.object(execution_report,"now",return_value=t0+timedelta(seconds=300)):
+        execution_report.begin_website_sync(late_process,"CHARLS","043","fixture")
+    late_path=browser_result(late_process)
+    late=json.loads(late_path.read_text(encoding="utf-8"))
+    late.update(late_navigation_observed=True,read_only=True,original_operation_state="failed",
+                recovered_original_result=False,observed_at=(t0+timedelta(seconds=400)).timestamp())
+    late_report=late_process / "execution_report.json"
+    before_late=late_report.read_bytes()
+    for invalid in [dict(late,read_only=False),dict(late,original_operation_state="running"),
+                    dict(late,observed_at=float("nan")),dict(late,observed_at=(t0+timedelta(seconds=999)).timestamp())]:
+        late_path.write_text(json.dumps(invalid),encoding="utf-8")
+        with patch.object(execution_report,"now",return_value=t0+timedelta(seconds=456)):
+            expect_system_exit(lambda:execution_report.command_website_finish(
+                execution_report.argparse.Namespace(process_dir=str(late_process),result=late_path)),"延迟返回")
+        assert late_report.read_bytes()==before_late
+    late_path.write_text(json.dumps(late),encoding="utf-8")
+    with patch.object(execution_report,"now",return_value=t0+timedelta(seconds=456)):
+        execution_report.command_website_finish(execution_report.argparse.Namespace(process_dir=str(late_process),result=late_path))
+    late_stage=execution_report.latest_stage(json.loads(late_report.read_text(encoding="utf-8")),"website_sync")
+    assert late_stage["status"]=="completed_with_issues" and late_stage["elapsed_seconds"]==100
+
 with tempfile.TemporaryDirectory() as temp_dir:
     from datetime import datetime, timedelta, timezone
     from unittest.mock import patch
@@ -638,3 +663,36 @@ with tempfile.TemporaryDirectory() as temp_dir:
         expect_system_exit(lambda: execution_report.command_turn_timing(args), "轮次结束后")
 
 print("EXECUTION_REPORT_TEST_PASS")
+
+
+# Current-run replacement retains reusable evidence without a report archive.
+with tempfile.TemporaryDirectory() as temporary:
+    from argparse import Namespace
+    root = Path(temporary)
+    source = root / "source.txt"
+    source.write_text("stable", encoding="utf-8")
+    options = Namespace(process_dir=str(root), database="test", topic_id="001",
+                        topic_name="fixture", task="current materials", workflow="general")
+    execution_report.command_init(options)
+    path, md = execution_report.paths(str(root))
+    prior = execution_report.load(path)
+    prior.update(status="completed", stage_reviews={"fixture": {
+        "status": "pass", "mode": "isolated", "limitation": "fixture only",
+        "inputs": execution_report.input_hashes([source]), "evidence": "checked fixture"}})
+    execution_report.save(path, md, prior)
+    execution_report.command_init(options)
+    current = execution_report.load(path)
+    execution_report.validate_stage_review(current, "fixture")
+    assert not (root / "archived_runs").exists()
+    source.write_text("changed", encoding="utf-8")
+    try:
+        execution_report.validate_stage_review(current, "fixture")
+    except ValueError as error:
+        assert "变化" in str(error)
+    else:
+        raise AssertionError("stale carried evidence was accepted")
+    current["status"] = "completed"
+    execution_report.save(path, md, current)
+    options.archive_previous = True
+    execution_report.command_init(options)
+    assert (root / "archived_runs" / current["run_id"] / "execution_report.json").is_file()

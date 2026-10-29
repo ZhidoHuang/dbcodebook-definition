@@ -27,6 +27,143 @@ def rejects(fn, message=''):
         raise AssertionError('Expected rejection: ' + message)
 
 
+def check_charls_full_default_identity_fixture():
+    """A validated household default may remain only in the full workbook."""
+    from unittest.mock import patch
+    import check_definition_output as output
+    files = ['db_topic.xlsx','codebook_topic.xlsx','analysis_db_topic.xlsx','analysis_codebook_topic.xlsx']
+    header = ['ID','id','year','respondent_id','source_a','source_b','defined_value']
+    tables = {
+        files[0]: [header, ['x','001','2011','001',1,2,3]],
+        files[1]: [['Variable','Label'], *[[n,n] for n in header]],
+        files[2]: [['ID','id','year','defined_value'], ['x','001','2011',3]],
+        files[3]: [['Variable','Label'], ['defined_value','defined_value']],
+    }
+    contract = {'files': {'raw_data_household.csv': {
+        'file_type':'householdID', 'header':['householdid','year','respondent_id','source_b'],
+        'variables':['source_b']}}}
+    with tempfile.TemporaryDirectory(prefix='charls_full_identity_') as tmp:
+        folder=Path(tmp)
+        for name in files: (folder/name).touch()
+        def run(values, accepted_contract=None, analysis_vars=None):
+            checks=[]
+            with patch.object(output,'read_table_rows',side_effect=lambda p:values[p.name]):
+                check_workbook_contract(folder,files,files[2],files[3],
+                    ['source_a','source_b'],analysis_vars or ['defined_value'],checks,
+                    charls_multifile_contract=accepted_contract)
+            return checks[-1]
+        assert not run(tables)['ok'], 'undeclared full-only identity was accepted'
+        assert run(tables,contract)['ok'], 'validated household respondent identity rejected'
+        alternate=deepcopy(contract)
+        alternate['files']['raw_data_household.csv']['header'][2]='id'
+        assert not run(tables,alternate)['ok'], 'respondent identity guessed from a different contract'
+        extra=deepcopy(tables)
+        extra[files[0]][0].append('helper')
+        extra[files[0]][1].append(99)
+        extra[files[1]].append(['helper','helper'])
+        assert not run(extra,contract)['ok'], 'arbitrary extra full column was accepted'
+        assert not run(tables,contract,['respondent_id','defined_value'])['ok'], 'default identity accepted as a definition result'
+        altered=deepcopy(tables)
+        altered[files[0]][1][-1]=4
+        assert not run(altered,contract)['ok'], 'shared result drift was hidden'
+        omitted=deepcopy(tables)
+        omitted[files[0]][0].pop(3)
+        omitted[files[0]][1].pop(3)
+        omitted[files[1]]=[row for row in omitted[files[1]] if row[0]!='respondent_id']
+        assert run(omitted,contract)['ok'], 'an unused default identity became mandatory'
+
+
+def check_source_result_label_fixture(full_dictionary=None, analysis_dictionary=None, raw_rows=None, plan=None):
+    """Exercise source/result Label roles with one synthetic data row, not production values."""
+    import csv
+    from unittest.mock import patch
+    import check_definition_output as output
+    if full_dictionary is None:
+        header = ["Variable", "original_vars", "processed_vars", "Label", "count"]
+        full_dictionary = [header, ["ID","ID","ID","Identity",1],
+                           ["shared","RAW_X","shared","Official source",1],
+                           ["defined","RAW_X","shared","Defined result",1]]
+        analysis_dictionary = [header, ["shared","RAW_X","shared","Shared result",1],
+                               ["defined","RAW_X","shared","Defined result",1]]
+        raw_rows = [{"Variable":"RAW_X","newname":"shared","Label":"Official source"}]
+        plan = [{"analysis_var":"shared","meaning":"Shared result"},
+                {"analysis_var":"defined","meaning":"Defined result"}]
+    full_dictionary, analysis_dictionary, raw_rows, plan = map(deepcopy,
+        (full_dictionary, analysis_dictionary, raw_rows, plan))
+    vi = full_dictionary[0].index("Variable")
+    av = analysis_dictionary[0].index("Variable")
+    names = [row[vi] for row in full_dictionary[1:]]
+    variables = [row[av] for row in analysis_dictionary[1:]]
+    identities = [name for name in names if name not in {row["newname"] for row in raw_rows} and name not in variables]
+    raw_vars = [row["newname"] for row in raw_rows]
+    files = ['db_topic.xlsx','codebook_topic.xlsx','analysis_db_topic.xlsx','analysis_codebook_topic.xlsx']
+    values = {name:i for i,name in enumerate(names)}
+    tables = {files[0]:[names,[values[name] for name in names]], files[1]:full_dictionary,
+              files[2]:[identities+variables,[values[name] for name in identities+variables]],
+              files[3]:analysis_dictionary}
+    shared = next(name for name in variables if name in raw_vars)
+    separate = next(name for name in variables if name not in raw_vars)
+    fi = next(i for i,row in enumerate(full_dictionary[1:],1) if row[vi]==shared)
+    ai = next(i for i,row in enumerate(analysis_dictionary[1:],1) if row[av]==shared)
+    di = next(i for i,row in enumerate(full_dictionary[1:],1) if row[vi]==separate)
+    cases = []
+    with tempfile.TemporaryDirectory(prefix='source_result_labels_') as tmp:
+        folder=Path(tmp)
+        for name in files: (folder/name).touch()
+        def run(label, accepted, data=None, raw=None, result_plan=None):
+            raw = deepcopy(raw_rows if raw is None else raw)
+            with (folder/'raw_codebook.csv').open('w',encoding='utf-8',newline='') as handle:
+                writer=csv.DictWriter(handle,fieldnames=list(raw[0]));writer.writeheader();writer.writerows(raw)
+            checks=[]
+            with patch.object(output,'read_table_rows',side_effect=lambda p:(data or tables)[p.name]):
+                output.check_workbook_contract(folder,files,files[2],files[3],raw_vars,variables,checks,
+                    result_label_plan=plan if result_plan is None else result_plan)
+            assert checks[-1]['ok']==accepted,(label,checks)
+            cases.append({'case':label,'expected_accept':accepted,'actual':checks[-1]})
+        run('exact source/result roles',True)
+        run('no approved label plan',False,result_plan=[])
+        equal=deepcopy(tables)
+        for row in equal[files[3]][1:]:
+            name=row[av];row[analysis_dictionary[0].index('Label')]=next(x[full_dictionary[0].index('Label')] for x in full_dictionary[1:] if x[vi]==name)
+        run('legacy equal Labels without plan',True,data=equal,result_plan=[])
+        mutations=[('source Label',files[1],fi,'Label','Changed source'),
+                   ('analysis Label',files[3],ai,'Label','Changed result'),
+                   ('original identity',files[1],fi,'original_vars','WRONG'),
+                   ('processed alias',files[1],fi,'processed_vars','WRONG'),
+                   ('source count',files[1],fi,'count',2),
+                   ('nonshared Label',files[1],di,'Label','Changed nonshared')]
+        for label,filename,row,column,value in mutations:
+            changed=deepcopy(tables);changed[filename][row][changed[filename][0].index(column)]=value
+            run(label,False,data=changed)
+        wrong_raw=deepcopy(raw_rows);next(row for row in wrong_raw if row['newname']==shared)['Variable']='WRONG'
+        run('raw original identity',False,raw=wrong_raw)
+        wrong_raw=deepcopy(raw_rows);next(row for row in wrong_raw if row['newname']==shared)['Label']='Changed source'
+        run('raw source Label',False,raw=wrong_raw)
+        wrong_raw=deepcopy(raw_rows);wrong_raw.append(deepcopy(next(row for row in raw_rows if row['newname']==shared)))
+        run('duplicate raw alias',False,raw=wrong_raw)
+        duplicate=deepcopy(plan);duplicate.append(deepcopy(next(row for row in plan if row['analysis_var']==shared)))
+        run('duplicate result plan',False,result_plan=duplicate)
+        missing=[row for row in plan if row['analysis_var']!=shared]
+        run('missing result plan',False,result_plan=missing)
+        empty=deepcopy(plan);next(row for row in empty if row['analysis_var']==shared)['meaning']=''
+        run('blank result meaning',False,result_plan=empty)
+        changed=deepcopy(tables);changed[files[2]][1][-1]+=1
+        run('shared result value drift',False,data=changed)
+        changed=deepcopy(tables);changed[files[2]][1][0]+=1
+        run('identity drift',False,data=changed)
+        changed=deepcopy(tables);changed[files[3]][1],changed[files[3]][2]=changed[files[3]][2],changed[files[3]][1]
+        run('analysis dictionary order',False,data=changed)
+        changed=deepcopy(tables);changed[files[0]][0].append('unknown');changed[files[0]][1].append(99)
+        run('extra unknown column',False,data=changed)
+        changed=deepcopy(tables);changed[files[2]].append(deepcopy(changed[files[2]][1]))
+        run('row count changed',False,data=changed)
+    return cases
+
+
+check_charls_full_default_identity_fixture()
+check_source_result_label_fixture()
+
+
 with tempfile.TemporaryDirectory(prefix='definition_branch_contracts_') as tmp:
     folder = Path(tmp)
     materials = folder / 'materials'; materials.mkdir()
@@ -153,6 +290,7 @@ render_definition_bundle(data=data,db_data=db_data,codebook=codebook,analysis_da
   analysis_codebook=analysis_codebook,analysis_vars=analysis_vars,raw_vars=raw_vars,raw_codebook=name_z,
   criteria=copy$criteria,criteria_intro=copy$criteria_intro,
   summary_meanings=c(defined_value="合计分数"),summary_groups=c(defined_value="测试结果"),
+  component_groups=c(defined_value="Test Module"),
   summary_entry=copy$summary_entry,summary_selection=copy$summary_selection,
   summary_insight_items=copy$summary_insight_items,reference_lines=copy$reference_lines,
   summary_source=NULL,file_stem="fixture",note_name="note.md",qa_title="Offline fixture",
@@ -191,5 +329,55 @@ cat("OFFLINE_DICTIONARY_AND_ALL_NA_NOTE_PASS\n")
     checks=[]
     check_workbook_contract(folder,files,files[2],files[3],['source_a'],['defined_value'],checks)
     assert not checks[-1]['ok'],checks
+    import csv
+    from check_definition_output import read_xlsx_rows, read_table_rows
+    from update_reader_copy import workbook_content, formal_table
+    csv_files=list(files)
+    for index in (0,2):
+        csv_files[index]=files[index].replace('.xlsx','.csv')
+        with (folder/csv_files[index]).open('w',encoding='utf-8-sig',newline='') as stream:
+            csv.writer(stream).writerows(read_xlsx_rows(folder/files[index]))
+    checks=[]
+    check_workbook_contract(folder,csv_files,csv_files[2],csv_files[3],['source_a','source_b'],['defined_value'],checks)
+    assert checks[-1]['ok'],checks
+    assert formal_table(csv_files[0]) and formal_table(csv_files[2]) and not formal_table('raw_data.csv')
+    content=workbook_content(folder/csv_files[2])
+    rows=read_table_rows(folder/csv_files[2])
+    with (folder/csv_files[2]).open('w',encoding='utf-8',newline='') as stream:
+        csv.writer(stream,quoting=csv.QUOTE_ALL).writerows(rows)
+    assert workbook_content(folder/csv_files[2])==content,'CSV quoting/BOM alone changed semantic content'
+    with (folder/csv_files[2]).open('w',encoding='utf-8',newline='') as stream:
+        csv.writer(stream).writerows(rows[:-1])
+    checks=[]
+    check_workbook_contract(folder,csv_files,csv_files[2],csv_files[3],['source_a','source_b'],['defined_value'],checks)
+    assert not checks[-1]['ok'],'CSV output omitted a record without rejection'
+
+
+def check_charls_psu_join_identity_fixture():
+    from unittest.mock import patch
+    import check_definition_output as output
+    files=['db_psu.xlsx','codebook_psu.xlsx','analysis_db_psu.xlsx','analysis_codebook_psu.xlsx']
+    header=['ID','id','year','a','b','x']
+    tables={files[0]:[header,['2011_001','001','2011',1,2,3]],
+            files[1]:[['Variable','Label'],*[[x,x] for x in header]],
+            files[2]:[['ID','id','year','x'],['2011_001','001','2011',3]],
+            files[3]:[['Variable','Label','processed_vars'],['x','x','a, b']]}
+    contract={'files':{'raw_data_psu.csv':{'file_type':'communityID'}},'join_identity_columns':['communityid']}
+    with tempfile.TemporaryDirectory() as tmp:
+        p=Path(tmp)
+        for name in files:(p/name).touch()
+        def run(values,con=contract):
+            checks=[]
+            with patch.object(output,'read_table_rows',side_effect=lambda path:values[path.name]):
+                check_workbook_contract(p,files,files[2],files[3],['communityid','a','b'],['x'],checks,charls_multifile_contract=con)
+            return checks[-1]['ok']
+        assert run(tables)
+        assert not run(tables,None),'same-name communityid was globally excluded'
+        wrong=deepcopy(tables);wrong[files[3]][1][2]='a, b, communityid';assert not run(wrong),'measurement mapping accepted as join-only'
+        wrong=deepcopy(tables);wrong[files[0]][0].remove('b');wrong[files[0]][1].pop(4);assert not run(wrong),'missing measurement source accepted'
+        wrong=deepcopy(tables);wrong[files[2]][1][-1]=4;assert not run(wrong),'altered result accepted'
+        wrong=deepcopy(tables);wrong[files[2]][1][1]='002';assert not run(wrong),'altered identity/order accepted'
+
+check_charls_psu_join_identity_fixture()
 
 print('EXECUTION_BRANCH_CONTRACTS_PASS: evidence/copy/note, all-NA generation, four actual workbooks, seven key shapes, CHNS identity types')

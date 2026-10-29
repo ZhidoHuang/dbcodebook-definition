@@ -7,7 +7,7 @@
 - ID保持原样，不能推断其内部编码或把Harmonized_id直接等同官方pid。
 - 普通表按ID连接，同时检查个人—时期唯一；插补表另带`RowIndex`、`v_imputation_`，不得当普通个人表去重。
 
-- 普通CSV为`raw_data.csv`，插补为`raw_data_KLoSA_Imputation.csv`。
+- 普通CSV为`raw_data.csv`，退出访谈可独立导出为`raw_data_KLoSA_Exit.csv`，插补为`raw_data_KLoSA_Imputation.csv`。按字典来源文件核对列归属；兼容Exit仍在普通CSV中的旧包。
 - 字典六列为`Easy label`、`Base_Variable`、`Wave`、`Variable`、`File type`、`newname`。
 - `Base_Variable`批量选择会展开并改变别名，因此当前固定选择须采用网页已经确认的具体`wXX`字段身份，不能凭变量命名自行猜出各期来源。
 

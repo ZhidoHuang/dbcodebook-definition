@@ -52,7 +52,7 @@
 
 选择 `TRACKER_FILE_HRS_2022_EARLY_RELEASE_TRACKER_FILE_VERSION_2_RESPONDENT` 中的业务变量后，网站自动附带 `OVHHID`、`OVPN`、`OVRESULT`、`OVYEAR`。
 
-- 四列不加入批量选择，不另设下载别名；R 按默认列名读取。
+- 四列不加入批量选择，不另设下载别名；R 按默认列名读取。 `OVHHID`、`OVPN` 按字符保留前导零；`OVRESULT`、`OVYEAR` 不因此视为字符身份键。
 - 来源记录仍保留四列的完整身份与连接用途；不计入手选来源数，不放入逐结果的业务来源 mapping。
 - 下载后核实四列全部存在，再按官方变更类型与时期判断连接，不因自动附带就自动合并编号。
 - 默认列不在 raw_codebook 的手选条目中；生成提取清单仍使用实际 raw_codebook。旧包保留原样，更新手选清单时按第2步重新下载，不改旧 CSV 表头伪装新导出。

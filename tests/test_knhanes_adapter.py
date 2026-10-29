@@ -82,5 +82,84 @@ class Contract(unittest.TestCase):
   self.assertEqual(action['input_text'],'sex (Core data)=s')
   with self.assertRaises(ValueError):select.build_record_action({'status':'DRAFT'},'http://test/home/knhanes/')
 
+class StandalonePersonal(unittest.TestCase):
+ csv=Contract.csv
+ def setUp(self):
+  self.temp=tempfile.TemporaryDirectory();self.r=pathlib.Path(self.temp.name)
+  self.family='Indoor air quality special release'
+  self.member='raw_data_Indoor_air_quality_special_release.csv'
+  self.csv('raw_codebook.csv',k.CODEBOOK_COLUMNS,[['VOC_BMA ('+self.family+')','a','a','uniqID','voc']])
+  self.rows=[['2021_A001','A001','2021','0.1'],['2021_0002','0002','2021','0.2']]
+  self.csv(self.member,(*k.IDENTIFIERS,'voc'),self.rows)
+ def tearDown(self):self.temp.cleanup()
+ def test_named_unique_file_has_no_rowindex(self):
+  report=k.validate_bundle(self.r,[self.member],['voc'])
+  self.assertEqual(report['data'][self.member]['identity_columns'],list(k.IDENTIFIERS))
+  self.assertEqual(k.person_raw_file(self.r,['voc']),self.r/self.member)
+ def test_named_unique_duplicate_identity_rejected(self):
+  self.csv(self.member,(*k.IDENTIFIERS,'voc'),self.rows+[self.rows[0]])
+  with self.assertRaisesRegex(ValueError,'duplicate id-year'):k.person_raw_file(self.r,['voc'])
+ def test_renaming_to_core_rejected(self):
+  (self.r/self.member).rename(self.r/'raw_data.csv')
+  with self.assertRaisesRegex(ValueError,'file set'):k.person_raw_file(self.r,['voc'])
+ def test_alias_in_wrong_source_file_rejected(self):
+  self.csv(self.member,(*k.IDENTIFIERS,'wrong'),self.rows)
+  with self.assertRaisesRegex(ValueError,'coverage'):k.person_raw_file(self.r,['voc'])
+ def test_wrong_source_identity_rejected(self):
+  with self.assertRaisesRegex(ValueError,'settled selection'):
+   k.validate_bundle(self.r,[self.member],['voc'],{'voc':'VOC_BMA (Core data)'})
+ def test_fake_repeated_type_rejected(self):
+  self.csv('raw_codebook.csv',k.CODEBOOK_COLUMNS,[['VOC_BMA ('+self.family+')','a','a','reID','voc']])
+  with self.assertRaisesRegex(ValueError,'File type'):k.person_raw_file(self.r,['voc'])
+ def test_mixed_core_special_preserves_sample_identity(self):
+  self.csv('raw_codebook.csv',k.CODEBOOK_COLUMNS,[['VOC_BMA ('+self.family+')','a','a','uniqID','voc'],['sex (Core data)','s','s','uniqID','s']])
+  self.csv('raw_data.csv',(*k.IDENTIFIERS,'s'),[['2021_A001','A001','2021','1']])
+  report=k.validate_person_package(self.r,['voc','s'])
+  self.assertEqual(set(report['data']),set(k.PERSON_SAMPLES))
+  self.assertEqual(report['data']['raw_data.csv']['unit'],'respondent-year')
+  with self.assertRaisesRegex(ValueError,'no single'):k.person_raw_file(self.r,['voc','s'])
+  header=['sample_source','ID','id','year']
+  rows=[header,['Core data','2021_A001','A001','2021'],[self.family,'2021_A001','A001','2021']]
+  results=[]
+  output.check_identity_values(self.r/'raw_data.csv',list(k.IDENTIFIERS),rows,header,results,'knhanes',
+    raw_paths=[self.r/n for n in k.PERSON_SAMPLES])
+  self.assertFalse(any(x.get('ok') is False for x in results))
+  rows[2][0]='Unknown sample'
+  results=[]
+  output.check_identity_values(self.r/'raw_data.csv',list(k.IDENTIFIERS),rows,header,results,'knhanes',
+    raw_paths=[self.r/n for n in k.PERSON_SAMPLES])
+  self.assertTrue(any(x.get('ok') is False for x in results))
+ def test_multiple_special_families_rejected(self):
+  self.csv('raw_codebook.csv',k.CODEBOOK_COLUMNS,[['VOC_BMA ('+self.family+')','a','a','uniqID','voc'],['x (Cycle 7 oral special release)','x','x','uniqID','x']])
+  with self.assertRaisesRegex(ValueError,'single source family'):k.person_raw_file(self.r,['voc','x'])
+ def test_actual_repeated_member_not_personal(self):
+  (self.r/self.member).unlink()
+  self.csv('raw_codebook.csv',k.CODEBOOK_COLUMNS,[['n_amt (Dietary recall detail)','a','a','reID','voc']])
+  self.csv('raw_data_Dietary_recall_detail.csv',('RowIndex',*k.IDENTIFIERS,'voc'),[['1',*self.rows[0]]])
+  with self.assertRaisesRegex(ValueError,'requires one uniqID'):k.person_raw_file(self.r,['voc'])
+ def test_recovery_preserves_original_named_file(self):
+  z=self.r/'synthetic.zip'
+  with zipfile.ZipFile(z,'w') as f:
+   for n in ['raw_codebook.csv',self.member]:f.write(self.r/n,n)
+  report=recover.inspect_archive(z,['voc'],'knhanes')
+  self.assertEqual(list(report['data']),[self.member])
+  self.assertEqual(report['data'][self.member]['rows'],2)
+ def test_partial_output_checker_reads_original_special_filename(self):
+  (self.r/'fixture_run_20261022.log').write_text('R_EXIT_CODE=0\n',encoding='utf-8')
+  command=[sys.executable,str(ROOT/'scripts/check_definition_output.py'),'--formal-dir',str(self.r),
+           '--db','knhanes','--raw-vars','voc','--expected-files',self.member+',raw_codebook.csv']
+  result=subprocess.run(command,capture_output=True,text=True,encoding='utf-8')
+  self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+  report=json.loads(result.stdout)
+  self.assertTrue(any(x['check']=='KNHANES personal source-file contract' and x['ok'] for x in report['checks']))
+ def test_output_checker_rejects_repeated_personal_source(self):
+  self.csv('raw_codebook.csv',k.CODEBOOK_COLUMNS,[['n_amt (Dietary recall detail)','a','a','reID','voc']])
+  (self.r/self.member).unlink()
+  self.csv('raw_data_Dietary_recall_detail.csv',('RowIndex',*k.IDENTIFIERS,'voc'),[['1',*self.rows[0]]])
+  result=subprocess.run([sys.executable,str(ROOT/'scripts/check_definition_output.py'),'--formal-dir',str(self.r),
+    '--db','knhanes','--raw-vars','voc'],capture_output=True,text=True,encoding='utf-8')
+  self.assertEqual(result.returncode,1)
+  self.assertIn('requires one uniqID',result.stdout)
+
 if __name__=='__main__':
  unittest.main()

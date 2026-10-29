@@ -116,6 +116,57 @@ def main() -> int:
         )
         assert result == {"questions": 1, "covered_periods": 2}
 
+        # Unknown routing is not the same assertion as verified no routing.
+        # It may be carried only when the current definition does not use it.
+        unknown = copy.deepcopy(record)
+        unknown_item = unknown["questionnaire_evidence"][0]
+        unknown_item.update(
+            skip_logic_status="unknown", skip_logic=[],
+            unverified_nonessential_routes=(
+                "材料未记载否/未知后的现场退出题号；当前定义仅用合法直接回答，"
+                "其余留缺失，不通过该未知路线补0。"),
+            publication_coding_notes=["官方发布：是=1、否=2；不把编码约定当作跳题。"],
+        )
+        assert checker.validate_questionnaire_evidence(unknown, exploration_log, source_periods) == result
+        paraphrased_unknown = copy.deepcopy(unknown)
+        paraphrased_unknown["questionnaire_evidence"][0].update(
+            question_text_mode="plain_paraphrase", question_text_complete=False,
+            paraphrase_reason="官方材料支持必要题义和编码，未取得完整提问原句。",
+            applicable_population="本期成年人", recall_period="过去一周",
+        )
+        assert checker.validate_questionnaire_evidence(paraphrased_unknown, exploration_log, source_periods) == result
+        from questionnaire_display import display_answers
+        assert display_answers(unknown_item, {})[1] == []
+        translated_empty = copy.deepcopy(unknown_item)
+        translated_empty["display"] = {"skip_logic": []}
+        assert display_answers(translated_empty, {})[1] == []
+        for reason in (None, "", "   ", [], {}):
+            bad = copy.deepcopy(unknown)
+            bad["questionnaire_evidence"][0]["unverified_nonessential_routes"] = reason
+            expect_failure(checker, bad, exploration_log, source_periods, "unverified_nonessential_routes")
+        bad = copy.deepcopy(unknown)
+        bad["questionnaire_evidence"][0]["skip_logic"] = [{"when":"是=1", "destination":"FB001"}]
+        expect_failure(checker, bad, exploration_log, source_periods, "unknown must use an empty list")
+        for status, jumps, message in (
+            ("recorded", [], "recorded skip logic must not be empty"),
+            ("none", [{"when":"是=1", "destination":"FB001"}], "with no skip logic"),
+            ("pending", [], "skip_logic_status"),
+        ):
+            bad = copy.deepcopy(record)
+            bad["questionnaire_evidence"][0].update(skip_logic_status=status, skip_logic=jumps)
+            expect_failure(checker, bad, exploration_log, source_periods, message)
+        none = copy.deepcopy(record)
+        none["questionnaire_evidence"][0].update(skip_logic_status="none", skip_logic=[])
+        assert checker.validate_questionnaire_evidence(none, exploration_log, source_periods) == result
+        known_entry = copy.deepcopy(record)
+        known_entry["questionnaire_evidence"][0].update(
+            skip_logic_status="recorded",
+            skip_logic=[{"kind":"entry_condition", "when":"已核实成人对象", "destination":"FA002", "evidence":"fixture对象说明"}],
+            unverified_nonessential_routes="仅题后非必要退出路线未知，不用于补值。",
+        )
+        assert checker.validate_questionnaire_evidence(known_entry, exploration_log, source_periods) == result
+        print("unknown routing: evidence reason, empty display, and legacy status fixtures PASS")
+
         # Default and explicit skill scope retain relative and legacy absolute paths.
         for scope in (None, "skill"):
             for material_path in (
@@ -357,6 +408,28 @@ def main() -> int:
         )
         assert path_result == {"variable_periods": 2, "branches": 2}
 
+        # A result may cover fewer periods than its shared sources.
+        scoped = copy.deepcopy(record)
+        scoped["questionnaire_path_closure"] = scoped["questionnaire_path_closure"][:1]
+        scoped_plan = copy.deepcopy(definition_plan)
+        scoped_plan[0]["periods"] = ["2011"]
+        assert checker.validate_questionnaire_path_closure(
+            scoped, exploration_log, source_groups, approved_names, scoped_plan,
+        ) == {"variable_periods": 1, "branches": 1}
+        # Omitting scope retains legacy coverage; missing an in-scope path still fails.
+        expect_path_failure(checker, scoped, exploration_log, source_groups,
+                            approved_names, definition_plan, "does not match")
+        missing_scoped = copy.deepcopy(scoped)
+        missing_scoped["questionnaire_path_closure"] = []
+        expect_path_failure(checker, missing_scoped, exploration_log, source_groups,
+                            approved_names, scoped_plan, "questionnaire_path_closure")
+        for periods, message in [([], "nonempty"), (["1900"], "outside"),
+                                 (["2011", "2011"], "duplicates")]:
+            invalid_plan = copy.deepcopy(scoped_plan)
+            invalid_plan[0]["periods"] = periods
+            expect_path_failure(checker, scoped, exploration_log, source_groups,
+                                approved_names, invalid_plan, message)
+
         auxiliary = copy.deepcopy(record)
         auxiliary_groups = source_groups + [
             {"concept": "访谈身份", "periods": ["cross-wave"], "raw_variables": ["self_status"]},
@@ -581,6 +654,24 @@ def main() -> int:
             definition_plan,
             "outside the relevant source groups",
         )
+
+        # Unknown nonessential field routing does not remove result closure gates.
+        unknown_closed = copy.deepcopy(record)
+        unknown_closed["questionnaire_evidence"][0].update(
+            skip_logic_status="unknown", skip_logic=[],
+            unverified_nonessential_routes="当前仅采用直接值，未记录的现场退出不参与定义。",
+        )
+        checker.validate_questionnaire_path_closure(
+            unknown_closed, exploration_log, source_groups, approved_names, definition_plan)
+        no_observed = copy.deepcopy(unknown_closed)
+        no_observed["questionnaire_path_closure"][0]["branches"][0]["observed_count"] = None
+        expect_path_failure(checker, no_observed, exploration_log, source_groups,
+                            approved_names, definition_plan, "observed_count")
+        no_plan_branch = copy.deepcopy(unknown_closed)
+        no_plan_branch["questionnaire_path_closure"][0]["branches"] = []
+        expect_path_failure(checker, no_plan_branch, exploration_log, source_groups,
+                            approved_names, definition_plan, "branches must not be empty")
+        print("unknown routing: actual counts and planned branch closure remain required PASS")
 
     print("questionnaire evidence gate fixtures PASS")
     return 0

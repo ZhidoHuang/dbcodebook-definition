@@ -1,12 +1,38 @@
 # 摘要导读和定义成果核对使用的公共事实函数。
 # “含义”和概念分组由主题人工提供；变量集合、顺序、来源数、覆盖周期和对象均从正式产物推导。
 
+summary_hrs_periods <- function(values) {
+  values <- unique(as.character(values))
+  if (!length(values) || anyNA(values) ||
+      any(!grepl("^[0-9]{4}(-[0-9]{4}| (Spring|Summer|Fall|Winter))?$", values)))
+    stop("Invalid HRS original periods.")
+  start <- as.integer(substr(values, 1L, 4L))
+  end <- start
+  interval <- grepl("^[0-9]{4}-[0-9]{4}$", values)
+  end[interval] <- as.integer(substr(values[interval], 6L, 9L))
+  season <- match(sub("^[0-9]{4} ", "", values), c("Spring", "Summer", "Fall", "Winter"))
+  season[is.na(season)] <- 0L
+  if (any(start < 1900L | end > 2100L | end < start)) stop("Invalid HRS original periods.")
+  values[order(start, season)]
+}
+
+summary_share_periods <- function(values) {
+  supported <- c(paste("Wave", 1:9), "Corona Survey 1", "Corona Survey 2")
+  values <- as.character(values)
+  if (anyNA(values) || any(!values %in% supported)) stop("SHARE 周期包含无法识别的值。")
+  supported[supported %in% values]
+}
+
 summary_split_sources <- function(x) {
   values <- trimws(unlist(strsplit(ifelse(is.na(x), "", x), ",\\s*")))
   unique(values[nzchar(values)])
 }
 
 summary_period_ranges <- function(periods, prefix = "Wave") {
+  if (!nzchar(prefix) && length(periods) && any(!grepl("^[0-9]{4}$", periods)) &&
+      all(grepl("^[0-9]{4}(-[0-9]{4}| (Spring|Summer|Fall|Winter))?$", periods)))
+    return(summary_hrs_periods(periods))
+  if (!nzchar(prefix) && length(periods) && any(grepl("FY|CY", periods))) return(sort(unique(as.character(periods))))
   if (!nzchar(prefix) && length(periods) && all(grepl("^[0-9]{4}-[0-9]{4}$", periods))) {
     return(sort(unique(as.character(periods))))
   }
@@ -28,6 +54,26 @@ summary_period_ranges <- function(periods, prefix = "Wave") {
 }
 
 summary_period_text <- function(periods, prefix = "Wave", all_periods = NULL) {
+  original_periods <- c(as.character(periods), as.character(all_periods))
+  if (!nzchar(prefix) && length(original_periods) && any(!grepl("^[0-9]{4}$", original_periods)) &&
+      all(grepl("^[0-9]{4}(-[0-9]{4}| (Spring|Summer|Fall|Winter))?$", original_periods))) {
+    values <- summary_hrs_periods(periods)
+    if (!is.null(all_periods) && identical(values, summary_hrs_periods(all_periods))) return("全周期")
+    return(paste(values, collapse = "、"))
+  }
+  if (identical(prefix, "Wave") && any(grepl("^(Wave |Corona Survey )", as.character(periods)))) {
+    values <- summary_share_periods(periods)
+    if (!is.null(all_periods) && identical(values, summary_share_periods(all_periods))) return("全周期")
+    ordinary <- values[grepl("^Wave ", values)]
+    labels <- c(summary_period_ranges(as.integer(sub("^Wave ", "", ordinary))),
+                values[grepl("^Corona Survey ", values)])
+    return(paste(labels, collapse="、"))
+  }
+  if (!nzchar(prefix) && length(periods) && any(grepl("FY|CY", periods))) {
+    periods <- sort(unique(as.character(periods)))
+    if (!is.null(all_periods) && identical(periods, sort(unique(as.character(all_periods))))) return("全周期")
+    return(paste(periods, collapse="、"))
+  }
   if (!nzchar(prefix) && length(periods) && all(grepl("^[0-9]{4}-[0-9]{4}$", periods))) {
     periods <- sort(unique(as.character(periods)))
     if (!is.null(all_periods) && identical(periods, sort(unique(as.character(all_periods))))) return("全周期")
@@ -77,27 +123,43 @@ build_summary_facts <- function(analysis_db,
                                 threshold = 0.85,
                                 split_gap = 0.20,
                                 period_prefix = NULL,
-                                object_overrides = NULL) {
+                                object_overrides = NULL,
+                                period_mode = NULL) {
   required_codebook <- c("Variable", "original_vars", "Label")
   missing_codebook <- setdiff(required_codebook, names(analysis_codebook))
   if (length(missing_codebook) > 0) {
     stop("analysis_codebook 缺少摘要事实列：", paste(missing_codebook, collapse = ", "))
   }
   if (!period_col %in% names(analysis_db)) stop("analysis_db 缺少周期列。")
-  expected_prefix <- if (period_col %in% c("year", "YEAR")) {
+  expected_prefix <- if (period_col %in% c("year", "YEAR", "Survey_period")) {
     ""
   } else if (period_col %in% c("wave", "Wave", "Wave_id")) {
     "Wave"
   } else {
     NULL
   }
-  if (is.null(expected_prefix)) stop("摘要周期列必须是 year、wave、Wave 或 Wave_id。")
+  if (is.null(expected_prefix)) stop("Unsupported summary period column: ", period_col)
   if (is.null(period_prefix)) period_prefix <- expected_prefix
   if (!identical(period_prefix, expected_prefix)) {
     expected_display <- if (nzchar(expected_prefix)) expected_prefix else "直接年份"
     stop("摘要周期术语与周期列不一致：", period_col, " 必须使用 ", expected_display, "。")
   }
-  period_values <- if (identical(period_col, "YEAR")) {
+  if (!is.null(period_mode) && !identical(period_mode, "hrs_original")) stop("Unsupported summary period mode.")
+  hrs_original <- identical(period_mode, "hrs_original")
+  if (hrs_original && !identical(period_col, "year")) stop("HRS original periods require year.")
+  share_mixed <- identical(period_col, "Wave_id") &&
+    any(grepl("^Corona Survey ", c(as.character(analysis_db[[period_col]]), as.character(expected_periods))))
+  period_values <- if (hrs_original) {
+    summary_hrs_periods(analysis_db[[period_col]])
+    as.character(analysis_db[[period_col]])
+  } else if (share_mixed) {
+    summary_share_periods(analysis_db[[period_col]])
+    as.character(analysis_db[[period_col]])
+  } else if (identical(period_col, "Survey_period")) {
+    values <- as.character(analysis_db[[period_col]])
+    if (anyNA(values) || any(!grepl("^[0-9]{4}(FY|CY)?$", values))) stop("Invalid NHIS survey periods.")
+    values
+  } else if (identical(period_col, "YEAR")) {
     values <- as.character(analysis_db[[period_col]])
     if (anyNA(values) || any(!grepl("^[0-9]{4}-[0-9]{4}$",values)) ||
         any(substr(values,1,4)>=substr(values,6,9))) stop("Invalid NHANES period ranges.")
@@ -108,11 +170,20 @@ build_summary_facts <- function(analysis_db,
     as.integer(analysis_db[[period_col]])
   }
   if (anyNA(period_values)) stop("analysis_db 的周期列包含无法识别的值。")
-  observed_periods <- sort(unique(period_values))
+  observed_periods <- if (hrs_original) summary_hrs_periods(period_values) else sort(unique(period_values))
   if (is.null(expected_periods)) {
     expected_periods <- observed_periods
   } else {
-    expected_periods <- if (identical(period_col,"YEAR")) {
+    expected_periods <- if (hrs_original) {
+      if (anyDuplicated(as.character(expected_periods))) stop("Duplicated expected HRS periods.")
+      summary_hrs_periods(expected_periods)
+    } else if (share_mixed) {
+      summary_share_periods(expected_periods)
+    } else if (identical(period_col,"Survey_period")) {
+      values <- as.character(expected_periods)
+      if (anyNA(values) || any(!grepl("^[0-9]{4}(FY|CY)?$", values))) stop("Invalid expected NHIS periods.")
+      values
+    } else if (identical(period_col,"YEAR")) {
       values <- as.character(expected_periods)
       if (anyNA(values) || any(!grepl("^[0-9]{4}-[0-9]{4}$",values)) ||
           any(substr(values,1,4)>=substr(values,6,9))) stop("Invalid expected NHANES periods.")
@@ -123,7 +194,7 @@ build_summary_facts <- function(analysis_db,
       as.integer(expected_periods)
     }
     if (anyNA(expected_periods)) stop("expected_periods 包含无法识别的周期。")
-    expected_periods <- sort(unique(expected_periods))
+    expected_periods <- if (hrs_original) summary_hrs_periods(expected_periods) else sort(unique(expected_periods))
     unexpected_periods <- setdiff(observed_periods, expected_periods)
     if (length(unexpected_periods) > 0) {
       stop(
@@ -566,29 +637,6 @@ summary_render_parts <- function(parts, theme_color) {
     if (identical(part$type, "path")) {
       return(summary_path_span(part$value, theme_color))
     }
-    if (identical(part$type, "source_link")) {
-      path <- part$value
-      database <- tolower(part$database)
-      if (!is.character(path) || length(path) != 1L || is.na(path) || !nzchar(trimws(path)) ||
-          grepl("[\r\n]", path)) {
-        stop("summary_source path must contain only the directory; put explanatory text in note.")
-      }
-      if (length(database) != 1L || !database %in% c("charls", "elsa", "hrs", "share", "klosa", "knhanes", "chns", "mhas", "nhanes")) stop("Invalid source-link database.")
-      route <- if (database == "nhanes") '/home/' else paste0('/home/', database, '/')
-      if (database == "klosa") {
-        if (length(part$language) != 1L || !part$language %in% c("en", "ko")) stop("KLoSA source link requires explicit language.")
-        route <- paste0(route, part$language, '/')
-      }
-      # The URL uses only the path, never the adjacent explanatory note.
-      nav <- gsub("\\s*>\\s*", ">", trimws(path), perl = TRUE)
-      label <- if (is.null(part$label)) path else part$label
-      if (!is.character(label) || length(label) != 1L || is.na(label) || !nzchar(label)) {
-        stop("source-link label must be one nonempty string.")
-      }
-      return(paste0('<a data-summary-path="true" href="', route,
-        '?nav=', utils::URLencode(enc2utf8(nav), reserved = TRUE), '">',
-        summary_escape_html(label), '</a>'))
-    }
     if (identical(part$type, "search")) {
       return(summary_search_span(part$value, theme_color))
     }
@@ -681,35 +729,11 @@ render_summary_entry_paragraph <- function(entry, theme_color) {
   if (!is.null(entry$parts)) {
     return(summary_render_parts(entry$parts, theme_color))
   }
-  entry_type <- if (is.null(entry$type)) "directory" else entry$type
   description <- if (is.null(entry$description)) "" else entry$description
   if (!nzchar(description)) stop("摘要第一段的主题内容说明不能为空。")
 
-  if (identical(entry_type, "directory")) {
-    paths <- as.character(entry$paths)
-    if (length(paths) == 0 || any(!nzchar(paths))) stop("目录入口不能为空。")
-    path_text <- paste(
-      vapply(paths, summary_path_span, character(1), theme_color = theme_color),
-      collapse = "、"
-    )
-    prefix <- paste0("从 dbCodeBook 的目录 ", path_text, " 进入，可以看到 ")
-  } else if (identical(entry_type, "search")) {
-    keyword <- as.character(entry$keyword)
-    if (length(keyword) != 1 || !nzchar(keyword)) stop("普通检索关键词不能为空。")
-    prefix <- paste0(
-      "在 dbCodeBook 中，通过 ",
-      summary_search_span(keyword, theme_color),
-      " 检索，可以看到 "
-    )
-  } else {
-    stop("摘要入口类型只能是 directory 或 search。")
-  }
-
-  count_text <- ""
-  if (!is.null(entry$count)) {
-    count_text <- summary_count_span(entry$count, " 条", theme_color, weight = 400)
-  }
-  paste0(prefix, count_text, summary_render_inline_code(description))
+  # Old directory/search entries retain their description, without navigation or source counts.
+  summary_render_inline_code(description)
 }
 
 render_summary_selection_paragraph <- function(selection, theme_color) {
@@ -752,42 +776,6 @@ render_summary_selection_paragraph <- function(selection, theme_color) {
     }
     rendered <- vapply(seq_along(lines), function(line_index) {
       line <- lines[[line_index]]
-      if (is.list(line) && identical(line$type, "source_directory_tree")) {
-        connector <- function(value) paste0(
-          '<span data-tree-role="connector" aria-hidden="true" style="white-space:pre;font-family:monospace;flex:none;">',
-          value, '</span>')
-        render_nodes <- function(nodes, prefix = "", depth = 0L) {
-          paste0(vapply(seq_along(nodes), function(i) {
-            chain <- list(nodes[[i]])
-            tail <- nodes[[i]]
-            while (length(tail$children) == 1L) {
-              tail <- tail$children[[1]]
-              chain <- c(chain, list(tail))
-            }
-            last <- i == length(nodes)
-            labels <- vapply(seq_along(chain), function(j) {
-              node <- chain[[j]]
-              link <- summary_render_parts(list(list(type = "source_link", value = node$path,
-                label = node$label, database = line$database, language = line$language)), theme_color)
-              paste0('<span data-source-directory-node="true" data-depth="', depth + j - 1L,
-                '" data-source-entry="', if (node$source_entry) 'true' else 'false', '">', link, '</span>')
-            }, character(1))
-            branch <- if (!depth) "" else if (last) "└─ " else "├─ "
-            row <- paste0('<span data-source-directory-row="true" style="display:flex;text-indent:0;">',
-              prefix, connector(branch), '<span style="min-width:0;overflow-wrap:anywhere;">',
-              paste(labels, collapse = connector(" ── ")), '</span></span>')
-            # Keep the first renderer's independent rows. Blank label-width spans align
-            # descendants with the chain tail without multiline HTML or nested subtrees.
-            tail_offset <- paste0(vapply(head(chain, -1L), function(node) paste0(
-              '<span data-source-directory-offset="true" aria-hidden="true" style="visibility:hidden;white-space:pre;flex:none;">',
-              summary_escape_html(node$label), connector(" ── "), '</span>'), character(1)), collapse = "")
-            child_prefix <- paste0(prefix, if (!depth) "" else connector(if (last) "   " else "│  "), tail_offset)
-            paste0(row, render_nodes(tail$children, child_prefix, depth + length(chain)))
-          }, character(1)), collapse = "")
-        }
-        return(paste0('<span class="source-directory-tree" data-source-directory-tree="true" style="display:block;">',
-                      render_nodes(line$nodes), '</span>'))
-      }
       if (is.list(line) && identical(line$type, "questionnaire_flow")) {
         return(paste0('<pre data-questionnaire-flow="true" style="white-space:pre;overflow-x:auto;">',
                       summary_escape_html(line$text), '</pre>'))
@@ -1047,7 +1035,7 @@ render_summary_note_section <- function(entry,
                                         theme_color,
                                         insight_items = NULL,
                                         insight_variant = c("standard", "compact"),
-                                        summary_source = NULL,
+                                        summary_source = NULL, # Retired, ignored.
                                         definition_basis = "") {
   insight_variant <- match.arg(insight_variant)
   lines <- c(
@@ -1065,13 +1053,6 @@ render_summary_note_section <- function(entry,
       theme_color,
       variant = insight_variant
     ))
-  }
-  if (!is.null(summary_source)) {
-    lines <- c(
-      lines,
-      "",
-      render_summary_selection_paragraph(summary_source, theme_color)
-    )
   }
   c(lines, "")
 }

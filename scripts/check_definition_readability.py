@@ -22,7 +22,7 @@ from questionnaire_groups import question_identity, validate_display_titles
 from questionnaire_display import validate_display_sequence, display_route_destination
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
-    rendered_when_matches, jump_descriptions, is_plain_paraphrase, validate_paraphrase_display)
+    rendered_when_matches, jump_descriptions, is_plain_paraphrase, validate_paraphrase, validate_paraphrase_display)
 
 
 def is_question_instruction(attrs: dict) -> bool:
@@ -104,6 +104,13 @@ def normalized_evidence_text(value: object) -> str:
 
 def normalized_period(value: object) -> str:
     return normalized_evidence_text(value).replace("年", "").replace("期", "")
+
+
+def question_block_text(node) -> str:
+    # Question/detail spans are separate visible blocks even when their HTML
+    # has no whitespace between closing and opening tags.
+    return "\n".join(child if isinstance(child, str) else child.text()
+                     for child in node.children)
 
 
 class QuestionnaireMarkupParser(HTMLParser):
@@ -263,7 +270,7 @@ def validate_questionnaire_rendering(
     for section in parser.sections:
         scope_errors = unverified_question_periods(section["label"],
             [identifier for line in section["lines"] for identifier in line["question_ids"]], evidence, section.get("module", ""),
-            [x.get("period", "") for x in record.get("questionnaire_coverage", [])])
+            [x.get("period", "") for x in record.get("questionnaire_coverage", []) if x.get("status") != "not_applicable"])
         if scope_errors:
             fail(scope_errors[0])
         keys = {
@@ -271,7 +278,7 @@ def validate_questionnaire_rendering(
             for value in (section["period"], section["label"])
             if normalized_period(value)
         }
-        keys.update(period_keys(section["label"], [x.get("period", "") for x in record.get("questionnaire_coverage", [])]))
+        keys.update(period_keys(section["label"], [x.get("period", "") for x in record.get("questionnaire_coverage", []) if x.get("status") != "not_applicable"]))
         for key in keys:
             sections.setdefault(key, []).append(section)
 
@@ -302,6 +309,8 @@ def validate_questionnaire_rendering(
         ):
             fail(f"{field}.copy_locator still describes unfinished copy")
         if is_plain_paraphrase(item):
+            validate_paraphrase(item)
+        if is_plain_paraphrase(item) and (item.get("display") or {}).get("presentation") != "question":
             blocks = [{"label": section["label"], "module": section.get("module", ""),
                        "design_count": len(section["period_notes"]),
                        "design_title": section["period_notes"][0].get("title") if section["period_notes"] else None,
@@ -384,7 +393,7 @@ def validate_questionnaire_rendering(
                 entry_ids = list(entry.find(lambda e: e.attrs.get("data-summary-question-id") == "true"))
                 if entry_ids:
                     entries.append((display_id(entry_ids[0]), [o.text() for o in entry.find(
-                        lambda e: e.attrs.get("data-summary-question-option") == "true")], entry.text()))
+                        lambda e: e.attrs.get("data-summary-question-option") == "true")], question_block_text(entry)))
             visible_id = next(display_id(q) for q in node.find(lambda q: q.attrs.get("data-summary-question-id") == "true"))
             shared_options, shared_routes = shared_question_info(
                 section["period_notes"][0]["text"] + "\n" + "\n".join(entry["text"] for entry in section["lines"]),
@@ -392,7 +401,7 @@ def validate_questionnaire_rendering(
             node_index = question_nodes.index(node)
             next_ids = list(question_nodes[node_index + 1].find(lambda q: q.attrs.get("data-summary-question-id") == "true")) if node_index + 1 < len(question_nodes) else []
             validate_display_sequence(item, next_ids[0].text().strip() if next_ids else None, period, evidence)
-            referenced = referenced_options(node.text(), visible_id, entries)
+            referenced = referenced_options(question_block_text(node), visible_id, entries)
             jump_entries = []
             for entry in question_nodes:
                 entry_ids = list(entry.find(lambda e: e.attrs.get("data-summary-question-id") == "true"))
@@ -402,9 +411,9 @@ def validate_questionnaire_rendering(
                         option_rows.append({"text": option.text(), "jump": " ".join(
                             e.text() for e in row.find(lambda e: is_question_instruction(e.attrs)))})
                 if entry_ids:
-                    jump_entries.append((display_id(entry_ids[0]), option_rows, entry.text()))
+                    jump_entries.append((display_id(entry_ids[0]), option_rows, question_block_text(entry)))
             inherited_jumps = referenced_jump_options(visible_id, jump_entries)
-            cross_options = cross_period_options(node.text(), section["label"], question_id,
+            cross_options = cross_period_options(question_block_text(node), section["label"], question_id,
                                                  [p[:3] for p in cross_periods if p[3] == section.get("module", "")])
             if cross_options and (options or referenced or shared_options):
                 fail(f"final note period {period} repeats or ambiguously references cross-period options for {question_id}")
@@ -679,7 +688,13 @@ def validate_result_check(formal_dir: Path, process_dir: Path, artifacts: dict) 
         target = (formal_dir / name).resolve()
         if target.parent != formal_dir.resolve() or not target.is_file() or sha256_file(target) != expected:
             fail("结果检查的输入或产物已变化：" + name)
-    if record.get('validation_mode') == 'copy_sections' or 'copy_sections' in record:
+    if record.get('validation_mode') == 'period_display':
+        from update_reader_copy import validate_period_result
+        try:
+            validate_period_result(record, formal_dir, process_dir)
+        except (ValueError, OSError, KeyError) as exc:
+            fail('周期展示局部验证无效：' + str(exc))
+    elif record.get('validation_mode') == 'copy_sections' or 'copy_sections' in record:
         from update_reader_copy import validate_text_result
         try:
             validate_text_result(record, formal_dir, process_dir)
@@ -824,15 +839,6 @@ def reader_review_block_sources(
             "name": "insight_card",
             "label": "小book提示",
             "review_text": insight_match.group(1) if insight_match else note_text,
-        })
-    if 'class="raw-source-link"' in note_text:
-        source_entry_match = re.search(
-            r'(?s)<div\s+class="raw-source-link".*?</div>', note_text
-        )
-        blocks.append({
-            "name": "source_entry",
-            "label": "dbCodeBook 来源入口",
-            "review_text": source_entry_match.group(0) if source_entry_match else note_text,
         })
     definition_matches = list(re.finditer(
         r'<td\s+class="plain-cell">\s*([^<]+?)\s*</td>', note_text
@@ -1237,9 +1243,29 @@ def validate_audit(
     topic_id: str,
     report_path: Path | None = None,
     write_report: bool = True,
+    order_only: bool = False,
+    summary_only: bool = False,
+    metadata_only: bool = False,
+    component_only: bool = False,
 ) -> dict:
     formal_dir = formal_dir.resolve()
     process_dir = process_dir.resolve()
+    if order_only or summary_only or metadata_only or component_only:
+        if sum((order_only, summary_only, metadata_only, component_only)) != 1:
+            fail('Choose one scoped update')
+        if component_only:
+            from component_display import verify
+        elif metadata_only:
+            from update_reader_copy import verify_metadata_update as verify
+        elif summary_only:
+            from definition_summary import verify
+        else:
+            from definition_order import verify
+        result = verify(formal_dir, process_dir, topic_id)
+        result.update(status='PUBLISH_READY', checked_at=datetime.now(timezone.utc).isoformat())
+        if write_report:
+            write_json(report_path or process_dir / REPORT_NAME, result)
+        return result
     audit_path = process_dir / AUDIT_NAME
     with audit_path.open("r", encoding="utf-8-sig") as handle:
         audit = json.load(handle)
@@ -1469,6 +1495,11 @@ def verify_existing_readiness(
     formal_dir: Path,
     process_dir: Path,
     topic_id: str,
+    without_data_attachment: bool = False,
+    order_only: bool = False,
+    summary_only: bool = False,
+    metadata_only: bool = False,
+    component_only: bool = False,
 ) -> dict:
     process_dir = process_dir.resolve()
     report_path = process_dir / REPORT_NAME
@@ -1484,10 +1515,15 @@ def verify_existing_readiness(
         process_dir,
         topic_id,
         write_report=False,
+        order_only=order_only,
+        summary_only=summary_only,
+        metadata_only=metadata_only,
+        component_only=component_only,
     )
     if recorded.get("status") != "PUBLISH_READY":
         fail("publish readiness status must be PUBLISH_READY")
     comparisons = (
+        ("scope", recorded.get("scope"), current.get("scope")),
         ("topic_id", recorded.get("topic_id"), current.get("topic_id")),
         ("audit_sha256", recorded.get("audit_sha256"), current.get("audit_sha256")),
         ("artifacts", recorded.get("artifacts"), current.get("artifacts")),
@@ -1526,8 +1562,9 @@ def verify_existing_readiness(
         },
         "attachments": [
             {"role": role, "path": str((formal_dir / current["artifacts"][role]["path"]).resolve())}
-            for role in ("analysis_db", "analysis_codebook")
+            for role in (("analysis_codebook",) if without_data_attachment else ("analysis_db", "analysis_codebook"))
         ],
+        "omitted_attachment_roles": ["analysis_db"] if without_data_attachment else [],
         "attachment_location": "侧栏文档",
     }
     previous_sync = process_dir / "website_sync_result.json"
@@ -1568,7 +1605,22 @@ def build_cua_sync_action(
     taxonomy_plan: dict | None = None,
     edit_id: str | None = None,
     language: str | None = None,
+    dataset_id: str | None = None,
 ) -> dict:
+    navigation = upload.get('navigation_removal')
+    if navigation:
+        from definition_display import remove_source_navigation
+        before = Path(navigation['before'])
+        if sha256_file(before) != navigation['before_sha256']:
+            fail('来源导航删除的原文基线已变化')
+        old = before.read_text(encoding='utf-8-sig')
+        expected, count = remove_source_navigation(old)
+        if not count or expected != Path(upload['note']).read_text(encoding='utf-8-sig'):
+            fail('来源导航删除之外的正文发生变化')
+        if create or upload['attachments'] or taxonomy_plan or directory_tag or cross_database_topic:
+            fail('导航删除不能新建文章、替换附件或修改栏目')
+        if not isinstance(navigation.get('attachment_names'), list) or not all(isinstance(n, str) and n for n in navigation['attachment_names']):
+            fail('导航删除缺少原附件列表')
     base_url = base_url.strip().rstrip("/")
     parsed = urlsplit(base_url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
@@ -1611,8 +1663,12 @@ def build_cua_sync_action(
          "sha256": sha256_file(Path(item["path"]))}
         for item in upload["attachments"]
     ]
-    expected_title_parts = [database, topic_name]
-    database_category = database
+    database_label = {"nhanesiii": "NHANES III"}.get(database.casefold(), database)
+    expected_title_parts = [database_label, topic_name]
+    database_category = database_label
+    if database.casefold() == "nhis":
+        from nhis_export_contract import publication_category
+        database_category = publication_category(dataset_id)
     if database.casefold() == "klosa":
         if language not in {"en", "ko"}:
             fail("KLoSA publication requires verified source language en or ko")
@@ -1657,6 +1713,10 @@ def build_cua_sync_action(
         "sync_attempt": sync_attempt,
         "dispatch_limit_ms": 60000,
     }
+    if navigation:
+        payload['navigation_removal'] = dict(navigation, previous_body_sha256=hashlib.sha256(old.encode('utf-8')).hexdigest())
+    if upload.get('component_preserve'):
+        payload['component_preserve'] = upload['component_preserve']
     existing_tab_match = [url for url in (payload["post_url"], payload["edit_url"]) if url]
     existing_tab_match_json = json.dumps(existing_tab_match, ensure_ascii=False)
     helper_script = rf'''function validDbCodeBookPostUrl(postUrl, payload) {{
@@ -1762,7 +1822,36 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
         throw new Error(`文章身份不符，标题缺少：${{part}}`);
       }}
     }}
+    if (payload.component_preserve) {{
+      const current = await tab.playwright.evaluate(() => ({{
+        category: document.querySelector('#category').value,
+        attachments: document.querySelector('#documents-sidebar-list').innerText.split(/\r?\n/)
+          .map(line => line.trim()).filter(line => /\.(xlsx|xls|csv|docx?|txt|pdf)$/i.test(line))
+      }}));
+      const currentTaxonomy = await readWebsiteTaxonomy(tab);
+      if (titleValue !== payload.component_preserve.title || current.category !== payload.component_preserve.category ||
+          JSON.stringify(current.attachments) !== JSON.stringify(payload.component_preserve.attachment_names) ||
+          Object.entries(payload.component_preserve.fields).some(([key, value]) => currentTaxonomy[key].current !== value))
+        throw new Error('组分更新前网站标题、分类、标签或附件已变化');
+      const original = await tab.playwright.locator('#editor').evaluate(el => el.value.replace(/\r\n/g, '\n'));
+      const signature = await tab.playwright.evaluate(async value => {{
+        const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+        return Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, '0')).join('');
+      }}, original);
+      if (signature !== payload.component_preserve.previous_body_sha256)
+        throw new Error('组分更新前网站正文与保留的旧稿不一致');
+    }}
     timings.identity_check_ms = Date.now() - stepStarted;
+
+    if (payload.navigation_removal) {{
+      if (titleValue !== payload.desired_title) throw new Error("导航清理不能修改标题");
+      const original = await tab.playwright.locator("#editor").evaluate(el => el.value.replace(/\r\n/g, "\n"));
+      const signature = await tab.playwright.evaluate(async value => {{
+        const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+        return Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, '0')).join('');
+      }}, original);
+      if (signature !== payload.navigation_removal.previous_body_sha256) throw new Error("待清理原正文已经变化");
+    }}
 
     stepStarted = Date.now();
     if (payload.desired_title && titleValue !== payload.desired_title) {{
@@ -1779,16 +1868,28 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
     }}
     timings.title_update_ms = Date.now() - stepStarted;
     if (payload.create) {{
-      const categoryOptions = await tab.playwright.evaluate(() =>
-        Array.from(document.querySelector("#category").options, option => ({{
-          label: option.textContent.trim(), value: option.value
-        }}))
-      );
+      const categoryOptions = await tab.playwright.evaluate(() => {{
+        const groups = JSON.parse(document.querySelector("#note-dataset-groups")?.textContent || "[]");
+        return Array.from(document.querySelector("#category").options, option => ({{
+          label: option.textContent.trim(), value: option.value,
+          group: groups.find(group => group.items.some(item => item.value === option.value))?.name || null
+        }}));
+      }});
       const matchingCategories = categoryOptions.filter(option =>
         option.label.toLocaleLowerCase() === payload.database_category.trim().toLocaleLowerCase()
       );
       if (matchingCategories.length !== 1) throw new Error("未找到唯一匹配的数据库选项");
-      await tab.playwright.locator("#category").selectOption({{ value: matchingCategories[0].value }});
+      const categoryControl = tab.playwright.locator("#category");
+      if (await categoryControl.isVisible()) {{
+        await categoryControl.selectOption({{ value: matchingCategories[0].value }});
+      }} else {{
+        const trigger = tab.playwright.getByRole("button", {{name: "数据库", exact: true}});
+        if (await trigger.getAttribute("aria-expanded") !== "true") await trigger.click();
+        if (matchingCategories[0].group) {{
+          await tab.playwright.getByRole("menuitem", {{name: matchingCategories[0].group, exact: true}}).click();
+        }}
+        await tab.playwright.getByRole("menuitem", {{name: matchingCategories[0].label, exact: true}}).click();
+      }}
       const metadata = await tab.playwright.evaluate(() => ({{
         database: document.querySelector("#category").selectedOptions[0].textContent.trim()
       }}));
@@ -1831,7 +1932,17 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
     const existingNames = readAttachmentNames(await sidebar.innerText());
     const previous = payload.previous_sync;
     keep = 0;
-    if (!payload.create && previous.post_url === payload.post_url) {{
+    if (payload.navigation_removal) {{
+      if (JSON.stringify(existingNames) !== JSON.stringify(payload.navigation_removal.attachment_names))
+        throw new Error("导航清理期间附件列表已变化");
+      keep = existingNames.length;
+    }}
+    else if (payload.component_preserve) {{
+      if (JSON.stringify(existingNames) !== JSON.stringify(payload.component_preserve.attachment_names))
+        throw new Error('组分更新期间附件列表已变化');
+      keep = existingNames.length;
+    }}
+    else if (!payload.create && previous.post_url === payload.post_url) {{
       const prior = previous.attachment_signatures || [];
       while (keep < payload.attachments.length && keep < existingNames.length) {{
         const expected = payload.attachments[keep];
@@ -1856,13 +1967,20 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
     const actualNames = sidebarText.split(/\r?\n/)
       .map(line => line.trim())
       .filter(line => /\.(xlsx|xls|csv|docx?|txt|pdf)$/i.test(line));
-    const expectedNames = payload.attachments.map(item => item.name);
+    const expectedNames = payload.navigation_removal ? payload.navigation_removal.attachment_names : payload.attachments.map(item => item.name);
     if (JSON.stringify(actualNames) !== JSON.stringify(expectedNames)) {{
       throw new Error(`侧栏附件顺序不符：${{actualNames.join(", ")}}`);
     }}
     timings.attachments_ms = Date.now() - (checkpoint?.uploadStartedAt || stepStarted);
 
     const finalTitle = await tab.playwright.locator("#title").evaluate(el => el.value);
+    if (payload.component_preserve) {{
+      const category = await tab.playwright.locator('#category').evaluate(el => el.value);
+      const currentTaxonomy = await readWebsiteTaxonomy(tab);
+      if (finalTitle !== payload.component_preserve.title || category !== payload.component_preserve.category ||
+          Object.entries(payload.component_preserve.fields).some(([key, value]) => currentTaxonomy[key].current !== value))
+        throw new Error('组分更新提交前网站标题、分类或标签已变化');
+    }}
     if (Object.keys(taxonomy).length) await verifyWebsiteTaxonomy(tab, taxonomy);
     if (!payload.expected_title_parts.every(part => finalTitle.toLocaleLowerCase().includes(String(part).toLocaleLowerCase()))) {{
       throw new Error("提交前标题身份已改变，停止提交");
@@ -1993,10 +2111,18 @@ def parse_args() -> argparse.Namespace:
     check_parser = subparsers.add_parser("check")
     add_common_arguments(check_parser)
     check_parser.add_argument("--report", type=Path)
+    check_parser.add_argument("--order-only", action="store_true", help="Verify an immutable permutation receipt; preserve names, values and definition content")
+    check_parser.add_argument("--summary-only", action="store_true", help="Verify an approved introduction replacement and exact preservation of other artifacts")
+    check_parser.add_argument("--component-only", action="store_true")
+    check_parser.add_argument("--metadata-only", action="store_true", help="Verify explicit metadata delta against retained baseline; no historical full revalidation")
 
     verify_parser = subparsers.add_parser("verify-ready")
     add_common_arguments(verify_parser)
     verify_parser.add_argument("--start-sync", action="store_true")
+    verify_parser.add_argument("--order-only", action="store_true", help="Use the previously verified permutation-only publication scope")
+    verify_parser.add_argument("--summary-only", action="store_true", help="Use the approved introduction-only publication scope")
+    verify_parser.add_argument("--component-only", action="store_true")
+    verify_parser.add_argument("--metadata-only", action="store_true", help="Verify explicit metadata delta against retained baseline; no historical full revalidation")
     verify_parser.add_argument("--database")
     verify_parser.add_argument("--topic-name")
     verify_parser.add_argument("--post-id")
@@ -2007,6 +2133,8 @@ def parse_args() -> argparse.Namespace:
     verify_parser.add_argument("--taxonomy-plan", type=Path, help="Current dropdown choices; creation requires reviewed options and reason")
     verify_parser.add_argument("--base-url")
     verify_parser.add_argument("--website-title")
+    verify_parser.add_argument("--without-data-attachment", action="store_true", help="Omit the analysis data attachment for an explicit user instruction; local data validation and the codebook attachment remain required")
+    verify_parser.add_argument("--component-prepare", type=Path, help="Current website-prepare result for component-only synchronization")
     return parser.parse_args()
 
 
@@ -2021,6 +2149,13 @@ def main() -> int:
         (args.database, args.topic_name, args.post_id, args.base_url, args.create)
     )
     try:
+        if args.command == "verify-ready" and args.component_only:
+            if args.without_data_attachment:
+                fail("component-only requires the existing two-attachment policy")
+            if args.create or args.directory_tag or args.cross_database_topic or args.taxonomy_plan:
+                fail("component-only preserves existing title and taxonomy")
+            if browser_target_requested and (not args.component_prepare or not args.website_title or not args.edit_id):
+                fail("component-only requires current website-prepare result, original title and editor identity")
         if browser_target_requested:
             if not all((args.database, args.topic_name, args.post_id or args.create, args.base_url)):
                 fail(
@@ -2064,23 +2199,66 @@ def main() -> int:
                 args.process_dir,
                 args.topic_id,
                 report_path=args.report,
+                order_only=args.order_only,
+                summary_only=args.summary_only,
+                metadata_only=args.metadata_only,
+                component_only=args.component_only,
             )
         else:
             result = verify_existing_readiness(
                 args.formal_dir,
                 args.process_dir,
                 args.topic_id,
+                without_data_attachment=args.without_data_attachment,
+                order_only=args.order_only,
+                summary_only=args.summary_only,
+                metadata_only=args.metadata_only,
+                component_only=args.component_only,
             )
             if browser_target_requested:
-                source_language = None
-                if args.database.casefold() == "klosa":
-                    source_language = json.loads((args.process_dir / SOURCE_RECORD_NAME).read_text(encoding="utf-8-sig")).get("language")
+                if args.component_only:
+                    page = json.loads(args.component_prepare.read_text(encoding="utf-8-sig"))
+                    previous = result["upload"].get("previous_sync", {})
+                    expected_post = args.base_url.rstrip("/") + "/nodes/post/" + args.post_id + "/"
+                    expected_edit = args.base_url.rstrip("/") + "/nodes/edit/" + args.edit_id + "/"
+                    if (page.get("ok") is not True or page.get("status") != "WEBSITE_EDITOR_READY"
+                        or page.get("authenticated") is not True or page.get("create") is not False
+                        or str(page.get("post_id")) != args.post_id or str(page.get("edit_id")) != args.edit_id
+                        or page.get("url") != expected_edit or page.get("title") != args.website_title
+                        or not isinstance(page.get("category"), str) or not page["category"]
+                        or page.get("attachment_count") != 2 or previous.get("post_url") != expected_post):
+                        fail("component-only website preparation does not match the original post, editor or title")
+                    fields = page.get("fields", {})
+                    if any(not isinstance(fields.get(k, {}).get("current"), str) for k in ("directory_tag", "cross_database_topic")):
+                        fail("component-only website preparation lacks original taxonomy")
+                    files = result["upload"]["attachments"]
+                    names = [Path(x["path"]).name for x in files]
+                    signatures = [{"name": Path(x["path"]).name, "sha256": sha256_file(Path(x["path"]))} for x in files]
+                    if (len(files) != 2 or names != previous.get("attachments")
+                        or signatures != previous.get("attachment_signatures")):
+                        fail("component-only existing attachment signatures do not match")
+                    result["upload"]["component_preserve"] = {
+                        "title": page["title"], "category": page["category"],
+                        "fields": {k: fields[k]["current"] for k in ("directory_tag", "cross_database_topic")},
+                        "attachment_names": names,
+                    }
+                    component_receipt = json.loads((args.process_dir / 'component_display_update.json').read_text(encoding='utf-8-sig'))
+                    baseline_path = Path(component_receipt['baseline'])
+                    baseline = json.loads(baseline_path.read_text(encoding='utf-8-sig'))
+                    before_note = (baseline_path.parent / baseline['note']).read_bytes().decode('utf-8-sig').replace('\r\n', '\n')
+                    result["upload"]["component_preserve"]["previous_body_sha256"] = hashlib.sha256(before_note.encode('utf-8')).hexdigest()
+                source_language = source_dataset = None
+                if args.database.casefold() in {"klosa", "nhis"}:
+                    source_context = json.loads((args.process_dir / SOURCE_RECORD_NAME).read_text(encoding="utf-8-sig"))
+                    source_language = source_context.get("language")
+                    source_dataset = source_context.get("dataset_id")
                 prepared_action = build_cua_sync_action(
                     result["upload"], args.base_url, args.post_id, args.database,
                     args.topic_id, args.topic_name, args.website_title,
                     create=args.create, directory_tag=args.directory_tag,
                     edit_id=args.edit_id,
                     language=source_language,
+                    dataset_id=source_dataset,
                     cross_database_topic=args.cross_database_topic,
                     taxonomy_plan=json.loads(args.taxonomy_plan.read_text(encoding="utf-8-sig")) if args.taxonomy_plan else None,
                 )
@@ -2098,6 +2276,7 @@ def main() -> int:
                         create=args.create, directory_tag=args.directory_tag,
                         edit_id=args.edit_id,
                         language=source_language,
+                        dataset_id=source_dataset,
                         cross_database_topic=args.cross_database_topic,
                         taxonomy_plan=json.loads(args.taxonomy_plan.read_text(encoding="utf-8-sig")) if args.taxonomy_plan else None,
                         sync_run_id=sync["run_id"], sync_attempt=sync["attempt"],

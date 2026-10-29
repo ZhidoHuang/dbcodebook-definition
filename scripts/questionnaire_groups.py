@@ -4,7 +4,7 @@ import re
 
 def option_reference(text):
     text = re.sub(r"`([^`]+)`", r"\1", text)
-    matches = re.findall(r"选项与\s*([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*)\s*相同。", text)
+    matches = re.findall(r"选项与\s*([A-Za-z0-9_][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*)\s*相同。", text)
     if len(matches) > 1:
         raise ValueError("一道题不能引用多套选项")
     return matches[0] if matches else None
@@ -18,7 +18,7 @@ def referenced_options(text, question_id, entries):
     """
     # Compare visible identifiers; keep authored inline code in the output.
     text = re.sub(r"`([^`]+)`", r"\1", text)
-    pattern = r"([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*(?:\s*、\s*[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*)*)\s*的选项与\s*([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*)\s*相同。"
+    pattern = r"([A-Za-z0-9_][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*(?:\s*、\s*[A-Za-z0-9_][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*)*)\s*的选项与\s*([A-Za-z0-9_][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*)\s*相同。"
     ids = [entry[0] for entry in entries]
     targets = []
     covered = set()
@@ -34,7 +34,7 @@ def referenced_options(text, question_id, entries):
                 raise ValueError("连续选项范围须从本题开始，使用同一题号前缀和顺序：" + match[0])
             scope = [start[1] + str(i).zfill(len(start[2])) for i in range(int(start[2]) + 1, int(end[2]) + 1)]
             return "、".join(scope) + " 的选项与 " + first + " 相同。"
-        visible = re.sub(r"([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*)\s*[–—-]\s*([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*)\s*的选项设置相同，(?:(?:该范围内的后续题目|下列题目)不再逐一展开选项|后续题目仅列有跳转的选项)。", expand_range, visible)
+        visible = re.sub(r"([A-Za-z0-9_][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*)\s*[–—-]\s*([A-Za-z0-9_][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*)\s*的选项设置相同，(?:(?:该范围内的后续题目|下列题目)不再逐一展开选项|后续题目仅列有跳转的选项)。", expand_range, visible)
         for match in re.finditer(pattern, visible):
             scope, source = match.groups()
             scope = [x.strip() for x in scope.split("、")]
@@ -92,7 +92,7 @@ def referenced_jump_options(question_id, entries):
     for identifier, options, instructions in entries:
         instructions = re.sub(r"`([^`]+)`", r"\1", instructions)
         declarations = "\n".join(match.group(0).replace("的跳题规则与", "的选项与")
-            for match in re.finditer(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*(?:\s*、\s*[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*)*\s*的跳题规则与\s*[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*\s*相同。", instructions))
+            for match in re.finditer(r"[A-Za-z0-9_][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*(?:\s*、\s*[A-Za-z0-9_][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*)*\s*的跳题规则与\s*[A-Za-z0-9_][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*\s*相同。", instructions))
         if declarations and not any(option.get("jump") for option in options):
             raise ValueError("引用题须在选项后完整展示跳题规则：" + identifier)
         scoped.append((identifier, options, declarations))
@@ -105,6 +105,8 @@ def period_keys(label, survey_periods=None):
     label = re.split(r"[:：]", label, maxsplit=1)[0]
     result = []
     cycles = {}
+    registered_years = {str(value).strip() for value in survey_periods or []
+                        if re.fullmatch(r"\d{4}", str(value).strip())}
     for value in survey_periods or []:
         match = re.fullmatch(r"\s*(\d{4})\s*[–—-]\s*(\d{4})\s*", str(value))
         if match:
@@ -124,7 +126,14 @@ def period_keys(label, survey_periods=None):
             start, end = map(int, re.findall(r"\d{4}", part))
             if not 1000 <= start <= end <= 9999:
                 raise ValueError("Invalid questionnaire year range: " + part)
-            if cycles:
+            # A topic can contain both annual interview periods and separate
+            # multi-year visit intervals. Explicit annual endpoints identify
+            # an annual range; do not let unrelated visit intervals claim it.
+            # Exact registered cycles were already resolved above. Per-question
+            # cadence and evidence checks remain in unverified_question_periods.
+            if cycles and str(start) in registered_years and str(end) in registered_years:
+                result.extend(str(i) for i in range(start, end + 1))
+            elif cycles:
                 included = sorted((a, b, key) for key, (a, b) in cycles.items()
                                   if start <= a <= b <= end)
                 if (not included or included[0][0] != start or included[-1][1] != end
@@ -250,6 +259,11 @@ def unverified_question_periods(label, identifiers, evidence, module="", survey_
     checked = set(declared)
     known = {period_key(p) for p in (survey_periods or [])}
     for match in re.finditer(r"(\d{4})\s*年?\s*[–—-]\s*(\d{4})", label):
+        # An exact original cycle was already selected by period_keys. Its
+        # endpoints can also be annual sources elsewhere in the same topic;
+        # those sources must not add annual evidence requirements to this cycle.
+        if period_key(match[0]) in known:
+            continue
         start, end = map(int, match.groups())
         years = sorted(int(p) for p in known if re.fullmatch(r"\d{4}", p) and start <= int(p) <= end)
         if years and years[0] == start and years[-1] == end:
@@ -327,7 +341,7 @@ def shared_question_info(design, question_id=None, question_ids=None):
     for match in re.finditer(pattern, design):
         kind, scope, body = match.groups()
         ids = [x.strip().strip('`') for x in re.split(r'[、,，；;]', scope)]
-        if not ids or any(not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*', x) for x in ids) or len(ids) != len(set(ids)):
+        if not ids or any(not re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)*', x) for x in ids) or len(ids) != len(set(ids)):
             raise ValueError('共同说明须逐项列出题号：' + scope)
         if question_ids is not None and not set(ids) <= set(question_ids):
             raise ValueError('共同说明包含本期未展示的题号：' + scope)

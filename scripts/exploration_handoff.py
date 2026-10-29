@@ -58,7 +58,7 @@ def validate_branches(report):
             raise ValueError("探索必须独立完成并使用相同输入")
         if not review.get("agent_id") or review.get("agent_id") == report.get("primary_agent_id"):
             raise ValueError("探索代理身份必须独立于主线程")
-        agent = review.get("prior_agent_record") or next((a for a in report.get("reviews", []) if a.get("agent_id") == review["agent_id"]), {})
+        agent = review.get("prior_agent_record") or next((a for a in report.get("reviews", []) if a.get("agent_id") == review["agent_id"] and a.get("role") == role), {})
         if not review_lifecycle_complete(agent):
             raise ValueError("探索代理尚未完成或未登记关闭限制")
         if input_hashes(item["outputs"]) != item["outputs"]:
@@ -101,8 +101,6 @@ def command_exploration(args):
         raise ValueError("探索交接须在执行中的报告登记")
     if args.command == "exploration-start":
         inputs = input_hashes(args.input)
-        if report.get("exploration"):
-            report.setdefault("exploration_history", []).append(deepcopy(report["exploration"]))
         report["exploration_policy"] = POLICY
         report["primary_agent_id"] = os.environ.get("CODEX_THREAD_ID", "")
         report["exploration"] = {"started_at": iso(), "inputs": inputs, "branches": {}}
@@ -145,7 +143,6 @@ def command_exploration(args):
                         raise ValueError("当前探索已有实际代理轮次，不能用历史探索替换")
             if not (args.replace_reason or "").strip():
                 raise ValueError("替换失败pending登记须提供--replace-reason")
-            report.setdefault("exploration_history", []).append(deepcopy(current))
         reused_at = iso()
         report["exploration_policy"] = POLICY
         report["primary_agent_id"] = primary
@@ -162,7 +159,7 @@ def command_exploration(args):
                 report.setdefault("stage_review_history", {}).setdefault(role, []).append(deepcopy(reviews[role]))
             prior = previous["stage_reviews"][role]
             agent = prior.get("prior_agent_record") or next(
-                item for item in previous.get("reviews", []) if item.get("agent_id") == prior["agent_id"])
+                item for item in previous.get("reviews", []) if item.get("agent_id") == prior["agent_id"] and item.get("role") == role)
             reviews[role] = {**deepcopy(prior), "reused_from": str(source_path),
                              "prior_agent_record": deepcopy(agent)}
         validate_branches(report)
@@ -181,11 +178,8 @@ def command_exploration(args):
                    "evidence": args.evidence, "finished_at": iso()}
         report["stage_reviews"][role] = updated
         validate_stage_review(report, role)
-        if args.branch in exploration["branches"]:
-            exploration.setdefault("result_history", []).append(deepcopy(exploration["branches"][args.branch]))
         exploration["branches"][args.branch] = {"outputs": input_hashes([output]), "agent_id": args.agent_id, "review_started_at": updated["started_at"], "review_finished_at": updated["finished_at"]}
-        if exploration.get("merge"):
-            exploration.setdefault("merge_history", []).append(exploration.pop("merge"))
+        exploration.pop("merge", None)
     else:
         exploration = validate_branches(report)
         decision = Path(args.decision).resolve(strict=True)
@@ -194,8 +188,6 @@ def command_exploration(args):
         if args.result == "ready" and args.unresolved:
             raise ValueError("未解决问题不能标记ready")
         record = Path(args.record).resolve(strict=True)
-        if exploration.get("merge"):
-            exploration.setdefault("merge_history", []).append(deepcopy(exploration["merge"]))
         exploration["merge"] = {"status": args.result, "unresolved": args.unresolved or [],
             "decision": input_hashes([decision]), "record": str(record), "plan_hash": plan_hash(record, 2), "hash_version": 2, "merged_at": iso()}
         if args.result == "ready":

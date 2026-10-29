@@ -12,6 +12,10 @@ function downloadCapture(page, attemptId, target, observeOnly = false) {
   page[key] = record;
   let expiry;
   const cleanup = () => {page.off('download', receive); page.off('close', closed); globalThis.clearTimeout(expiry);};
+  record.reject = error => {
+    if (record.state !== 'waiting') return;
+    record.state = 'failed'; record.error = String(error); cleanup(); complete();
+  };
   const closed = () => {
     if (record.state === 'waiting') {
       record.state = 'unavailable'; record.error = 'Bound page closed before download event';

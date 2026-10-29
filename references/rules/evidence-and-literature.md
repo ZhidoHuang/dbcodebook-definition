@@ -58,10 +58,12 @@
 | 字段 | 填写要求 |
 | --- | --- |
 | `question_text_mode`、`question_text_complete` | 分别填 `plain_paraphrase`、`false`；完整原题沿用原有填写方式 |
-| `question_text`、`paraphrase_reason` | 已核实的中文题意概括，以及未取得完整题文的实际原因 |
+| `question_text`、`paraphrase_reason` | 已核实的中文题意，以及未取得完整题文的实际原因；原因仅供内部核实，不要求写进笔记 |
 | `question_id` | 保留已核实题号；未知时为空，不编造 |
 | `applicable_population`、`recall_period` | 已核实对象及回顾期；无回顾期时写明不适用及原因 |
 | 选项、跳题、材料定位及 `evidence_steps` | 沿用完整核实要求；证据须能支持定义所用事实 |
+
+`skip_logic_status` 区分已记录、已核实无跳题与尚未核实：`recorded` 保留已证的实际路径或适用条件；`none` 只用于已核实没有跳题，不能替代未知。当前定义不依赖的现场路线尚未核实时，可用 `unknown` 与空 `skip_logic`，并在 `unverified_nonessential_routes` 写明未证的是哪些路线、为什么当前定义无需它们；不据此新增补值或跳题推断。已有已证 `entry_condition` 时仍用 `recorded`，在该说明中保留其余非必要路线的未知。单纯发布码说明保留为 `publication_coding_notes`，不为填充跳题列表而伪造路线。程序只检查说明存在，是否确实不影响定义仍须按材料判断；结果补值分支闭合及下载后实际人数要求不变。
 
 关键事实仍不清楚时，返回来源探索，不下载。缺完整题文不能标成非问卷来源，也不能将概括登记成完整原题。程序检查字段及前后对应，证据是否足够仍由探索环节根据材料判断。
 

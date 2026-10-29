@@ -16,6 +16,12 @@ UNIQUE_FILES = frozenset({'Core data','Injury and medical utilization','Disease 
 IDENTIFIERS = ('ID','id','year')
 RESERVED = frozenset((*IDENTIFIERS,'RowIndex'))
 CODEBOOK_COLUMNS = ('Variable','Label原文','Label中文','File type','newname')
+# The website exports these uniqID releases independently: their identifiers do
+# not establish a bridge to Core data. A mixed package retains separate samples.
+SPECIAL_RELEASES = frozenset({'Indoor air quality special release', 'Cycle 7 oral special release'})
+MIXED_PERSON_FAMILIES = frozenset({'Core data', 'Indoor air quality special release'})
+PERSON_SAMPLES = {'raw_data.csv': 'Core data',
+    'raw_data_Indoor_air_quality_special_release.csv': 'Indoor air quality special release'}
 
 def _csv(path):
     with path.open(encoding='utf-8-sig', newline='') as f:
@@ -47,6 +53,8 @@ def validate_bundle(out_dir: Path, data_members, expected_vars, expected_sources
     if len(codebook)!=len(expected) or {x['newname'] for x in codebook}!=set(expected):
         raise ValueError('KNHANES dictionary aliases differ from selection')
     wanted={}
+    member_kinds={}
+    source_files=set()
     identities=set()
     for item in codebook:
         alias=item['newname'];variable,file=_identity(item['Variable'])
@@ -59,10 +67,14 @@ def validate_bundle(out_dir: Path, data_members, expected_vars, expected_sources
         kind='reID' if file in REPEATED else 'uniqID'
         if item['File type']!=kind:
             raise ValueError('KNHANES File type contradicts source file')
-        member='raw_data_'+file.replace(' ','_')+'.csv' if kind=='reID' else 'raw_data.csv'
+        source_files.add(file)
+        member='raw_data_'+file.replace(' ','_')+'.csv' if kind=='reID' or file in SPECIAL_RELEASES else 'raw_data.csv'
         wanted.setdefault(member,[]).append(alias)
+        member_kinds[member]=kind
         if expected_sources is not None and expected_sources.get(alias)!=item['Variable']:
             raise ValueError('KNHANES original source identity differs from settled selection')
+    if source_files & SPECIAL_RELEASES and len(source_files)!=1 and source_files != MIXED_PERSON_FAMILIES:
+        raise ValueError('KNHANES standalone uniqID release requires a single source family; mixed families are not supported')
     members=list(data_members)
     if len(members)!=len(set(members)) or set(members)!=set(wanted):
         raise ValueError('KNHANES data file set differs from dictionary source families')
@@ -71,7 +83,7 @@ def validate_bundle(out_dir: Path, data_members, expected_vars, expected_sources
         if Path(member).name!=member:
             raise ValueError('KNHANES member must be a basename')
         cols,records=_csv(out_dir/member)
-        repeated=member!='raw_data.csv'
+        repeated=member_kinds[member]=='reID'
         prefix=['RowIndex',*IDENTIFIERS] if repeated else list(IDENTIFIERS)
         if cols[:len(prefix)]!=prefix or set(cols[len(prefix):])!=set(wanted[member]):
             raise ValueError(member+': identity prefix or alias coverage differs from dictionary')
@@ -94,10 +106,39 @@ def validate_bundle(out_dir: Path, data_members, expected_vars, expected_sources
                 if rowkey in rowkeys:raise ValueError(member+': duplicate repeated row key')
                 rowkeys.add(rowkey)
         reports[member]={'header':cols,'rows':len(records),'cols':len(cols),'identity_columns':prefix,
-                         'data_vars':cols[len(prefix):],'unit':'repeated record' if repeated else 'respondent-year',
+                         'data_vars':cols[len(prefix):],'unit':('repeated record' if repeated else
+                             'special-release person-period' if member != 'raw_data.csv' and member_kinds[member]=='uniqID' else 'respondent-year'),
                          'unique_respondent_years':len(keys)}
     return {'codebook':{'rows':len(codebook),'aliases':[x['newname'] for x in codebook]},'data':reports,
             'verification_scope':'staged CSV contract only; origin and fresh-download provenance checked by caller'}
+
+
+def validate_person_package(out_dir: Path, expected_vars=None, source_record=None):
+    """Validate personal files; the supported mixed pair must remain separate samples."""
+    out_dir=Path(out_dir)
+    _,codebook=_csv(out_dir/'raw_codebook.csv')
+    aliases=list(expected_vars) if expected_vars is not None else [x.get('newname','') for x in codebook]
+    members=[p.name for p in out_dir.glob('raw_data*.csv')]
+    contract=validate_bundle(out_dir,members,aliases)
+    if any(row.get('File type') == 'reID' for row in codebook):
+        if not isinstance((source_record or {}).get('knhanes_person_aggregation'), dict):
+            raise ValueError('KNHANES personal definition requires one uniqID data file; repeated sources require an explicit supported aggregation plan')
+        from knhanes_person_aggregation import expected_person_summaries
+        _, _, stats = expected_person_summaries(out_dir, source_record or {}, contract)
+        contract['person_aggregation'] = stats
+        return contract
+    if (len(contract['data'])!=1 and set(contract['data'])!=set(PERSON_SAMPLES)) or any(
+            item['identity_columns']!=list(IDENTIFIERS) for item in contract['data'].values()):
+        raise ValueError('KNHANES personal definition requires one uniqID data file; repeated or multiple files are not supported')
+    return contract
+
+
+def person_raw_file(out_dir: Path, expected_vars=None):
+    """Resolve the original filename of a validated single personal source."""
+    contract=validate_person_package(out_dir,expected_vars)
+    if len(contract['data']) != 1:
+        raise ValueError('Mixed KNHANES samples have no single personal raw file')
+    return Path(out_dir)/next(iter(contract['data']))
 
 def validate_person_frame(path: Path):
     """For generation/output checks: regular person-year file, with no repeat collapse."""

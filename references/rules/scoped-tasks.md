@@ -1,7 +1,6 @@
 # Scoped Tasks
 
-Questionnaire-only 仅用于用户明确限定只改本地问卷、不生成或同步的任务；普通问卷修改完成后接 Copy-update 和网站同步。Offline-download 和 Historical-report 仅用于用户明确限定的任务。
-[Copy-operations](copy-update.md#copy-operations) 保存文案阶段共用的程序操作。
+Questionnaire-only 仅用于用户明确限定只改本地问卷、不生成或同步的任务；普通问卷修改按文案、生成和已授权同步的现有阶段执行。Offline-download 和 Historical-report 仅用于用户明确限定的任务。
 路径和 Python 从任务配置取得；下方命令在 Skill 根目录运行。
 
 ## Questionnaire-only
@@ -60,11 +59,3 @@ Questionnaire-only 仅用于用户明确限定只改本地问卷、不生成或�
 - 通过只证明按当时策略登记完整，不证明历史研究、计算或复核内容正确。
 - 不重跑生产，不补造耗时。
 - 非完整定义报告或尚未结束的报告不在本入口范围内；说明限制，不代记完成。
-
-## Copy-update
-
-此入口移至[局部文案更新](copy-update.md)。按该入口确定范围、读取栏目、准备、检查及返回位置。
-
-## Copy-operations
-
-文案共用的展示登记、首稿保存和检查命令移至[文案程序操作](copy-update.md#copy-operations)。

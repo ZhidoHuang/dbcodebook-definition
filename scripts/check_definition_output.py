@@ -46,11 +46,28 @@ class DefinedSurfaceParser(HTMLParser):
         self.overview_variables: list[str] = []
         self.overview_count = 0
         self.overview_depth = 0
+        self.current_overview_group = ""
+        self.current_detail_group = ""
+        self.current_overview_role = ""
+        self.component_overview_variables = []
+        self.overview_groups: list[tuple[str, str]] = []
+        self.detail_groups: list[tuple[str, str]] = []
+        self.group_titles: list[tuple[str, str, str]] = []
+        self._title = None
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         values = dict(attrs)
+        group = values.get("data-component-group")
+        if group is not None and values.get("data-variable-role") in {"source", "component", "defined"}:
+            if tag == "a":
+                self.current_overview_group = group
+                self.current_overview_role = values["data-variable-role"]
+            elif tag == "summary":
+                self.current_detail_group = group
+            self._title = (tag, group, values["data-variable-role"], [])
         if tag == "table":
-            if values.get("data-defined-overview") == "true":
+            if (values.get("data-defined-overview") == "true"
+                    or "heatmap-table" in (values.get("class", "") or "").split()):
                 self.overview_count += 1
                 self.overview_depth = 1
             elif self.overview_depth:
@@ -58,6 +75,9 @@ class DefinedSurfaceParser(HTMLParser):
         href = values.get("href", "") or ""
         if self.overview_depth and tag == "a" and href.startswith("#var-"):
             self.overview_variables.append(href[len("#var-"):])
+            if self.current_overview_role == "component":
+                self.component_overview_variables.append(href[len("#var-"):])
+            self.overview_groups.append((href[len("#var-"):], self.current_overview_group))
         variable = values.get("data-defined-variable")
         is_detail = tag == "span" and "var-name" in (values.get("class", "") or "").split()
         if variable is not None or is_detail:
@@ -65,8 +85,18 @@ class DefinedSurfaceParser(HTMLParser):
                 self.invalid_detail_markers.append(values)
         if variable:
             self.variables.append(variable)
+        if is_detail and (values.get("id", "") or "").startswith("var-"):
+            self.detail_groups.append((values["id"][4:], self.current_detail_group))
+
+    def handle_data(self, data: str) -> None:
+        if self._title is not None:
+            self._title[3].append(data)
 
     def handle_endtag(self, tag: str) -> None:
+        if self._title is not None and self._title[0] == tag:
+            _, group, role, chunks = self._title
+            self.group_titles.append((group, role, "".join(chunks).strip()))
+            self._title = None
         if tag == "table" and self.overview_depth:
             self.overview_depth -= 1
 
@@ -90,17 +120,18 @@ def check_compact_surfaces(formal_dir: Path, note_text: str, variables: list[str
         else:
             ok(results, f"compact module {label} omitted definition table")
         pairs = extract_category_pairs(text)
-        if not pairs or any(role != "defined" for _, role in pairs):
+        if not pairs or any(role not in {"component", "defined"} for _, role in pairs):
             fail(results, f"compact module {label} categories", pairs)
         else:
             ok(results, f"compact module {label} categories", pairs)
         parser = DefinedSurfaceParser()
         parser.feed(text)
-        if parser.invalid_detail_markers or Counter(parser.variables) != Counter(variables):
+        if parser.invalid_detail_markers or parser.variables != variables:
             fail(results, f"compact module {label} variable coverage", {"expected": variables, "actual": parser.variables, "invalid_markers": parser.invalid_detail_markers})
         else:
             ok(results, f"compact module {label} variable coverage", variables)
-        if parser.overview_count != 1 or Counter(parser.overview_variables) != Counter(variables):
+        result_overview = [v for v in parser.overview_variables if v in variables or v not in parser.component_overview_variables]
+        if parser.overview_count != 1 or result_overview != variables:
             fail(results, f"compact module {label} overview coverage", {"expected": variables, "actual": parser.overview_variables, "overview_tables": parser.overview_count})
         else:
             ok(results, f"compact module {label} overview coverage", variables)
@@ -137,9 +168,10 @@ def normalize_var(value: str) -> str:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Check definition output artifacts.")
     parser.add_argument('--language', choices=['en', 'ko'])
+    parser.add_argument('--dataset-id')
     parser.add_argument(
         "--db",
-        choices=["charls", "elsa", "hrs", "share", "knhanes", "klosa", "chns", "mhas", "nhanes"],
+        choices=["charls", "elsa", "hrs", "share", "knhanes", "klosa", "chns", "mhas", "nhanes", "nhanesiii", "nhis"],
         default="charls",
         help="Database identity mode. Defaults to charls for backward compatibility.",
     )
@@ -151,7 +183,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--complete", action="store_true", help="Require and bind the full output-check scope; partial checks cannot authorize publication.")
     parser.add_argument("--expected-files", help="Comma-separated required file names.")
     parser.add_argument("--raw-vars", help="Comma-separated expected raw variables after database identity columns.")
-    parser.add_argument("--analysis-db", help="Analysis db xlsx file name in formal dir.")
+    parser.add_argument("--analysis-db", help="Analysis data table file name in formal dir (xlsx, or explicitly planned csv).")
     parser.add_argument("--analysis-columns", help="Comma-separated expected analysis db columns.")
     parser.add_argument("--analysis-codebook", help="Analysis codebook xlsx file name in formal dir.")
     parser.add_argument("--analysis-vars", help="Comma-separated expected analysis variables.")
@@ -229,6 +261,10 @@ def read_codebook_vars(path: Path) -> list[str]:
 
 
 def expected_raw_header(db: str, raw_vars: list[str]) -> list[str]:
+    if db == 'nhis':
+        return ['ID','Wave_id','Survey_year',*raw_vars]
+    if db == "nhanesiii":
+        return ["SEQN", *raw_vars]
     if db == "nhanes":
         return ["SEQN", "YEAR", *raw_vars]
     if db == "chns":
@@ -276,6 +312,78 @@ def charls_layered_raw_headers(raw_vars: list[str]) -> list[list[str]]:
         ["householdid", "year", "id", *raw_vars],
         ["communityid", "year", *raw_vars],
     ]
+
+
+def check_charls_person_multifile_contract(formal_dir, raw_vars, source_record=None,
+                                         expected_files=None):
+    """Check native personal/household or personal/PSU layers without joining them."""
+    from check_definition_source_record import analysis_identity_contract, validate_download_package
+    if analysis_identity_contract(source_record, "CHARLS")["analysis_unit"] != "person_period":
+        raise ValueError("CHARLS personal multi-file contract requires person_period")
+    paths = {path.name: path for path in formal_dir.glob("raw_data*.csv")}
+    psu_layer = "raw_data_psu.csv" in paths
+    required = {"raw_data.csv", "raw_data_psu.csv" if psu_layer else "raw_data_household.csv"}
+    if set(paths) != required:
+        raise ValueError("CHARLS personal multi-file source files differ; expected=" +
+                         repr(sorted(required)) + ", actual=" + repr(sorted(paths)))
+    if expected_files is not None and not required <= set(expected_files):
+        raise ValueError("CHARLS complete artifact scope omits source files: " +
+                         ", ".join(sorted(required - set(expected_files))))
+    package = validate_download_package(formal_dir, source_record)
+    with (formal_dir / "raw_codebook.csv").open(encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if not reader.fieldnames or not {"newname", "File type"} <= set(reader.fieldnames):
+            raise ValueError("CHARLS multi-file dictionary requires newname and File type")
+        rows = list(reader)
+    aliases = [row["newname"] for row in rows]
+    if aliases != raw_vars or len(set(aliases)) != len(aliases):
+        raise ValueError("CHARLS multi-file dictionary aliases differ from planned raw variables")
+    file_types = {row["File type"] for row in rows}
+    if file_types != {"uniqID", "communityID" if psu_layer else "householdID"}:
+        raise ValueError("Unsupported CHARLS personal multi-file File type: " + repr(sorted(file_types)))
+    join_identities = []
+    if psu_layer:
+        if not (isinstance(source_record, dict) and source_record.get("schema_version") == 7
+                and source_record.get("status") == "READY" and source_record.get("database", "").upper() == "CHARLS"
+                and source_record.get("approved_analysis_vars") and source_record.get("definition_plan")):
+            raise ValueError("CHARLS PSU contract requires the current READY schema7 source record")
+        pairs = [(a, i) for g in source_record.get("source_groups", [])
+                 for a, i in zip(g.get("raw_variables", []), g.get("source_identities", []))]
+        if any(len(g.get("raw_variables", [])) != len(g.get("source_identities", [])) for g in source_record.get("source_groups", [])):
+            raise ValueError("CHARLS PSU source identities require positional full identities")
+        if set(pairs) != {(r["newname"], r.get("Variable")) for r in rows}:
+            raise ValueError("CHARLS PSU source record differs from complete dictionary identities")
+        personal_key = [r for r in rows if r["newname"] == "communityid" and r["File type"] == "uniqID"
+                        and r.get("Variable", "").startswith("communityid (")]
+        if len(personal_key) != 1:
+            raise ValueError("CHARLS PSU contract requires the actual personal communityid source identity")
+        for group in source_record.get("source_groups", []):
+            if group.get("source_role") == "join_identity":
+                if group.get("raw_variables") != ["communityid"] or group.get("source_identities") != [personal_key[0]["Variable"]]:
+                    raise ValueError("Unsupported CHARLS PSU join_identity declaration")
+                join_identities.append("communityid")
+        if len(join_identities) > 1 or "communityid" in source_record["approved_analysis_vars"]:
+            raise ValueError("CHARLS PSU connection identity is not an analysis result")
+    contracts = {}
+    for name, file_type in (("raw_data.csv", "uniqID"),
+                            ("raw_data_psu.csv", "communityID") if psu_layer else ("raw_data_household.csv", "householdID")):
+        variables = [row["newname"] for row in rows if row["File type"] == file_type]
+        header = read_csv_header(paths[name])
+        prefixes = [["ID", "id", "year"]] if file_type == "uniqID" else [
+            ["householdid", "year", "respondent_id"], ["householdid", "year", "id"]]
+        if file_type == "communityID":
+            prefixes = [["communityid", "year"]]
+        if not any(header == [*prefix, *variables] for prefix in prefixes):
+            raise ValueError("CHARLS multi-file header differs for " + name +
+                             "; expected ordered " + file_type + " dictionary subset")
+        contracts[name] = {"header": header, "variables": variables, "file_type": file_type}
+    if psu_layer:
+        with paths["raw_data_psu.csv"].open(encoding="utf-8-sig", newline="") as handle:
+            keys = [(r["communityid"], r["year"]) for r in csv.DictReader(handle)]
+        if any(not all(k) for k in keys) or len(keys) != len(set(keys)):
+            raise ValueError("CHARLS PSU communityid/year keys must be nonempty and unique")
+    return {"files": contracts, "raw_variables": len(aliases), "download_package": package,
+            "join_identity_columns": join_identities}
 
 
 def check_charls_household_identifier(path: Path) -> dict:
@@ -379,6 +487,19 @@ def read_xlsx_rows(path: Path) -> list[list[object]]:
     return rows
 
 
+def read_table_rows(path: Path) -> list[list[object]]:
+    if path.suffix.lower() == '.csv':
+        with path.open(encoding='utf-8-sig',newline='') as stream:
+            rows = [[value if value != '' else None for value in row] for row in csv.reader(stream)]
+        if rows and (any(value is None for value in rows[0]) or len(rows[0]) != len(set(rows[0]))
+                     or any(len(row) != len(rows[0]) for row in rows[1:])):
+            raise ValueError('Malformed final CSV table: '+path.name)
+        return rows
+    if path.suffix.lower() != '.xlsx':
+        raise ValueError('Unsupported final table format: '+path.name)
+    return read_xlsx_rows(path)
+
+
 def _xlsx_row_values(row, shared_strings) -> list[object]:
         values: list[object] = []
         for cell in row.findall(f"{NS_MAIN}c"):
@@ -413,40 +534,112 @@ def _xlsx_row_values(row, shared_strings) -> list[object]:
         return values
 
 
-def check_long_table(rows, header, results, db=""):
+def check_long_table(rows, header, results, db="", source_record=None):
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from check_definition_source_record import analysis_identity_contract
+    try:
+        contract = analysis_identity_contract(source_record, db or "charls")
+    except ValueError as exc:
+        fail(results, "analysis identity contract", str(exc))
+        return False
+    household = contract["analysis_unit"] == "household_period"
+    label = "analysis household-period rows" if household else "analysis person-period rows"
     keys = {
         "charls": ["id", "year"], "elsa": ["idauniq", "Wave"],
         "hrs": ["HHID", "PN", "year"], "share": ["mergeid", "Wave_id"],
         "klosa": ["Harmonized_id", "Wave_id"], "chns": ["IDind", "WAVE"],
-        "knhanes": ["id", "year"], "mhas": ["ID", "Wave_id"], "nhanes": ["SEQN", "YEAR"],
+        "knhanes": ["id", "year"], "mhas": ["ID", "Wave_id"], "nhanes": ["SEQN", "YEAR"], "nhanesiii": ["SEQN", "YEAR"], "nhis": ['ID','Wave_id'],
     }[(db or "charls").lower()]
+    if contract.get("identity_keys"):
+        keys = contract["identity_keys"]
+    if db.lower() == "mhas" and "source_module" in header and "source_module" not in keys:
+        keys = ["source_module", *keys]
+    if db.lower() == "knhanes" and "sample_source" in header:
+        keys = ["sample_source", *keys]
     if any(key not in header for key in keys):
-        fail(results, "analysis person-period rows", {"required_keys": keys, "actual": header})
+        fail(results, label, {"required_keys": keys, "actual": header})
         return False
     indexes = [header.index(key) for key in keys]
     seen = set()
     for number, row in enumerate(rows[1:], 2):
         if any(index >= len(row) or not is_nonmissing(row[index]) for index in indexes):
-            fail(results, "analysis person-period rows", {"row": number, "reason": "missing person or period"})
+            fail(results, label, {"row": number, "reason": "missing household or year" if household else "missing person or period"})
+            return False
+        if household and any(not isinstance(row[index], str) for index in indexes):
+            fail(results, label, {"row": number, "reason": "householdid and year must remain string cells"})
             return False
         key = tuple(str(row[index]) for index in indexes)
         # Numeric-equivalent period spellings do not create additional periods.
-        period = re.sub(r"^Wave\s+", "", key[-1])
-        period = re.sub(r"\.0+$", "", period)
+        period = key[-1] if household else re.sub(r"^Wave\s+", "", key[-1])
+        period = period if household else re.sub(r"\.0+$", "", period)
         key = (*key[:-1], period)
-        if db.lower() == "nhanes":
+        if db.lower() in {"nhanes", "nhanesiii"}:
             key = (re.sub(r"\.0+$", "", key[0]).lstrip("0") or "0", period)
         if key in seen:
-            fail(results, "analysis person-period rows", {"row": number, "reason": "duplicate person-period", "key": key})
+            fail(results, label, {"row": number, "reason": "duplicate household-year" if household else "duplicate person-period", "key": key})
             return False
         seen.add(key)
-    ok(results, "analysis person-period rows", {"keys": keys, "rows": len(rows) - 1})
+    ok(results, label, {"keys": keys, "rows": len(rows) - 1})
     return True
 
 
-def check_workbook_contract(formal, expected_files, analysis_db, analysis_codebook, raw_vars, analysis_vars, results):
+def workbook_source_columns(formal, raw_vars, analysis_vars, summaries):
+    """Resolve explicitly planned summaries of repeated sources; raw stays unchanged."""
+    if not summaries:
+        return list(raw_vars), {}
+    with (formal / "raw_codebook.csv").open(encoding="utf-8-sig", newline="") as handle:
+        repeated = {row["newname"] for row in csv.DictReader(handle)
+                    if row.get("File type") == "reID"}
+    mapping = {}
+    for item in summaries:
+        variable = item.get("variable")
+        sources = item.get("source_variables", [])
+        if (not isinstance(variable, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", variable)
+                or variable in set(raw_vars) | set(analysis_vars) | {"SEQN", "YEAR"}
+                or variable in mapping or not isinstance(sources, list) or not sources
+                or len(set(sources)) != len(sources)
+                or not set(sources) <= repeated.intersection(raw_vars)
+                or not isinstance(item.get("method"), str) or not item["method"].strip()):
+            raise ValueError("Invalid repeated-source summary: " + repr(item))
+        mapping[variable] = sources
+    replaced = set().union(*(set(sources) for sources in mapping.values()))
+    return [name for name in raw_vars if name not in replaced] + list(mapping), mapping
+
+
+def source_result_label_roles(formal, dictionary, analysis_dictionary, raw_vars, analysis_vars, plan):
+    """Accept distinct Labels only when both source and approved result roles match."""
+    full = {row[dictionary[0].index("Variable")]: dict(zip(dictionary[0], row))
+            for row in dictionary[1:]}
+    analysis = {row[analysis_dictionary[0].index("Variable")]: dict(zip(analysis_dictionary[0], row))
+                for row in analysis_dictionary[1:]}
+    mismatched = [name for name in analysis_vars if full[name].get("Label") != analysis[name].get("Label")]
+    if not mismatched:
+        return []
+    with (formal / "raw_codebook.csv").open(encoding="utf-8-sig", newline="") as handle:
+        raw = list(csv.DictReader(handle))
+    accepted = []
+    for name in mismatched:
+        sources = [row for row in raw if row.get("newname") == name]
+        results = [row for row in (plan or []) if isinstance(row, dict) and row.get("analysis_var") == name]
+        if name not in raw_vars or len(sources) != 1 or len(results) != 1:
+            raise ValueError("Label role lacks a unique selected source and approved result: " + name)
+        source, result, entry = sources[0], results[0], full[name]
+        source_label = next((source[key] for key in ("Label", "Easy label", "Easy.label") if key in source), None)
+        result_label = result.get("meaning")
+        if (not source.get("Variable") or not isinstance(source_label, str) or not source_label.strip()
+                or not isinstance(result_label, str) or not result_label.strip()
+                or entry.get("original_vars") != source["Variable"]
+                or entry.get("processed_vars") != name or str(entry.get("count")) not in ("1", "1.0")
+                or entry.get("Label") != source_label or analysis[name].get("Label") != result_label):
+            raise ValueError("Source/result Label or identity differs from its declared role: " + name)
+        accepted.append({"variable": name, "source_identity": source["Variable"],
+                         "source_Label": source_label, "result_Label": result_label})
+    return accepted
+
+
+def check_workbook_contract(formal, expected_files, analysis_db, analysis_codebook, raw_vars, analysis_vars, results, source_summaries=None, medicine_record=None, charls_multifile_contract=None, result_label_plan=None):
     """Compare actual cells, not file existence or declared argument lists."""
-    full = [n for n in expected_files if n.startswith("db_") and n.endswith(".xlsx")]
+    full = [n for n in expected_files if n.startswith("db_") and n.endswith((".xlsx",'.csv'))]
     dictionaries = [n for n in expected_files if n.startswith("codebook_") and n.endswith(".xlsx")]
     if len(full) != 1 or len(dictionaries) != 1:
         fail(results, "four workbook contents", "expected one full table and one full dictionary")
@@ -455,18 +648,53 @@ def check_workbook_contract(formal, expected_files, analysis_db, analysis_codebo
     if any(not name or not (formal / name).is_file() for name in files):
         fail(results, "four workbook contents", "missing workbook")
         return
-    full_rows, dictionary, analysis_rows, analysis_dictionary = [read_xlsx_rows(formal / n) for n in files]
+    full_rows, dictionary, analysis_rows, analysis_dictionary = [read_table_rows(formal / n) for n in files]
     if not all((full_rows, dictionary, analysis_rows, analysis_dictionary)):
         fail(results, "four workbook contents", "empty workbook")
         return
     full_header, analysis_header = full_rows[0], analysis_rows[0]
     identities = [name for name in analysis_header if name not in analysis_vars]
-    expected = set(identities) | set(raw_vars) | set(analysis_vars)
+    try:
+        source_columns, summary_mapping = workbook_source_columns(formal, raw_vars, analysis_vars, source_summaries)
+        if medicine_record:
+            from nhanes_export_contract import medicine_source_columns
+            extra = medicine_source_columns(formal, medicine_record)
+            if set(extra) & (set(source_columns) | set(analysis_vars) | set(identities)):
+                raise ValueError('Medicine source columns conflict with other fields')
+            source_columns += extra
+    except (ValueError, KeyError, TypeError) as exc:
+        fail(results, "four workbook contents", str(exc))
+        return
+    join_identities = (charls_multifile_contract or {}).get("join_identity_columns", [])
+    if join_identities:
+        if "processed_vars" not in analysis_dictionary[0]:
+            fail(results, "four workbook contents", "PSU connection identity requires actual result source mapping")
+            return
+        lineage_index = analysis_dictionary[0].index("processed_vars")
+        measurement = {v for row in analysis_dictionary[1:] for v in split_csv(row[lineage_index] if lineage_index < len(row) else None)}
+        if set(join_identities) & (set(analysis_vars) | measurement):
+            fail(results, "four workbook contents", "PSU join_identity is mapped as a measurement or result")
+            return
+        source_columns = [v for v in source_columns if v not in join_identities or v in full_header]
+    full_only_identities = []
+    if charls_multifile_contract:
+        household = charls_multifile_contract.get("files", {}).get("raw_data_household.csv", {})
+        if (household.get("file_type") == "householdID"
+                and household.get("header", [])[:3] == ["householdid", "year", "respondent_id"]):
+            if "respondent_id" in analysis_vars:
+                fail(results, "four workbook contents", "CHARLS household respondent_id is an identity, not a definition result")
+                return
+            if "respondent_id" in full_header:
+                full_only_identities.append("respondent_id")
+    expected = set(identities) | set(source_columns) | set(analysis_vars) | set(full_only_identities)
     if len(full_header) != len(set(full_header)) or set(full_header) != expected:
         fail(results, "four workbook contents", {"expected_full_columns": sorted(expected), "actual": full_header})
         return
     if analysis_header != identities + analysis_vars:
         fail(results, "four workbook contents", "analysis table must contain identities followed by final results")
+        return
+    if [name for name in full_header if name in analysis_vars] != analysis_vars:
+        fail(results, "four workbook contents", "full table result columns differ from analysis_vars order")
         return
     if len(full_rows) != len(analysis_rows):
         fail(results, "four workbook contents", "full and analysis tables have different row counts")
@@ -485,8 +713,24 @@ def check_workbook_contract(formal, expected_files, analysis_db, analysis_codebo
         if variables != expected_variables:
             fail(results, "four workbook contents", {"dictionary": name, "expected": expected_variables, "actual": variables})
             return
-    ok(results, "four workbook contents", {"rows": len(analysis_rows) - 1, "source_columns": raw_vars,
-                                           "result_columns": analysis_vars})
+    label_roles = []
+    if "Label" in dictionary[0] and "Label" in analysis_dictionary[0]:
+        try:
+            label_roles = source_result_label_roles(formal, dictionary, analysis_dictionary,
+                                                    raw_vars, analysis_vars, result_label_plan)
+        except (ValueError, OSError) as exc:
+            fail(results, "four workbook contents", str(exc))
+            return
+    if summary_mapping:
+        entries = [dict(zip(dictionary[0], row)) for row in dictionary[1:]]
+        for variable, sources in summary_mapping.items():
+            entry = next(row for row in entries if row.get("Variable") == variable)
+            if set(split_csv(entry.get("processed_vars"))) != set(sources):
+                fail(results, "four workbook contents", "Summary lineage differs: " + variable)
+                return
+    ok(results, "four workbook contents", {"rows": len(analysis_rows) - 1, "source_columns": source_columns,
+                                           "source_summaries": summary_mapping,
+                                           "result_columns": analysis_vars, "source_result_label_roles": label_roles})
 
 
 def check_identity_values(
@@ -496,9 +740,35 @@ def check_identity_values(
     analysis_header: list[str],
     results: list[dict],
     db: str = "",
+    raw_paths: list[Path] | None = None,
+    source_record: dict | None = None,
 ) -> None:
-    if not check_long_table(analysis_rows, analysis_header, results, db):
+    if db == 'mhas':
+        from mhas_export_contract import CORE, SCOPED_MODULES, validate_scoped_analysis
+        members = raw_paths or [raw_path]
+        if (source_record or {}).get('mhas_analysis_scope') is not None or any(p.stem.removeprefix('raw_data_') in SCOPED_MODULES - {CORE} for p in members):
+            try:
+                fact = validate_scoped_analysis(members, analysis_rows, analysis_header, source_record)
+                ok(results, 'analysis identity values', fact)
+            except ValueError as exc:
+                fail(results, 'analysis identity values', str(exc))
+            return
+    if not check_long_table(analysis_rows, analysis_header, results, db, source_record):
         return
+    if (source_record or {}).get("analysis_unit") == "household_period":
+        # Preserve the actual household-year export, including row order.  No
+        # respondent id is required; an optional respondent column is checked
+        # by the existing shared-identity comparison below.
+        keys = ["householdid", "year"]
+        with raw_path.open(encoding="utf-8-sig", newline="") as handle:
+            raw_rows = list(csv.DictReader(handle))
+        expected = [tuple(row.get(name, "") for name in keys) for row in raw_rows]
+        actual = [tuple(row[analysis_header.index(name)] for name in keys) for row in analysis_rows[1:]]
+        if (any(any(not value.strip() for value in key) for key in expected)
+                or len(set(expected)) != len(expected) or actual != expected):
+            fail(results, "household source row preservation", "household-year keys must be nonempty, unique and equal to the original source sequence")
+            return
+        ok(results, "household source row preservation", {"keys": keys, "rows": len(expected)})
     identity_candidates = [
         "ID",
         "id",
@@ -519,6 +789,37 @@ def check_identity_values(
                for row in analysis_rows[1:] for name in ["ID", "id"]):
             fail(results, "analysis identity values", "KNHANES ID and id must remain string cells")
             return
+        if raw_paths and len(raw_paths) > 1 and (source_record or {}).get("knhanes_person_aggregation"):
+            try:
+                from knhanes_export import validate_person_package
+                from knhanes_person_aggregation import expected_person_summaries, KEYS
+                contract = validate_person_package(raw_path.parent, source_record=source_record)
+                expected, _, _ = expected_person_summaries(raw_path.parent, source_record, contract)
+                indexes = [analysis_header.index(name) for name in KEYS]
+                actual = [tuple(str(row[i]) for i in indexes) for row in analysis_rows[1:]]
+                if actual != list(expected):
+                    raise ValueError("Primary person-year rows/order changed in repeated-source analysis")
+                ok(results, "analysis identity values", {"primary_rows":len(actual), "all_primary_rows_preserved":True})
+            except (ValueError, OSError) as exc:
+                fail(results, "analysis identity values", str(exc))
+            return
+        if raw_paths and len(raw_paths) > 1:
+            from knhanes_export import PERSON_SAMPLES
+            if "sample_source" not in analysis_header or {p.name for p in raw_paths} != set(PERSON_SAMPLES):
+                fail(results, "analysis identity values", "Mixed KNHANES samples require sample_source and both original files")
+                return
+            expected = Counter()
+            for member in raw_paths:
+                with member.open(encoding="utf-8-sig", newline="") as handle:
+                    expected.update((PERSON_SAMPLES[member.name], r["ID"], r["id"], r["year"]) for r in csv.DictReader(handle))
+            indexes = [analysis_header.index(n) for n in ["sample_source", "ID", "id", "year"]]
+            actual = Counter(tuple(str(row[i]) for i in indexes) for row in analysis_rows[1:])
+            excess = actual - expected
+            if excess:
+                fail(results, "analysis identity values", {"unexpected_sample_identities": list(excess.items())[:10]})
+            else:
+                ok(results, "analysis identity values", {"sample_scoped_rows": sum(actual.values()), "scope": "subset of each original sample; no cross-sample join"})
+            return
     if db == "chns":
         identity_columns = ["ID", "IDind", "WAVE"]
         if not all(name in raw_header and name in analysis_header for name in identity_columns):
@@ -527,6 +828,26 @@ def check_identity_values(
         if any(len(row) <= analysis_header.index(name) or not isinstance(row[analysis_header.index(name)], str)
                for row in analysis_rows[1:] for name in ["ID", "IDind"]):
             fail(results, "analysis identity values", "CHNS ID and IDind must remain string cells")
+            return
+    elif db == 'nhis':
+        from nhis_export_contract import DEFAULTS, OPTIONAL_DEFAULTS
+        identity_columns = [n for n in (*DEFAULTS,*OPTIONAL_DEFAULTS) if n in raw_header]
+        if not set(DEFAULTS).issubset(analysis_header) or not set(identity_columns).issubset(analysis_header):
+            fail(results,'analysis identity values','NHIS default identities must all be preserved')
+            return
+        if any(not isinstance(row[analysis_header.index(n)],str) for row in analysis_rows[1:] for n in DEFAULTS):
+            fail(results,'analysis identity values','NHIS identities must remain original character cells')
+            return
+    elif db == "nhanesiii":
+        identity_columns = [x for x in ('SEQN', '_survey_period', '_period') if x in raw_header]
+        retained = ['YEAR' if x == '_survey_period' else x for x in identity_columns]
+        if ('SEQN' not in identity_columns or not set(retained).issubset(analysis_header)
+                or 'YEAR' not in analysis_header):
+            fail(results, "analysis identity values", "NHANES III requires original SEQN/default periods plus explicit YEAR")
+            return
+        if any(not isinstance(row[analysis_header.index('SEQN')], str)
+               or row[analysis_header.index('YEAR')] not in {'1988-1994','1988-1991','1991-1994'} for row in analysis_rows[1:]):
+            fail(results, "analysis identity values", "NHANES III requires character SEQN and confirmed survey/phase periods")
             return
     elif db == "nhanes":
         identity_columns = ["SEQN", "YEAR"]
@@ -570,7 +891,8 @@ def check_identity_values(
         return
 
     raw_indexes = [raw_header.index(name) for name in identity_columns]
-    analysis_indexes = [analysis_header.index(name) for name in identity_columns]
+    analysis_indexes = [analysis_header.index('YEAR' if db == 'nhanesiii' and name == '_survey_period' else name)
+                        for name in identity_columns]
 
     def identity(row: list[object], indexes: list[int]) -> tuple[str, ...]:
         values = [
@@ -587,11 +909,42 @@ def check_identity_values(
         return tuple(values)
 
     raw_identities: Counter[tuple[str, ...]] = Counter()
-    with raw_path.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.reader(handle)
-        next(reader, None)
-        for raw_row in reader:
-            raw_identities[identity(raw_row, raw_indexes)] += 1
+    if db == "hrs":
+        from hrs_export_contract import documented_lowercase_periods, person_identity
+        lowercase_periods = documented_lowercase_periods(raw_path.parent)
+    for raw_member in raw_paths or [raw_path]:
+        with raw_member.open("r", encoding="utf-8-sig", newline="") as handle:
+            for values in csv.DictReader(handle):
+                raw_row = [values.get(name, "") for name in raw_header]
+                if db == "hrs":
+                    try:
+                        pair = person_identity(values, lowercase_periods)
+                    except ValueError as exc:
+                        fail(results, "analysis identity values", str(exc))
+                        return
+                    raw_identities[tuple(pair[["HHID", "PN"].index(name)] for name in identity_columns)] += 1
+                else:
+                    raw_identities[identity(raw_row, raw_indexes)] += 1
+
+    if db == "hrs":
+        # Supported repeat files may contain respondents absent from the main
+        # table. Validate their complete transport contract before admitting keys.
+        from hrs_export_contract import HRS_REPEAT_FILES, validate_hrs_repeat
+        for family in sorted(HRS_REPEAT_FILES):
+            member = raw_path.parent / f"raw_data_repeat_{family}.csv"
+            if not member.is_file():
+                continue
+            try:
+                validate_hrs_repeat(member.parent, member.name, read_csv_header(member))
+            except ValueError as exc:
+                fail(results, "analysis identity values", str(exc))
+                return
+            with member.open(encoding="utf-8-sig", newline="") as handle:
+                for values in csv.DictReader(handle):
+                    # The validated Internet contract alone permits its documented
+                    # 2011 blank HHID; PN and period have already been cross-checked.
+                    pair = (values["HHID"] or values["ID"].split("|")[1], values["PN"])
+                    raw_identities[tuple(pair[["HHID", "PN"].index(name)] for name in identity_columns)] += 1
 
     remaining = raw_identities.copy()
     mismatches: list[dict] = []
@@ -863,7 +1216,7 @@ def check_summary_prose(note_text: str, results: list[dict], compact_module: boo
         len(opening_text) < 30
         or period_issues
         or not card_ok
-        or source_count != 1
+        or source_count != 0
         or legacy_table
     ):
         fail(results, "summary prose lint", details)
@@ -929,12 +1282,46 @@ def strip_r_comments_and_strings(source: str) -> str:
     return "".join(masked)
 
 
+def charls_identity_data_read(source: str, raw_name: str, header: list[str], household: bool) -> bool:
+    """Check a direct primary read; formatting/order do not change identity semantics."""
+    masked = strip_r_comments_and_strings(source)
+    assignments = list(re.finditer(r'(?m)^[ \t]*(dt\s*<-\s*read\.csv\s*\()', masked))
+    if len(assignments) != 1:
+        return False
+    start = assignments[0].start(1)
+    # Literal filenames/classes only: no arbitrary R expression or extra read options.
+    read = re.match(
+        r'\s*dt\s*<-\s*read\.csv\s*\(\s*(?:file\s*=\s*)?'
+        r'(["\'])' + re.escape(raw_name) + r'\1\s*'
+        r'(?:,\s*colClasses\s*=\s*c\(([^()]*)\)\s*)?\)'
+        r'(?=\s*(?:#|$))', source[start:], flags=re.M,
+    )
+    if read is None:
+        return False
+    classes = read[2]
+    if classes is None:
+        return not household
+    pairs = [part.strip() for part in classes.split(',')]
+    identities = []
+    for part in pairs:
+        pair = re.fullmatch(r'(\w+)\s*=\s*(["\'])character\2', part)
+        if pair is None:
+            return False
+        identities.append(pair[1])
+    allowed = {'householdid', 'year', 'id'} if household else {'id', 'householdid', 'communityid'}
+    return (bool(identities) and len(identities) == len(set(identities))
+            and set(identities) <= allowed
+            and (not header or set(identities) <= set(header))
+            and (not household or {'householdid', 'year'} <= set(identities)))
+
+
 def check_public_code_outline(
     formal_dir: Path,
     note_text: str,
     results: list[dict],
     db: str,
     formal_r: Path | None = None,
+    record: dict | None = None,
 ) -> None:
     scripts = [formal_r] if formal_r is not None else sorted(formal_dir.glob("define*.R"))
     if len(scripts) != 1 or not scripts[0].is_file():
@@ -984,7 +1371,10 @@ def check_public_code_outline(
         )
 
     if db == "charls":
-        raw_data_path = formal_dir / "raw_data.csv"
+        from check_definition_source_record import primary_raw_name
+        raw_name = primary_raw_name(record, db)
+        raw_data_path = formal_dir / raw_name
+        raw_header = []
         if raw_data_path.exists():
             raw_header = read_csv_header(raw_data_path)
             duplicate_header = sorted({
@@ -992,7 +1382,7 @@ def check_public_code_outline(
             })
             if duplicate_header:
                 structural_issues.append(
-                    "raw_data.csv contains duplicate columns; assign unique aliases "
+                    f"{raw_name} contains duplicate columns; assign unique aliases "
                     f"in dbCodeBook before download: {', '.join(duplicate_header)}"
                 )
         simple_codebook_read = 'name_z <- read.csv("raw_codebook.csv")' in source_public
@@ -1000,22 +1390,9 @@ def check_public_code_outline(
             structural_issues.append(
                 "CHARLS public R must read raw_codebook.csv without extra options"
             )
-        simple_data_read = 'dt <- read.csv("raw_data.csv")' in source_public
-        household_data_read = (
-            'colClasses = c(householdid = "character", id = "character")'
-            in source_public
-        )
-        person_data_read = (
-            'colClasses = c(id = "character")' in source_public
-        )
-        community_data_read = (
-            'colClasses = c(communityid = "character")' in source_public
-        )
-        if not (
-            simple_data_read
-            or person_data_read
-            or household_data_read
-            or community_data_read
+        if not charls_identity_data_read(
+            source_public, raw_name, raw_header,
+            (record or {}).get("analysis_unit") == "household_period",
         ):
             structural_issues.append(
                 "CHARLS public R must use the simple read, except that "
@@ -1051,13 +1428,17 @@ def check_public_code_outline(
             structural_issues.append(
                 "HRS public R must read raw_codebook.csv without extra options"
             )
-        hrs_identity_read = bool(re.search(
+        hrs_classes = re.search(
             r'read\.csv\(\s*["\']raw_data\.csv["\'][^)]*'
-            r'colClasses\s*=\s*c\(\s*HHID\s*=\s*["\']character["\']\s*,'
-            r'\s*PN\s*=\s*["\']character["\']\s*\)',
+            r'colClasses\s*=\s*c\(([^()]*)\)',
             source_public,
             flags=re.I | re.S,
-        ))
+        )
+        hrs_identity_read = bool(hrs_classes) and all(
+            re.search(r'(?:^|,)\s*' + name + r'\s*=\s*["\']character["\']\s*(?:,|$)',
+                      hrs_classes.group(1), flags=re.I)
+            for name in ('HHID', 'PN')
+        )
         if not hrs_identity_read:
             structural_issues.append(
                 "HRS public R must preserve HHID and PN as character when reading raw_data.csv"
@@ -1317,6 +1698,12 @@ def check_public_dictionary(source_public: str, results: list[dict]) -> None:
 
 
 def extract_category_pairs(text: str) -> list[tuple[str, str]]:
+    marked = []
+    for match in re.finditer(r"<(?:a|summary)\b[^>]*>", text, flags=re.I):
+        group = re.search(r'\bdata-component-group="([^"]*)"', match[0])
+        role = re.search(r'\bdata-variable-role="(source|component|defined)"', match[0])
+        if group and role:
+            marked.append((match.start(), (html.unescape(group[1]).strip().lower(), role[1])))
     label_matches = [
         *re.finditer(
             r"<summary>\s*((?:[^<]+?\s+)?(?:source|defined) variables?)\s*</summary>",
@@ -1329,9 +1716,11 @@ def extract_category_pairs(text: str) -> list[tuple[str, str]]:
             flags=re.I,
         ),
     ]
-    labels = [match.group(1) for match in sorted(label_matches, key=lambda item: item.start())]
+    labels = [(match.start(), match.group(1)) for match in label_matches
+              if "data-variable-role=" not in match.group(0)]
     pairs: list[tuple[str, str]] = []
-    for label in labels:
+    positioned = list(marked)
+    for position, label in labels:
         normalized = " ".join(label.split())
         match = re.fullmatch(
             r"(?:(.+?)\s+)?(source|defined) variables?",
@@ -1340,8 +1729,41 @@ def extract_category_pairs(text: str) -> list[tuple[str, str]]:
         )
         if match:
             category = match.group(1).strip().lower() if match.group(1) else ""
-            pairs.append((category, match.group(2).lower()))
-    return pairs
+            positioned.append((position, (category, match.group(2).lower())))
+    return [pair for _, pair in sorted(positioned, key=lambda item: item[0])]
+
+
+def check_component_group_membership(formal_dir, note_text, variables, results, record=None):
+    """Check renderer grouping and its declared plan, not the semantic choice of categories."""
+    expected = {p.get("analysis_var", p.get("analysis_variable")): p["display_group"]
+                for p in (record or {}).get("definition_plan", []) if p.get("display_group")}
+    detail_files = list(formal_dir.glob("*_detail.html"))
+    if len(detail_files) != 1:
+        return  # The artifact-count check reports this separately.
+    for label, text in (("note", note_text), ("detail", detail_files[0].read_text(encoding="utf-8-sig"))):
+        parser = DefinedSurfaceParser()
+        parser.feed(text)
+        if not parser.group_titles:
+            if expected:
+                fail(results, f"{label} component groups", "declared groups have no rendered titles")
+            continue
+        overview = [(v, g) for v, g in parser.overview_groups if v in variables]
+        detail = [(v, g) for v, g in parser.detail_groups if v in variables]
+        valid = overview == detail and [v for v, _ in overview] == variables
+        valid = valid and "data-component-title=" not in text
+        valid = valid and all(g for _, g in overview)
+        if expected:
+            valid = valid and set(expected) == set(variables) and all(expected.get(v) in (g, re.sub(r"·Components$", "", g)) for v, g in overview)
+        policy = display_policy(formal_dir, variables, record)
+        for group, role, visible in parser.group_titles:
+            valid = valid and visible == group and role in {"component", "defined"}
+            valid = valid and bool(visible.strip()) and not bool(re.search(r"(^|·)(组分|定义)$", visible))
+            valid = valid and (bool(re.search(r".+·Components$", visible)) == (role == "component"))
+        if valid:
+            ok(results, f"{label} component groups", overview)
+        else:
+            fail(results, f"{label} component groups", dict(expected=expected, overview=overview, detail=detail,
+                                                          titles=parser.group_titles))
 
 
 def check_category_order(formal_dir: Path, note_text: str, results: list[dict], compact_module: bool = False) -> None:
@@ -1365,15 +1787,51 @@ def check_category_order(formal_dir: Path, note_text: str, results: list[dict], 
             categories = list(dict.fromkeys(category for category, _ in visible_order))
             for category in categories:
                 roles = [role for current, role in visible_order if current == category]
-                valid = valid and roles in (["defined"], ["source", "defined"])
-                if compact_module:
-                    valid = valid and roles == ["defined"]
+                valid = valid and roles in (["defined"], ["component"])
         if not valid:
             failures[name] = pairs
     if failures:
         fail(results, "detail/note category order", failures)
     else:
         ok(results, "detail/note category order", {name: extract_category_pairs(text) for name, text in materials.items()})
+
+
+def check_result_presentation(formal_dir, note_text, variables, labels, results, record=None):
+    """One order across explicit result surfaces, with source columns filtered out."""
+    for name, text in [("note", note_text)] + [
+            (path.name, path.read_text(encoding="utf-8-sig")) for path in formal_dir.glob("*_detail.html")]:
+        parser = DefinedSurfaceParser()
+        parser.feed(text)
+        raw_book = formal_dir / "raw_codebook.csv"
+        raw_names = set()
+        if raw_book.is_file():
+            with raw_book.open(encoding="utf-8-sig", newline="") as stream:
+                raw_names = {row.get("newname", "") for row in csv.DictReader(stream)}
+        leaked = (set(parser.overview_variables) | {v for v, _ in parser.detail_groups}) & (raw_names - set(variables))
+        if leaked:
+            fail(results, f"{name} hidden raw variables", sorted(leaked))
+        else:
+            ok(results, f"{name} hidden raw variables")
+        overview = [v for v in parser.overview_variables if v in variables]
+        detail = [v for v, _ in parser.detail_groups if v in variables]
+        if overview != variables or detail != variables:
+            fail(results, f"{name} final result order", dict(expected=variables, overview=overview, detail=detail))
+        else:
+            ok(results, f"{name} final result order", variables)
+    from check_reader_copy import check_tree_result_order, sections
+    plan = (record or {}).get("definition_plan", [])
+    planned = {p.get("analysis_var", p.get("analysis_variable")): p.get("display_name") for p in plan}
+    path = formal_dir / READER_COPY_NAME
+    if not path.is_file():
+        fail(results, "tree final result order", "missing 文案.md")
+        return
+    try:
+        summary = sections(path.read_text(encoding="utf-8-sig"), 2).get("摘要导读", "")
+        display_names = planned if any("display_name" in p for p in plan) else labels
+        evidence = check_tree_result_order(summary, variables, display_names)
+        ok(results, "tree final result order", evidence)
+    except ValueError as exc:
+        fail(results, "tree final result order", str(exc))
 
 def check_summary_facts(
     formal_dir: Path,
@@ -1412,7 +1870,7 @@ def check_summary_facts(
     else:
         ok(results, "summary prose indentation", "&emsp; indentation entities = 0")
 
-    db_rows = read_xlsx_rows(formal_dir / analysis_db_name)
+    db_rows = read_table_rows(formal_dir / analysis_db_name)
     cb_rows = read_xlsx_rows(formal_dir / analysis_codebook_name)
     if not db_rows or not cb_rows:
         fail(results, "analysis workbooks", "analysis workbook is empty")
@@ -1456,8 +1914,13 @@ def check_summary_facts(
     else:
         ok(results, "definition variables in analysis_db", codebook_variables)
 
-    check_public_code_outline(formal_dir, note_text, results, db, formal_r)
+    check_public_code_outline(formal_dir, note_text, results, db, formal_r, record)
     check_category_order(formal_dir, note_text, results, policy["compact_module"])
+    check_component_group_membership(formal_dir, note_text, codebook_variables, results, record)
+    label_idx = cb_header.index("Label") if "Label" in cb_header else None
+    labels = {str(row[var_idx]): row[label_idx] if label_idx is not None and len(row) > label_idx else None
+              for row in cb_rows[1:] if len(row) > var_idx and is_nonmissing(row[var_idx])}
+    check_result_presentation(formal_dir, note_text, codebook_variables, labels, results, record)
 
 
 def visible_text(value: str) -> str:
@@ -1580,8 +2043,17 @@ def main() -> int:
         print(json.dumps({"ok": passed, "checks": results}, ensure_ascii=False))
         return 0 if passed else 1
     formal_dir = args.formal_dir
-    from mhas_export_contract import RAW_NAME as MHAS_RAW_NAME
-    primary_raw_name = MHAS_RAW_NAME if args.db == "mhas" else "raw_data.csv"
+    from mhas_export_contract import RAW_NAME as MHAS_RAW_NAME, raw_files as mhas_raw_files
+    try:
+        raw_members = mhas_raw_files(formal_dir) if args.db == "mhas" else []
+    except ValueError as exc:
+        fail(results, "MHAS source-file contracts", str(exc))
+        print(json.dumps({"ok": False, "checks": results}, ensure_ascii=False, indent=2))
+        return 1
+    primary_raw_name = (raw_members[0].name if raw_members else MHAS_RAW_NAME) if args.db == "mhas" else "raw_data.csv"
+    if args.db == "nhanesiii":
+        from nhanesiii_export_contract import RAW_NAME
+        primary_raw_name = RAW_NAME
 
     if not formal_dir.exists():
         fail(results, "formal dir exists", str(formal_dir))
@@ -1589,12 +2061,54 @@ def main() -> int:
         return 1
     ok(results, "formal dir exists", str(formal_dir))
 
-    expected_files = split_csv(args.expected_files)
     source_record = None
     if args.process_dir is not None:
         source_path = args.process_dir / "definition_search_record.json"
         if source_path.is_file():
             source_record = json.loads(source_path.read_text(encoding="utf-8-sig"))
+    knhanes_person_contract = None
+    if args.db == "knhanes" and (formal_dir / "raw_codebook.csv").is_file():
+        try:
+            from knhanes_export import validate_person_package
+            knhanes_person_contract = validate_person_package(formal_dir, split_csv(args.raw_vars) or None, source_record)
+            primary_raw_name = "raw_data.csv" if "person_aggregation" in knhanes_person_contract else next(iter(knhanes_person_contract["data"]))
+            raw_members = [formal_dir / name for name in knhanes_person_contract["data"]]
+        except (OSError, ValueError) as exc:
+            fail(results, "KNHANES personal source-file contract", str(exc))
+            print(json.dumps({"ok": False, "checks": results}, ensure_ascii=False, indent=2))
+            return 1
+
+    klosa_package_contract = None
+    if args.db == "klosa" and (formal_dir / "raw_codebook.csv").is_file():
+        from klosa_adapter_contract import validate_package, REPEAT_MEMBER
+        try:
+            members = [p.name for p in formal_dir.glob("raw_data*.csv")]
+            if REPEAT_MEMBER in members:
+                raise ValueError("KLoSA imputation analysis is not supported")
+            klosa_package_contract = validate_package(formal_dir, members,
+                split_csv(args.raw_vars) or read_codebook_vars(formal_dir / "raw_codebook.csv"), args.language)
+            raw_members = [formal_dir / name for name in klosa_package_contract["data"]]
+        except (OSError, ValueError) as exc:
+            fail(results, "KLoSA source-file contracts", str(exc))
+            print(json.dumps({"ok": False, "checks": results}, ensure_ascii=False))
+            return 1
+
+    expected_files = split_csv(args.expected_files)
+    if args.db == "charls":
+        from check_definition_source_record import primary_raw_name as charls_primary_raw_name
+        try:
+            primary_raw_name = charls_primary_raw_name(source_record, args.db)
+        except ValueError as exc:
+            fail(results, "analysis identity contract", str(exc))
+            print(json.dumps({"ok": False, "checks": results}, ensure_ascii=False))
+            return 1
+    if args.complete:
+        table_format = (source_record or {}).get('data_table_format','xlsx')
+        data_files = [n for n in expected_files if n.startswith('db_') or n == args.analysis_db]
+        if table_format not in {'xlsx','csv'} or len(data_files) != 2 or any(Path(n).suffix.lower() != '.'+table_format for n in data_files):
+            fail(results,'final data table format',{'declared':table_format,'files':data_files})
+        else:
+            ok(results,'final data table format',{'data':table_format,'codebooks':'xlsx'})
     try:
         policy = display_policy(formal_dir, split_csv(args.analysis_vars) or None, source_record)
     except ValueError as exc:
@@ -1609,10 +2123,12 @@ def main() -> int:
             fail(results, "public R discovery", str(error))
     if args.complete:
         required_names = {primary_raw_name, "raw_codebook.csv", args.analysis_db, args.analysis_codebook}
+        if args.db in {"mhas", "knhanes", "klosa"}:
+            required_names.update(path.name for path in raw_members)
         missing = required_names - set(expected_files)
         roles = {"public_r": any(name.lower().endswith(".r") for name in expected_files),
                  "note": any(name.endswith(".md") and name != READER_COPY_NAME for name in expected_files),
-                 "db": any(name.startswith("db_") and name.endswith(".xlsx") for name in expected_files),
+                 "db": any(name.startswith("db_") and name.endswith((".xlsx",'.csv')) for name in expected_files),
                  "codebook": any(name.startswith("codebook_") and name.endswith(".xlsx") for name in expected_files)}
         if missing or not all(roles.values()):
             fail(results, "complete artifact scope", {"missing_files": sorted(missing), "roles": roles})
@@ -1625,6 +2141,7 @@ def main() -> int:
 
     check_forbidden_files(formal_dir, results, args.max_md)
 
+    charls_multifile_contract = None
     raw_vars = split_csv(args.raw_vars)
     forbid_vars = set(split_csv(args.forbid_vars))
     required_user_text = split_csv(args.required_user_text)
@@ -1641,24 +2158,65 @@ def main() -> int:
             except ValueError as exc:
                 fail(results, "KLoSA package contract", str(exc))
         header = read_csv_header(raw_data)
+        if klosa_package_contract:
+            header = list(dict.fromkeys(name for path in raw_members for name in read_csv_header(path)))
+        charls_multifile = (args.db == "charls" and primary_raw_name == "raw_data.csv"
+                            and len(list(formal_dir.glob("raw_data*.csv"))) > 1)
+        charls_multifile_matches = False
+        if charls_multifile:
+            try:
+                contract = check_charls_person_multifile_contract(
+                    formal_dir, raw_vars, source_record, expected_files if args.complete else None)
+                charls_multifile_contract = contract
+                charls_multifile_matches = True
+                ok(results, "CHARLS personal multi-file source contract", contract)
+            except (OSError, ValueError, KeyError) as exc:
+                fail(results, "CHARLS personal multi-file source contract", str(exc))
+        nhis_header_matches = False
+        if args.db == 'nhis':
+            try:
+                from nhis_export_contract import validate_package, require_context, build_selection
+                if source_record is None:
+                    raise ValueError('NHIS output verification requires the exact source record in --process-dir')
+                require_context(source_record,args.dataset_id)
+                selection = build_selection(source_record,source_record['dbcodebook_url'])
+                contract = validate_package(formal_dir,[p.name for p in formal_dir.glob('raw_data*.csv')],raw_vars,args.dataset_id,selection)
+                nhis_header_matches = True
+                ok(results,'NHIS exact-source unique-person contract',contract)
+            except (OSError,ValueError,KeyError) as exc:
+                fail(results,'NHIS exact-source unique-person contract',str(exc))
+        nhanesiii_header_matches = False
+        if args.db == "nhanesiii":
+            try:
+                from nhanesiii_export_contract import validate_package
+                contract = validate_package(formal_dir, [p.name for p in formal_dir.glob("raw_data*.csv")], raw_vars)
+                nhanesiii_header_matches = True
+                ok(results, "NHANES III unique-person contract", contract)
+            except (OSError, ValueError) as exc:
+                fail(results, "NHANES III unique-person contract", str(exc))
         nhanes_header_matches = False
         if args.db == "nhanes":
             try:
                 from nhanes_export_contract import validate_package
                 contract = validate_package(formal_dir, [p.name for p in formal_dir.glob("raw_data*.csv")], raw_vars)
                 nhanes_header_matches = True
-                ok(results, "NHANES ordinary person-period contract", contract)
+                if args.complete:
+                    omitted = set(contract.get('files', {'raw_data.csv': contract})) - set(expected_files)
+                    if omitted:
+                        raise ValueError("NHANES complete artifact scope omits source files: " + ", ".join(sorted(omitted)))
+                ok(results, "NHANES source-file contracts", contract)
             except (OSError, ValueError) as exc:
-                fail(results, "NHANES ordinary person-period contract", str(exc))
+                fail(results, "NHANES source-file contracts", str(exc))
         mhas_header_matches = False
         if args.db == "mhas":
             try:
                 from mhas_export_contract import validate_package
                 contract = validate_package(formal_dir, [p.name for p in formal_dir.glob("raw_data*.csv")], raw_vars)
                 mhas_header_matches = True
-                ok(results, "MHAS Core person-period contract", contract)
+                header = list(dict.fromkeys(name for path in raw_members for name in read_csv_header(path)))
+                ok(results, "MHAS person-period file contracts", contract)
             except (OSError, ValueError) as exc:
-                fail(results, "MHAS Core person-period contract", str(exc))
+                fail(results, "MHAS person-period file contracts", str(exc))
         chns_header_matches = False
         if args.db == "chns":
             try:
@@ -1677,10 +2235,14 @@ def main() -> int:
                 fail(results, "CHNS personal/static file contract", str(exc))
         if args.db == "knhanes":
             try:
-                from knhanes_export import validate_bundle, validate_person_frame
-                members = [p.name for p in formal_dir.glob("raw_data*.csv")]
-                validate_bundle(formal_dir, members, raw_vars)
-                ok(results, "KNHANES respondent-year contract", validate_person_frame(raw_data))
+                if knhanes_person_contract is None:
+                    from knhanes_export import validate_person_package
+                    knhanes_person_contract = validate_person_package(formal_dir, raw_vars, source_record)
+                ok(results, "KNHANES personal source-file contract", knhanes_person_contract)
+                header = list(dict.fromkeys(name for path in raw_members for name in read_csv_header(path)))
+                if "person_aggregation" in knhanes_person_contract:
+                    # Transport has separately checked the preserved RowIndex.
+                    header = [name for name in header if name != "RowIndex"]
             except (OSError, ValueError) as exc:
                 fail(results, "KNHANES respondent-year contract", str(exc))
         layered_headers = (
@@ -1695,12 +2257,38 @@ def main() -> int:
                 hrs_defaults = validate_defaults(raw_codebook, header, legacy_package=accepts_legacy_package(args.process_dir, formal_dir))
             except ValueError as exc:
                 fail(results, "HRS automatic Tracker columns", str(exc))
+        hrs_repeat_header_matches = False
+        if args.db == "hrs":
+            members = [p.name for p in formal_dir.glob("raw_data*.csv")]
+            if any(member != "raw_data.csv" for member in members):
+                try:
+                    from hrs_export_contract import HRS_REPEAT_FILES
+                    from recover_dbcodebook_export import validate_data_members
+                    supported = {"raw_data.csv"} | {
+                        "raw_data_repeat_" + family + ".csv" for family in HRS_REPEAT_FILES}
+                    if set(members) - supported or "raw_data.csv" not in members:
+                        raise ValueError("Unsupported HRS repeated source files")
+                    if header[:4] != ["ID", "HHID", "PN", "Wave_id"]:
+                        raise ValueError("HRS main file must retain its four default identity columns")
+                    import contextlib, io
+                    diagnostic = io.StringIO()
+                    try:
+                        with contextlib.redirect_stdout(diagnostic):
+                            contract = validate_data_members(formal_dir, members, raw_vars)
+                    except SystemExit as exc:
+                        raise ValueError("HRS package verification failed: " + diagnostic.getvalue().strip()) from exc
+                    if args.complete and set(members) - set(expected_files):
+                        raise ValueError("Complete HRS artifact scope omits repeated source files")
+                    hrs_repeat_header_matches = True
+                    ok(results, "HRS repeated person-source file contracts", contract)
+                except (OSError, ValueError) as exc:
+                    fail(results, "HRS repeated person-source file contracts", str(exc))
         hrs_header_matches = (
             args.db == "hrs"
             and header[:4] == ["ID", "HHID", "PN", "Wave_id"]
             and len(header[4:]) == len(raw_vars) + len(hrs_defaults)
             and set(header[4:]) == set(raw_vars) | hrs_defaults
-        )
+        ) or hrs_repeat_header_matches
         share_header_matches = False
         if args.db == "share":
             try:
@@ -1729,7 +2317,7 @@ def main() -> int:
                 ok(results, "ELSA default Wave_id", elsa_contract)
             except ValueError as exc:
                 fail(results, "ELSA default Wave_id", str(exc))
-        if (args.db not in {"share", "chns", "elsa", "mhas", "nhanes"} and (header in layered_headers or hrs_header_matches or klosa_header_matches)) or share_header_matches or knhanes_header_matches or chns_header_matches or elsa_header_matches or mhas_header_matches or nhanes_header_matches:
+        if (args.db not in {"share", "chns", "elsa", "mhas", "nhanes", "nhanesiii", "nhis"} and not charls_multifile and (header in layered_headers or hrs_header_matches or klosa_header_matches)) or charls_multifile_matches or share_header_matches or knhanes_header_matches or chns_header_matches or elsa_header_matches or mhas_header_matches or nhanes_header_matches or nhanesiii_header_matches or nhis_header_matches:
             ok(results, "raw_data header", header)
         elif args.db == "charls" and header == ["ID", "year", *raw_vars]:
             identifier_check = check_charls_household_identifier(raw_data)
@@ -1758,7 +2346,7 @@ def main() -> int:
                 "raw_data header",
                 {"expected": layered_headers, "actual": header},
             )
-        ok(results, "raw_data rows", count_csv_records(raw_data))
+        ok(results, "raw_data rows", sum(count_csv_records(path) for path in raw_members) if args.db in {"mhas", "knhanes", "klosa"} else count_csv_records(raw_data))
 
         try:
             if args.db == "elsa":
@@ -1780,7 +2368,7 @@ def main() -> int:
             ok(results, "forbidden vars in raw/codebook")
 
     if args.analysis_db:
-        rows = read_xlsx_rows(formal_dir / args.analysis_db)
+        rows = read_table_rows(formal_dir / args.analysis_db)
         header = [str(item) if item is not None else "" for item in rows[0]]
         expected_columns = split_csv(args.analysis_columns)
         if expected_columns and header != expected_columns:
@@ -1791,13 +2379,16 @@ def main() -> int:
 
         raw_data_path = formal_dir / primary_raw_name
         if raw_data_path.exists():
+            identity_header = list(dict.fromkeys(name for path in raw_members for name in read_csv_header(path))) if args.db in {"mhas", "knhanes", "klosa"} else read_csv_header(raw_data_path)
             check_identity_values(
                 raw_data_path,
-                read_csv_header(raw_data_path),
+                identity_header,
                 rows,
                 header,
                 results,
                 args.db,
+                raw_paths=raw_members if args.db in {"mhas", "knhanes", "klosa"} else None,
+                source_record=source_record,
             )
 
         forbidden_found = sorted(forbid_vars.intersection(set(header)))
@@ -1822,7 +2413,27 @@ def main() -> int:
 
     if args.complete:
         check_workbook_contract(formal_dir, expected_files, args.analysis_db, args.analysis_codebook,
-                                raw_vars, split_csv(args.analysis_vars), results)
+                                raw_vars, split_csv(args.analysis_vars), results,
+                                ([dict(item, method=source_record["knhanes_person_aggregation"]["method"])
+                                  for item in source_record["knhanes_person_aggregation"]["source_summaries"]]
+                                 if args.db == "knhanes" and "person_aggregation" in (knhanes_person_contract or {})
+                                 else (source_record or {}).get("source_summaries") if args.db == "nhanes" else None),
+                                source_record if args.db == "nhanes" else None,
+                                charls_multifile_contract=charls_multifile_contract,
+                                result_label_plan=(source_record or {}).get("definition_plan"))
+
+    if args.complete and args.db == "knhanes" and "person_aggregation" in (knhanes_person_contract or {}):
+        try:
+            from knhanes_person_aggregation import expected_person_summaries, validate_summary_cells
+            expected, summaries, stats = expected_person_summaries(formal_dir, source_record, knhanes_person_contract)
+            full_names = [name for name in expected_files if name.startswith("db_") and name.endswith((".xlsx", ".csv"))]
+            if len(full_names) != 1:
+                raise ValueError("Expected exactly one full person-level table")
+            full = read_table_rows(formal_dir / full_names[0])
+            checked = validate_summary_cells(full[0], full[1:], expected, summaries)
+            ok(results, "KNHANES repeated-source summary cells", dict(checked, aggregation=stats))
+        except (ValueError, OSError) as exc:
+            fail(results, "KNHANES repeated-source summary cells", str(exc))
 
     if args.check_summary_facts:
         r_names = [name for name in expected_files if name.lower().endswith('.r')]
@@ -1847,6 +2458,10 @@ def main() -> int:
             from klosa_adapter_contract import require_context
             try: require_context(record, args.language)
             except ValueError as exc: fail(results, "approved language", str(exc))
+        if args.db == 'nhis':
+            from nhis_export_contract import require_context
+            try: require_context(record,args.dataset_id)
+            except ValueError as exc: fail(results,'approved dataset',str(exc))
         if str(record.get("database", "")).lower() != args.db:
             fail(results, "approved database", "database differs from the source plan")
     check_required_user_text(formal_dir, required_user_text, results, policy)
@@ -1865,6 +2480,7 @@ def main() -> int:
             for path in sorted(formal_dir.iterdir()) if path.is_file()
         }
         payload["database"] = args.db
+        if args.db == 'nhis': payload['dataset_id'] = args.dataset_id
         payload["analysis_vars"] = split_csv(args.analysis_vars)
         payload["source_sha256"] = hashlib.sha256((args.process_dir / "definition_search_record.json").read_bytes()).hexdigest().upper()
         payload["checker_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest().upper()
@@ -1878,3 +2494,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

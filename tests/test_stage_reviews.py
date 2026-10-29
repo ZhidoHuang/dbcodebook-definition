@@ -93,7 +93,9 @@ with tempfile.TemporaryDirectory() as temporary:
     assert (process / "execution_report.json").read_bytes() == original_report
     cli("review-check", "--process-dir", process, "--role", "logic")
     saved = json.loads((process / "execution_report.json").read_text(encoding="utf-8"))
-    assert Path(saved["stage_reviews"]["logic"]["reused_from"]).is_file()
+    assert saved["continued_from_run"]
+    assert not (process / "archived_runs").exists()
+    assert "reused_from" not in saved["stage_reviews"]["logic"]
     source.write_text("changed plan", encoding="utf-8")
     cli("review-check", "--process-dir", process, "--role", "logic", ok=False)
     source.write_text("stable plan", encoding="utf-8")

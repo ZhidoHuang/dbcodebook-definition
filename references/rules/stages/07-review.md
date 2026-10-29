@@ -34,3 +34,4 @@
 - 只读角色看ordinary_reader_input.md，在reader_comprehension_review.json记录真实结论；一旦发起，未完成、未解决或已过期就不能发布。
 - 返修复用角色，只复核受影响内容；相同笔记的有效记录可用 `init --overwrite --preserve-reader` 保留。
 - 最后运行check取得当前许可。
+

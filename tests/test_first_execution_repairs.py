@@ -42,6 +42,9 @@ with tempfile.TemporaryDirectory() as tmp:
         result=subprocess.run([sys.executable,'-X','utf8',str(ROOT/'scripts'/script),*map(str,args)],capture_output=True,text=True,encoding='utf-8')
         assert (result.returncode == 0) == succeeds, result.stdout+result.stderr
         return result
+    rejected = run('update_reader_copy.py', 'prepare', '--formal-dir', p, '--process-dir', process,
+                   '--reason', 'Explicit fixture for the normal current-file update entry', succeeds=False)
+    assert '--retain-baseline' in rejected.stderr and not process.exists()
     run('execution_report.py','init','--process-dir',process,'--database','test','--topic-id','fixture','--topic-name','fixture','--task','first-copy test','--workflow','general')
     run('execution_report.py','stage-start','--process-dir',process,'--stage-id','copy','--name','copy','--role','test')
     original=(ROOT/'tests/fixtures/writing-inputs/reader-copy.md').read_bytes()
@@ -49,12 +52,14 @@ with tempfile.TemporaryDirectory() as tmp:
     first_bytes=doc.read_bytes()
     run('check_reader_copy.py','--copy',doc,'--process-dir',process,succeeds=False)
     report=lambda:json.loads((process/'execution_report.json').read_text(encoding='utf-8'))
-    first=report()['first_copy']
-    assert Path(first['snapshot_path']).read_bytes()==first_bytes
+    first=report()['current_copy']
+    import hashlib
+    assert first['sha256']==hashlib.sha256(first_bytes).hexdigest()
     run('execution_report.py','stage-finish','--process-dir',process,'--stage-id','copy','--status','failed','--copy',doc)
-    assert len(report()['copy_history'])==1
+    assert report()['current_copy']['sha256']==first['sha256']
     doc.write_bytes(original)
     run('execution_report.py','stage-start','--process-dir',process,'--stage-id','copy','--name','repair','--role','test')
     run('check_reader_copy.py','--copy',doc,'--process-dir',process)
-    assert report()['first_copy']==first and len(report()['copy_history'])==2
+    assert report()['current_copy']['sha256']!=first['sha256']
+    assert not (process/'copy_versions').exists()
 print('FIRST_EXECUTION_REPAIRS_PASS')

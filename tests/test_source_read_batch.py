@@ -7,7 +7,7 @@ import tempfile
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from source_read import run_read
+from source_read import run_read, saved_receipt
 
 
 class Session:
@@ -40,16 +40,21 @@ def main():
         assert s.calls == ["Wave 1", "Wave 2", "Wave 3"]
         assert len(first["completed"]) == 2 and first["pending"]["index"] == 2
         s.observation = {"ok": False, "status": "READ_STILL_RUNNING"}
-        pending = run_read(s, action, "site", "share", root / "pending.json", root / "first.json")
+        pending = run_read(s, action, "site", "share", root / "first.json", root / "first.json")
         assert pending["status"] == "READ_STILL_RUNNING" and len(s.calls) == 3
         s.observation = {"ok": True, "result": {"ok": True, "status": "SOURCE_READ", "details": [{"period": "Wave 3"}]}}
-        result = run_read(s, action, "site", "share", root / "done.json", root / "pending.json")
+        result = run_read(s, action, "site", "share", root / "first.json", root / "first.json")
         assert result["ok"] and len(result["details"]) == 9
         assert s.calls == action["periods"], "An already dispatched period was replayed"
-        for item in result["completed"]:
-            assert Path(item["receipt"]).is_file()
+        for item in result['completed']:
+            assert saved_receipt(item, result)['details'][0]['period'] == action['periods'][item['index']]
+        assert list(root.iterdir()) == [root / 'first.json'], 'Per-period or temporary files were retained'
+        assert (root / 'first.json').read_text(encoding='utf-8').count('"DETAIL_READ"') == 8
+        before = (root / 'first.json').read_bytes()
+        run_read(s, action, 'site', 'share', root / 'first.json', root / 'first.json')
+        assert (root / 'first.json').read_bytes() == before and s.calls == action['periods']
         try:
-            run_read(s, action, "site", "share", root / "done.json")
+            run_read(s, action, "site", "share", root / "first.json")
         except ValueError:
             pass
         else:
@@ -61,13 +66,25 @@ def main():
         assert not ended["ok"] and ended["pending"] is None and len(s.calls) == 3
         resumed = run_read(s, action, "site", "share", root / "retry.json", root / "ended.json")
         assert resumed["ok"] and s.calls.count("Wave 1") == 1 and s.calls.count("Wave 3") == 2
-        Path(resumed["completed"][0]["receipt"]).write_text("{}")
+        assert resumed['failed'] is None
+        resumed['details'][0]['period'] = 'tampered'
+        (root / 'retry.json').write_text(json.dumps(resumed), encoding='utf-8')
         try:
             run_read(s, action, "site", "share", root / "bad.json", root / "retry.json")
         except ValueError as error:
             assert "changed" in str(error)
         else:
             raise AssertionError("Modified evidence reused")
+        for kind in ('search', 'directory'):
+            query = {'kind': kind, 'query': 'age'} if kind == 'search' else {'kind': kind, 'path': []}
+            response = {'ok': True, 'status': kind.upper() + '_READ', 'rows': [{'label': 'Unique source text'}]}
+            target = root / (kind + '.json')
+            with patch.object(s, 'code', return_value=response) as read:
+                r = run_read(s, query, 'site', 'share', target)
+                assert r['rows'] == response['rows']
+                run_read(s, query, 'site', 'share', target, target)
+                assert read.call_count == 1
+            assert target.read_text(encoding='utf-8').count('Unique source text') == 1
     print("SOURCE_READ_BATCH_PASS")
 
 

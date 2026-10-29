@@ -62,6 +62,14 @@ shared_tree = re.search(r'```text 两种总分\n.*?\n```', template, re.S)[0]
 shared = [b for b in summary_blocks(shared_tree) if b['type'] == 'code_tree'][0]
 assert shared['role_html'].count('data-tree-role="result"') == 2
 assert shared['role_html'].count('data-tree-role="component"') == 6
+# Render the category preview examples, including Chinese labels, 0/1 and ellipsis.
+demographic_tree = re.search(r'```text 人口学\n.*?\n```', template, re.S)[0]
+demographic = summary_blocks(demographic_tree)[0]
+assert '（男／女）' in demographic['text']
+assert '（0/1）' in demographic['text']
+assert '丧偶／……）' in demographic['text']
+trees.append(demographic)
+
 trees.append(shared)
 trees.append(role_block)
 for bad in ['```text 例\n[[unknown:名字]]\n```', '```text 例\n[[meta:未闭合\n```']:
@@ -121,4 +129,78 @@ stopifnot(sum(shown == "## 问卷") == 1L, sum(shown == "## 定义依据") == 1L
     assert 'data-tree-role="result"' in rendered
     assert '&lt;4' in rendered
     assert '[[result:' not in rendered
-print('TREE_CONTRACT_PASS: trial trees and shared-item template, all roles, escaping, legacy/malformed input, questionnaire headings, meta, formula order, literal text, labels, actual R')
+# Production entry: the same valid plan must reject unbound results, missing
+# names and reordered identities, while low-level legacy parsing stays readable.
+with tempfile.TemporaryDirectory(prefix='tree_identity_') as directory:
+    path = Path(directory)
+    base = (ROOT / 'tests/fixtures/writing-inputs/reader-copy.md').read_text(encoding='utf-8')
+    before, tail = base.split('## 摘要导读', 1)
+    _, after = tail.split('## Criteria', 1)
+    variables = ['fall_status', 'fall_count']
+    names = ['是否发生跌倒', '跌倒次数']
+    plan = [dict(analysis_var=v, display_name=n) for v, n in zip(variables, names)]
+    record = dict(approved_analysis_vars=variables, definition_plan=plan)
+    doc, rec = path/'文案.md', path/'record.json'
+
+    def check(nodes, source_record, error=None, extra=()):
+        tree = '' if nodes is None else '```text 跌倒\n跌倒\n' + '\n'.join(nodes) + '\n```'
+        doc.write_text(before + '## 摘要导读\n\n本主题定义“**是否发生跌倒**”和“**跌倒次数**”。\n\n' + tree + '\n\n## Criteria' + after, encoding='utf-8')
+        rec.write_text(json.dumps(source_record, ensure_ascii=False), encoding='utf-8')
+        cmd = [sys.executable, '-B', '-X', 'utf8', str(ROOT/'scripts/check_reader_copy.py'),
+               '--copy', str(doc), '--record', str(rec), *extra]
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
+        assert result.returncode == (1 if error else 0), result.stdout + result.stderr
+        payload = json.loads(result.stdout)
+        if error:
+            assert error in payload['error'], payload
+        return doc
+
+    explicit = ['├─ [[result:fall_status|是否发生跌倒]] [[meta:（0/1）]]',
+                '└─ [[result:fall_count|跌倒次数]] [[meta:（次）]]']
+    unbound = ['├─ [[result:是否发生跌倒]]', '└─ [[result:跌倒次数]]']
+    strict = ('--require-result-identity',)
+    check(unbound, record)  # legacy read-only check
+    check(unbound, record, '显式绑定', strict)
+    check(explicit, dict(approved_analysis_vars=variables), 'definition_plan', strict)
+    check(explicit, dict(record, definition_plan=[dict(analysis_var=v) for v in variables]), 'display_name', strict)
+    check(explicit, dict(record, definition_plan=[plan[0], dict(analysis_var=variables[1], display_name='')]), 'display_name', strict)
+    check(list(reversed(explicit)), record, '顺序不一致', strict)
+    check([explicit[0].replace('是否发生跌倒', '错误测试名称'), explicit[1]], record, 'display_name 不一致', strict)
+    for suffix in ['', ' [[meta:（ ）]]', ' [[meta:[2011年]]]']:
+        check([explicit[0], '└─ [[result:fall_count|跌倒次数]]' + suffix], record, '缺少取值或单位 meta', strict)
+    check(None, record)  # no new requirement for historical read-only parsing
+    for reason in [None, '', '  ', False]:
+        check(None, dict(record, tree_omission_reason=reason), 'tree_omission_reason', strict)
+    omitted = dict(record, tree_omission_reason='本例仅两个独立直接取值，名称已清楚说明内容；树不会补充关系信息。')
+    check(None, omitted, extra=strict)
+    assert read_copy(doc, record=omitted, require_result_identity=True)['result_order_check']['omission_reason'] == omitted['tree_omission_reason']
+    # Whitespace and parenthesis variants are presentation, not new identities.
+    compatible = [explicit[0].replace('是否发生跌倒', '是否发生 跌倒'),
+                  explicit[1].replace('[[meta:（次）]]', '[[meta:[2011年]]] [[meta:(次)]]')]
+    check(compatible, record, extra=strict)
+    check(explicit + [explicit[0]], record, extra=strict)  # repeated references retain the same identity
+    check(explicit, record, extra=strict)
+    parsed = read_copy(doc, record=record, require_result_identity=True)
+    assert sum(b.get('role_html', '').count('data-tree-variable=') for b in parsed['summary_blocks']) == 2
+
+    # The normal full workflow must enforce the contract without an author
+    # remembering the optional CLI switch. First rejected draft stays captured.
+    process = path/'process'
+    for args in [
+        ['init', '--database', 'test', '--topic-id', 'fixture', '--topic-name', 'fixture', '--task', 'test', '--workflow', 'full_definition'],
+        ['stage-start', '--stage-id', 'copy', '--name', 'copy', '--role', 'test'],
+    ]:
+        result = subprocess.run([sys.executable, '-B', str(ROOT/'scripts/execution_report.py'),
+                                 *args, '--process-dir', str(process)], capture_output=True, text=True, encoding='utf-8')
+        assert result.returncode == 0, result.stdout + result.stderr
+    check(unbound, record, '显式绑定', ('--process-dir', str(process)))
+    saved = json.loads((process/'execution_report.json').read_text(encoding='utf-8'))['current_copy']
+    original_hash = saved['sha256']
+    check([explicit[0].replace('是否发生跌倒', '错误测试名称'), explicit[1]], record, 'display_name 不一致', ('--process-dir', str(process)))
+    check(None, record, 'tree_omission_reason', ('--process-dir', str(process)))
+    check(explicit, record, extra=('--process-dir', str(process)))
+    current = json.loads((process/'execution_report.json').read_text(encoding='utf-8'))['current_copy']
+    assert current['sha256'] != original_hash
+    assert not (process/'copy_versions').exists()
+
+print('TREE_CONTRACT_PASS: legacy parsing, strict identities/names/meta/omission reasons, automatic full-workflow gate, current-file binding, actual R rendering')

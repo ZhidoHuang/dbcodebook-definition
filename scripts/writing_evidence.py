@@ -1,4 +1,4 @@
-"""Preserve observed writing versions; never infer a semantic PASS."""
+"""Bind the current writing file; never infer a semantic PASS."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ def skill_version(root=ROOT):
 
 
 def capture_copy(report, process_dir, stage, copy_path=None):
-    """Called at the existing copy handoff. First means first, even if uncaptured."""
+    """Update one current binding without creating a document copy."""
     version = skill_version()
     report.setdefault("skill_versions", {})[version["id"]] = version["files"]
     candidates = [Path(copy_path)] if copy_path else [Path(p) for p in stage.get("outputs", []) if Path(p).name == "文案.md"]
@@ -40,36 +40,26 @@ def capture_copy(report, process_dir, stage, copy_path=None):
              "skill_changed_since_start": version["id"] != report.get("skill_version_at_start"),
              "summary": list(stage.get("summary", [])), "stage_attempt": stage.get("attempt")}
     if not candidates:
-        entry.update(status="not_recorded", reason="copy 环节未提供文案路径；后续修稿不能补称首次稿")
+        entry.update(status="not_recorded", reason="copy 环节未提供当前文案路径")
     else:
         source = candidates[0].expanduser().resolve()
         data = source.read_bytes()
         if not data.strip():
-            raise ValueError("首次文案快照不能保存空文件")
-        history = report.get("copy_history", [])
-        if history and history[-1].get("stage_attempt") == stage.get("attempt") and history[-1].get("sha256") == digest(data):
-            return history[-1]
-        folder = Path(process_dir) / "copy_versions" / report["run_id"]
-        folder.mkdir(parents=True, exist_ok=True)
-        filename = datetime.now().astimezone().strftime("%Y%m%dT%H%M%S%f%z") + ".md"
-        target = folder / filename
-        with target.open("xb") as handle:
-            handle.write(data)
-        entry.update(status="captured", source_path=str(source), snapshot_path=str(target.resolve()),
+            raise ValueError("当前文案不能是空文件")
+        entry.update(status="captured", source_path=str(source),
                      sha256=digest(data), bytes=len(data))
-    report.setdefault("copy_history", []).append(entry)
-    report.setdefault("first_copy", dict(entry))
+    report["current_copy"] = entry
     return entry
 
 
 def capture_before_check(process_dir, copy_path):
-    """Explicitly preserve the complete submitted draft before parsing/checks."""
+    """Bind the submitted file before checks, including failed submissions."""
     from execution_report import paths, load, latest_stage, save
     report_path, markdown_path = paths(process_dir)
     report = load(report_path)
     stage = latest_stage(report, "copy")
     if stage["status"] != "running":
-        raise ValueError("保存检查前文案需要当前运行中的copy环节")
+        raise ValueError("登记当前文案需要运行中的copy环节")
     capture_copy(report, report_path.parent, stage, copy_path)
     save(report_path, markdown_path, report)
 
@@ -79,10 +69,10 @@ def copy_execution_conclusions(process_dir, copy_path):
     if not report_path.is_file():
         return {"status": "unavailable"}
     report = json.loads(report_path.read_text(encoding="utf-8-sig"))
-    history = report.get("copy_history", [])
-    if not history:
+    history = report.get("copy_history", [])  # Read historical receipts only.
+    entry = report.get("current_copy") or (history[-1] if history else None)
+    if not entry:
         return {"status": "unavailable"}
-    entry = history[-1]
     if entry.get("status") != "captured" or entry.get("sha256") != digest(Path(copy_path).read_bytes()):
         return {"status": "stale", "reason": "执行结论未绑定当前文案"}
     return {"run_id": report["run_id"], **entry,

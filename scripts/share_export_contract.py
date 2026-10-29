@@ -1,4 +1,4 @@
-"""Ordinary SHARE Wave 1–9 personal uniqID files only; IDs stay opaque."""
+"""SHARE Wave 1–9 and Corona Survey 1–2 personal uniqID files; IDs stay opaque."""
 import csv
 import re
 from html import escape
@@ -6,6 +6,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 ORDINARY_WAVES = {f"Wave {i}" for i in range(1, 10)}
+SUPPORTED_PERIODS = ORDINARY_WAVES | {"Corona Survey 1", "Corona Survey 2"}
 IDENTIFIERS = {"ID", "Wave_id", "Record_id", "mergeid", "hhid", "country", "intid", "intidwX"}
 REQUIRED_KEYS = {"ID", "Wave_id", "mergeid"}
 CODEBOOK_COLUMNS = {"Variable", "Label", "Period", "File type", "Match key", "newname"}
@@ -48,11 +49,11 @@ def read_connection_scope(path: Path, variables: set[tuple[str, str]]) -> set[st
     current_wave = None
     periods = set()
     for line in text.splitlines():
-        file_wave = re.search(r"\.dta\s+\[(Wave \d+)\]\s*$", line)
+        file_wave = re.search(r"\.dta\s+\[([^\]]+)\]\s*$", line)
         if file_wave:
             current_wave = file_wave[1]
-            if current_wave not in ORDINARY_WAVES:
-                raise ValueError("SHARE connection note supports ordinary Wave 1–9 only")
+            if current_wave not in SUPPORTED_PERIODS:
+                raise ValueError("SHARE connection note supports Wave 1–9 and Corona Survey 1–2 only")
             periods.add(current_wave)
         elif ".zip" in line:
             current_wave = None
@@ -89,8 +90,8 @@ def read_unique_codebook(path: Path) -> tuple[list[str], set[str]]:
             raise ValueError("SHARE adapter supports personal uniqID sources only")
         if legacy:
             periods = {s.strip() for s in row["Period"].split(",") if s.strip()}
-            if not periods or not periods.issubset(ORDINARY_WAVES):
-                raise ValueError("SHARE adapter supports ordinary Wave 1–9 only")
+            if not periods or not periods.issubset(SUPPORTED_PERIODS):
+                raise ValueError("SHARE adapter supports Wave 1–9 and Corona Survey 1–2 only")
         aliases.append(alias); sources.add(row["Variable"]); files.add(match[2])
     if not aliases:
         raise ValueError("SHARE codebook is empty")
@@ -116,7 +117,7 @@ def validate_unique_csv(path: Path, expected: list[str], identities: set[str]) -
             if None in row or any(v is None for v in row.values()) or any(row.get(k) in (None, "") for k in REQUIRED_KEYS):
                 raise ValueError("SHARE raw has malformed rows or empty identity")
             rid, wave, person = (row[k] for k in ("ID", "Wave_id", "mergeid"))
-            if wave not in ORDINARY_WAVES:
+            if wave not in SUPPORTED_PERIODS:
                 raise ValueError("SHARE raw contains an unsupported period/product")
             if rid in ids or (wave, person) in keys:
                 raise ValueError("SHARE raw has duplicate ID or person-wave key")

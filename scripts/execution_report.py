@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from copy import deepcopy
 import hashlib
 import json
 import math
@@ -11,7 +12,7 @@ import os
 import re
 import sys
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -347,6 +348,26 @@ def read_review_log(log_path: Path, role: str) -> dict[str, Any]:
     }
 
 
+def completed_exploration_inheritance(all_rounds, selected_ids, role, start, end, reason):
+    """Keep original completed exploration times without treating them as new work."""
+    if role not in {"独立探索 A", "独立探索 B"}:
+        raise ValueError("既有轮次沿用仅用于独立探索；R复核仍使用现有输入绑定和沿用入口")
+    if not selected_ids or len(set(selected_ids)) != len(selected_ids) or not str(reason or "").strip():
+        raise ValueError("沿用既有探索必须明确turn-id和inherit-reason")
+    rounds = [item for item in all_rounds if item["turn_id"] in selected_ids]
+    if {item["turn_id"] for item in rounds} != set(selected_ids):
+        raise ValueError("指定既有探索轮次不在该真实日志中")
+    if any(parse_time(item["started_at"]) >= start for item in rounds):
+        raise ValueError("本次报告内开始的探索使用普通导入，不登记为既有探索")
+    if any(not item.get("finished_at") or item.get("outcome") != "completed"
+           or parse_time(item["finished_at"]) > end for item in rounds):
+        raise ValueError("沿用既有探索只接受真实日志确认已经完成的指定轮次")
+    return rounds, {"reason": reason.strip(), "registered_at": iso(end),
+                    "included_in_current_run_timing": False,
+                    "other_unfinished_turn_ids": [item["turn_id"] for item in all_rounds
+                                                   if not item.get("finished_at") and item not in rounds]}
+
+
 def command_review_import(args: argparse.Namespace) -> dict[str, Any]:
     report_path, markdown_path = paths(args.process_dir)
     report = load(report_path)
@@ -357,8 +378,16 @@ def command_review_import(args: argparse.Namespace) -> dict[str, Any]:
     selected_ids = getattr(args, "turn_id", None)
     start = parse_time(report["started_at"])
     end = now()
-    rounds = [item for item in all_rounds if start <= parse_time(item["started_at"]) <= end]
-    if selected_ids:
+    inherited = getattr(args, "inherit_completed", False)
+    inheritance = None
+    if inherited:
+        rounds, inheritance = completed_exploration_inheritance(
+            all_rounds, selected_ids, args.role, start, end, getattr(args, "inherit_reason", None))
+    else:
+        if getattr(args, "inherit_reason", None):
+            raise ValueError("inherit-reason须与inherit-completed同时使用")
+        rounds = [item for item in all_rounds if start <= parse_time(item["started_at"]) <= end]
+    if selected_ids and not inherited:
         if len(set(selected_ids)) != len(selected_ids):
             raise ValueError("重复的复核轮次")
         rounds = [item for item in rounds if item["turn_id"] in selected_ids]
@@ -366,7 +395,7 @@ def command_review_import(args: argparse.Namespace) -> dict[str, Any]:
             raise ValueError("指定复核轮次不存在或不属于本次报告时间范围")
     if not rounds:
         raise ValueError("本次任务没有复核轮次；历史结论请沿用，不重新导入为本次工作")
-    if all_rounds[-1].get("finished_at") is None and all_rounds[-1] not in rounds:
+    if not inherited and all_rounds[-1].get("finished_at") is None and all_rounds[-1] not in rounds:
         raise ValueError("代理仍有未结束轮次，不能通过筛选隐藏")
     for index, item in enumerate(rounds):
         item["gap_before_seconds"] = (elapsed_seconds(rounds[index - 1]["finished_at"], item["started_at"])
@@ -378,13 +407,21 @@ def command_review_import(args: argparse.Namespace) -> dict[str, Any]:
                   excluded_turn_count=len(all_rounds) - len(rounds),
                   timing_scope={"started_at": report["started_at"], "through": iso(end),
                                 "turn_ids": [item["turn_id"] for item in rounds]})
+    if inheritance is not None:
+        if args.closed and inheritance["other_unfinished_turn_ids"]:
+            raise ValueError("代理另有未结束轮次，不能登记为已关闭")
+        review["completed_exploration_inheritance"] = inheritance
+        review["timing_scope"] = {"started_at": rounds[0]["started_at"],
+                                  "through": rounds[-1]["finished_at"],
+                                  "turn_ids": [item["turn_id"] for item in rounds],
+                                  "included_in_current_run_timing": False}
     if args.closed and review["unfinished_turns"]:
         raise SystemExit("审核日志仍有未结束轮次，不能登记为已关闭。")
     limitation = getattr(args, "close_unavailable", None)
     if limitation and (not limitation.strip() or review["unfinished_turns"] or review["rounds"][-1].get("outcome") != "completed"):
         raise SystemExit("缺少关闭工具的例外只适用于日志确认已完成的审核，并须说明工具限制。")
     reviews = report.setdefault("reviews", [])
-    prior = next((item for item in reviews if item["agent_id"] == review["agent_id"]), None)
+    prior = next((item for item in reviews if item["agent_id"] == review["agent_id"] and item["role"] == review["role"]), None)
     same_rounds = prior and [r["turn_id"] for r in prior.get("rounds", [])] == [r["turn_id"] for r in rounds]
     review["closed"] = bool(args.closed or (same_rounds and prior.get("closed")))
     review["close_unavailable"] = limitation or ((prior or {}).get("close_unavailable") if same_rounds else None)
@@ -446,11 +483,14 @@ def validate_stage_review(report, role, required_inputs=None):
         if not review.get("limitation", "").strip():
             raise ValueError("隔离自查缺少环境限制说明")
     else:
-        agent = review.get("prior_agent_record") or next((item for item in report.get("reviews", []) if item["agent_id"] == review.get("agent_id")), None)
+        agent = review.get("prior_agent_record") or next((item for item in report.get("reviews", []) if item["agent_id"] == review.get("agent_id") and item["role"] == role), None)
         latest = max(agent.get("rounds", []), key=lambda item: parse_time(item["started_at"]), default={}) if agent else {}
+        inherited_exploration = bool(agent and role in {"独立探索 A", "独立探索 B"}
+                                     and agent.get("completed_exploration_inheritance"))
         if (not agent or agent["role"] != role or agent["unfinished_turns"]
                 or latest.get("outcome") != "completed"
-                or parse_time(latest["started_at"]) < parse_time(review["started_at"])):
+                or (parse_time(latest["started_at"]) < parse_time(review["started_at"])
+                    and not inherited_exploration)):
             raise ValueError("缺少本轮实际完成的只读审核记录：" + role)
     return review
 
@@ -474,7 +514,7 @@ def command_review_stage(args):
                     continue
                 prior = validate_stage_review(previous, args.role, getattr(args, "input", None))
                 agent = prior.get("prior_agent_record") or next((item for item in previous.get("reviews", [])
-                    if item["agent_id"] == prior.get("agent_id")), None)
+                    if item["agent_id"] == prior.get("agent_id") and item["role"] == args.role), None)
                 report.setdefault("stage_reviews", {})[args.role] = {
                     **prior, "reused_from": str(path), "prior_agent_record": agent}
                 if report["status"] == "running" and not getattr(args, "read_only", False):
@@ -618,6 +658,13 @@ def render_markdown(report: dict[str, Any]) -> str:
                          f"{lifecycle} |")
             if review.get("close_unavailable"):
                 lines.append(f"关闭限制（{review['nickname']}）：{review['close_unavailable']}")
+            if review.get("completed_exploration_inheritance"):
+                inherited_review = review["completed_exploration_inheritance"]
+                lines.append(f"既有探索沿用（{review['nickname']}）：{inherited_review['reason']}；"
+                             "上表保留原轮次实际时间，不计本轮新增耗时。")
+                if inherited_review.get("other_unfinished_turn_ids"):
+                    lines.append("该代理另有未结束轮次，未用于本项结论：" +
+                                 ", ".join(inherited_review["other_unfinished_turn_ids"]))
     if report.get("execution_metrics"):
         metrics = report["execution_metrics"]
         lines.extend(["", "## 执行用量（指定日志范围）", "",
@@ -671,7 +718,16 @@ def render_markdown(report: dict[str, Any]) -> str:
                         lines.append(f"    - {finding['location']}：{finding['problem']}；已解决={finding['resolved']}")
             else:
                 lines.append("  未保存此前结构化轮次，不以当前结论反推整个过程零发现。")
-    if report.get("first_copy"):
+    if report.get("current_copy"):
+        current = report["current_copy"]
+        lines.extend(["", "## 当前文案", ""])
+        if current["status"] == "captured":
+            lines.extend([f"- 文件：{current['source_path']}", f"- SHA256：{current['sha256']}",
+                          f"- Skill 内容版本：{current['skill_version']}",
+                          "- 记录绑定当前文件，不代表内容审核通过。"])
+        else:
+            lines.append(current["reason"])
+    elif report.get("first_copy"):
         first = report["first_copy"]
         lines.extend(["", "## 首次完整文案", ""])
         if first["status"] == "captured":
@@ -714,15 +770,20 @@ def render_markdown(report: dict[str, Any]) -> str:
 
 def command_init(args: argparse.Namespace) -> dict[str, Any]:
     report_path, markdown_path = paths(args.process_dir)
+    previous = None
     if report_path.exists():
         previous = load(report_path)
         if previous.get("status") == "running":
             raise SystemExit("已有执行中的报告；请继续该报告，不能静默覆盖。")
-        archive = report_path.parent / "archived_runs" / previous["run_id"]
-        archive.mkdir(parents=True, exist_ok=True)
-        for existing in (report_path, markdown_path):
-            if existing.exists():
-                (archive / existing.name).write_bytes(existing.read_bytes())
+        if (str(previous.get("database", "")).lower() != args.database.lower()
+                or str(previous.get("topic_id")) != str(args.topic_id)):
+            raise SystemExit("过程目录已有其他主题的报告，不能覆盖。")
+        if getattr(args, "archive_previous", False):
+            archive = report_path.parent / "archived_runs" / previous["run_id"]
+            archive.mkdir(parents=True, exist_ok=True)
+            for existing in (report_path, markdown_path):
+                if existing.exists():
+                    (archive / existing.name).write_bytes(existing.read_bytes())
     report = {
         "schema_version": 1,
         "review_policy": REVIEW_POLICY,
@@ -744,6 +805,39 @@ def command_init(args: argparse.Namespace) -> dict[str, Any]:
     version = skill_version()
     report["skill_version_at_start"] = version["id"]
     report["skill_versions"] = {version["id"]: version["files"]}
+    if previous and not getattr(args, "archive_previous", False):
+        # Keep reusable evidence, not a nested copy of every previous run. Each
+        # consumer still verifies current input hashes before accepting a pass.
+        report["continued_from_run"] = previous["run_id"]
+        if previous.get("review_policy") == REVIEW_POLICY:
+            for role, prior in previous.get("stage_reviews", {}).items():
+                item = deepcopy(prior)
+                agent = item.get("prior_agent_record") or next((a for a in previous.get("reviews", [])
+                    if a.get("agent_id") == item.get("agent_id") and a.get("role") == role), None)
+                if agent:
+                    item["prior_agent_record"] = deepcopy(agent)
+                item.pop("reused_from", None)
+                report.setdefault("stage_reviews", {})[role] = item
+        if previous.get("exploration"):
+            report["exploration_policy"] = previous.get("exploration_policy")
+            # Resolve the old external binding before overwriting its report.
+            # Invalid evidence stays pending; it never becomes a fresh pass.
+            try:
+                from exploration_handoff import validate_branches
+                validate_branches(previous)
+            except (ValueError, KeyError, OSError) as error:
+                report["evidence_reuse_note"] = str(error)
+            else:
+                report["exploration_policy"] = previous.get("exploration_policy")
+                report["exploration"] = deepcopy(previous["exploration"])
+                report["exploration"].pop("from_report", None)
+                report["exploration"].pop("from_report_hash", None)
+                report["primary_agent_id"] = os.environ.get("CODEX_THREAD_ID", "")
+        report["issues"] = [deepcopy(item) for item in previous.get("issues", [])
+                            if item.get("status") == "open"]
+        for number, issue in enumerate(report["issues"], 1):
+            issue["previous_issue_number"] = issue["number"]
+            issue["number"] = number
     save(report_path, markdown_path, report)
     return {"ok": True, "run_id": report["run_id"]}
 
@@ -1101,6 +1195,19 @@ def command_website_finish(args: argparse.Namespace) -> dict[str, Any]:
         stage_status = "completed_with_issues"
         summary = ["原同步返回不明；已通过只读确认正文和附件保存，未取得原同步直接返回回执。"]
         duration = elapsed_seconds(stage["started_at"], finished.isoformat())
+    elif result.get("late_navigation_observed") is True:
+        if (result.get("read_only") is not True or result.get("original_operation_state") != "failed"
+                or result.get("recovered_original_result") is not False
+                or type(result.get("observed_at")) not in (int, float)
+                or not math.isfinite(result["observed_at"])):
+            raise SystemExit("延迟返回缺少同次原失败回执和实际观察时间。")
+        finished = datetime.fromtimestamp(result["observed_at"], timezone.utc)
+        if finished < parse_time(stage["started_at"]) or finished > now() + timedelta(seconds=1):
+            raise SystemExit("延迟返回的实际观察时间无效。")
+        stage_status = "completed_with_issues"
+        summary = ["原提交等待超时；同次回执已核实原标签延迟返回正确文章，标题和附件顺序一致，未重复提交。",
+                   "阶段墙钟包括超时后的其他工作和延迟观察，不等于纯浏览器处理时间；原操作耗时另见原始结果。"]
+        duration, evidence_outputs = elapsed_seconds(stage["started_at"], finished.isoformat()), []
     else:
         values = [result.get(key) for key in ("dispatch_latency_ms", "browser_elapsed_ms",
                                               "sync_elapsed_to_browser_return_ms")]
@@ -1205,6 +1312,8 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--topic-id", required=True)
     init_parser.add_argument("--topic-name", required=True)
     init_parser.add_argument("--task", required=True)
+    init_parser.add_argument("--archive-previous", action="store_true",
+                             help="仅在对照或回退确需原报告时保存旧报告；常规运行更新当前报告")
     init_parser.add_argument(
         "--workflow", choices=tuple(WORKFLOWS), default="full_definition"
     )
@@ -1273,6 +1382,8 @@ def build_parser() -> argparse.ArgumentParser:
     review_parser.add_argument("--log", required=True, type=Path)
     review_parser.add_argument("--role", required=True)
     review_parser.add_argument("--turn-id", action="append", help="Exact task turns when an agent served multiple tasks; repeat as needed.")
+    review_parser.add_argument("--inherit-completed", action="store_true", help="Explicitly inherit completed exploration turns that began before this report; preserve original times.")
+    review_parser.add_argument("--inherit-reason", help="Why the existing independent exploration applies to this unchanged scope and output.")
     review_parser.add_argument("--closed", action="store_true",
                                help="Use only after the agent close tool succeeded.")
     review_parser.add_argument("--close-unavailable", help="Actual host/tool limitation; requires a completed final review turn.")

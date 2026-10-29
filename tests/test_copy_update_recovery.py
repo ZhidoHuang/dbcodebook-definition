@@ -138,7 +138,11 @@ for stage in ('copy','generate','results','delivery'):
         assert len(list(backup.glob('attempts/*/copy-check.log')))==2
 
 with fixture(reader=True) as (args,formal,process,backup,state):
+    current_scope=update.read(backup/'definition_change_impact.json')
+    current_scope['question_groups']=[{'question_text':'current revised question'}]
+    update.write(process/'definition_change_impact.json',current_scope)
     assert update.run(args)['status']=='READER_REVIEW_REQUIRED'
+    assert update.read(process/'definition_change_impact.json')['question_groups']==current_scope['question_groups']
     assert update.read(process/'readability_audit.json')['reader_review_required']
     assert (backup/'attempts/1/reader_comprehension_review.json').exists()
     rejects(lambda:update.finish(args),'reader review')

@@ -38,10 +38,25 @@ def validate_local_evidence(record, record_path):
         raise ValueError('Local dictionary binding targets a different website')
     if database == 'klosa' and binding.get('language') != record.get('language'):
         raise ValueError('Local dictionary language differs from topic')
+    if database == 'nhis' and binding.get('dataset_id') != record.get('dataset_id'):
+        raise ValueError('Local NHIS dictionary dataset differs from topic')
     if binding.get('mapping', {}).get('kind') != 'runtime_settings_same_file':
         raise ValueError('Local dictionary needs verified runtime/settings/file mapping')
     if not re.fullmatch(r'[0-9a-f]{64}', str(binding.get('dictionary_sha256', ''))):
         raise ValueError('Local binding needs a dictionary SHA256')
+    accepted_binding_hashes = {access['binding']['sha256']}
+    prior_bindings = access.get('receipt_bindings', [])
+    if not isinstance(prior_bindings, list):
+        raise ValueError('Receipt bindings must be an explicit reference list')
+    for ref in prior_bindings:
+        prior = read_reference(ref, base)
+        if (prior.get('schema') != 'dbcodebook.local-binding.v1' or prior.get('ok') is not True
+                or prior.get('mapping', {}).get('kind') != 'runtime_settings_same_file'
+                or any(prior.get(field) != binding.get(field) for field in
+                       ('database', 'language', 'dataset_id', 'dictionary_sha256', 'dictionary'))
+                or prior.get('website_url', '').rstrip('/') != binding.get('website_url', '').rstrip('/')):
+            raise ValueError('Prior receipt binding does not match current dictionary and website')
+        accepted_binding_hashes.add(ref['sha256'])
     receipts = access.get('receipts')
     if not isinstance(receipts, list) or not receipts:
         raise ValueError('No local dictionary receipts')
@@ -51,8 +66,9 @@ def validate_local_evidence(record, record_path):
         data = read_reference(ref, base)
         if (data.get('schema') != 'dbcodebook.local-source.v1' or data.get('ok') is not True
                 or data.get('database') != database
+                or (database == 'nhis' and data.get('dataset_id') != binding.get('dataset_id'))
                 or data.get('language') != binding.get('language')
-                or data.get('binding_sha256') != access['binding']['sha256']
+                or data.get('binding_sha256') not in accepted_binding_hashes
                 or data.get('dictionary_sha256') != binding.get('dictionary_sha256')):
             raise ValueError('Local receipt is failed, mismatched or from another binding')
         request = data.get('request', {})
@@ -66,6 +82,14 @@ def validate_local_evidence(record, record_path):
                     directories.add(' > '.join(path))
             if request.get('kind') != 'detail':
                 continue
+            if database == 'nhis':
+                value = {'variable':row.get('variable'),'file':row.get('file'),
+                         'periods':{p['period'] for p in row.get('periods',[]) if p.get('available')},
+                         'source_mappings':row.get('source_mappings')}
+                previous = scoped_sources.setdefault(row.get('variable_id'), value)
+                if previous['variable'] != value['variable'] or previous['file'] != value['file'] or previous['source_mappings'] != value['source_mappings']:
+                    raise ValueError('Conflicting NHIS exact identity receipts')
+                previous['periods'].update(value['periods'])
             if database == 'mhas' and record.get('mhas_selection'):
                 raw = row.get('raw_row', {})
                 available = {p for p in binding['periods'] if raw.get(p) not in (None, '')}
@@ -121,4 +145,15 @@ def validate_local_evidence(record, record_path):
             covered = {p for a in group['raw_variables'] for p in by_alias[a]}
             if not set(group['periods']).issubset(covered):
                 raise ValueError('MHAS source-group periods differ from scoped aliases')
+    if database == 'nhis':
+        from nhis_export_contract import build_selection
+        action = build_selection(record, record['dbcodebook_url'])
+        if action['dictionary_sha256'] != binding['dictionary_sha256']:
+            raise ValueError('NHIS selection dictionary differs from source binding')
+        for item in action['selected']:
+            owner = scoped_sources.get(item['variable_id'])
+            if (not owner or owner['variable'] != item['variable'] or owner['file'] != item['file']
+                    or not set(item['periods']).issubset(owner['periods'])
+                    or owner['source_mappings'] != item['source_mappings']):
+                raise ValueError('NHIS selection is not supported by exact identity/mapping receipts')
     return {'directories': directories, 'sources': sources, 'keywords': keywords}

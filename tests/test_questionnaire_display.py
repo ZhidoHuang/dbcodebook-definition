@@ -45,6 +45,24 @@ with tempfile.TemporaryDirectory() as temp:
     rejects(lambda: validate_questionnaire_rendering(folder, folder, note.name), "complete text")
 assert record == original  # No comparator rewrites the original evidence.
 
+# Verified codebook wording uses an ordinary question block without research boilerplate.
+codebook_record = copy.deepcopy(record)
+codebook_item = codebook_record['questionnaire_evidence'][0]
+codebook_item.update(question_text_mode='plain_paraphrase', question_text_complete=False,
+                     question_text=question, paraphrase_reason='官方代码本提供字段说明，未取得逐字访谈原话。',
+                     applicable_population='本人', recall_period='本次测验')
+codebook_item['display']['presentation'] = 'question'
+assert not questionnaire_copy_errors(content, codebook_record)
+assert questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(text.replace(question, '错误题文。'))}, codebook_record)
+with tempfile.TemporaryDirectory() as temp:
+    folder = Path(temp)
+    (folder / SOURCE_RECORD_NAME).write_text(json.dumps(codebook_record, ensure_ascii=False), encoding='utf-8')
+    (folder / 'note.md').write_text(markup, encoding='utf-8')
+    assert validate_questionnaire_rendering(folder, folder, 'note.md')['rendered_question_periods'] == 2
+    (folder / 'note.md').write_text(markup.replace(question, '错误题文。'), encoding='utf-8')
+    rejects(lambda: validate_questionnaire_rendering(folder, folder, 'note.md'), 'complete text')
+assert codebook_item['question_text_complete'] is False
+
 # Evidence lists may be stored by variable rather than questionnaire order.
 # Explicit next-question display metadata must match both copy and final HTML.
 sequential = copy.deepcopy(record)

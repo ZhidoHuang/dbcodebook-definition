@@ -1,3 +1,92 @@
+definition_wrap_source_cards <- function(text) {
+  if (!any(grepl("hm-table", text, fixed=TRUE)) ||
+      !any(grepl("var-name-line", text, fixed=TRUE)) ||
+      any(grepl('data-definition-source-card-layout="wrap-v1"', text, fixed=TRUE))) return(text)
+  c(text,
+    '<style data-definition-source-card-layout="wrap-v1">',
+    '.hm-table .var-name-line{flex-wrap:wrap;align-items:flex-start;}',
+    '.hm-table .var-name{flex:0 1 auto;min-width:0;max-width:100%;overflow-wrap:anywhere;white-space:normal;}',
+    '.hm-table .varlink-block{flex:1 0 100%;width:100%;min-width:0;max-width:100%;align-items:flex-start;}',
+    '.hm-table .varlink-info{flex:1 1 auto;min-width:0;max-width:100%;overflow-wrap:anywhere;white-space:normal;}',
+    '</style>')
+}
+
+validate_hrs_period_order <- function(cycle_order) {
+  periods <- as.character(cycle_order)
+  fail <- function() stop("Invalid HRS year order.")
+  if (!length(periods) || anyNA(periods) || anyDuplicated(periods) ||
+      any(!grepl("^[0-9]{4}(-[0-9]{4}| (Spring|Summer|Fall|Winter))?$", periods))) fail()
+  start <- as.integer(substr(periods, 1L, 4L))
+  end <- start
+  interval <- grepl("^[0-9]{4}-[0-9]{4}$", periods)
+  end[interval] <- as.integer(substr(periods[interval], 6L, 9L))
+  season <- match(sub("^[0-9]{4} ", "", periods), c("Spring", "Summer", "Fall", "Winter"))
+  season[is.na(season)] <- 0L
+  if (any(start < 1900L | end > 2100L | end < start) ||
+      is.unsorted(start * 10L + season)) fail()
+  invisible(periods)
+}
+
+mhas_questionnaire_periods <- function() list(
+  MHAS_SURVEY_CORE_RESPONDENT=c("2001","2003","2012","2015","2018","2021","2024"),
+  MHAS_SURVEY_NEXT_OF_KIN=c("2003","2012","2015","2018","2021","2024"),
+  MHAS_MEXCOG_COGNITIVE_ASSESSMENT=c("2016","2021"),
+  MHAS_MEXCOG_INFORMANT_INTERVIEW=c("2016","2021"))
+
+validate_mhas_analysis_scope <- function(frames, mhas_analysis_scope = NULL, analysis_vars = NULL) {
+    if (!is.null(mhas_analysis_scope) || any(vapply(frames, function(frame) "source_module" %in% names(frame), logical(1)))) {
+      if (is.null(mhas_analysis_scope) || is.null(names(mhas_analysis_scope))) stop("MHAS scoped analysis requires mhas_analysis_scope.")
+      supported_modules <- mhas_questionnaire_periods()
+      if (any(!names(mhas_analysis_scope) %in% names(supported_modules))) stop("Unknown MHAS analysis module.")
+      for (module in names(mhas_analysis_scope)) {
+        periods <- mhas_analysis_scope[[module]]$analysis_periods
+        if (!is.character(periods) || !length(periods) || anyNA(periods) || anyDuplicated(periods) ||
+            any(!periods %in% supported_modules[[module]])) stop("Invalid MHAS module analysis periods.")
+      }
+      source_record_path <- Sys.getenv("DBCODEBOOK_DEFINITION_SOURCE_RECORD")
+      if (nzchar(source_record_path)) {
+        declared <- jsonlite::fromJSON(source_record_path, simplifyVector=FALSE)$mhas_analysis_scope
+        if (!setequal(names(declared), names(mhas_analysis_scope))) stop("MHAS renderer scope differs from source record.")
+        for (module in names(mhas_analysis_scope)) for (field in c("analysis_periods", "result_variables")) {
+          if (!identical(as.character(unlist(declared[[module]][[field]])), as.character(unlist(mhas_analysis_scope[[module]][[field]])))) stop("MHAS renderer scope differs from source record.")
+        }
+      }
+      owned <- unlist(lapply(mhas_analysis_scope, function(scope) scope$result_variables), use.names=FALSE)
+      if (anyDuplicated(owned) || (!is.null(analysis_vars) && !setequal(owned, analysis_vars))) stop("MHAS scope must own every result exactly once.")
+      for (frame in frames) {
+        if (!"source_module" %in% names(frame) || any(!frame$source_module %in% names(mhas_analysis_scope))) stop("Missing or unknown MHAS source module.")
+        for (module in names(mhas_analysis_scope)) {
+          scope <- mhas_analysis_scope[[module]]
+          if (!length(scope$analysis_periods) || !length(scope$result_variables) || !all(scope$result_variables %in% names(frame))) stop("Incomplete MHAS module scope.")
+          own <- frame$source_module == module
+          if (any(!frame$Wave_id[own] %in% scope$analysis_periods)) stop("MHAS analysis outside module applicability.")
+          for (variable in scope$result_variables) {
+            other <- frame[[variable]][!own]
+            if (any(!is.na(other) & as.character(other) != "")) stop("MHAS result populated in another source module.")
+          }
+        }
+      }
+    }
+
+}
+
+validate_nhis_render_inputs <- function(frames, cycle_order, dataset_id) {
+  supported <- switch(dataset_id,
+    nhis_pre1997=c(paste0(1963:1967,"FY"),"1968FY","1968CY",as.character(1969:1996)),
+    nhis_1997_2018=as.character(1997:2018), nhis_2019_plus=as.character(2019:2025),
+    stop("NHIS requires an explicit supported dataset_id."))
+  if (!is.character(cycle_order) || !length(cycle_order) || anyNA(cycle_order) ||
+      any(!cycle_order %in% supported) || anyDuplicated(cycle_order) ||
+      is.unsorted(match(cycle_order,supported))) stop("Invalid NHIS declared period order.")
+  for (frame in frames) {
+    keys <- c("ID","Wave_id","Survey_year")
+    if (!all(keys %in% names(frame)) || !all(vapply(frame[keys],is.character,logical(1)))) stop("NHIS requires original character identity columns.")
+    if (anyNA(frame[keys]) || any(vapply(frame[keys],function(x) any(!nzchar(trimws(x))),logical(1))) ||
+        anyDuplicated(frame$ID) || any(!frame$Wave_id %in% cycle_order) ||
+        any(frame$Survey_year != substr(frame$Wave_id,1,4))) stop("Invalid NHIS unique-person export identity.")
+  }
+}
+
 validate_nhanes_render_inputs <- function(frames, cycle_order) {
   if (!is.character(cycle_order) || !length(cycle_order) || anyNA(cycle_order) ||
       any(!grepl("^[0-9]{4}-[0-9]{4}$", cycle_order)) || anyDuplicated(cycle_order) ||
@@ -14,18 +103,35 @@ validate_nhanes_render_inputs <- function(frames, cycle_order) {
   }
 }
 
+validate_nhanesiii_render_inputs <- function(frames, cycle_order) {
+  if (!(identical(cycle_order, "1988-1994") ||
+        identical(cycle_order, c("1988-1991", "1991-1994")))) stop("NHANES III requires the confirmed whole-survey or two-phase period order.")
+  validate_nhanes_render_inputs(frames, cycle_order)
+  for (frame in frames) {
+    key <- sub("^0+", "", sub("\\.0+$", "", frame$SEQN))
+    if (any(!nzchar(key)) || anyDuplicated(key)) stop("NHANES III requires unique positive personal identifiers.")
+  }
+}
+
 validate_mhas_render_inputs <- function(frames, cycle_order) {
-  periods <- c("2001", "2003", "2012", "2015", "2018", "2021", "2024")
+  periods <- c("2001", "2003", "2012", "2015", "2016", "2018", "2021", "2024")
   if (!is.character(cycle_order) || !length(cycle_order) || anyNA(cycle_order) ||
       any(!cycle_order %in% periods) || anyDuplicated(cycle_order) ||
-      is.unsorted(match(cycle_order, periods))) stop("Invalid MHAS Core period order.")
+      is.unsorted(match(cycle_order, periods))) stop("Invalid MHAS period order.")
   for (frame in frames) {
-    keys <- c("ID", "Wave_id")
+    keys <- if ("source_module" %in% names(frame)) c("source_module", "ID", "Wave_id") else c("ID", "Wave_id")
+    if ("source_module" %in% names(frame)) {
+      supported_modules <- mhas_questionnaire_periods()
+      if (any(!frame$source_module %in% names(supported_modules))) stop("Unknown MHAS source_module.")
+      for (module in unique(frame$source_module)) {
+        if (any(!frame$Wave_id[frame$source_module == module] %in% supported_modules[[module]])) stop("Invalid MHAS source module period.")
+      }
+    }
     if (!all(keys %in% names(frame)) || !all(vapply(frame[keys], is.character, logical(1)))) {
       stop("MHAS requires character ID and Wave_id.")
     }
     if (anyNA(frame[keys]) || any(vapply(frame[keys], function(x) any(!nzchar(trimws(x))), logical(1))) ||
-        anyDuplicated(frame$ID) || anyDuplicated(frame[c("ID", "Wave_id")])) stop("Invalid MHAS person-period identity.")
+        anyDuplicated(frame[keys])) stop("Invalid MHAS person-period identity.")
     if (any(!startsWith(frame$ID, paste0(frame$Wave_id, "|")))) stop("MHAS ID period prefix differs from Wave_id.")
     if (any(!frame$Wave_id %in% cycle_order)) stop("MHAS observed period outside declared cycle_order.")
   }
@@ -66,7 +172,13 @@ validate_knhanes_render_inputs <- function(frames, cycle_order) {
     if (anyNA(respondent) || any(!nzchar(respondent)) || anyNA(year) ||
         any(!year %in% cycle_order) || anyNA(frame$ID) ||
         any(frame$ID != paste(year, respondent, sep="_"))) stop("Invalid KNHANES respondent-year identity.")
-    if (anyDuplicated(frame$ID)) stop("KNHANES renderer needs unique respondent-year rows; aggregate repeat files explicitly before rendering.")
+    keys <- frame[c("ID", "id", "year")]
+    if ("sample_source" %in% names(frame)) {
+      if (!is.character(frame$sample_source) || anyNA(frame$sample_source) ||
+          any(!frame$sample_source %in% c("Core data", "Indoor air quality special release"))) stop("Invalid KNHANES sample_source.")
+      keys$sample_source <- frame$sample_source
+    }
+    if (anyDuplicated(keys)) stop("KNHANES renderer needs unique respondent-year rows within each sample.")
   }
   invisible(TRUE)
 }
@@ -222,9 +334,11 @@ validate_definition_display_policy <- function(display_policy, analysis_vars) {
     stop("display_policy analysis_vars differs from the actual analysis_vars or order.")
   }
   if (!is.character(display_policy$topic_kind) || length(display_policy$topic_kind) != 1L ||
-      !display_policy$topic_kind %in% c("module", "standard") ||
+      !display_policy$topic_kind %in% c("module", "standard", "questionnaire_module") ||
       !is.logical(display_policy$compact_module) || length(display_policy$compact_module) != 1L ||
       is.na(display_policy$compact_module)) stop("Invalid definition display_policy.")
+  expected_compact <- identical(display_policy$topic_kind, "module") && length(analysis_vars) > 10L
+  if (!identical(display_policy$compact_module, expected_compact)) stop("display_policy compact flag differs from topic kind and result count.")
   display_policy
 }
 
@@ -495,123 +609,115 @@ definition_period_counts <- function(data) {
   )
 }
 
-definition_source_count <- function(raw_vars, raw_codebook, database) {
-  if (!length(raw_vars) || anyNA(raw_vars) || any(!nzchar(raw_vars)) ||
-      !all(c("Variable", "newname") %in% names(raw_codebook))) {
-    stop("Source count requires raw_vars and complete raw_codebook identities.")
+definition_analysis_identity_contract <- function(database, analysis_unit = "person_period", identity_keys = NULL,
+    record_path = Sys.getenv("DBCODEBOOK_DEFINITION_SOURCE_RECORD")) {
+  if (identical(analysis_unit, "person_period") && is.null(identity_keys)) {
+    contract <- list(analysis_unit = analysis_unit)
+  } else if (identical(analysis_unit, "person_period") && toupper(database) == "MHAS" &&
+      identical(identity_keys, c("source_module", "ID", "Wave_id"))) {
+    contract <- list(analysis_unit = analysis_unit, identity_keys = identity_keys)
+  } else if (identical(analysis_unit, "household_period") && toupper(database) == "CHARLS" &&
+      identical(identity_keys, c("householdid", "year"))) {
+    contract <- list(analysis_unit = analysis_unit, identity_keys = identity_keys)
+  } else stop("Invalid explicit renderer analysis_unit/identity_keys contract.")
+  if (!nzchar(record_path)) return(contract)
+  if (!file.exists(record_path)) stop("Definition source record does not exist: ", record_path)
+  record <- jsonlite::fromJSON(record_path, simplifyVector = FALSE)
+  unit <- record$analysis_unit
+  if (is.null(unit)) unit <- "person_period"
+  keys <- if (is.null(record$identity_keys)) NULL else unlist(record$identity_keys, use.names = FALSE)
+  if (!identical(unit, analysis_unit) || !identical(keys, identity_keys) ||
+      (identical(unit, "household_period") && !identical(toupper(record$database), "CHARLS"))) {
+    stop("Renderer identity declaration differs from the bound source record.")
   }
-  identities <- vapply(unique(raw_vars), function(alias) {
-    rows <- which(!is.na(raw_codebook$newname) & raw_codebook$newname == alias)
-    values <- unique(trimws(as.character(raw_codebook$Variable[rows])))
-    if (!length(values) || anyNA(values) || any(!nzchar(values)) || length(values) != 1L) {
-      stop("Source identity missing or ambiguous for: ", alias)
-    }
-    values
-  }, character(1))
-  length(unique(paste(toupper(database), identities, sep = "::")))
+  contract
 }
 
-definition_source_paths <- function(paths) {
-  if (!is.character(paths) || !length(paths) || anyNA(paths) || any(!nzchar(trimws(paths)))) {
-    stop("summary_source path must contain verified nonempty directory paths.")
-  }
-  if (any(grepl("[\r\n]", paths))) {
-    stop("summary_source path must contain only the directory; put explanatory text in note.")
-  }
-  segments <- lapply(paths, function(path) trimws(strsplit(path, ">", fixed = TRUE)[[1]]))
-  if (any(vapply(segments, function(parts) !length(parts) || any(!nzchar(parts)), logical(1))) ||
-      any(grepl(">\\s*$", paths))) stop("summary_source path has an empty directory level.")
-  unique(vapply(segments, paste, character(1), collapse = " > "))
-}
-
-definition_source_tree <- function(paths) {
-  paths <- definition_source_paths(paths)
-  segments <- strsplit(paths, " > ", fixed = TRUE)
-  # A shared directory is an identical prefix, not a name found under another parent.
-  if (!anyDuplicated(vapply(segments, `[[`, character(1), 1L))) return(NULL)
-  build <- function(items, prefix = character()) {
-    heads <- vapply(items, `[[`, character(1), 1L)
-    lapply(unique(heads), function(label) {
-      members <- items[heads == label]
-      full_path <- c(prefix, label)
-      tails <- lapply(members[lengths(members) > 1L], function(parts) parts[-1L])
-      list(label = label, path = paste(full_path, collapse = " > "),
-           source_entry = any(lengths(members) == 1L),
-           children = if (length(tails)) build(tails, full_path) else list())
-    })
-  }
-  build(segments)
-}
-
-definition_source_entry <- function(value, database = "CHARLS", source_count = NULL, questionnaire_shown = TRUE) {
-  if (is.null(value)) return(NULL)
-  if (is.character(value)) value <- list(path = value)
-  if (is.list(value) && !is.null(value$path)) {
-    paths <- definition_source_paths(value$path)
-    tree <- definition_source_tree(paths)
-    note <- if (is.null(value$note)) "" else value$note
-    if (!is.character(note) || length(note) != 1L || is.na(note)) stop("summary_source note must be one string.")
-    for (count in list(value$variable_count, source_count)) {
-      if (!is.null(count) && (!is.numeric(count) || length(count) != 1L ||
-          is.na(count) || !is.finite(count) || count < 1 || count != floor(count))) {
-        stop("summary_source variable_count must be a verified positive integer.")
-      }
-    }
-    if (!is.null(source_count) && !is.null(value$variable_count) && source_count != value$variable_count) {
-      stop("summary_source variable_count differs from the actual source identities.")
-    }
-    count <- if (is.null(source_count)) value$variable_count else source_count
-    subject <- if (questionnaire_shown) "以上问卷问题" else "本主题"
-    note <- sub("^[；;]", "", trimws(note))
-    if (!is.null(tree)) {
-      intro <- if (is.null(count)) paste0(subject, "对应的原始变量") else
-        paste0(subject, "在数据中对应 ", count, " 个原始变量")
-      lines <- list(list(parts = list(paste0(intro, "，可从 dbCodeBook 的以下目录进入检索和查看："))),
-                    list(type = "source_directory_tree", nodes = tree,
-                         database = database, language = value$language))
-      if (nzchar(note)) lines <- c(lines, list(list(parts = list(note))))
-      return(list(class = "raw-source-link", lines = lines))
-    }
-    prefix <- if (is.null(count)) {
-      list(paste0(subject, "对应的原始变量，可从 dbCodeBook 的目录 "))
-    } else {
-      c(list(paste0(subject, "在数据中对应 ", count, " 个")),
-        list(if (length(paths) == 1L) "原始变量，可从 dbCodeBook 的目录 " else "原始变量，可分别从 dbCodeBook 的目录 "))
-    }
-    links <- list()
-    for (path in paths) {
-      if (length(links)) links <- c(links, list("、"))
-      links <- c(links, list(list(type = "source_link", value = path, database = database,
-                                 language = value$language)))
-    }
-    return(list(class = "raw-source-link", lines = list(list(parts = c(prefix, links,
-      list(" 进入检索和查看。", note))))))
-  }
-  if (!is.list(value) || is.null(value$lines)) stop("summary_source requires nonempty text or a source entry with lines.")
-  if (!is.null(source_count)) {
-    value$lines <- c(list(list(parts = list("本主题共使用 ",
-      paste0(source_count, " 个"), "原始变量。"))), value$lines)
-  }
-  value$class <- "raw-source-link"
-  value
-}
-
-validate_person_period_outputs <- function(frames, database) {
+validate_person_period_outputs <- function(frames, database, contract = list(analysis_unit = "person_period")) {
+  household <- identical(contract$analysis_unit, "household_period")
   keys <- switch(toupper(database), CHARLS=c("id", "year"), ELSA=c("idauniq", "Wave"),
     HRS=c("HHID", "PN", "year"), SHARE=c("mergeid", "Wave_id"),
-    KLOSA=c("Harmonized_id", "Wave_id"), CHNS=c("IDind", "WAVE"), KNHANES=c("id", "year"), MHAS=c("ID", "Wave_id"), NHANES=c("SEQN", "YEAR"))
+    KLOSA=c("Harmonized_id", "Wave_id"), CHNS=c("IDind", "WAVE"), KNHANES=c("id", "year"), MHAS=c("ID", "Wave_id"), NHANES=c("SEQN", "YEAR"), NHANESIII=c("SEQN", "YEAR"), NHIS=c("ID","Wave_id"))
+  if (!is.null(contract$identity_keys)) keys <- contract$identity_keys
+  original_keys <- NULL
   for (frame in frames) {
-    if (!all(keys %in% names(frame))) stop("Final data requires person-period long rows: ", paste(keys, collapse=", "))
-    identity <- frame[keys]
+    key_names <- if (toupper(database) == "KNHANES" && "sample_source" %in% names(frame)) c("sample_source", keys) else keys
+    if (!all(key_names %in% names(frame))) stop(if (household) "Final data requires household-year rows: " else "Final data requires person-period long rows: ", paste(key_names, collapse=", "))
+    if (toupper(database) == "MHAS" && "source_module" %in% names(frame) && !"source_module" %in% keys) key_names <- c("source_module", keys)
+    identity <- frame[key_names]
     if (anyNA(identity) || any(vapply(identity, function(x) any(!nzchar(trimws(as.character(x)))), logical(1)))) {
-      stop("Final person-period keys must not be missing.")
+      stop(if (household) "Final household-year keys must not be missing." else "Final person-period keys must not be missing.")
     }
-    period <- sub("^Wave +", "", as.character(identity[[length(keys)]]))
-    identity[[length(keys)]] <- sub("\\.0+$", "", period)
+    if (household) {
+      if (!all(vapply(identity, is.character, logical(1)))) stop("Household keys must remain character strings.")
+      if (anyDuplicated(identity)) stop("Final data must contain one row per household per year.")
+      if (is.null(original_keys)) original_keys <- identity
+      else if (!identical(lapply(identity, unname), lapply(original_keys, unname))) stop("Household outputs must preserve all source keys and row order.")
+      next
+    }
+    period <- sub("^Wave +", "", as.character(identity[[length(key_names)]]))
+    identity[[length(key_names)]] <- sub("\\.0+$", "", period)
     if (anyDuplicated(identity)) stop("Final data must contain one row per person per period.")
   }
 }
 
+
+definition_display_periods <- function(database, adopted_periods, language = NULL, dataset_id = NULL) {
+  root <- Sys.getenv("DBCODEBOOK_DEFINITION_SKILL_ROOT")
+  if (!nzchar(root)) {
+    home <- Sys.getenv("CODEX_HOME")
+    if (!nzchar(home)) home <- file.path(Sys.getenv("USERPROFILE", path.expand("~")), ".codex")
+    root <- file.path(home, "skills", "dbcodebook-definition")
+  }
+  catalog <- jsonlite::fromJSON(file.path(root, "references", "display-periods.json"))
+  periods <- catalog[[toupper(database)]]
+  if (toupper(database) == "NHIS") {
+    periods <- periods[[dataset_id]]
+    if (is.null(periods)) stop("NHIS display requires dataset_id.")
+    return(unique(c(periods,as.character(adopted_periods))))
+  }
+  if (toupper(database) == "KLOSA" && identical(language, "en")) periods <- periods[seq_len(9L)]
+  periods <- unique(c(periods, as.character(adopted_periods)))
+  if (all(grepl("^Wave ", periods))) periods[order(as.integer(sub("^Wave ", "", periods)))] else periods[order(periods)]
+}
+
+# One display mapping: names are calculated components/results; values are final group labels.
+definition_component_categories <- function(wide_data, analysis_vars, component_groups) {
+  variables <- as.character(wide_data$Variable)
+  if (is.null(names(component_groups)) || anyDuplicated(names(component_groups)) ||
+      !setequal(variables, names(component_groups))) {
+    stop("component_groups must name every displayed component/result exactly once")
+  }
+  assigned <- as.character(component_groups[variables])
+  if (anyNA(assigned) || any(!nzchar(trimws(assigned))) || any(grepl("(^|·)(组分|定义)$", assigned))) {
+    stop("Use an English module/category name for results and append ·Components for calculated components")
+  }
+  if (any(!variables %in% analysis_vars & !grepl(".+·Components$", assigned))) {
+    stop("非最终输出的计算成分须归入组分，不能标成定义")
+  }
+  groups <- if (is.factor(component_groups)) levels(component_groups) else unique(assigned)
+  groups <- groups[groups %in% assigned]
+  wide_data$category <- factor(assigned, levels = groups)
+  wide_data <- wide_data[order(wide_data$category, seq_along(variables)), , drop = FALSE]
+  if (!identical(as.character(wide_data$Variable[wide_data$Variable %in% analysis_vars]), analysis_vars)) {
+    stop("分组顺序与 analysis_vars 不一致；按已确认顺序组织分组映射。")
+  }
+  list(data = wide_data, groups = groups)
+}
+
+definition_component_titles <- function(text, groups) {
+  esc <- function(x) as.character(htmltools::htmlEscape(x, attribute = TRUE))
+  for (group in groups) {
+    role <- if (grepl(".+·Components$", group)) "component" else "defined"
+    attributes <- paste0(' data-component-group="', esc(group),
+      '" data-variable-role="', role, '"')
+    text <- gsub(paste0('>', esc(group), '</a>'),
+      paste0(attributes, '>', esc(group), '</a>'), text, fixed = TRUE)
+    text <- gsub(paste0('<summary>', esc(group), '</summary>'),
+      paste0('<summary', attributes, '>', esc(group), '</summary>'), text, fixed = TRUE)
+  }
+  text
+}
 
 render_definition_bundle <- function(
     data,
@@ -629,7 +735,7 @@ render_definition_bundle <- function(
     summary_entry,
     summary_selection,
     summary_insight_items,
-    summary_source = NULL,
+    summary_source = NULL, # Retired: accepted for existing scripts, never rendered.
     file_stem,
     note_name,
     qa_title,
@@ -648,10 +754,32 @@ render_definition_bundle <- function(
     criteria_intro = "",
     language = NULL,
     definition_basis = "",
-    display_policy = NULL) {
+    display_policy = NULL,
+    medicine_codebook = NULL,
+    component_groups = NULL,
+    dataset_id = NULL,
+    nhis_source_ids = NULL,
+    analysis_unit = "person_period",
+    identity_keys = NULL,
+    mhas_analysis_scope = NULL,
+    component_card_labels = NULL) {
   display_policy <- validate_definition_display_policy(display_policy, analysis_vars)
   compact_module <- !is.null(display_policy) && isTRUE(display_policy$compact_module)
   database <- toupper(database)
+  if (!is.null(medicine_codebook)) {
+    extract_codebook <- raw_codebook
+    required <- c("Variable", "newname", "Label", "input_name", "definition_path", "selected_values")
+    if (database != "NHANES" || !all(required %in% names(medicine_codebook)) ||
+        !nrow(medicine_codebook) || anyNA(medicine_codebook[required]) ||
+        anyDuplicated(medicine_codebook$newname) ||
+        any(medicine_codebook$newname %in% c(raw_vars, analysis_vars)) ||
+        !all(medicine_codebook$newname %in% names(db_data)) ||
+        !all(medicine_codebook$definition_path %in% c("multum", "icd", "drugnames"))) {
+      stop("Invalid separate NHANES medicine source dictionary.")
+    }
+    raw_codebook <- dplyr::bind_rows(raw_codebook, medicine_codebook)
+    raw_vars <- c(raw_vars, medicine_codebook$newname)
+  }
   if (!is.character(theme_color) || length(theme_color) != 1L ||
       is.na(theme_color) || !nzchar(trimws(theme_color))) {
     theme_color <- "#A33842"
@@ -660,10 +788,23 @@ render_definition_bundle <- function(
     grDevices::col2rgb(theme_color)
     theme_color
   }, error = function(e) "#A33842")
-  if (!database %in% c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "KLOSA", "CHNS", "MHAS", "NHANES")) stop("Unsupported definition database: ", database)
-  if (database == "NHANES") {
+  if (!database %in% c("CHARLS", "ELSA", "HRS", "SHARE", "KNHANES", "KLOSA", "CHNS", "MHAS", "NHANES", "NHANESIII", "NHIS")) stop("Unsupported definition database: ", database)
+  if (database == "NHIS") {
+    if (missing(cycle_order)) stop("NHIS requires explicit cycle_order.")
+    validate_nhis_render_inputs(list(data,db_data,analysis_data),cycle_order,dataset_id)
+    data$year <- data$Wave_id; db_data$year <- db_data$Wave_id; analysis_data$year <- analysis_data$Wave_id
+    analysis_data$Survey_period <- analysis_data$Wave_id
+    if (!is.character(nhis_source_ids) || is.null(names(nhis_source_ids)) ||
+        anyDuplicated(names(nhis_source_ids)) || anyDuplicated(nhis_source_ids) ||
+        !setequal(names(nhis_source_ids),as.character(raw_codebook$newname)) ||
+        anyNA(nhis_source_ids) || any(!grepl("^NHIS_[A-Za-z0-9_]+$",nhis_source_ids))) {
+      stop("NHIS requires exact source IDs named by each downloaded alias.")
+    }
+  }
+  if (database %in% c("NHANES", "NHANESIII")) {
     if (missing(cycle_order)) stop("NHANES requires explicit cycle_order.")
-    validate_nhanes_render_inputs(list(data, db_data, analysis_data), cycle_order)
+    if (database == "NHANESIII") validate_nhanesiii_render_inputs(list(data, db_data, analysis_data), cycle_order)
+    else validate_nhanes_render_inputs(list(data, db_data, analysis_data), cycle_order)
     data$year <- data$YEAR
     db_data$year <- db_data$YEAR
     analysis_data$year <- analysis_data$YEAR
@@ -671,6 +812,7 @@ render_definition_bundle <- function(
   if (database == "MHAS") {
     if (missing(cycle_order)) stop("MHAS requires explicit evidence-based cycle_order.")
     validate_mhas_render_inputs(list(data, db_data, analysis_data), cycle_order)
+    validate_mhas_analysis_scope(list(db_data, analysis_data), mhas_analysis_scope, analysis_vars)
     # Project periods only in rendering copies. Retain all original identifiers.
     data$year <- data$Wave_id
     db_data$year <- db_data$Wave_id
@@ -688,7 +830,8 @@ render_definition_bundle <- function(
     if (missing(cycle_order)) stop("KNHANES requires explicit, evidence-based cycle_order.")
     validate_knhanes_render_inputs(list(data, db_data, analysis_data), cycle_order)
   }
-  period_col <- if (database == "NHANES") "YEAR" else if (database %in% c("ELSA", "KLOSA")) "Wave" else if (database %in% c("SHARE", "MHAS")) "Wave_id" else "year"
+  period_col <- if (database %in% c("NHANES", "NHANESIII")) "YEAR" else if (database %in% c("ELSA", "KLOSA")) "Wave" else if (database %in% c("SHARE", "MHAS")) "Wave_id" else "year"
+  if (database == "NHIS") period_col <- "Survey_period"
   if (database == "KLOSA") {
     if (is.null(language) || length(language) != 1L || !language %in% c("en", "ko")) stop("KLoSA requires language=en or ko.")
     if (missing(cycle_order) || !length(cycle_order) || anyNA(cycle_order)) stop("KLoSA requires explicit nonempty cycle_order.")
@@ -729,10 +872,10 @@ render_definition_bundle <- function(
   }
   if (database == "SHARE") {
     if (missing(cycle_order)) stop("SHARE requires explicit, evidence-based cycle_order.")
-    wave_numbers <- suppressWarnings(as.integer(sub("^Wave ", "", cycle_order)))
-    if (anyNA(wave_numbers) || any(!wave_numbers %in% 1:9) ||
-        !identical(as.character(cycle_order), paste("Wave", wave_numbers)) ||
-        anyDuplicated(wave_numbers) || is.unsorted(wave_numbers)) stop("Invalid SHARE ordinary Wave order.")
+    supported_periods <- c(paste("Wave", 1:9), "Corona Survey 1", "Corona Survey 2")
+    period_indexes <- match(as.character(cycle_order), supported_periods)
+    if (!length(period_indexes) || anyNA(period_indexes) ||
+        anyDuplicated(period_indexes) || is.unsorted(period_indexes)) stop("Invalid SHARE declared period order.")
     for (frame in list(data, db_data, analysis_data)) {
       keys <- c("ID", "Wave_id", "mergeid")
       if (!all(keys %in% names(frame))) stop("SHARE requires ID, Wave_id and mergeid.")
@@ -747,23 +890,15 @@ render_definition_bundle <- function(
   }
   if (database == "HRS") {
     if (missing(cycle_order)) stop("HRS requires explicit, evidence-based cycle_order.")
-    hrs_years <- suppressWarnings(as.integer(cycle_order))
-    if (anyNA(hrs_years) || any(hrs_years < 1900L) || any(hrs_years > 2100L) ||
-        !identical(as.character(cycle_order), as.character(hrs_years)) ||
-        anyDuplicated(hrs_years) || is.unsorted(hrs_years)) stop("Invalid HRS year order.")
+    validate_hrs_period_order(cycle_order)
     for (frame in list(data, db_data, analysis_data)) {
       if (!all(c("HHID", "PN", "year") %in% names(frame))) stop("HRS requires HHID, PN and year.")
       if (any(!is.na(frame$year) & !as.character(frame$year) %in% cycle_order)) stop("Observed year outside declared cycle_order.")
     }
   }
-  if (database == "KLOSA" && !is.null(summary_source) &&
-      (!is.list(summary_source) || !identical(summary_source$language, language))) stop("KLoSA source link language must match renderer language.")
-  summary_source <- definition_source_entry(summary_source, database,
-    questionnaire_shown = !missing(summary_selection) && nzchar(paste(render_summary_selection_paragraph(summary_selection, theme_color), collapse = "")),
-    source_count = if (is.null(summary_source)) NULL else definition_source_count(raw_vars, raw_codebook, database))
-  # Validate source structure before any output files are written.
-  if (!is.null(summary_source)) render_summary_selection_paragraph(summary_source, theme_color)
   definition_copy_check(source = list(
+    result_display_names = if (missing(analysis_codebook)) NULL else
+      as.list(setNames(as.character(analysis_codebook$Label), analysis_codebook$Variable)),
     summary = render_summary_entry_paragraph(summary_entry, theme_color),
     criteria = if (compact_module) structure(list(), names = character()) else as.list(criteria[analysis_vars]),
     criteria_intro = paste(render_criteria_intro(criteria_intro), collapse = ""),
@@ -772,7 +907,10 @@ render_definition_bundle <- function(
     references = paste(reference_lines[!grepl("^## 参考资料说明$", reference_lines)], collapse = "\n"),
     questionnaire = if (missing(summary_selection)) "" else render_summary_selection_paragraph(summary_selection, theme_color)
   ), analysis_vars = analysis_vars)
-  validate_person_period_outputs(list(db_data, analysis_data), database)
+  if (is.null(medicine_codebook)) extract_codebook <- raw_codebook
+  identity_contract <- definition_analysis_identity_contract(database, analysis_unit, identity_keys)
+  identity_frames <- if (identical(identity_contract$analysis_unit, "household_period")) list(data, db_data, analysis_data) else list(db_data, analysis_data)
+  validate_person_period_outputs(identity_frames, database, identity_contract)
   for (pkg in c("dplyr", "tidyr", "dbCodeBookr")) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
       stop("Required package is not installed: ", pkg)
@@ -792,12 +930,17 @@ render_definition_bundle <- function(
   if (!compact_module) {
     stopifnot(all(analysis_vars %in% names(criteria)))
     stopifnot(all(nzchar(criteria[analysis_vars])))
-    validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars)),
+    validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars,
+      trimws(sub("[[:space:]]*\\(.*$", "", as.character(raw_codebook$Variable))))),
                              lapply(analysis_data[analysis_vars], unique))
   }
   formatted_card_sources <- format_definition_card_sources(
     analysis_codebook, raw_codebook, codebook,
-    default_sources = if (database == "NHANES") intersect(c("SEQN", "YEAR"), names(db_data)) else character())
+    default_sources = if (database == "CHARLS") {
+      intersect("respondent_id", setdiff(names(db_data), analysis_vars))
+    } else if (database %in% c("NHANES", "NHANESIII")) {
+      intersect(c("SEQN", "YEAR", "_survey_period", "_period"), names(db_data))
+    } else character())
 
   format_n <- function(x) {
     format(x, big.mark = ",", scientific = FALSE)
@@ -812,7 +955,8 @@ render_definition_bundle <- function(
     summary_reviewed,
     period_col = period_col,
     expected_periods = cycle_order,
-    object_overrides = summary_object_overrides
+    object_overrides = summary_object_overrides,
+    period_mode = if (identical(database, "HRS")) "hrs_original" else NULL
   )
   coverage <- analysis_data %>%
     select(year, all_of(analysis_vars)) %>%
@@ -857,9 +1001,20 @@ render_definition_bundle <- function(
     useBytes = TRUE
   )
 
-  # Filter only the display copy, before chart/detail generation. Source data and
-  # workbook objects remain intact; compact modules show defined variables only.
-  detail_data <- if (compact_module) db_data[c("year", analysis_vars)] else db_data
+  # Source columns remain in downloads/workbooks, never in overview/detail charts.
+  # summary_groups belongs to summary facts; it is not a second display-group input.
+  if (is.null(component_groups)) stop("Provide component_groups with explicit module/category names")
+  display_vars <- names(component_groups)
+  if (is.null(display_vars) || anyDuplicated(display_vars) || !all(analysis_vars %in% display_vars)) {
+    stop("component_groups must include every final result exactly once")
+  }
+  if (length(intersect(setdiff(raw_vars, analysis_vars), display_vars))) {
+    stop("原始变量不得进入组分概览或详情；component_groups 只列计算成分和最终定义变量")
+  }
+  if (!all(display_vars %in% names(db_data)) || !all(display_vars %in% codebook$Variable)) {
+    stop("展示成分必须在计算数据和字典中存在，不能按来源名称推测")
+  }
+  detail_data <- db_data[unique(c("year", display_vars))]
   if (!is.null(raw_source_years)) {
     for (var_name in intersect(names(raw_source_years), names(detail_data))) {
       active <- as.character(detail_data$year) %in%
@@ -897,6 +1052,12 @@ render_definition_bundle <- function(
   )
   codebook$detail <- unname(details[codebook$Variable])
   codebook$easylabel <- codebook$Label
+  if (!is.null(component_card_labels)) {
+    if (is.null(names(component_card_labels)) || anyDuplicated(names(component_card_labels)) ||
+        !setequal(names(component_card_labels), analysis_vars) ||
+        anyNA(component_card_labels) || any(!nzchar(trimws(component_card_labels)))) stop("invalid component card labels")
+    codebook$easylabel[match(analysis_vars, codebook$Variable)] <- unname(component_card_labels[analysis_vars])
+  }
 
   identity_columns <- intersect(
     c("ID", "id", "idauniq", "HHID", "PN", "HHIDPN", "RAHHIDPN", "Wave", "householdid", "communityid"),
@@ -907,14 +1068,16 @@ render_definition_bundle <- function(
       c("Wave_id", "mergeid", "hhid", "country", "intid", "intidwX", "Record_id",
         grep("^intid[ .(]", names(detail_data), value = TRUE)), names(detail_data)))
   }
-  if (database == "NHANES") identity_columns <- union(identity_columns, intersect(c("SEQN", "YEAR"), names(detail_data)))
+  if (database %in% c("NHANES", "NHANESIII")) identity_columns <- union(identity_columns, intersect(c("SEQN", "YEAR", "_survey_period", "_period"), names(detail_data)))
+  if (database == "KNHANES") identity_columns <- union(identity_columns, intersect("sample_source", names(detail_data)))
   if (database == "MHAS") identity_columns <- union(identity_columns, intersect(
-    c("Wave_id", "UNHHIDNP", "CUNICAH", "NP", "cunicah", "np", "unhhid", "ps3", "acthog",
+    c("source_module", "Wave_id", "UNHHIDNP", "CUNICAH", "NP", "cunicah", "np", "unhhid", "ps3", "acthog",
       "ent2", "codent01", "codent03", "source_file", "source_row"), names(detail_data)))
   if (database == "KLOSA") identity_columns <- union(identity_columns, intersect(c("Harmonized_id", "Wave_id", "pid"), names(detail_data)))
   if (database == "CHNS") identity_columns <- union(identity_columns, intersect(
     c("IDind", "WAVE", "hhid", "COMMID", "Household_ID", "Community_ID",
       grep("^(IDind|WAVE|hhid|COMMID|Household_ID|Community_ID)[ .(]", names(detail_data), value = TRUE)), names(detail_data)))
+  if (database == "NHIS") identity_columns <- union(identity_columns, intersect(c("Wave_id","Survey_year","Survey_period","Record_id","Baseline_year","Imputation_number"),names(detail_data)))
   z <- detail_data[, setdiff(names(detail_data), identity_columns), drop = FALSE]
   count_data <- definition_period_counts(z)
   wide_data <- pivot_wider(
@@ -924,24 +1087,16 @@ render_definition_bundle <- function(
     values_fill = NA,
     names_sort = FALSE
   )
-  period_columns <- intersect(as.character(cycle_order), names(wide_data))
+  display_cycles <- definition_display_periods(database, cycle_order, language, dataset_id)
+  for (period in setdiff(display_cycles, names(wide_data))) wide_data[[period]] <- NA_integer_
+  period_columns <- display_cycles
   wide_data <- wide_data[c(setdiff(names(wide_data), period_columns), period_columns)]
   wide_data <- wide_data[
     order(factor(wide_data$Variable, levels = names(db_data))),
   ]
-  wide_data$category <- ifelse(
-    wide_data$Variable %in% analysis_vars,
-    "Defined variables",
-    "Source variables"
-  )
-  wide_data$category <- factor(
-    wide_data$category,
-    levels = c("Source variables", "Defined variables")
-  )
-  wide_data$category <- droplevels(wide_data$category)
-  wide_data <- wide_data[
-    order(wide_data$category, match(wide_data$Variable, names(db_data))),
-  ]
+  wide_data <- wide_data[match(display_vars, wide_data$Variable), , drop = FALSE]
+  component_categories <- definition_component_categories(wide_data, analysis_vars, component_groups)
+  wide_data <- component_categories$data
 
   heat_df <- left_join(
     wide_data,
@@ -978,7 +1133,7 @@ render_definition_bundle <- function(
       show_distribution_nav = TRUE,
       show_cycle_heatmap = TRUE,
       cycle_col = "year",
-      cycle_order = cycle_order,
+      cycle_order = display_cycles,
       heatmap_color = theme_color
     )
     definition_details <- vapply(
@@ -994,7 +1149,7 @@ render_definition_bundle <- function(
         fixed = TRUE
       )
     }
-    names(definition_details) <- names(db_data)
+    names(definition_details) <- names(detail_data)
     definition_data$detail <- unname(
       definition_details[definition_data$Variable]
     )
@@ -1014,9 +1169,14 @@ render_definition_bundle <- function(
     text <- readLines(path, encoding = "UTF-8", warn = FALSE)
     text <- gsub("mapping", "varlink", text, fixed = TRUE)
     text <- gsub("&emsp;&emsp;", "", text, fixed = TRUE)
+    text <- definition_wrap_source_cards(text)
     writeLines(text, path, useBytes = TRUE)
   }
   clean_html(paste0(database, "_", file_stem, "_detail.html"))
+  detail_path <- paste0(database, "_", file_stem, "_detail.html")
+  detail_text <- paste(readLines(detail_path, encoding = "UTF-8", warn = FALSE), collapse = "\n")
+  detail_text <- definition_component_titles(detail_text, component_categories$groups)
+  writeLines(detail_text, detail_path, useBytes = TRUE)
   if (compact_module) {
     detail_path <- paste0(database, "_", file_stem, "_detail.html")
     detail_text <- readLines(detail_path, encoding = "UTF-8", warn = FALSE)
@@ -1038,7 +1198,8 @@ render_definition_bundle <- function(
     writeLines(definition_text, definition_path, useBytes = TRUE)
   }
 
-  extract_vars <- paste0(raw_codebook$Variable, "=", raw_codebook$newname)
+  extract_vars <- paste0(extract_codebook$Variable, "=", extract_codebook$newname)
+  if (database == "NHIS") extract_vars <- paste0(extract_codebook$Variable," [",nhis_source_ids[extract_codebook$newname],"]=",extract_codebook$newname)
   extract_box <- c(
     '<div class="custom-textbox">',
     '<div class="textbox-content">',
@@ -1046,10 +1207,23 @@ render_definition_bundle <- function(
     "</div>",
     paste0(
       '<button class="textbox-button" ',
+      if (database == "NHIS") paste0('data-dataset-id="',dataset_id,'" ') else '',
       'onclick="goToExtractVariables(this)">Go to 提取变量</button>'
     ),
     "</div>"
   )
+  if (!is.null(medicine_codebook)) {
+    requests <- unique(medicine_codebook[c("input_name", "definition_path", "selected_values")])
+    rows <- vapply(seq_len(nrow(requests)), function(i) {
+      item <- requests[i, ]
+      paste0('<tr data-drug-content="', criteria_escape_code(item$selected_values),
+        '" data-drug-table-type="', item$definition_path, '"><td>药物分类</td><td>',
+        criteria_escape_code(item$input_name), '</td><td>', criteria_escape_code(item$selected_values),
+        '</td><td>', criteria_escape_code(item$definition_path),
+        '</td><td><button class="drug-extract-btn" onclick="goToExtractMedicine(this)">Go to 提取药物</button></td></tr>')
+    }, character(1))
+    extract_box <- c(extract_box, '<table class="drug-extract-table"><thead><tr><th>说明</th><th>命名</th><th>输入内容</th><th>定义方式</th><th>提取</th></tr></thead><tbody>', rows, '</tbody></table>')
+  }
 
   script_lines <- readLines(
     script_file,
@@ -1079,7 +1253,6 @@ render_definition_bundle <- function(
     theme_color = theme_color,
     insight_items = summary_insight_items,
     insight_variant = "compact",
-    summary_source = summary_source,
     definition_basis = definition_basis
   )
   note_lines <- compose_definition_note_lines(
@@ -1095,3 +1268,4 @@ render_definition_bundle <- function(
   writeLines(note_lines, note_name, useBytes = TRUE)
   definition_copy_check(note = note_name, analysis_vars = analysis_vars)
 }
+

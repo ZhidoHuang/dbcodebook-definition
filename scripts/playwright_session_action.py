@@ -12,8 +12,18 @@ import re
 import time
 import uuid
 import zipfile
+import tempfile
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from skill_config import load_config, playwright_command, database_url
+
+
+@contextmanager
+def temporary_browser_script(code):
+    with tempfile.TemporaryDirectory(prefix='dbcodebook-browser-') as folder:
+        path = Path(folder) / 'action.js'
+        path.write_text(code, encoding='utf-8')
+        yield path
 
 
 ADAPTER = r'''
@@ -85,7 +95,8 @@ def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None, retain_receipt=
       let selected;
       const bindingWarnings = [];
       const targetKey = Symbol.for('dbCodeBook.targetId');
-      for (const candidate of defaultPage.context().pages()) {
+      const candidates = [defaultPage, ...defaultPage.context().pages().filter(p => p !== defaultPage)];
+      for (const candidate of candidates) {
         if (candidate.isClosed()) continue;
         if (!candidate[targetKey]) {
           const cdp = await defaultPage.context().newCDPSession(candidate);
@@ -241,10 +252,10 @@ class Session:
                 'receipt_id':receipt_id, 'tab_id':self.tab_id, 'scope':self.receipt_scope,
                 'recorded_at':time.time(), 'phase_timeout_seconds':self.operation_timeout,
             }, ensure_ascii=False, indent=2), encoding='utf-8')
-        self.code_path.write_text(bind_code(code, self.tab_id, receipt_id,
-                                           int((time.time() + 40) * 1000),
-                                           self.retain_receipts, self.receipt_scope), encoding="utf-8")
-        output = self.call("--raw", "run-code", "--filename", str(self.code_path.resolve()))
+        with temporary_browser_script(bind_code(code, self.tab_id, receipt_id,
+                                               int((time.time() + 40) * 1000),
+                                               self.retain_receipts, self.receipt_scope)) as path:
+            output = self.call("--raw", "run-code", "--filename", str(path))
         # The CLI returns early when its selected tab opens a dialog, even if
         # our bound handler dismisses it. Retrieve that same operation only;
         # never replay the click/upload/submit to obtain a result.
@@ -255,8 +266,8 @@ class Session:
               if (!receipt || receipt.id !== %s) throw new Error('Bound action receipt unavailable; do not replay');
               return await receipt.operation;
             }''' % (json.dumps(receipt_id), json.dumps(receipt_id))
-            self.code_path.write_text(bind_code(recovery, self.tab_id), encoding="utf-8")
-            output = self.call("--raw", "run-code", "--filename", str(self.code_path.resolve()))
+            with temporary_browser_script(bind_code(recovery, self.tab_id)) as path:
+                output = self.call("--raw", "run-code", "--filename", str(path))
         try:
             return json.loads(output)
         except json.JSONDecodeError as exc:
@@ -331,6 +342,9 @@ class Session:
 def validate_sync_files(payload):
     files = [{"path": payload["note"], "sha256": payload.get("note_sha256")},
              *payload["attachments"]]
+    if payload.get('navigation_removal'):
+        proof = payload['navigation_removal']
+        files.append({'path': proof['before'], 'sha256': proof['before_sha256']})
     for item in files:
         expected = item.get("sha256")
         path = Path(item["path"])
@@ -384,7 +398,7 @@ def run_sync(session, action, preflight):
             perform('attachment_' + str(index + state['keep'] + 1),
                     lambda: session.upload("#documents-sidebar-input", attachment["path"]), 65)
         validate_sync_files(payload)
-        # A failed submit call may already have written remotely; never retry or discard it.
+        # Record uncertain submissions truthfully; timeout recovery uses a fresh task window.
         submitted = True
         return perform('submit', step)
     except Exception as exc:
@@ -400,7 +414,7 @@ def run_sync(session, action, preflight):
                   "editor_page_restored": False,
                   "content_rollback_status": "NOT_VERIFIED"}
         # The CLI may time out while the original browser operation is still running.
-        # Do not reload or replay it. The fixed observer reads that exact receipt.
+        # Non-timeout failures may use the observer; timeouts follow the documented fresh-window retry.
         result['preload_sha256'] = payload.get('preload_sha256')
         result['phase_timings_ms'] = phase_timings
         result['observation'] = {
@@ -408,7 +422,11 @@ def run_sync(session, action, preflight):
             'tab_id':getattr(session, 'tab_id', None), 'step':active_step,
             'scope':dict(session.receipt_scope),
         }
-        result['next_action'] = 'sync-observe'
+        is_timeout = isinstance(exc, (TimeoutError, subprocess.TimeoutExpired)) or bool(
+            re.search(r'timeout|timed out|超时', str(exc), re.IGNORECASE))
+        result['next_action'] = ('close_task_window_and_retry_in_new_window'
+                                 if is_timeout else 'sync-observe')
+        result['save_check_required_before_retry'] = not is_timeout
         return result
     finally:
         session.deadline = None
@@ -450,8 +468,17 @@ def observe_sync(session, action, failed_result):
           timer = setTimeout(resolve, 10000);
         })]); } finally {clearTimeout(timer);}
       }
+      let returnedPost=null, returnedUrl=null;
+      if (receipt.state==='failed' && receipt.submission_requested===true && expectedScope.step==='submit') {
+        returnedUrl=page.url();
+        const element=await page.locator('#post-data').count();
+        if (element) returnedPost=await page.locator('#post-data').evaluate(el=>{
+          const p=JSON.parse(el.textContent);return {id:p.id,title:p.title,
+            documents:(p.documents || []).filter(d=>(d.displayIn || 'sidebar')==='sidebar').map(d=>d.name)};
+        });
+      }
       return {state:receipt.state, result:receipt.result, error:receipt.error,
-        submission_requested:receipt.submission_requested,
+        submission_requested:receipt.submission_requested, url:returnedUrl, returned_post:returnedPost,
         verified:receipt.verified, finished_at:receipt.finished_at};
     }'''.replace('RECEIPT',json.dumps(receipt_id)).replace('TAB',json.dumps(session.tab_id))
         .replace('SCOPE',json.dumps(expected_scope)))
@@ -464,12 +491,37 @@ def observe_sync(session, action, failed_result):
             if any(result.get(key) != payload.get(key) for key in keys):
                 raise ValueError('Recovered result belongs to another synchronization')
             return {**result, 'recovered_original_result':True, 'recovery':common}
+    # The original wait may end before the already-submitted page returns.
+    # Apply the normal URL completion condition to that same bound receipt;
+    # preserve the failed receipt rather than relabeling it as completed.
+    if (observed['state']=='failed' and observation['step']=='submit'
+            and observed.get('submission_requested') is True
+            and all((observed.get('verified') or {}).get(k) is True for k in
+                    ('edit_url_verified','title_verified','body_verified','attachment_order_verified'))):
+        from urllib.parse import urlsplit
+        current=urlsplit(observed.get('url') or ''); expected=urlsplit(payload['edit_url'])
+        match=re.fullmatch(r'/nodes/post/(?:local-)?([1-9][0-9]*)/',current.path)
+        post=observed.get('returned_post') or {}
+        correct_update=payload.get('create') or (
+            current.path.replace('/local-','/')==urlsplit(payload.get('post_url','')).path.replace('/local-','/'))
+        if (current.scheme==expected.scheme and current.netloc==expected.netloc and match
+                and str(post.get('id'))==match[1] and correct_update
+                and post.get('title')==payload.get('desired_title')
+                and post.get('documents')==[x['name'] for x in payload['attachments']]):
+            validate_sync_files(payload)
+            return {**common,'ok':True,'status':'ARTICLE_PAGE_RETURNED',
+                'preload_sha256':payload['preload_sha256'],'post_url':observed['url'],
+                'browser_elapsed_ms':failed_result['browser_elapsed_ms'],
+                'phase_timings_ms':failed_result.get('phase_timings_ms',{}),
+                'late_navigation_observed':True,'original_operation_state':'failed',
+                'recovered_original_result':False,
+                'quality_checks':{**observed['verified'],'article_page_returned':True}}
     status = {'running':'SYNC_ACTION_PENDING','unavailable':'SYNC_RECEIPT_UNAVAILABLE'}
     result = {**common, 'ok':False, 'status':status.get(observed['state'],
               'SYNC_SAVE_CHECK_REQUIRED' if observed.get('submission_requested') or
               (observation['step']=='submit' and observed.get('submission_requested') is None)
               else 'SYNC_NOT_SUBMITTED'), 'operation_state':observed['state'],
-              'operation_error':observed.get('error'), 'verified':observed.get('verified')}
+              'operation_error':observed.get('error'), 'verified':observed.get('verified'), 'observed_url':observed.get('url')}
     result['next_action'] = {
         'SYNC_ACTION_PENDING':'observe_same_receipt_later',
         'SYNC_RECEIPT_UNAVAILABLE':'read_only_saved_state_check',
@@ -530,9 +582,10 @@ def confirm_saved_sync(session, action, failed_result, original_result_path, out
       const targetUrl=new URL(target), expected=new URL(payload.post_url || payload.edit_url);
       if (targetUrl.origin!==expected.origin || !/^\/nodes\/post\/(?:local-)?[1-9][0-9]*\/$/.test(targetUrl.pathname))
         throw new Error('No confirmed article URL is available; keep the original page');
-      const page=await boundPage.context().newPage();
+      const reuseBoundPage=boundPage.url()===target;
+      const page=reuseBoundPage ? boundPage : await boundPage.context().newPage();
       try {
-      await page.goto(target,{waitUntil:'domcontentloaded',timeout:20000});
+      if (!reuseBoundPage) await page.goto(target,{waitUntil:'commit',timeout:20000});
       const current=new URL(page.url());
       if (current.origin!==expected.origin || !/^\/nodes\/post\/(?:local-)?[1-9][0-9]*\/$/.test(current.pathname))
         throw new Error('Read-only confirmation is not on a task article');
@@ -562,7 +615,7 @@ def confirm_saved_sync(session, action, failed_result, original_result_path, out
       const download=await downloadPromise;await download.saveAs(payload.confirmation_archive);
       if (await download.failure()) throw new Error('Saved attachment download failed');
       return {url:page.url(),title:post.title,content:post.content,documents,sections};
-      } finally { await page.close({runBeforeUnload:false}); }
+      } finally { if (!reuseBoundPage) await page.close({runBeforeUnload:false}); }
     }""".replace('PAYLOAD',json.dumps({
         **{k:payload.get(k) for k in ('create','post_url','edit_url','desired_title','attachments')},
         'confirmation_archive':str(archive.resolve())},ensure_ascii=False))
@@ -612,9 +665,12 @@ def confirm_saved_sync(session, action, failed_result, original_result_path, out
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--action", type=Path)
+    actions = parser.add_mutually_exclusive_group()
+    actions.add_argument("--action", type=Path)
+    actions.add_argument("--action-json", help="source-read: inline action JSON without an action file")
     parser.add_argument("--mode", choices=["bind", "tab-code", "source-read", "website-prepare", "taxonomy-options", "login-status", "login-open", "select", "download", "download-observe", "preflight", "sync", "sync-observe", "sync-confirm"], required=True)
-    parser.add_argument("--database", choices=['charls', 'elsa', 'hrs', 'share', 'chns', 'knhanes', 'klosa', 'mhas', 'nhanes'])
+    parser.add_argument("--database", choices=['charls', 'elsa', 'hrs', 'share', 'chns', 'knhanes', 'klosa', 'mhas', 'nhanes', 'nhanesiii', 'nhis'])
+    parser.add_argument('--dataset-id')
     parser.add_argument("--script", type=Path, help="tab-code: async page function restricted to the bound page")
     parser.add_argument("--tab-index", type=int, help="Observed tab-list index; only used to create a binding")
     parser.add_argument("--tab-id", help="Stable Chromium target id from mode bind; never an index")
@@ -627,6 +683,8 @@ def main() -> None:
     parser.add_argument("--config", type=Path)
     parser.add_argument('--language', choices=['en', 'ko'])
     args = parser.parse_args()
+    if args.action_json is not None and args.mode != 'source-read':
+        parser.error('--action-json is only supported for source-read')
     config = load_config(args.config)
     command = playwright_command(config)
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -663,16 +721,18 @@ def main() -> None:
         raise SystemExit(0 if payload.get('ok') else 1)
     if args.mode == "source-read":
         from source_read import run_read
-        if not args.tab_id or not args.database or not args.action:
-            parser.error('source-read requires --tab-id, --database and --action')
+        if not args.tab_id or not args.database or (args.action is None and args.action_json is None):
+            parser.error('source-read requires --tab-id, --database and --action-json or --action')
         try:
-            action = read_action(args.action)
+            action = json.loads(args.action_json) if args.action_json is not None else read_action(args.action)
+            if not isinstance(action, dict):
+                raise ValueError('source-read action must be a JSON object')
             if args.database == "klosa":
                 from klosa_adapter_contract import require_context
                 require_context(action, args.language)
             payload = run_read(
                 Session(args.session, args.session_workdir, args.out.with_suffix('.browser.js'), config, args.tab_id),
-                action, database_url(config, args.database, args.language), args.database, args.out, args.resume)
+                action, database_url(config, args.database, args.language, args.dataset_id), args.database, args.out, args.resume)
         except ValueError as exc:
             parser.error(str(exc))
         print(json.dumps({"ok": payload["ok"], "status": payload["status"],
@@ -686,10 +746,13 @@ def main() -> None:
         if not args.tab_id or not args.database:
             parser.error('login/selection requires --tab-id and --database')
         action = read_action(args.action) if args.action else {}
-        url = database_url(config, args.database, args.language)
+        url = database_url(config, args.database, args.language, args.dataset_id)
         if args.database == "klosa" and args.mode == "select":
             from klosa_adapter_contract import require_context
             require_context(action, args.language, url)
+        if args.database == 'nhis' and args.mode == 'select':
+            from nhis_export_contract import require_context
+            require_context(action, args.dataset_id)
         if args.mode == 'select':
             if action.get('url') != url:
                 parser.error('selection action must match the configured database URL')
@@ -745,6 +808,11 @@ def main() -> None:
     if args.mode == "download" and action.get("database") == "klosa":
         from klosa_adapter_contract import require_context
         require_context(action, args.language, database_url(config, "klosa", args.language))
+    if args.mode == 'download' and action.get('database') == 'nhis':
+        from nhis_export_contract import require_context
+        require_context(action, args.dataset_id)
+        if action.get('existing_tab_path') != database_url(config, 'nhis', dataset_id=args.dataset_id):
+            parser.error('NHIS download action differs from the configured dataset URL')
     preflight = read_action(args.preflight) if args.preflight else None
     target = args.out.parent / ("download-" + action.get("attempt_id", "unused") + ".zip")
     if args.mode in {'sync-observe','sync-confirm'}:
@@ -758,6 +826,8 @@ def main() -> None:
                 payload = confirm_saved_sync(session, action, read_action(args.result),args.result,args.out)
             else:
                 payload = observe_sync(session, action, read_action(args.result))
+                if payload.get("late_navigation_observed"):
+                    payload["original_result_path"] = str(args.result.resolve())
         except (ValueError, RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
             payload = {'ok':False, 'status':'SYNC_CONFIRMATION_INCOMPLETE',
                        'error':str(exc), 'read_only':True, 'allow_resubmit':False,
@@ -773,8 +843,6 @@ def main() -> None:
         print(json.dumps(payload, ensure_ascii=False))
         raise SystemExit(0 if payload.get("ok") else 1)
     code = bind_code(build_code(action, args.mode, preflight, target), args.tab_id)
-    code_path = args.out.with_suffix(".browser.js")
-    code_path.write_text(code, encoding="utf-8")
     if args.mode == "download":
         # Claim locally before dispatch: a timeout must never cause a second paid click.
         attempt_file = Path(action["attempt_file"])
@@ -782,11 +850,12 @@ def main() -> None:
             json.dump({"attempt_id": action["attempt_id"], "session": args.session,
                        "status": "claimed_before_cli_dispatch"}, handle)
     try:
-        result = subprocess.run(
-            command + ["-s=" + args.session, "--raw", "run-code", "--filename", str(code_path.resolve())],
-            cwd=args.session_workdir, encoding="utf-8", capture_output=True,
-            timeout=action.get("timeout_ms", 90000) / 1000 + 30, stdin=subprocess.DEVNULL,
-        )
+        with temporary_browser_script(code) as code_path:
+            result = subprocess.run(
+                command + ["-s=" + args.session, "--raw", "run-code", "--filename", str(code_path)],
+                cwd=args.session_workdir, encoding="utf-8", capture_output=True,
+                timeout=action.get("timeout_ms", 90000) / 1000 + 30, stdin=subprocess.DEVNULL,
+            )
         payload = cli_action_result(result)
     except (subprocess.TimeoutExpired, OSError) as exc:
         payload = {"ok": False, "status": "CLI_ACTION_UNCERTAIN",

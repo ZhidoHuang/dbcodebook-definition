@@ -62,7 +62,7 @@ QUESTION_RESPONSE_TYPES = {
     "open_value",
     "interviewer_instruction",
 }
-QUESTION_SKIP_STATUSES = {"recorded", "none"}
+QUESTION_SKIP_STATUSES = {"recorded", "none", "unknown"}
 QUESTION_COVERAGE_STATUSES = {"questionnaire", "not_applicable"}
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 DATABASE_ROUTING = json.loads(
@@ -151,23 +151,34 @@ def validate_alias_families(record: dict, recorded_raw: list[str]) -> int:
     for index, item in enumerate(families, start=1):
         if not isinstance(item, dict):
             fail(f"alias_families[{index}] must be an object")
-        template = nonempty_text(
-            item.get("template"), f"alias_families[{index}].template"
-        )
-        if template.count("{n}") != 1:
-            fail(f"alias_families[{index}].template must contain one {{n}}")
-        start = item.get("start")
-        end = item.get("end")
-        if (
-            isinstance(start, bool)
-            or isinstance(end, bool)
-            or not isinstance(start, int)
-            or not isinstance(end, int)
-            or start > end
-        ):
-            fail(f"alias_families[{index}] start/end must be ordered integers")
+        if "members" in item:
+            if any(key in item for key in ("template", "start", "end")):
+                fail(f"alias_families[{index}] must use members or template, not both")
+            values = item["members"]
+            if not isinstance(values, list) or not values:
+                fail(f"alias_families[{index}].members must be a non-empty list")
+            members = [nonempty_text(value, f"alias_families[{index}].members")
+                       for value in values]
+            if len(set(members)) != len(members):
+                fail(f"alias_families[{index}].members contains duplicates")
+        else:
+            template = nonempty_text(
+                item.get("template"), f"alias_families[{index}].template"
+            )
+            if template.count("{n}") != 1:
+                fail(f"alias_families[{index}].template must contain one {{n}}")
+            start = item.get("start")
+            end = item.get("end")
+            if (
+                isinstance(start, bool)
+                or isinstance(end, bool)
+                or not isinstance(start, int)
+                or not isinstance(end, int)
+                or start > end
+            ):
+                fail(f"alias_families[{index}] start/end must be ordered integers")
 
-        members = [template.format(n=value) for value in range(start, end + 1)]
+            members = [template.format(n=value) for value in range(start, end + 1)]
         overlap = sorted(set(members) & declared_members)
         if overlap:
             fail(f"alias_families overlap on aliases: {overlap}")
@@ -368,6 +379,13 @@ def validate_questionnaire_evidence(
             fail(f"{field} recorded skip logic must not be empty")
         if skip_status == "none" and skip_logic:
             fail(f"{field} with no skip logic must use an empty list")
+        if skip_status == "unknown":
+            if skip_logic:
+                fail(f"{field}.skip_logic_status=unknown must use an empty list")
+            nonempty_text(
+                item.get("unverified_nonessential_routes"),
+                f"{field}.skip_logic_status=unknown requires unverified_nonessential_routes",
+            )
         for skip_index, skip in enumerate(skip_logic, start=1):
             if not isinstance(skip, dict):
                 fail(f"{field}.skip_logic[{skip_index}] must be an object")
@@ -603,12 +621,26 @@ def validate_questionnaire_path_closure(
         planned_groups = item.get("source_groups")
         if not isinstance(planned_groups, list) or not planned_groups:
             fail(f"{field}.source_groups must not be empty")
+        # Optional per-result scope is distinct from each shared source's availability.
+        declared_periods = item.get("periods")
+        if declared_periods is not None:
+            if not isinstance(declared_periods, list) or not declared_periods:
+                fail(f"{field}.periods must be a nonempty list when supplied")
+            declared_values = [nonempty_text(p, f"{field}.periods") for p in declared_periods]
+            if len(set(declared_values)) != len(declared_values):
+                fail(f"{field}.periods contains duplicates")
+            declared_periods = set(declared_values)
+            available_periods = set().union(*(periods_by_group.get(g, set()) for g in planned_groups))
+            if not declared_periods.issubset(available_periods):
+                fail(f"{field}.periods references periods outside its sources")
         for group in planned_groups:
             group = nonempty_text(group, f"{field}.source_groups")
             if group not in periods_by_group:
                 fail(f"{field} references unknown source group: {group}")
             planned_raw_by_variable.setdefault(analysis_var, set()).update(raw_by_group[group])
             for period in periods_by_group[group]:
+                if declared_periods is not None and period not in declared_periods:
+                    continue
                 if (group, period) in questionnaire_pairs:
                     expected_groups.setdefault((analysis_var, period), set()).add(group)
 
@@ -782,6 +814,7 @@ def validate_download_selection(
     """Check the final page selection before any download is started."""
 
     record = load_json(record_path)
+    analysis_identity_contract(record, record.get("database", ""))
     topic_kind(record.get("topic_kind", "standard"))
     schema_version = record.get("schema_version")
     if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
@@ -883,7 +916,7 @@ def read_raw_vars(path: Path) -> list[str]:
     return values
 
 
-def read_exported_identity_vars(raw_codebook_path: Path) -> set[str]:
+def read_exported_identity_vars(raw_codebook_path: Path, record: dict | None = None) -> set[str]:
     """Return automatic identity columns that are present in exported CSV files."""
 
     allowed = {
@@ -896,7 +929,10 @@ def read_exported_identity_vars(raw_codebook_path: Path) -> set[str]:
         "sub_commuid",
     }
     exported: set[str] = set()
-    for data_path in raw_codebook_path.parent.glob("raw_data*.csv"):
+    data_paths = ([raw_codebook_path.parent / primary_raw_name(record, str((record or {}).get("database", "")))]
+                  if (record or {}).get("analysis_unit") == "household_period"
+                  else raw_codebook_path.parent.glob("raw_data*.csv"))
+    for data_path in data_paths:
         with data_path.open("r", encoding="utf-8-sig", newline="") as handle:
             reader = csv.reader(handle)
             header = next(reader, [])
@@ -904,14 +940,20 @@ def read_exported_identity_vars(raw_codebook_path: Path) -> set[str]:
     return exported
 
 
-def validate_download_package(formal_dir: Path) -> dict:
+def validate_download_package(formal_dir: Path, record: dict | None = None) -> dict:
     """Confirm that formal CSV content matches one original download zip."""
 
     archive_path = formal_dir / "bookapp_download.zip"
     if not archive_path.is_file():
         fail(f"bookapp_download.zip does not exist: {archive_path}")
 
+    native = primary_raw_name(record, str((record or {}).get("database", "")))
+    household = native == "raw_data_household.csv"
     extracted = [formal_dir / "raw_codebook.csv", *sorted(formal_dir.glob("raw_data*.csv"))]
+    if household and formal_dir / native not in extracted:
+        fail("household_period requires the original raw_data_household.csv; no fallback is allowed")
+    if household and {path.name for path in extracted} != {"raw_codebook.csv", native}:
+        fail("household_period formal files must contain only raw_data_household.csv and raw_codebook.csv")
     missing = [str(path) for path in extracted if not path.is_file()]
     if missing or len(extracted) < 2:
         fail(f"formal download files are incomplete; missing={missing}")
@@ -1044,6 +1086,66 @@ def validate_directory_entries(directories, database, local_evidence=None):
     return directory_paths
 
 
+def analysis_identity_contract(record: dict | None, database: str) -> dict:
+    """Only a source-record declaration can opt into CHARLS household rows."""
+    record = record or {}
+    unit = record.get("analysis_unit", "person_period")
+    keys = record.get("identity_keys")
+    if unit == "person_period":
+        if database.upper() == "MHAS" and record.get("mhas_analysis_scope") is not None:
+            from mhas_export_contract import validate_analysis_scope
+            validate_analysis_scope(record["mhas_analysis_scope"], record.get("approved_analysis_vars"))
+            if keys != ["source_module", "ID", "Wave_id"]:
+                raise ValueError("MHAS scoped analysis requires identity_keys=[source_module, ID, Wave_id]")
+            return {"analysis_unit": unit, "identity_keys": keys}
+        if keys is not None:
+            raise ValueError("identity_keys is reserved for the explicit household_period contract")
+        return {"analysis_unit": unit}
+    if (unit != "household_period" or database.upper() != "CHARLS"
+            or str(record.get("database", "")).upper() != "CHARLS"
+            or keys != ["householdid", "year"]):
+        raise ValueError("household_period requires a CHARLS source record with identity_keys=[householdid, year]")
+    return {"analysis_unit": unit, "identity_keys": keys}
+
+
+def primary_raw_name(record: dict | None, database: str) -> str:
+    """Resolve the original CHARLS household filename only from its explicit contract."""
+    contract = analysis_identity_contract(record, database)
+    return "raw_data_household.csv" if contract["analysis_unit"] == "household_period" else "raw_data.csv"
+
+
+def validate_render_identity_contract(source: str, record: dict, database: str) -> None:
+    """Reuse the existing call parser; household rendering must stand alone in RStudio."""
+    contract = analysis_identity_contract(record, database)
+    code = re.sub(r"(?m)^\s*#.*$", "", source)
+    code = re.sub(r"\brender_definition_bundle\s*\(", "render_definition_bundle(", code)
+    if "render_definition_bundle(" not in code:
+        if contract["analysis_unit"] == "household_period":
+            raise ValueError("household_period requires an explicit render_definition_bundle declaration")
+        return
+    from definition_order import r_call_arguments
+    declarations = {}
+    for start, end in r_call_arguments(code, "render_definition_bundle"):
+        match = re.match(r"\s*(analysis_unit|identity_keys)\s*=\s*(.*?)\s*$", code[start:end], re.S)
+        if match:
+            if match[1] in declarations:
+                raise ValueError("Duplicate renderer identity argument: " + match[1])
+            declarations[match[1]] = match[2]
+    unit = declarations.get("analysis_unit", '"person_period"')
+    expected = contract["analysis_unit"]
+    if not re.fullmatch(r"[\"']" + expected + r"[\"']", unit):
+        raise ValueError("Renderer analysis_unit must be a literal matching the source record")
+    keys = declarations.get("identity_keys", "NULL")
+    if expected == "household_period":
+        if not re.fullmatch(r"c\(\s*[\"']householdid[\"']\s*,\s*[\"']year[\"']\s*\)", keys):
+            raise ValueError("Renderer identity_keys must be literal c(householdid, year), matching the source record")
+    elif contract.get("identity_keys") == ["source_module", "ID", "Wave_id"]:
+        if not re.fullmatch(r"c\(\s*[\"']source_module[\"']\s*,\s*[\"']ID[\"']\s*,\s*[\"']Wave_id[\"']\s*\)", keys):
+            raise ValueError("MHAS renderer identity_keys must match the module partition declaration")
+    elif keys != "NULL":
+        raise ValueError("Default person_period renderer identity_keys must be NULL")
+
+
 def validate_record(
     record_path: Path,
     r_script_path: Path | None,
@@ -1056,6 +1158,8 @@ def validate_record(
     topic_kind(record.get("topic_kind", "standard"))
     pre_download = selection is not None
     source = "" if pre_download else r_script_path.read_text(encoding="utf-8")
+    if not pre_download:
+        validate_render_identity_contract(source, record, record.get("database", ""))
 
     schema_version = record.get("schema_version")
     if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
@@ -1067,6 +1171,9 @@ def validate_record(
     if record.get("status") != READY_STATUS:
         fail(f"status must be {READY_STATUS}")
     url = nonempty_text(record.get("dbcodebook_url"), "dbcodebook_url")
+    if nonempty_text(record.get("database"), "database").upper() == "NHIS":
+        from nhis_export_contract import build_selection
+        build_selection(record, url)
     if not re.match(r"^https?://[^/]+(?:/|$)", url):
         fail("dbcodebook_url must be an HTTP or HTTPS website URL")
     nonempty_text(record.get("searched_at"), "searched_at")
@@ -1085,6 +1192,9 @@ def validate_record(
             evidence_reviews = []
 
     database = nonempty_text(record.get("database"), "database").upper()
+    if database == 'NHANES' and not pre_download and record.get('medicine_export'):
+        from nhanes_export_contract import medicine_source_columns
+        medicine_source_columns(raw_codebook_path.parent, record)
     local_evidence = validate_local_evidence(record, record_path)
     directory_paths = validate_directory_entries(record.get("directory_entries"), database, local_evidence)
 
@@ -1253,7 +1363,7 @@ def validate_record(
     raw_vars = selection if pre_download else read_raw_vars(raw_codebook_path)
     from hrs_export_contract import record_defaults, validate_defaults, accepts_legacy_package
     defaults = record_defaults(record)
-    exported_identity_vars = defaults if pre_download else read_exported_identity_vars(raw_codebook_path)
+    exported_identity_vars = defaults if pre_download else read_exported_identity_vars(raw_codebook_path, record)
     if not pre_download and str(record.get("database", "")).lower() == "hrs":
         with (raw_codebook_path.parent / "raw_data.csv").open(encoding="utf-8-sig", newline="") as h:
             header = next(csv.reader(h))
@@ -1385,6 +1495,17 @@ def validate_record(
                 "definition_plan differs from approved_analysis_vars; "
                 f"planned={planned_names}, approved={approved_names}"
             )
+        if any("display_name" in item for item in definition_plan):
+            display_names = [nonempty_text(item.get("display_name"), "definition_plan.display_name")
+                             for item in definition_plan]
+            if len(display_names) != len(set(display_names)):
+                fail("definition_plan.display_name must uniquely identify each result")
+        if any(item.get("display_group") for item in definition_plan):
+            display_groups = [nonempty_text(item.get("display_group"), "definition_plan.display_group")
+                              for item in definition_plan]
+            runs = [g for i, g in enumerate(display_groups) if i == 0 or g != display_groups[i - 1]]
+            if len(runs) != len(set(runs)):
+                fail("definition_plan display groups must be contiguous in approved_analysis_vars order")
 
     path_closure_summary = {"variable_periods": 0, "branches": 0}
     if schema_version == 7:
@@ -1463,7 +1584,7 @@ def main() -> int:
             )
             if args.formal_dir is None:
                 parser.error("full validation requires --formal-dir")
-            result["download_package"] = validate_download_package(args.formal_dir)
+            result["download_package"] = validate_download_package(args.formal_dir, load_json(args.record))
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"SOURCE_RECORD_FAIL: {error}", file=sys.stderr)
         return 1

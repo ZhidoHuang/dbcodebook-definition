@@ -67,6 +67,24 @@ assert period_keys('Wave 2：全日制教育年数') == ['wave2']
 assert period_keys('Wave 1、Wave 4–5: 不连续时期') == ['wave1','wave4','wave5']
 print('GROUPED_QUESTIONNAIRE_PASS: copy/rendered scope, text, codes, labels, overlap and real differences')
 
+# Printed numeric identifiers use the same explicitly scoped answer references.
+numeric_copy = ('### 2011 年\n\n#### 问卷设计\n\n两题分别作答。\n\n'
+                '#### 12\n\n第一项回答？\n\n- 0 否\n- 1 是\n\n14 的选项与 12 相同。\n\n'
+                '#### 14\n\n第二项回答？\n')
+numeric_record = {'schema_version': 6, 'questionnaire_evidence': [
+    dict(question_id=qid, question_text=stem, periods=['2011'], response_type='closed_options',
+         options=[dict(value='0', label='否'), dict(value='1', label='是')], skip_logic=[])
+    for qid, stem in [('12', '第一项回答？'), ('14', '第二项回答？')]]}
+assert not questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(numeric_copy)}, numeric_record)
+assert questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(numeric_copy.replace('14 的选项与 12 相同。', ''))}, numeric_record)
+try:
+    read_questionnaire_copy(numeric_copy.replace('14 的选项与 12 相同。', '15 的选项与 12 相同。'))
+except ValueError:
+    pass
+else:
+    raise AssertionError('numeric option references cannot name an undisplayed question')
+print('NUMERIC_QUESTION_REFERENCE_PASS: source coverage, missing reference, foreign target')
+
 from questionnaire_groups import unverified_question_periods
 years = list(range(2004, 2023, 2))
 ev = [{'question_id':'D110', 'periods':[str(y)]} for y in years]
@@ -78,6 +96,27 @@ assert unverified_question_periods('2004–2024 年', ['D110'], ev, survey_perio
 assert unverified_question_periods('2004–2022 年', ['D110'], ev)
 assert not unverified_question_periods('2004–2010、2014 年', ['D110'], ev, survey_periods=years)
 print('REGULAR_YEAR_LABEL_PASS: fixed interval, missing evidence, irregular scope and boundaries')
+
+# A static register's publication span is not an interview cycle. It must not
+# change the scope checks for questions asked in the actual biennial interviews.
+static_span_record = {'schema_version': 6,
+    'questionnaire_coverage': [{'period': str(y), 'status': 'questionnaire'} for y in years]
+        + [{'period': '1992–2022', 'status': 'not_applicable'}],
+    'questionnaire_evidence': [dict(question_id='D110', question_text='是否吸烟？',
+        periods=[str(y)], response_type='closed_options',
+        options=[dict(value='1', label='是'), dict(value='2', label='否')], skip_logic=[],
+        rendered_in_copy=True, copy_locator='2004–2022年/D110') for y in years]}
+static_span_copy = '### 2004–2022 年\n\n#### 问卷设计\n\n每两年访谈。\n\n#### D110\n\n是否吸烟？\n\n- 1 是\n- 2 否\n'
+assert not questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(static_span_copy)}, static_span_record)
+with tempfile.TemporaryDirectory() as folder:
+    root = Path(folder)
+    (root / 'definition_search_record.json').write_text(json.dumps(static_span_record, ensure_ascii=False), encoding='utf-8')
+    (root / 'note.md').write_text(rendered(static_span_copy), encoding='utf-8')
+    assert validate_questionnaire_rendering(root, root, 'note.md')['rendered_question_periods'] == len(years)
+missing_interview = copy.deepcopy(static_span_record)
+missing_interview['questionnaire_evidence'].pop(3)
+assert questionnaire_copy_errors({'questionnaire': read_questionnaire_copy(static_span_copy)}, missing_interview)
+print('STATIC_REGISTER_SCOPE_PASS: static span excluded; missing interview evidence still rejected')
 
 from questionnaire_display import display_answers
 

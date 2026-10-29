@@ -1,9 +1,30 @@
-"""Read source pages sequentially and preserve a receipt for each completed period."""
+"""Read source pages sequentially; keep evidence and recovery in one current file."""
 import hashlib
 import json
 from pathlib import Path
 import subprocess
 import uuid
+
+
+def receipt_hash(receipt):
+    return hashlib.sha256(json.dumps(receipt, ensure_ascii=False, sort_keys=True).encode('utf-8')).hexdigest()
+
+
+def saved_receipt(item, state):
+    if 'receipt' in item:  # Read existing external evidence without rewriting it.
+        content = Path(item['receipt']).read_bytes()
+        if hashlib.sha256(content).hexdigest() != item['sha256']:
+            raise ValueError('Completed receipt changed; do not reuse it')
+        return json.loads(content.decode('utf-8'))
+    receipt = dict(item['result'])
+    if 'details_slice' in item:
+        start, end = item['details_slice']
+        receipt['details'] = state['details'][start:end]
+    for key in item.get('fields', []):
+        receipt[key] = state[key]
+    if receipt_hash(receipt) != item['sha256']:
+        raise ValueError('Completed receipt changed; do not reuse it')
+    return receipt
 
 
 def browser_code(action, url, database):
@@ -44,8 +65,8 @@ def browser_code(action, url, database):
 def run_read(session, action, url, database, out, resume=None):
     """One source per request, one period per browser call; never replay a pending call."""
     out = Path(out)
-    if out.exists():
-        raise ValueError("Output already exists; choose a new receipt path")
+    if out.exists() and (not resume or out.resolve() != Path(resume).resolve()):
+        raise ValueError("Output already exists; use --resume with this same file to continue")
     if action.get("kind") == "detail":
         periods = action.get("periods")
         if not isinstance(periods, list) or not periods or any(not isinstance(p, str) or not p.strip() for p in periods) or len(set(periods)) != len(periods):
@@ -63,20 +84,41 @@ def run_read(session, action, url, database, out, resume=None):
         raise ValueError("Resume requires the same action, browser binding and helper version")
     state = {"ok": False, "status": "READ_INCOMPLETE", "binding": binding,
              "completed": [], "pending": None, "failed": None}
+    if action['kind'] == 'detail':
+        state['details'] = []
+
+    def store_result(index, receipt):
+        item = {'index': index, 'sha256': receipt_hash(receipt), 'result': dict(receipt)}
+        if action['kind'] == 'detail':
+            details = item['result'].pop('details')
+            start = len(state['details'])
+            state['details'].extend(details)
+            item['details_slice'] = [start, len(state['details'])]
+        else:
+            fields = [key for key in receipt if key not in {'action', 'ok', 'status'}]
+            if any(key in state for key in fields):
+                raise ValueError('Source result collides with recovery fields')
+            item['fields'] = fields
+            for key in fields:
+                state[key] = item['result'].pop(key)
+        state['completed'].append(item)
+
     if previous:
-        state["completed"] = list(previous["completed"])
-        for item in state["completed"]:
-            path = Path(item["receipt"])
-            if hashlib.sha256(path.read_bytes()).hexdigest() != item["sha256"]:
-                raise ValueError("Completed receipt changed; do not reuse it")
-            receipt = json.loads(path.read_text(encoding="utf-8"))
+        completed = previous['completed']
+        if len(completed) > len(parts) or [x['index'] for x in completed] != list(range(len(completed))):
+            raise ValueError('Completed receipts must be a sequential prefix')
+        for item in completed:
+            receipt = saved_receipt(item, previous)
             if not receipt.get("ok") or receipt["action"] != parts[item["index"]]:
                 raise ValueError("Completed receipt identity mismatch")
-        if [x["index"] for x in state["completed"]] != list(range(len(state["completed"]))):
-            raise ValueError("Completed receipts must be a sequential prefix")
+            store_result(item['index'], receipt)
+        if previous.get('pending') and (previous['pending']['index'] != len(completed) or len(completed) >= len(parts)):
+            raise ValueError('Pending index does not follow completed receipts')
+        if previous.get('ok') and out.resolve() == Path(resume).resolve():
+            if len(completed) != len(parts) or previous.get('pending'):
+                raise ValueError('Successful result has unfinished periods')
+            return previous
     out.parent.mkdir(parents=True, exist_ok=True)
-    receipt_dir = out.parent / (out.stem + "-receipts")
-    receipt_dir.mkdir(exist_ok=False)
 
     def save():
         state["remaining_periods"] = [p["periods"][0] for p in parts[len(state["completed"]):]] if action["kind"] == "detail" else []
@@ -85,15 +127,13 @@ def run_read(session, action, url, database, out, resume=None):
         temporary.replace(out)
 
     def capture(index, part, result):
-        receipt = receipt_dir / (uuid.uuid4().hex + ".json")
-        receipt.write_text(json.dumps({"action": part, **result}, ensure_ascii=False, indent=2), encoding="utf-8")
-        item = {"index": index, "receipt": str(receipt.resolve()),
-                "sha256": hashlib.sha256(receipt.read_bytes()).hexdigest()}
+        receipt = {"action": part, **result}
         if result.get("ok"):
-            state["completed"].append(item)
+            store_result(index, receipt)
             state["pending"] = None
+            state['failed'] = None
         else:
-            state["failed"] = item
+            state["failed"] = {'index': index, 'result': receipt}
             state["status"] = result.get("status", "READ_INCOMPLETE")
         save()
         return bool(result.get("ok"))
@@ -139,12 +179,6 @@ def run_read(session, action, url, database, out, resume=None):
     state.update(ok=True, status={"detail":"SOURCE_READ", "directory":"DIRECTORY_READ", "search":"SEARCH_READ"}[action["kind"]])
     if action["kind"] == "detail":
         identity_key = "base_variable" if database in {"hrs", "klosa", "mhas"} else "variable"
-        state.update({identity_key:action[identity_key], "file":action["file"], "details":[]})
-        for item in state["completed"]:
-            state["details"].extend(json.loads(Path(item["receipt"]).read_text(encoding="utf-8"))["details"])
-    else:
-        # Preserve the existing directory/search result interface.
-        receipt = json.loads(Path(state["completed"][0]["receipt"]).read_text(encoding="utf-8"))
-        state.update({k: v for k, v in receipt.items() if k not in {"action", "ok", "status"}})
+        state.update({identity_key:action[identity_key], "file":action["file"]})
     save()
     return state

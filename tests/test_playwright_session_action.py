@@ -19,6 +19,34 @@ from unittest.mock import patch
 from recover_dbcodebook_export import build_download_browser_action
 
 
+def exercise_current_target_first(root):
+    """A verified current target must not probe an unrelated unresponsive page."""
+    bound = bind_code("async page => ({name:page.name})", "expected-target")
+    unknown = bind_code("async page => ({name:page.name})", "unknown-target")
+    script = root / "current-target-first.cjs"
+    script.write_text(r"""
+const assert = require('node:assert/strict');
+const targetKey = Symbol.for('dbCodeBook.targetId');
+const other = {name:'other',isClosed:()=>false,on:()=>{},off:()=>{}};
+const target = {name:'target',isClosed:()=>false,on:()=>{},off:()=>{}};
+let probes = [];
+const context = {pages:()=>[other,target],newCDPSession:async page=>{
+  probes.push(page.name);
+  if(page===other) throw Error('unresponsive unrelated page');
+  return {send:async()=>({targetInfo:{targetId:'expected-target'}}),detach:async()=>{}};
+}};
+other.context=target.context=()=>context;
+(async()=>{
+  assert.deepEqual(await (BOUND)(target),{name:'target'});
+  assert.deepEqual(probes,['target']);
+  other[targetKey]='other-target';
+  assert.deepEqual(await (BOUND)(other),{name:'target'},'Current page must not replace bound identity');
+  await assert.rejects(()=>(UNKNOWN)(other),/Bound tab is closed or unavailable/);
+})().catch(error=>{console.error(error);process.exitCode=1;});
+""".replace("BOUND", bound).replace("UNKNOWN", unknown), encoding="utf-8")
+    subprocess.run(["node", str(script)], check=True)
+
+
 def exercise_sync_receipts(root):
     """Keep the original browser promise observable across unrelated CLI calls."""
     receipt_id = "a" * 32
@@ -124,6 +152,27 @@ def exercise_sync_observation(root, action, failed_result):
     uncertain = observe_sync(observer, action, failed_result)
     assert uncertain['status'] == 'SYNC_SAVE_CHECK_REQUIRED'
     assert uncertain['next_action'] == 'read_only_saved_state_check'
+    # Late return uses the same original receipt and normal completion checks.
+    late_action=copy.deepcopy(action)
+    late_action['payload'].update(create=True,edit_url='http://localhost/nodes/edit/',desired_title='Late fixture',attachments=[{'name':'fixture.xlsx'}],preload_sha256='c'*64)
+    late_failed=copy.deepcopy(failed_result)
+    late_failed['observation']['scope']['preload_sha256']='c'*64
+    late_failed.setdefault('browser_elapsed_ms',123)
+    observer.observed.update(verified={k:True for k in ('edit_url_verified','title_verified','body_verified','attachment_order_verified')},
+        url='http://localhost/nodes/post/local-123/',returned_post={'id':123,'title':late_action['payload']['desired_title'],
+        'documents':[x['name'] for x in late_action['payload']['attachments']]})
+    with patch('playwright_session_action.validate_sync_files') as check_files:
+        late=observe_sync(observer,late_action,late_failed)
+        assert late['ok'] and late['late_navigation_observed'] and late['status']=='ARTICLE_PAGE_RETURNED'
+        assert late['original_operation_state']=='failed' and not late['recovered_original_result']
+        check_files.assert_called_once_with(late_action['payload'])
+    observer.observed['url']=None
+    assert observe_sync(observer,late_action,late_failed)['status']=='SYNC_SAVE_CHECK_REQUIRED'
+    observer.observed['url']='http://localhost/nodes/post/local-123/'
+    observer.observed['returned_post']['title']='Another topic'
+    assert observe_sync(observer,late_action,late_failed)['status']=='SYNC_SAVE_CHECK_REQUIRED'
+    observer.observed.pop('verified');observer.observed.pop('url');observer.observed.pop('returned_post')
+
     # Old prepared helpers did not record the click boundary. A terminated
     # submit operation is still uncertain when that tracking field is absent.
     for legacy_receipt in ({'state':'failed'}, {'state':'failed', 'submission_requested':None}):
@@ -202,6 +251,11 @@ const observe = OBSERVER;
   assert.equal(timers.length, 2, 'A completed original operation returns immediately');
   receipt.state='failed';receipt.error='late import failed';
   assert.equal((await observe(page)).error, 'late import failed');
+  receipt.submission_requested=true;
+  page.url=()=> 'http://localhost/nodes/post/local-123/';
+  page.locator=selector=>{assert.equal(selector,'#post-data');return {count:async()=>1,evaluate:async read=>read({textContent:JSON.stringify({id:123,title:'Late fixture',documents:[{name:'fixture.xlsx'}]})})};};
+  const late=await observe(page);assert.equal(late.returned_post.id,123);assert.equal(late.url,page.url());
+  assert.deepEqual(late.returned_post.documents,['fixture.xlsx']);
   receipt.tab_id='another-target';
   await assert.rejects(() => observe(page), /receipt identity does not match/);
   receipts.delete(RECEIPT);
@@ -351,13 +405,13 @@ Fixture reference.
 const assert = require('node:assert/strict');
 const saved = SNAPSHOT;
 const confirm = GENERATED;
-function fixture(failLazy) {
+function fixture(failLazy, reuse=false) {
   const events=[];
   let current='about:blank', responseHandler, downloadHandler, closed=0, originalMutations=0, controlsReady=false;
   const originalMutation=()=>{originalMutations++;throw Error('Original bound page was modified');};
   const temporary={
     url:()=>current,
-    goto:async(url,options)=>{assert.equal(url,saved.url);assert.equal(options.timeout,20000);current=url;events.push('goto');},
+    goto:async(url,options)=>{assert.equal(url,saved.url);assert.equal(options.waitUntil,'commit');assert.equal(options.timeout,20000);current=url;events.push('goto');},
     locator:selector=>{
       if(selector==='#post-data') return {textContent:async options=>{
         assert.equal(options.timeout,15000);events.push('post');return JSON.stringify({...saved,lazy_component_sections:['overview','details']});
@@ -387,6 +441,7 @@ function fixture(failLazy) {
   };
   const bound={url:()=> 'http://localhost/nodes/edit/123/',goto:originalMutation,close:originalMutation,
     locator:originalMutation,context:()=>({newPage:async()=>{events.push('new-page');return temporary;}})};
+  if(reuse) Object.assign(bound,temporary,{url:()=>saved.url,goto:originalMutation,close:originalMutation});
   return {bound,events,closed:()=>closed,originalMutations:()=>originalMutations};
 }
 (async()=>{
@@ -399,6 +454,13 @@ function fixture(failLazy) {
   await assert.rejects(()=>confirm(failure.bound),/fixture lazy read failed/);
   assert.deepEqual(failure.events,['new-page','goto','post','wait-controls','wait-response','summary-0','close']);
   assert.equal(failure.closed(),1);assert.equal(failure.originalMutations(),0);
+  const reused=fixture(false,true);
+  assert.deepEqual(await confirm(reused.bound),saved);
+  assert.deepEqual(reused.events,['post','wait-controls','wait-response','summary-0','wait-response','summary-1','wait-download','download-click','save']);
+  assert.equal(reused.closed(),0);assert.equal(reused.originalMutations(),0);
+  const reusedFailure=fixture(true,true);
+  await assert.rejects(()=>confirm(reusedFailure.bound),/fixture lazy read failed/);
+  assert.equal(reusedFailure.closed(),0);assert.equal(reusedFailure.originalMutations(),0);
 })().catch(error=>{console.error(error);process.exitCode=1;});
 """.replace('GENERATED',saved_session.scripts[1]).replace('SNAPSHOT',json.dumps(snapshot,ensure_ascii=False))
        .replace('ARCHIVE',json.dumps(str(out.with_suffix('.attachments.zip').resolve()))),encoding='utf-8')
@@ -547,6 +609,7 @@ const page = {
             raise AssertionError("Mismatched preflight accepted")
         except ValueError:
             pass
+        exercise_current_target_first(root)
         exercise_sync_receipts(root)
         # File selection returns before client-side parsing finishes. A slower first
         # file must finish rendering before a faster second file can be selected.
@@ -671,6 +734,14 @@ const page = {
             assert result['sync_started_at'] == 'fixture-time'
             assert result['observation']['step'] == 'submit'
             submission_failure = copy.deepcopy(result)
+            timed_out = FakeSession()
+            def timeout_upload(selector, path):
+                raise TimeoutError("upload timed out")
+            timed_out.upload = timeout_upload
+            timeout_result = run_sync(timed_out, website, {"preload_script": ""})
+            assert timeout_result["next_action"] == "close_task_window_and_retry_in_new_window"
+            assert timeout_result["save_check_required_before_retry"] is False
+            assert not timeout_result["ok"]
             for item in files:
                 calls.clear()
                 item.write_bytes(b"changed after readiness")
