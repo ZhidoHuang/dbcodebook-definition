@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -137,3 +138,46 @@ cat("SEMANTIC_RAW_READS_PASS\\n")
     assert result.returncode == 0, result.stdout + result.stderr
 
 print("EXECUTION_INTERFACES_PASS: direct/offline CLI, material base diagnostics, parsed R reads")
+
+# Test only the suite runner's summary/control flow with temporary stub tools.
+# This fixture does not claim to run the real R or Skill validation suites.
+with tempfile.TemporaryDirectory() as temporary:
+    root = Path(temporary)
+    tests = root / 'tests'
+    tests.mkdir()
+    suite = tests / 'run_all.ps1'
+    suite.write_text((ROOT / 'tests/run_all.ps1').read_text(encoding='utf-8'), encoding='utf-8')
+    leaf = tests / 'test_fixture.py'
+    leaf.write_text('print("FIXTURE_PASS")', encoding='utf-8')
+    (tests / 'test_run_r_definition_no_install.ps1').write_text('$global:LASTEXITCODE = 0', encoding='utf-8')
+    stub_r = root / 'stub_r.ps1'
+    stub_r.write_text('$global:LASTEXITCODE = 0', encoding='utf-8')
+    validator = root / 'validator.py'
+    validator.write_text('print("FIXTURE_VALIDATOR_PASS")', encoding='utf-8')
+    config = root / 'config.json'
+    pwsh = shutil.which('pwsh') or shutil.which('powershell')
+    assert pwsh, 'PowerShell is needed to verify the suite runner'
+    def runner(has_r, validate, require=False):
+        config.write_text(json.dumps({'executables': {'python': sys.executable,
+                         'rscript': str(stub_r) if has_r else ''}}), encoding='utf-8')
+        driver = root / 'driver.ps1'
+        # Deterministic no-R scenario, even if the host has Rscript on PATH.
+        command = "function Get-Command { param($Name) if ($Name -eq 'Rscript') { return } Microsoft.PowerShell.Core\\Get-Command $Name }\n"
+        quote = lambda p: "'" + str(p).replace("'", "''") + "'"
+        command += '& ' + quote(suite) + ' -Config ' + quote(config)
+        if validate: command += ' -SkillValidator ' + quote(validator)
+        if require: command += ' -RequireComplete'
+        driver.write_text(command, encoding='utf-8')
+        return subprocess.run([pwsh, '-NoProfile', '-File', str(driver)], capture_output=True, encoding='utf-8')
+    for has_r, validate in [(False, True), (True, False), (False, False)]:
+        result = runner(has_r, validate)
+        assert result.returncode == 0 and 'SKILL_TESTS_PARTIAL' in result.stdout, result.stdout + result.stderr
+        assert 'ALL_SKILL_TESTS_PASS' not in result.stdout
+    result = runner(False, False, True)
+    assert result.returncode != 0 and 'ALL_SKILL_TESTS_PASS' not in result.stdout
+    result = runner(True, True, True)
+    assert result.returncode == 0 and 'ALL_SKILL_TESTS_PASS' in result.stdout, result.stdout + result.stderr
+    leaf.write_text('raise SystemExit(1)', encoding='utf-8')
+    result = runner(True, True, True)
+    assert result.returncode != 0 and 'ALL_SKILL_TESTS_PASS' not in result.stdout
+print('SUITE_SUMMARY_PASS: skipped checks reported; incomplete release and failed tests rejected')

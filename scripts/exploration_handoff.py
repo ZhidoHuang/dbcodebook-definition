@@ -59,8 +59,8 @@ def validate_branches(report):
         if not review.get("agent_id") or review.get("agent_id") == report.get("primary_agent_id"):
             raise ValueError("探索代理身份必须独立于主线程")
         agent = review.get("prior_agent_record") or next((a for a in report.get("reviews", []) if a.get("agent_id") == review["agent_id"] and a.get("role") == role), {})
-        if not review_lifecycle_complete(agent):
-            raise ValueError("探索代理尚未完成或未登记关闭限制")
+        if not review.get("review_output") and not review_lifecycle_complete(agent):
+            raise ValueError("探索代理尚未完成")
         if input_hashes(item["outputs"]) != item["outputs"]:
             raise ValueError("独立探索产出已变化")
         if outputs.intersection(item["outputs"]) or set(item["outputs"]).intersection(exploration["inputs"]):
@@ -159,7 +159,7 @@ def command_exploration(args):
                 report.setdefault("stage_review_history", {}).setdefault(role, []).append(deepcopy(reviews[role]))
             prior = previous["stage_reviews"][role]
             agent = prior.get("prior_agent_record") or next(
-                item for item in previous.get("reviews", []) if item.get("agent_id") == prior["agent_id"] and item.get("role") == role)
+                (item for item in previous.get("reviews", []) if item.get("agent_id") == prior["agent_id"] and item.get("role") == role), None)
             reviews[role] = {**deepcopy(prior), "reused_from": str(source_path),
                              "prior_agent_record": deepcopy(agent)}
         validate_branches(report)
@@ -175,7 +175,8 @@ def command_exploration(args):
         role = ROLES[args.branch]
         prior = report["stage_reviews"][role]
         updated = {**prior, "status": "pass", "mode": "independent", "agent_id": args.agent_id,
-                   "evidence": args.evidence, "finished_at": iso()}
+                   "evidence": args.evidence, "finished_at": iso(),
+                   "review_output": {"path": str(output), "sha256": hashlib.sha256(output.read_bytes()).hexdigest()}}
         report["stage_reviews"][role] = updated
         validate_stage_review(report, role)
         exploration["branches"][args.branch] = {"outputs": input_hashes([output]), "agent_id": args.agent_id, "review_started_at": updated["started_at"], "review_finished_at": updated["finished_at"]}

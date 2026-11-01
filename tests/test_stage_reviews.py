@@ -27,13 +27,16 @@ with tempfile.TemporaryDirectory() as temporary:
               "evidence": "The source plan and the result scope agree; no open findings."}
     report = {"stage_reviews": {"logic": review}, "reviews": [{
         "agent_id": "agent-1", "role": "logic", "unfinished_turns": 0,
-        "rounds": [{"outcome": "completed", "started_at": "2026-09-09T01:01:00+00:00"}]}]}
+        "rounds": [{"outcome": "completed", "started_at": "2026-09-09T01:01:00+00:00",
+                    "finished_at": "2026-09-09T01:05:00+00:00"}]}]}
     assert validate_stage_review(report, "logic")["mode"] == "independent"
     missing = copy.deepcopy(report)
     missing["reviews"] = []
     rejects(lambda: validate_stage_review(missing, "logic"), "缺少本轮实际完成")
     stale = copy.deepcopy(report)
     stale["reviews"][0]["rounds"][0]["started_at"] = "2026-09-08T01:01:00+00:00"
+    assert validate_stage_review(stale, "logic")["status"] == "pass"
+    stale["reviews"][0]["rounds"][0]["finished_at"] = "2026-09-08T01:05:00+00:00"
     rejects(lambda: validate_stage_review(stale, "logic"), "缺少本轮实际完成")
     aborted = copy.deepcopy(report)
     aborted["reviews"][0]["rounds"][0]["outcome"] = "aborted"

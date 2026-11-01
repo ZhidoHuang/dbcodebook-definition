@@ -45,7 +45,7 @@ execution_report.validate_full_definition_completion(full_report, full_end)
 with tempfile.TemporaryDirectory() as folder:
     path = Path(folder) / "execution_report.json"
     for variant, expected in (({**full_report, "finished_at": execution_report.iso(full_end)}, 0),
-                              ({**full_report, "finished_at": execution_report.iso(full_end), "stages": []}, 1),
+                              ({**full_report, "finished_at": execution_report.iso(full_end), "stages": []}, 0),
                               (full_report, 1),
                               ({"workflow": "general"}, 1)):
         path.write_text(json.dumps(variant), encoding="utf-8")
@@ -59,6 +59,7 @@ with tempfile.TemporaryDirectory() as folder:
             receipt = json.loads(result.stdout)
             assert receipt["scope"] == "registration_only"
             assert receipt["historical_quality_verified"] is False
+            assert receipt["stage_recording"]["status"] == ("complete" if variant["stages"] else "incomplete")
 split_report = copy.deepcopy(full_report)
 production = next(s for s in split_report["stages"] if s["stage_id"] == "formal_r")
 split_report["stages"].remove(production)
@@ -69,7 +70,8 @@ for index, stage_id in enumerate(("copy", "public_r", "generate")):
                         if index < 2 else "2026-09-08T10:04:00+08:00")})
 execution_report.validate_full_definition_completion(split_report, full_end)
 split_report["stages"].pop()
-expect_system_exit(lambda: execution_report.validate_full_definition_completion(split_report, full_end), "generate")
+execution_report.validate_full_definition_completion(split_report, full_end)
+assert any("generate" in item for item in split_report["stage_recording"]["missing"])
 split_validation = copy.deepcopy(full_report)
 validation = next(s for s in split_validation["stages"] if s["stage_id"] == "validation")
 split_validation["stages"].remove(validation)
@@ -77,7 +79,8 @@ for stage_id in ("results", "review"):
     split_validation["stages"].append({**validation, "stage_id": stage_id})
 execution_report.validate_full_definition_completion(split_validation, full_end)
 split_validation["stages"].pop()
-expect_system_exit(lambda: execution_report.validate_full_definition_completion(split_validation, full_end), "review")
+execution_report.validate_full_definition_completion(split_validation, full_end)
+assert any("review" in item for item in split_validation["stage_recording"]["missing"])
 skipped_stage = copy.deepcopy(full_report)
 skipped_stage["stages"][2]["status"] = "skipped"
 skipped_stage["stages"][2]["summary"] = ["来源未变化，不重复下载。"]
@@ -94,12 +97,12 @@ missing_stage = copy.deepcopy(full_report)
 missing_stage["stages"] = [
     stage for stage in missing_stage["stages"] if stage["stage_id"] != "download"
 ]
-expect_system_exit(
-    lambda: execution_report.validate_full_definition_completion(
-        missing_stage, full_end
-    ),
-    "download",
-)
+execution_report.validate_full_definition_completion(missing_stage, full_end)
+assert missing_stage["stage_recording"]["status"] == "incomplete"
+assert any("download" in item for item in missing_stage["stage_recording"]["missing"])
+failed_work = copy.deepcopy(full_report)
+failed_work["stages"][0]["status"] = "failed"
+expect_system_exit(lambda: execution_report.validate_full_definition_completion(failed_work, full_end), "未完成的实际工作")
 missing_review = copy.deepcopy(full_report)
 missing_review["reviews"] = missing_review["reviews"][:-1]
 expect_system_exit(
@@ -398,10 +401,11 @@ with tempfile.TemporaryDirectory() as temp_dir:
     assert evidence["rounds"][1]["model"] is None
     run("review-import", "--process-dir", temp_dir, "--log", str(log), "--role", "logic",
         "--close-unavailable", "Host has no close tool", ok=False)
-    assert "未登记关闭" in run("finish", "--process-dir", temp_dir,
+    assert "审核工作未完成" in run("finish", "--process-dir", temp_dir,
                              "--status", "completed", ok=False).stderr
     run("review-import", "--process-dir", temp_dir, "--log", str(log), "--role", "logic", "--closed")
-    run("finish", "--process-dir", temp_dir, "--status", "completed")
+    run("finish", "--process-dir", temp_dir, "--status", "completed", ok=False)
+    run("finish", "--process-dir", temp_dir, "--status", "stopped")
     run("review-import", "--process-dir", temp_dir, "--log", str(log), "--role", "logic", ok=False)
     markdown = (root / "执行报告.md").read_text(encoding="utf-8")
     assert "新建 0 个" in markdown and "15秒" in markdown and "1分0秒" in markdown
@@ -424,7 +428,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
     finished = json.loads((root / "execution_report.json").read_text(encoding="utf-8"))
     assert not finished["reviews"][0]["closed"]
     markdown = (root / "执行报告.md").read_text(encoding="utf-8")
-    assert "审核已完成；宿主无关闭工具" in markdown and "fixture-model / high" in markdown
+    assert "审核已完成；未登记关闭" in markdown and "fixture-model / high" in markdown
     log.write_text('{"type":"session_meta","payload":{"source":"cli","id":"parent"}}\n', encoding="utf-8")
     try:
         execution_report.read_review_log(log, "logic")

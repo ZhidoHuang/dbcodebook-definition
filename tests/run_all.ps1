@@ -1,6 +1,7 @@
-param([string]$Config = "", [string]$SkillValidator = "")
+param([string]$Config = "", [string]$SkillValidator = "", [switch]$RequireComplete)
 
 $ErrorActionPreference = "Stop"
+$skippedChecks = @()
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 if ($SkillValidator) {
   $SkillValidator = (Resolve-Path -LiteralPath $SkillValidator -ErrorAction Stop).Path
@@ -43,6 +44,7 @@ if (-not [string]::IsNullOrWhiteSpace($configuredRscript)) {
 }
 
 $env:PYTHONUTF8 = "1"
+Remove-Item Env:LC_ALL,Env:LANG,Env:LC_CTYPE -ErrorAction SilentlyContinue
 if (-not [string]::IsNullOrWhiteSpace($rscript)) {
   $env:RSCRIPT = $rscript
 }
@@ -83,12 +85,21 @@ if (-not [string]::IsNullOrWhiteSpace($rscript)) {
     if ($LASTEXITCODE -ne 0) { throw "test_chns_renderer.R failed." }
   } finally { Pop-Location }
 } else {
+  $skippedChecks += "R tests"
   Write-Output "R_TESTS_SKIP: Rscript is not configured or on PATH"
 }
 
 if ($SkillValidator) {
   & $python @pythonArguments $SkillValidator $repoRoot
   if ($LASTEXITCODE -ne 0) { throw "Skill structure validation failed." }
+} else {
+  $skippedChecks += "Skill structure validation"
+  Write-Output "SKILL_VALIDATION_SKIP: SkillValidator is not supplied"
 }
 
-Write-Output "ALL_SKILL_TESTS_PASS"
+if ($skippedChecks.Count -gt 0) {
+  Write-Output ("SKILL_TESTS_PARTIAL: not run: " + ($skippedChecks -join ", "))
+  if ($RequireComplete) { throw "Required release checks were not run." }
+} else {
+  Write-Output "ALL_SKILL_TESTS_PASS"
+}

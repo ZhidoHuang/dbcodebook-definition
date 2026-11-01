@@ -71,6 +71,8 @@ COMBINED_REVIEW_ROLE = "公开 R 复核"
 
 
 def duration_text(seconds: float) -> str:
+    if seconds is None:
+        return "未提供"
     whole = int(seconds)
     hours, remaining = divmod(whole, 3600)
     minutes, secs = divmod(remaining, 60)
@@ -147,12 +149,18 @@ def validate_full_definition_completion(
         if stage_id not in latest
         or latest[stage_id].get("status") not in terminal_statuses
     ]
-    if missing:
-        raise SystemExit("完整定义流程缺少已收口环节：" + "、".join(missing))
+    report["stage_recording"] = {"status": "incomplete" if missing else "complete",
+                                 "missing": missing}
+    # Missing bookkeeping is not proof that work failed. Active/failed work,
+    # actual reviews and production checks retain their own completion gates.
+    unfinished = [key for key, stage in latest.items() if stage.get("status") in {"running", "failed"}
+                  and not (key == "website_closure" and stage.get("status") == "running")]
+    if unfinished:
+        raise SystemExit("仍有未完成的实际工作：" + "、".join(unfinished))
     unexplained_skips = [
         f"{stage_id}（{label}）"
         for stage_id, label in required_stages.items()
-        if latest[stage_id].get("status") == "skipped"
+        if latest.get(stage_id, {}).get("status") == "skipped"
         and not latest[stage_id].get("summary")
     ]
     if unexplained_skips:
@@ -180,7 +188,7 @@ def validate_full_definition_completion(
         if review_lifecycle_complete(review)
     }
     for role, review in report.get("stage_reviews", {}).items():
-        if (review.get("mode") == "isolated" or review.get("reused_from")) and review.get("status") == "pass":
+        if (review.get("mode") == "isolated" or review.get("reused_from") or review.get("review_output")) and review.get("status") == "pass":
             validate_stage_review(report, role)
             closed_roles.add(role)
     required_roles = FULL_DEFINITION_REVIEW_ROLES
@@ -290,10 +298,10 @@ def stage_model(declared: str, started_at: str) -> dict[str, Any]:
 def review_lifecycle_complete(review):
     if review.get("unfinished_turns"):
         return False
-    if review.get("closed"):
-        return True
     rounds = review.get("rounds", [])
-    return bool(review.get("close_unavailable") and rounds and rounds[-1].get("outcome") == "completed")
+    if rounds:
+        return rounds[-1].get("outcome") == "completed"
+    return bool(review.get("closed"))  # Older imported records lack turn details.
 
 
 def read_review_log(log_path: Path, role: str) -> dict[str, Any]:
@@ -483,6 +491,8 @@ def validate_stage_review(report, role, required_inputs=None):
     review = report.get("stage_reviews", {}).get(role)
     if not review or review.get("status") != "pass" or not review.get("evidence", "").strip():
         raise ValueError("本环节审核尚未通过：" + role)
+    if any(not finding["resolved"] for finding in review.get("findings", [])):
+        raise ValueError("Unresolved review findings cannot pass")
     if input_hashes(review["inputs"], review.get("r_scope", "full"), review.get("source_scope", "legacy")) != review["inputs"]:
         raise ValueError("审核输入已变化，须复核受影响部分：" + role)
     if required_inputs:
@@ -496,13 +506,24 @@ def validate_stage_review(report, role, required_inputs=None):
         if not review.get("limitation", "").strip():
             raise ValueError("隔离自查缺少环境限制说明")
     else:
+        if review.get("review_output"):
+            primary = report.get("primary_agent_id")
+            if not primary or not review.get("agent_id") or review["agent_id"] == primary:
+                raise ValueError("审核者身份必须明确且独立于主线程")
+            output = review["review_output"]
+            path = Path(output["path"])
+            if (str(path.resolve()) in review["inputs"] or not path.is_file()
+                    or not path.read_text(encoding="utf-8-sig").strip()
+                    or hashlib.sha256(path.read_bytes()).hexdigest() != output["sha256"]):
+                raise ValueError("审核者实际交付的结论缺失或已变化")
+            return review
         agent = review.get("prior_agent_record") or next((item for item in report.get("reviews", []) if item["agent_id"] == review.get("agent_id") and item["role"] == role), None)
         latest = max(agent.get("rounds", []), key=lambda item: parse_time(item["started_at"]), default={}) if agent else {}
         inherited_exploration = bool(agent and role in {"独立探索 A", "独立探索 B"}
                                      and agent.get("completed_exploration_inheritance"))
         if (not agent or agent["role"] != role or agent["unfinished_turns"]
                 or latest.get("outcome") != "completed"
-                or (parse_time(latest["started_at"]) < parse_time(review["started_at"])
+                or (latest.get("finished_at") and parse_time(latest["finished_at"]) < parse_time(review["started_at"])
                     and not inherited_exploration)):
             raise ValueError("缺少本轮实际完成的只读审核记录：" + role)
     return review
@@ -556,6 +577,12 @@ def command_review_stage(args):
         updated = {**prior, "status": args.result, "evidence": args.evidence,
                    "agent_id": args.agent_id, "limitation": args.isolated_reason,
                    "mode": "isolated" if args.isolated_reason else "independent", "finished_at": iso()}
+        output = getattr(args, "output", None)
+        if output:
+            path = output.resolve(strict=True)
+            if not path.read_text(encoding="utf-8-sig").strip():
+                raise ValueError("审核者实际交付的结论不能为空")
+            updated["review_output"] = {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
         findings_file = getattr(args, "findings_file", None)
         if findings_file:
             findings = json.loads(findings_file.read_text(encoding="utf-8-sig"))
@@ -659,6 +686,9 @@ def render_markdown(report: dict[str, Any]) -> str:
         lines.extend(["", f"网站全过程：{duration_text(seconds)}（{seconds:.3f} 秒，含准备、提交、排错及收口；执行中则计至当前）。"])
     if any(s.get("model_source") == "session_log" for s in stages):
         lines.extend(["", "模型取自各环节开始时的本任务日志；具体证据和推理档位保存在 JSON 中。"])
+    if report.get("stage_recording", {}).get("missing"):
+        lines.extend(["", "未登记完整的环节：" + "、".join(report["stage_recording"]["missing"]) +
+                      "。未登记不代表未执行；不补造耗时，也不代替成果验收。"])
 
     reviews = report.get("reviews", [])
     if reviews:
@@ -672,7 +702,10 @@ def render_markdown(report: dict[str, Any]) -> str:
         ])
         for review in reviews:
             models = list(dict.fromkeys(f"{r.get('model') or '未核实'} / {r.get('effort') or '未核实'}" for r in review.get("rounds", [])))
-            lifecycle = '已关闭' if review['closed'] else ('审核已完成；宿主无关闭工具' if review_lifecycle_complete(review) else '未登记关闭')
+            lifecycle = '已关闭' if review['closed'] else ('审核已完成；未登记关闭' if review_lifecycle_complete(review) else '审核未完成')
+            delivered = report.get("stage_reviews", {}).get(review["role"], {})
+            if delivered.get("status") == "pass" and delivered.get("review_output") and delivered.get("agent_id") == review.get("agent_id") and not review_lifecycle_complete(review):
+                lifecycle = "结论已交付；日志未记录完成"
             lines.append(f"| {review['role']} | {review['nickname']} | {'; '.join(models)} | {review['turn_count']} | "
                          f"{duration_text(review['running_seconds'])} | "
                          f"{duration_text(review['between_rounds_seconds'])} | "
@@ -725,6 +758,9 @@ def render_markdown(report: dict[str, Any]) -> str:
                 lines.append("  沿用当前输入未变的既有结论，不计本轮新增审核耗时：" + review["reused_from"])
             if review.get("evidence"):
                 lines.append("  实际结论：" + review["evidence"])
+            if review.get("review_output"):
+                lines.append("  审核者原始交付：" + review["review_output"]["path"] +
+                             "；此交付不提供模型、轮次或耗时。程序核对文件与输入绑定，交付来源由执行者核实。")
             history = report.get("stage_review_history", {}).get(role, [])
             if history:
                 rounds = [*history, review]
@@ -815,6 +851,7 @@ def command_init(args: argparse.Namespace) -> dict[str, Any]:
         "topic_name": args.topic_name,
         "task": args.task,
         "workflow": getattr(args, "workflow", "full_definition"),
+        "primary_agent_id": os.environ.get("CODEX_THREAD_ID", ""),
         "status": "running",
         "started_at": iso(),
         "finished_at": None,
@@ -1045,8 +1082,12 @@ def command_finish(args: argparse.Namespace) -> dict[str, Any]:
     if running and running != ["website_closure"]:
         raise SystemExit("仍有执行中的环节：" + ", ".join(running))
     if args.status in ("completed", "completed_with_issues"):
-        if any(not review_lifecycle_complete(review) for review in report.get("reviews", [])):
-            raise SystemExit("仍有审核会话未登记关闭；先关闭不再需要的会话并更新记录。")
+        for agent in report.get("reviews", []):
+            if not review_lifecycle_complete(agent):
+                review = report.get("stage_reviews", {}).get(agent["role"], {})
+                if not review.get("review_output") or review.get("agent_id") != agent.get("agent_id"):
+                    raise SystemExit("仍有审核工作未完成；不能标记完成。")
+                validate_stage_review(report, agent["role"])
         if any(issue["status"] == "open" for issue in report["issues"]):
             raise SystemExit("仍有未解决的问题；不能标记完成。")
         latest = {stage["stage_id"]: stage for stage in report["stages"]}
@@ -1303,7 +1344,8 @@ def command_check(args: argparse.Namespace) -> dict[str, Any]:
         raise SystemExit("Report has no finished_at; historical completion cannot be checked.")
     validate_full_definition_completion(report, parse_time(report["finished_at"]))
     return {"ok": True, "scope": "registration_only", "read_only": True,
-            "report": str(args.report), "historical_quality_verified": False}
+            "report": str(args.report), "historical_quality_verified": False,
+            "stage_recording": report.get("stage_recording")}
 
 
 def command_metrics(args):
@@ -1466,6 +1508,7 @@ def build_parser() -> argparse.ArgumentParser:
             stage_review.add_argument("--input", action="append", required=True)
             stage_review.add_argument("--r-scope", choices=("full", "public"), default="full", help="Bind business code before # 输出; backend generation remains subject to output tests.")
         if name == "review-result":
+            stage_review.add_argument("--output", type=Path, help="Actual independent reviewer response; log telemetry is optional")
             stage_review.add_argument("--findings-file", type=Path, help="Optional actual findings JSON; [] explicitly records zero findings")
             stage_review.add_argument("--evidence", required=True)
             stage_review.add_argument("--result", choices=("pass", "blocked"), required=True)

@@ -14,7 +14,7 @@
    - 新发现研究缺口时，只返回有关探索问题。
    - 集中返回具体发现、未决问题和结论。
    - 不修改成果、不重跑生产、不操作网站，也不代主执行者补基本材料。
-3. **先登记本轮结论。** 导入角色日志，以 `review-result` 保存本轮实际发现及 pass/blocked 结论；登记成功后才能修改绑定成果。
+3. **先登记本轮结论。** 保存审核者实际交回的原文，以 `review-result --output <原始交付文件> --agent-id <审核者ID>` 登记发现及 pass/blocked 结论；登记成功后再修改绑定成果。不用主执行者自写的结论代替代理交付。
    - 字段填写错误只修记录格式，保留原结论，不重做内容复核。
    - 未读到材料、任务未送达、中止或宿主不能提供独立角色时，记为未完成。
    - 不用隔离自查替代独立复核；可继续不依赖结论的准备工作。
@@ -36,7 +36,7 @@
 - 旧记录按原范围校验；局部更新入口在修改前核实其仍有效后，才保存沿用依据，不事后放宽旧结论。
 
 - 返修先review-check；输入未变且当前合格才沿用，否则复查受影响部分。
-- review-import登记实际会话，review-result登记内容结论，二者不互相代替。
+- review-result登记实际内容结论及输入版本；review-import可补充会话时间和模型信息，不是必经步骤。程序核对身份不同、文件未变及结论完整；执行者仍须核实交付确实来自该代理、对应本轮输入。
 - 同一代理复用到不同角色时，按代理身份和角色分别保留导入记录及所选真实轮次；新角色不覆盖先前角色，完成验证仍核对对应角色、时间和稳定输入。
 - 没有发现也可通过，但必须实际完成判断。
 
@@ -44,7 +44,7 @@
 
 - 当前任务自己主执行，不另派代理承担整个主题，不为环节创建可见任务。
 - 探索使用下面的两个独立角色；R复核在输入稳定后创建，同主题返修复用。
-- 完成后实际关闭再用review-import --closed登记；宿主无关闭工具时，仅最后轮已完成才能登记--close-unavailable及限制，不冒充已关闭。
+- 完成后关闭不用的角色。有日志时可用review-import --closed记录；没有关闭工具就如实说明。角色已完成与角色已关闭分开，不因缺关闭记录重做审核。
 
 主线程沿用用户当前设置，不为切换模型创建新任务。
 内部独立探索和 R 复核默认明确指定 `gpt-6.1-sol`、`medium`；用户本次另有指定时优先采用用户设置，不省略参数而继承主线程配置。
@@ -56,6 +56,8 @@
 
 原目录不可访问时复制所需文件到可访问工作区，记录原路径和副本并核对SHA-256；绑定原件、读取一致副本。派发自包含任务，确认收到且能读取；送达失败重发本任务，不能把空回复当结论。
 
+直接使用审核者原始交付；输出文件沿用当前版本，不为登记再复制一份。以下日志入口仅在需要补充可核实的耗时或模型信息时使用。
+
 ```powershell
 & $Python -X utf8 scripts/execution_report.py find-log --sessions-root $SessionsRoot --agent-id $AgentId --parent-id $ParentId
 & $Python -X utf8 scripts/execution_report.py review-import --process-dir $Process --log $AgentLog --role "公开 R 复核"
@@ -63,8 +65,8 @@
 ```
 
 - 只定位明确agent的日志并验证身份；多个续写文件选含本次完整轮次的日志，不猜最新文件或扫描整段历史。
-- fork日志需独立会话身份、forked_from_id及真实起止事件；控制台JSONL不能替代session日志。
-- 定位或导入失败修交接，不重做内容审核；绑定必须早于实际复核。
+- 导入日志计算耗时时，须有真实身份及起止事件；不能用控制台输出伪造计时。
+- 日志不可用时沿用审核者原始交付，不反复定位日志或重做审核。输入须在实际复核前稳定；代理会话开始早于绑定，不等于实际复核开始早于绑定。
 
 --read-only不登记复用或修改报告。R预检可先通过并提示复核未就绪，这不表示正式生成已获准。计时及用量含义按[执行报告](execution-report.md#时间口径)。
 
@@ -87,8 +89,7 @@
 
 ```powershell
 & $Python scripts/execution_report.py exploration-start --process-dir $Process --input <共同任务说明文件>
-# 两个代理分别探索并交付后，用各自真实日志登记；下面A，B同样执行。
-& $Python scripts/execution_report.py review-import --process-dir $Process --role "独立探索 A" --log <A真实日志> --close-unavailable <确无关闭工具时的真实限制>
+# 两个代理分别探索并交付后，直接登记各自原始输出；下面A，B同样执行。
 & $Python scripts/execution_report.py exploration-result --process-dir $Process --branch a --agent-id <A真实身份> --output <A独立结果文件> --evidence <实际交付范围及未决问题>
 # 主线程在既有探索记录中保存比较、取舍、共同缺口、依据性质和下游方案，不要求两路一致。
 & $Python scripts/execution_report.py exploration-merge --process-dir $Process --record <definition_search_record.json> --decision <本轮合并结论文件> --result ready
@@ -102,7 +103,7 @@
 - 已有当前探索只允许同输入、没有结果/合并且未启动新代理轮次的空pending登记，加 `--replace-reason <失败登记的实际替换理由>` 后替换并留存history；其它冲突拒绝替换。
 - 原报告随后变化会使沿用失效。
 
-- 有关闭工具时实际关闭后用--closed，不照抄关闭限制；代理日志读取、身份与结束状态沿用本页规则。
+- 有关闭工具时实际关闭，不照抄关闭限制；日志只用于补充可核实的会话信息。
 - exploration-result只登记实际探索完成，不认可该路方案。
 - 两路都须独立完成；主线程比较后才可ready。
 - 有影响当前方案的未决问题使用--result blocked并逐项--unresolved，不能用两路相同结论掩盖共同缺口。

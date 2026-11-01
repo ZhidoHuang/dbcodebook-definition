@@ -155,7 +155,7 @@ RAND HRS 和 Harmonized HRS 是独立产品，只能作为明确标注的辅助�
 
 每次修改规则后，沿相关引用核对入口、阶段规则、数据库差异、模板、示例和程序：检查适用条件、例外、要求强度及执行顺序是否冲突，修正受影响之处，不只检查改动句子。
 
-共享机制修改或仓库发布时，运行 `tests/run_all.ps1`，使用本机配置的程序及已安装 skill-creator 的 `quick_validate.py`（通过 `-SkillValidator` 传入）。
+共享机制修改或仓库发布时，运行 `tests/run_all.ps1 -RequireComplete`，使用本机配置的程序及已安装 skill-creator 的 `quick_validate.py`（通过 `-SkillValidator` 传入）。未运行的检查须明确列出，不能报全部通过。
 将本次共享变更的实际检查及未验证范围记入[维护验证记录](tests/maintenance/validation-history.md)，详细日志留维护过程目录。普通主题完成时只更新主题记录。
 
 发布到 GitHub 后，核对远端目标分支包含本次提交，再汇报“已同步”及提交号。仅本机保存、提交或测试通过，不表示已发布。新设备排查版本差异时，核对实际使用的 Skill 路径、提交号及未提交修改，不只核对仓库名称。

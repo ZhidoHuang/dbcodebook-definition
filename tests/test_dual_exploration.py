@@ -101,7 +101,7 @@ with tempfile.TemporaryDirectory() as temp:
     assert saved.read_bytes() == initial
     cli("exploration-start", "--process-dir", process, "--input", request)
     initial = saved.read_bytes()
-    cli("exploration-result", "--process-dir", process, "--branch", "a", "--agent-id", "no-log",
+    cli("exploration-result", "--process-dir", process, "--branch", "a", "--agent-id", "primary-test",
         "--output", root / "a.md", "--evidence", "test", ok=False)
     assert saved.read_bytes() == initial
     cli("exploration-start", "--process-dir", process, "--input", request)
@@ -117,6 +117,10 @@ with tempfile.TemporaryDirectory() as temp:
     for branch in ROLES:
         cli("exploration-result", "--process-dir", process, "--branch", branch, "--agent-id", branch,
             "--output", root / (branch + ".md"), "--evidence", "Synthetic independent fixture completed")
+    # Original output and distinct reviewer identity suffice without session logs.
+    current = json.loads(saved.read_text(encoding="utf-8"))
+    current["reviews"] = []
+    saved.write_text(json.dumps(current), encoding="utf-8")
     cli("exploration-merge", "--process-dir", process, "--record", plan,
         "--decision", decision, "--result", "blocked", "--unresolved", "Method choice pending")
     cli("exploration-check", "--process-dir", process, ok=False)
@@ -152,8 +156,8 @@ with tempfile.TemporaryDirectory() as temp:
     assert continued_path.read_bytes() == before
     for change in (
         lambda bad: bad.update(database="another"),
-        lambda bad: bad["reviews"][0].update(unfinished_turns=1),
-        lambda bad: bad["reviews"][0]["rounds"][0].update(outcome="aborted"),
+        lambda bad: bad["stage_reviews"][ROLES["a"]].update(status="blocked"),
+        lambda bad: bad["stage_reviews"][ROLES["a"]]["review_output"].update(sha256="0" * 64),
         lambda bad: bad["stage_reviews"][ROLES["a"]].update(agent_id="primary-test"),
         lambda bad: bad["exploration"]["branches"]["b"].update(agent_id="a"),
     ):
@@ -181,7 +185,9 @@ with tempfile.TemporaryDirectory() as temp:
     pending = json.loads(pending_bytes)
     reuse(False)
     active = copy.deepcopy(pending)
-    active["reviews"] = copy.deepcopy(original["reviews"])
+    active["reviews"] = copy.deepcopy(report["reviews"])
+    for agent in active["reviews"]:
+        agent["unfinished_turns"] = 1
     continued_path.write_text(json.dumps(active), encoding="utf-8")
     reuse(False, "--replace-reason", "failed pending registration")
     continued_path.write_bytes(pending_bytes)
