@@ -675,8 +675,13 @@ def validate_result_check(formal_dir: Path, process_dir: Path, artifacts: dict) 
             or not record.get("checks") or not all(item.get("ok") is True for item in record["checks"])):
         fail("result_check.json 不是完整结果检查通过记录")
     recorded = record.get("artifacts", {})
-    if record.get("checker_sha256") != sha256_file(Path(__file__).with_name("check_definition_output.py")):
-        fail("结果检查程序已经变化，请用当前完整检查重新核对成果")
+    historical = record.get('validation_mode') in {'period_display', 'copy_sections'} or 'copy_sections' in record
+    if historical:
+        if record.get("checker_sha256") != sha256_file(Path(__file__).with_name("check_definition_output.py")):
+            fail("结果检查程序已经变化，请用当前完整检查重新核对成果")
+    else:
+        from result_check_binding import validate_binding
+        validate_binding(record, Path(__file__).parent)
     source_path = process_dir / SOURCE_RECORD_NAME
     if not source_path.is_file() or record.get("source_sha256") != sha256_file(source_path):
         fail("结果检查的来源方案已变化")

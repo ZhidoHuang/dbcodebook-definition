@@ -1979,6 +1979,9 @@ def check_forbidden_formal_content(formal_dir: Path, forbidden: set[str], result
 def main() -> int:
     args = parse_args()
     results: list[dict] = []
+    if args.complete:
+        from result_check_binding import make_binding
+        checker_binding = make_binding()
     if args.public_r_script is not None:
         source = args.public_r_script.read_text(encoding="utf-8-sig")
         boundary = re.search(r"(?m)^# 输出\s*$", source)
@@ -2416,6 +2419,8 @@ def main() -> int:
 
     check_logs(formal_dir, args.log_prefix, args.require_log_exit_code, results)
 
+    if args.complete and make_binding() != checker_binding:
+        fail(results, "result-check program stability", "检查期间程序依赖变化，请重新运行输出检查")
     passed = all(item["ok"] for item in results)
     payload = {"ok": passed, "scope": "complete" if args.complete else "partial",
                "status": ("MACHINE_CHECK_PASS" if args.complete else "PARTIAL_CHECK_PASS") if passed else "CHECK_FAILED",
@@ -2430,6 +2435,7 @@ def main() -> int:
         payload["analysis_vars"] = split_csv(args.analysis_vars)
         payload["source_sha256"] = hashlib.sha256((args.process_dir / "definition_search_record.json").read_bytes()).hexdigest().upper()
         payload["checker_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest().upper()
+        payload["checker_binding"] = checker_binding
     text = json.dumps(payload, ensure_ascii=False, indent=2)
     print(text)
     if args.report:

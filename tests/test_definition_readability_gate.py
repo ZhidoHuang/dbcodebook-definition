@@ -103,12 +103,14 @@ def initialize_fixture_audit(checker, formal, process, topic, files, **kwargs):
     source = process / checker.SOURCE_RECORD_NAME
     if not source.exists():
         checker.write_json(source, {"schema_version": 1})
+    from result_check_binding import make_binding
     checker.write_json(process / checker.RESULT_CHECK_NAME, {
         "ok": True, "scope": "complete", "status": "MACHINE_CHECK_PASS",
         "checks": [{"ok": True, "check": "isolated audit fixture"}],
         "artifacts": {name: checker.sha256_file(formal / name) for name in files.values()},
         "source_sha256": checker.sha256_file(source),
         "checker_sha256": checker.sha256_file(REPO_ROOT / "scripts/check_definition_output.py"),
+        "checker_binding": make_binding(),
     })
     result = checker.initialize_audit(formal, process, topic, files, **kwargs)
     audit_path = process / checker.AUDIT_NAME

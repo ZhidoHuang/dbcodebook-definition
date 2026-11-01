@@ -3,14 +3,17 @@
 import copy
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import check_definition_readability as review
 from check_reader_copy import read_questionnaire_copy, questionnaire_text, compare_content
+from result_check_binding import make_binding
 
 
 def rejects(action, message):
@@ -20,6 +23,65 @@ def rejects(action, message):
         assert message in str(error), str(error)
     else:
         raise AssertionError("Expected rejection: " + message)
+
+
+def check_program_binding(root, formal, process, artifacts, result):
+    # Mutate only temporary copies, then use the actual delivery gate.
+    scripts = root / "skill" / "scripts"
+    scripts.mkdir(parents=True)
+    for key in result["checker_binding"]["logic"]:
+        relative = Path("scripts") / key.split(":")[0] if ":" in key else Path(key)
+        destination = scripts.parent / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / relative, destination)
+    assert make_binding(scripts) == result["checker_binding"]
+    receipt = process / review.RESULT_CHECK_NAME
+    with patch.object(review, "__file__", str(scripts / "check_definition_readability.py")):
+        check = lambda: review.validate_result_check(formal, process, artifacts)
+        main = scripts / "check_definition_output.py"
+        main.write_text(main.read_text(encoding="utf-8-sig") + "\n# comment only\n\n", encoding="utf-8")
+        assert check()["scope"] == "complete"
+        helper = scripts / "definition_display.py"
+        original = helper.read_text(encoding="utf-8-sig")
+        helper.write_text(original.replace("original_bytes = path.read_bytes()", "original_bytes = b'uncalled'"), encoding="utf-8")
+        assert check()["scope"] == "complete", "Unused period-rewrite body invalidated the result"
+        helper.write_text(original.replace('def resolve_display_policy(text, analysis_vars=None, record=None):',
+            'def resolve_display_policy(text, analysis_vars=None, record=None):\n    raise ValueError("changed rule")'), encoding="utf-8")
+        rejects(check, "definition_display.py:resolve_display_policy")
+        helper.write_text(original.replace('def _variables(value):',
+            'def _variables(value):\n    raise ValueError("changed nested helper")'), encoding="utf-8")
+        rejects(check, "definition_display.py:_variables")
+        helper.write_text(original, encoding="utf-8")
+        deeper = scripts / "check_reader_copy.py"
+        original_deeper = deeper.read_text(encoding="utf-8-sig")
+        deeper.write_text(original_deeper.replace(
+            'NO_INSIGHT = "本主题没有需要单独提示的主题级边界"', 'NO_INSIGHT = "changed constant"'), encoding="utf-8")
+        rejects(check, "check_reader_copy.py:@module")
+        deeper.write_text(original_deeper, encoding="utf-8")
+        extra = scripts / "new_helper.py"
+        extra.write_text("def check():\n    return False\n", encoding="utf-8")
+        helper.write_text(original.replace('def resolve_display_policy(text, analysis_vars=None, record=None):',
+            'def resolve_display_policy(text, analysis_vars=None, record=None):\n    from new_helper import check\n    check()'), encoding="utf-8")
+        added = make_binding(scripts)
+        assert "new_helper.py:check" in added["logic"]
+        rejects(check, "结果检查逻辑已变化")
+        helper.write_text(original, encoding="utf-8")
+        routing = scripts.parent / "references/database-routing.json"
+        routing_original = routing.read_text(encoding="utf-8-sig")
+        routing.write_text(json.dumps(json.loads(routing_original), ensure_ascii=False, indent=4), encoding="utf-8")
+        assert check()["scope"] == "complete"
+        routing.write_text("{}", encoding="utf-8")
+        rejects(check, "references/database-routing.json")
+        routing.write_text(routing_original, encoding="utf-8")
+        helper.unlink()
+        rejects(check, "结果检查逻辑已变化")
+        helper.write_text(original, encoding="utf-8")
+        legacy = dict(result)
+        legacy.pop("checker_binding")
+        receipt.write_text(json.dumps(legacy), encoding="utf-8")
+        rejects(check, "缺少程序依赖记录")
+        receipt.write_text(json.dumps(result), encoding="utf-8")
+        assert check()["scope"] == "complete"
 
 
 def main():
@@ -64,7 +126,8 @@ def main():
         result = {"ok": True, "scope": "partial", "status": "PARTIAL_CHECK_PASS", "checks": [{"ok": True}],
                   "artifacts": {note.name: artifacts["note"]["sha256"]},
                   "source_sha256": review.sha256_file(process / review.SOURCE_RECORD_NAME),
-                  "checker_sha256": review.sha256_file(ROOT / "scripts/check_definition_output.py")}
+                  "checker_sha256": review.sha256_file(ROOT / "scripts/check_definition_output.py"),
+                  "checker_binding": make_binding()}
         path = process / review.RESULT_CHECK_NAME
         path.write_text(json.dumps(result), encoding="utf-8")
         rejects(lambda: review.validate_result_check(formal, process, artifacts), "不是完整")
@@ -72,6 +135,12 @@ def main():
         result.update(scope="complete", status="MACHINE_CHECK_PASS")
         path.write_text(json.dumps(result), encoding="utf-8")
         assert review.validate_result_check(formal, process, artifacts)["scope"] == "complete"
+        check_program_binding(root, formal, process, artifacts, result)
+        source_path = process / review.SOURCE_RECORD_NAME
+        original_source = source_path.read_bytes()
+        source_path.write_bytes(original_source + b"\n")
+        rejects(lambda: review.validate_result_check(formal, process, artifacts), "来源方案已变化")
+        source_path.write_bytes(original_source)
         note.write_text("Changed", encoding="utf-8")
         rejects(lambda: review.validate_result_check(formal, process, artifacts), "已变化")
 
