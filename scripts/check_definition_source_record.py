@@ -12,8 +12,9 @@ import zipfile
 from itertools import zip_longest
 from pathlib import Path, PureWindowsPath
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from questionnaire_display import requires_questionnaire_display, is_plain_paraphrase, validate_paraphrase
+from questionnaire_display import requires_questionnaire_display, is_plain_paraphrase, validate_paraphrase, validate_uncoded_options
 from local_source_evidence import validate_local_evidence
+from published_source_acceptance import validate as validate_published_source
 from definition_display import topic_kind
 
 
@@ -63,7 +64,7 @@ QUESTION_RESPONSE_TYPES = {
     "interviewer_instruction",
 }
 QUESTION_SKIP_STATUSES = {"recorded", "none", "unknown"}
-QUESTION_COVERAGE_STATUSES = {"questionnaire", "not_applicable"}
+QUESTION_COVERAGE_STATUSES = {"questionnaire", "not_applicable", "published_origin_unknown"}
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 DATABASE_ROUTING = json.loads(
     (SKILL_ROOT / "references" / "database-routing.json").read_text(encoding="utf-8-sig")
@@ -366,6 +367,7 @@ def validate_questionnaire_evidence(
         if item.get("options_complete") is not True:
             fail(f"{field}.options_complete must be true")
 
+        validate_uncoded_options(item)
         skip_status = item.get("skip_logic_status")
         if skip_status not in QUESTION_SKIP_STATUSES:
             fail(
@@ -511,6 +513,10 @@ def validate_questionnaire_evidence(
         if not isinstance(evidence_ids, list):
             fail(f"{field}.evidence_ids must be a list")
         reason = nonempty_text(item.get("reason"), f"{field}.reason")
+        if status == "published_origin_unknown":
+            if evidence_ids:
+                fail("Unknown published source cannot invent questionnaire evidence")
+            continue
         if status == "not_applicable":
             if evidence_ids:
                 fail(f"{field} not_applicable coverage cannot reference questions")
@@ -777,7 +783,7 @@ def read_selection_vars(path: Path) -> list[str]:
     return values
 
 
-def validate_logic_review(record: dict) -> None:
+def validate_logic_review(record: dict, published_verified=None) -> None:
     schema_version = record.get("schema_version")
     review = record.get("logic_review")
     if not isinstance(review, dict):
@@ -785,12 +791,18 @@ def validate_logic_review(record: dict) -> None:
     required = list(REQUIRED_LOGIC_CHECKS)
     if schema_version >= 3:
         required.extend(REQUIRED_V3_LOGIC_CHECKS)
-    if schema_version >= 7:
+    if schema_version >= 7 and not published_verified:
         required.extend(REQUIRED_V7_LOGIC_CHECKS)
+    if published_verified:
+        if review.get('questionnaire_paths_closed') is not None:
+            fail('Unknown published origins require questionnaire_paths_closed=null, never a proof claim')
+        if review.get('operational_assignment_paths_closed') is not True:
+            fail('logic_review.operational_assignment_paths_closed must be true')
     for field in required:
         if review.get(field) is not True:
             fail(f"logic_review.{field} must be true")
-    if review.get("result") not in LOGIC_RESULTS:
+    allowed_results = LOGIC_RESULTS | ({'reported_bounded_unknown'} if published_verified else set())
+    if review.get("result") not in allowed_results:
         fail(f"logic_review.result must be one of {sorted(LOGIC_RESULTS)}")
     issues = record.get("logic_issues")
     if not isinstance(issues, list):
@@ -800,9 +812,10 @@ def validate_logic_review(record: dict) -> None:
             fail(f"logic_issues[{index}] must be an object")
         for field in ("description", "impact", "reported_to_user_at", "decision"):
             nonempty_text(issue.get(field), f"logic_issues[{index}].{field}")
-        if issue.get("status") not in RESOLVED_ISSUE_STATUSES:
+        bounded_unknown = published_verified and issue.get('status') == 'reported_bounded_unknown' and issue.get('scope') == 'published_generation_unknown'
+        if issue.get("status") not in RESOLVED_ISSUE_STATUSES and not bounded_unknown:
             fail(f"logic_issues[{index}] is unresolved and must be reported")
-    if issues and review["result"] != "reported_and_resolved":
+    if issues and review["result"] not in ({'reported_and_resolved','reported_bounded_unknown'} if published_verified else {'reported_and_resolved'}):
         fail("logic_review.result must be reported_and_resolved when issues exist")
 
 
@@ -1074,7 +1087,10 @@ def validate_directory_entries(directories, database, local_evidence=None):
             fail(
                 f"directory_entries[{index}].full_path is not a full {database} data path"
             )
-        if local_evidence is not None:
+        if local_evidence is not None and local_evidence.get('mixed') and item.get('verified_in_ui') is True:
+            if item.get('verified_in_local_dictionary') is True or full_path not in local_evidence['web_directories']:
+                fail('Web directory not supported by its own receipt')
+        elif local_evidence is not None:
             if item.get('verified_in_ui') is not False or item.get('verified_in_local_dictionary') is not True:
                 fail('Local directory must be marked as local, not as a website observation')
             if full_path not in local_evidence['directories']:
@@ -1155,6 +1171,7 @@ def validate_record(
     selection: list[str] | None = None,
 ) -> dict:
     record = load_json(record_path)
+    published_source = validate_published_source(record, record_path)
     topic_kind(record.get("topic_kind", "standard"))
     pre_download = selection is not None
     source = "" if pre_download else r_script_path.read_text(encoding="utf-8")
@@ -1168,7 +1185,7 @@ def validate_record(
         fail("local_dictionary source_access requires schema_version 7")
     if str(record.get("topic_id", "")).zfill(3) != topic_id:
         fail(f"topic_id must be {topic_id}")
-    if record.get("status") != READY_STATUS:
+    if record.get("status") != READY_STATUS and not (published_source and record.get('status')=='READY_OPERATIONAL_PUBLISHED_UNKNOWN'):
         fail(f"status must be {READY_STATUS}")
     url = nonempty_text(record.get("dbcodebook_url"), "dbcodebook_url")
     if nonempty_text(record.get("database"), "database").upper() == "NHIS":
@@ -1341,12 +1358,18 @@ def validate_record(
         if mode == "local_dictionary":
             if local_evidence is None:
                 fail('local_dictionary discovery requires bound local evidence')
+            if local_evidence.get('mixed') and value not in local_evidence['directories'] and value not in local_evidence['keywords']:
+                fail('Mixed local discovery must have local evidence')
             if value not in directory_paths and value not in local_evidence['keywords']:
                 fail('Local discovery value must reference a recorded directory or search')
         elif mode == "directory":
+            if local_evidence and local_evidence.get('mixed') and value not in local_evidence['web_directories']:
+                fail('Mixed web directory requires its own receipt')
             if value not in directory_paths:
                 fail(f"source_groups[{index}] uses an unrecorded directory")
         elif mode == "ordinary_search":
+            if local_evidence and local_evidence.get('mixed') and value not in local_evidence['web_keywords']:
+                fail('Mixed web search requires its own receipt')
             if value not in search_keywords:
                 fail(f"source_groups[{index}] uses an unrecorded search keyword")
         else:
@@ -1523,7 +1546,7 @@ def validate_record(
     if unrecorded_paths:
         fail(f"R summary uses directories absent from source evidence: {unrecorded_paths}")
 
-    validate_logic_review(record)
+    validate_logic_review(record, published_source)
     issues = record["logic_issues"]
     result = record["logic_review"]["result"]
 
@@ -1538,6 +1561,7 @@ def validate_record(
         "evidence_reviews": len(evidence_reviews),
         "questionnaire_evidence": questionnaire_summary,
         "questionnaire_path_closure": path_closure_summary,
+        **({'published_operational_assignment': {'status':'exhaustive','unclassified_persons':0,'result_anchor_pairs':len(published_source['assignment_pairs']),'generation_origin':'unknown'}} if published_source else {}),
         "raw_variables": len(raw_vars),
         "analysis_vars": approved_names,
         "logic_issues": len(issues),

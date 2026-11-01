@@ -31,14 +31,14 @@ def main():
     names = [f"Lab_v{i}" for i in range(31)]
     names[-1] = "Lab_v30.ng_ml"
     module = "---\ntopic_kind: module\n---\n"
-    for text, variables, compact in ((module, names[:10], False), (module, names[:11], True), (module, names, True), ("", names, False)):
+    for text, variables, compact in ((module, names[:10], False), (module, names[:11], False), (module, names, False), ("", names, False)):
         policy = resolve_display_policy(text, variables)
         assert policy["compact_module"] is compact
         assert policy["analysis_vars"] == variables
     rejects(lambda: resolve_display_policy(module), "实际 analysis_vars")
     rejects(lambda: resolve_display_policy(module, names, {"approved_analysis_vars": names}), "topic_kind")
     record = {"topic_kind": "module", "approved_analysis_vars": names}
-    assert resolve_display_policy(module, record=record)["compact_module"]
+    assert not resolve_display_policy(module, record=record)["compact_module"]
     rejects(lambda: resolve_display_policy(module, names[::-1], record), "顺序")
     rejects(lambda: resolve_display_policy(module, names + names[:1]), "duplicates")
     rejects(lambda: resolve_display_policy("---\ntopic_kind: compact\n---\n", names), "topic_kind")
@@ -57,23 +57,20 @@ def main():
         path, output = folder / "文案.md", folder / "笔记.md"
         path.write_text(module + body, encoding="utf-8")
         output.write_text(note, encoding="utf-8")
+        rejects(lambda: read_copy(path, names, record), "Criteria")
+        from test_reader_copy import render_note
+        fields = {"定义": "检测的发布数值。", "定义逻辑": "保留发布的检测数值。", "分类": "- [数值] 检测单位。"}
+        criteria = {v: dict(fields) for v in names}
+        blocks = "## Criteria\n\n" + "\n\n".join("### " + v + "\n\n" + "\n\n".join("#### " + k + "\n\n" + t for k,t in fields.items()) for v in names)
+        path.write_text(module + body.replace("## 小book提示", blocks + "\n\n## 小book提示"), encoding="utf-8")
         copy = read_copy(path, names, record)
-        assert copy["criteria"] == {} and copy["criteria_intro"] == ""
+        assert list(copy["criteria"]) == names
+        output.write_text(render_note(copy), encoding="utf-8")
         assert validate_note(path, output, record=record)["variables"] == names
-        rendered = dict(copy, criteria=[])
-        assert compare_content(copy, rendered)["variables"] == names
-        rejects(lambda: compare_content(copy, dict(copy, criteria={"extra": {}})), "Criteria")
-        output.write_text(note + "\n## 定义\n", encoding="utf-8")
-        rejects(lambda: validate_note(path, output, record=record), "不生成")
-        output.write_text(note + "\n<table><tr><th>Definition</th><th>Criteria</th><th>detail</th></tr></table>\n", encoding="utf-8")
-        rejects(lambda: validate_note(path, output, record=record), "不生成")
-        path.write_text(module + body + "\n## Criteria\n", encoding="utf-8")
-        rejects(lambda: read_copy(path, names, record), "不编写 Criteria")
-        path.write_text(module + body, encoding="utf-8")
-        rejects(lambda: read_copy(path, names[:10]), "Criteria")
-        path.write_text(body, encoding="utf-8")
-        rejects(lambda: read_copy(path, names), "Criteria")
-        path.write_text(module + body, encoding="utf-8")
+        rejects(lambda: compare_content(copy, dict(copy, criteria={})), "Criteria")
+        output.write_text(note, encoding="utf-8")
+        rejects(lambda: validate_note(path, output, record=record), "定义表")
+        output.write_text(render_note(copy), encoding="utf-8")
         exported = folder / "copy.json"
         run = subprocess.run([sys.executable, "-X", "utf8", str(ROOT / "scripts/check_reader_copy.py"),
             "--copy", str(path), "--analysis-vars", ",".join(names), "--export", str(exported)],

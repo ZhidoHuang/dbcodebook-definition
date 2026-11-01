@@ -337,8 +337,7 @@ validate_definition_display_policy <- function(display_policy, analysis_vars) {
       !display_policy$topic_kind %in% c("module", "standard", "questionnaire_module") ||
       !is.logical(display_policy$compact_module) || length(display_policy$compact_module) != 1L ||
       is.na(display_policy$compact_module)) stop("Invalid definition display_policy.")
-  expected_compact <- identical(display_policy$topic_kind, "module") && length(analysis_vars) > 10L
-  if (!identical(display_policy$compact_module, expected_compact)) stop("display_policy compact flag differs from topic kind and result count.")
+  if (isTRUE(display_policy$compact_module)) stop("All final variables require Criteria; reload the current reader copy.")
   display_policy
 }
 
@@ -348,8 +347,7 @@ read_definition_copy <- function(analysis_vars, path = "文案.md") {
   definition_copy_check(path, export = exported, analysis_vars = analysis_vars)
   copy <- jsonlite::read_json(exported)
   display_policy <- validate_definition_display_policy(copy$display_policy, analysis_vars)
-  compact_module <- !is.null(display_policy) && isTRUE(display_policy$compact_module)
-  if (!compact_module && !identical(names(copy$criteria), analysis_vars)) {
+  if (!identical(names(copy$criteria), analysis_vars)) {
     stop("文案 Criteria 的变量或顺序与 analysis_vars 不一致。")
   }
   paragraphs <- function(text) strsplit(text, "\n[[:blank:]]*\n", perl = TRUE)[[1]]
@@ -764,7 +762,6 @@ render_definition_bundle <- function(
     mhas_analysis_scope = NULL,
     component_card_labels = NULL) {
   display_policy <- validate_definition_display_policy(display_policy, analysis_vars)
-  compact_module <- !is.null(display_policy) && isTRUE(display_policy$compact_module)
   database <- toupper(database)
   if (!is.null(medicine_codebook)) {
     extract_codebook <- raw_codebook
@@ -900,7 +897,7 @@ render_definition_bundle <- function(
     result_display_names = if (missing(analysis_codebook)) NULL else
       as.list(setNames(as.character(analysis_codebook$Label), analysis_codebook$Variable)),
     summary = render_summary_entry_paragraph(summary_entry, theme_color),
-    criteria = if (compact_module) structure(list(), names = character()) else as.list(criteria[analysis_vars]),
+    criteria = as.list(criteria[analysis_vars]),
     criteria_intro = paste(render_criteria_intro(criteria_intro), collapse = ""),
     definition_basis = definition_basis,
     insight = paste(summary_insight_items, collapse = "\n\n"),
@@ -927,13 +924,11 @@ render_definition_bundle <- function(
     )
   }
   stopifnot(identical(analysis_vars, analysis_codebook$Variable))
-  if (!compact_module) {
-    stopifnot(all(analysis_vars %in% names(criteria)))
-    stopifnot(all(nzchar(criteria[analysis_vars])))
-    validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars,
-      trimws(sub("[[:space:]]*\\(.*$", "", as.character(raw_codebook$Variable))))),
-                             lapply(analysis_data[analysis_vars], unique))
-  }
+  stopifnot(all(analysis_vars %in% names(criteria)))
+  stopifnot(all(nzchar(criteria[analysis_vars])))
+  validate_criteria_markup(criteria[analysis_vars], unique(c(raw_vars, analysis_vars,
+    trimws(sub("[[:space:]]*\\(.*$", "", as.character(raw_codebook$Variable))))),
+                           lapply(analysis_data[analysis_vars], unique))
   formatted_card_sources <- format_definition_card_sources(
     analysis_codebook, raw_codebook, codebook,
     default_sources = if (database == "CHARLS") {
@@ -1113,57 +1108,52 @@ render_definition_bundle <- function(
   )
 
   definition_path <- paste0(database, "_", file_stem, "_definition.html")
-  if (compact_module) {
-    # Remove only this generated artifact if a previous full render left it behind.
-    if (file.exists(definition_path)) unlink(definition_path)
-  } else {
-    definition_data <- meta_df[
-      meta_df$Variable %in% analysis_vars,
-      c("Variable", "original_vars", "detail")
-    ]
-    definition_data <- definition_data[
-      match(analysis_vars, definition_data$Variable),
-    ]
-    definition_details <- generate_var_details(
-      detail_data,
-      bar_color = paste0(theme_color, "90"),
-      show_hist = TRUE,
-      hist_binwidth = hist_binwidth,
-      hist_mode = hist_mode,
-      show_distribution_nav = TRUE,
-      show_cycle_heatmap = TRUE,
-      cycle_col = "year",
-      cycle_order = display_cycles,
-      heatmap_color = theme_color
-    )
-    definition_details <- vapply(
-      definition_details,
-      append_linear_histogram_endpoint,
-      character(1)
-    )
-    if (length(date_detail_positions) > 0L) {
-      definition_details[date_detail_positions] <- gsub(
-        "Unsupported type",
-        "日期变量（近似构造）",
-        definition_details[date_detail_positions],
-        fixed = TRUE
-      )
-    }
-    names(definition_details) <- names(detail_data)
-    definition_data$detail <- unname(
-      definition_details[definition_data$Variable]
-    )
-    definition_data$Definition <- definition_data$Variable
-    definition_data$Criteria <- unname(criteria[definition_data$Variable])
-    definition_data <- definition_data[
-      c("Variable", "original_vars", "Definition", "Criteria", "detail")
-    ]
-    generate_html_definition(
-      definition_data,
-      paste0(database, "_", file_stem, "_definition.html"),
-      theme_color
+  definition_data <- meta_df[
+    meta_df$Variable %in% analysis_vars,
+    c("Variable", "original_vars", "detail")
+  ]
+  definition_data <- definition_data[
+    match(analysis_vars, definition_data$Variable),
+  ]
+  definition_details <- generate_var_details(
+    detail_data,
+    bar_color = paste0(theme_color, "90"),
+    show_hist = TRUE,
+    hist_binwidth = hist_binwidth,
+    hist_mode = hist_mode,
+    show_distribution_nav = TRUE,
+    show_cycle_heatmap = TRUE,
+    cycle_col = "year",
+    cycle_order = display_cycles,
+    heatmap_color = theme_color
+  )
+  definition_details <- vapply(
+    definition_details,
+    append_linear_histogram_endpoint,
+    character(1)
+  )
+  if (length(date_detail_positions) > 0L) {
+    definition_details[date_detail_positions] <- gsub(
+      "Unsupported type",
+      "日期变量（近似构造）",
+      definition_details[date_detail_positions],
+      fixed = TRUE
     )
   }
+  names(definition_details) <- names(detail_data)
+  definition_data$detail <- unname(
+    definition_details[definition_data$Variable]
+  )
+  definition_data$Definition <- definition_data$Variable
+  definition_data$Criteria <- unname(criteria[definition_data$Variable])
+  definition_data <- definition_data[
+    c("Variable", "original_vars", "Definition", "Criteria", "detail")
+  ]
+  generate_html_definition(
+    definition_data,
+    paste0(database, "_", file_stem, "_definition.html"),
+    theme_color
+  )
 
   clean_html <- function(path) {
     text <- readLines(path, encoding = "UTF-8", warn = FALSE)
@@ -1177,21 +1167,8 @@ render_definition_bundle <- function(
   detail_text <- paste(readLines(detail_path, encoding = "UTF-8", warn = FALSE), collapse = "\n")
   detail_text <- definition_component_titles(detail_text, component_categories$groups)
   writeLines(detail_text, detail_path, useBytes = TRUE)
-  if (compact_module) {
-    detail_path <- paste0(database, "_", file_stem, "_detail.html")
-    detail_text <- readLines(detail_path, encoding = "UTF-8", warn = FALSE)
-    detail_text <- sub('<table class="heatmap-table">',
-      '<table class="heatmap-table" data-defined-overview="true">', detail_text, fixed = TRUE)
-    for (variable in analysis_vars) {
-      escaped <- criteria_escape_code(variable)
-      target <- paste0('<span class="var-name" id="var-', escaped, '">')
-      detail_text <- sub(target, paste0('<span class="var-name" id="var-', escaped,
-        '" data-defined-variable="', escaped, '">'), detail_text, fixed = TRUE)
-    }
-    writeLines(detail_text, detail_path, useBytes = TRUE)
-  }
-  if (!compact_module) clean_html(definition_path)
-  if (!compact_module && nzchar(trimws(criteria_intro))) {
+  clean_html(definition_path)
+  if (nzchar(trimws(criteria_intro))) {
     definition_path <- paste0(database, "_", file_stem, "_definition.html")
     definition_text <- definition_html_with_intro(
       readLines(definition_path, encoding = "UTF-8", warn = FALSE), criteria_intro)
@@ -1236,7 +1213,7 @@ render_definition_bundle <- function(
   } else {
     script_lines[seq_len(output_idx[1] - 1)]
   }
-  definition_html_lines <- if (compact_module) character() else readLines(
+  definition_html_lines <- readLines(
     paste0(database, "_", file_stem, "_definition.html"),
     encoding = "UTF-8",
     warn = FALSE
@@ -1263,7 +1240,7 @@ render_definition_bundle <- function(
     extract_box,
     publish_code,
     detail_html_lines,
-    include_definition = !compact_module
+    include_definition = TRUE
   )
   writeLines(note_lines, note_name, useBytes = TRUE)
   definition_copy_check(note = note_name, analysis_vars = analysis_vars)

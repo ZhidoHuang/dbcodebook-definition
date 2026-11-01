@@ -42,6 +42,11 @@ def check_charls_identity_combinations():
     assert charls_identity_data_read(family,'raw_data_household.csv',['householdid','year','id'],True)
     assert not charls_identity_data_read(family.replace('year="character",',''),'raw_data_household.csv',['householdid','year','id'],True)
     assert not charls_identity_data_read(family.replace('id="character"','value="character"'),'raw_data_household.csv',['householdid','year','id','value'],True)
+    respondent = 'dt <- read.csv("raw_data_household.csv", colClasses=c(year="character",householdid="character",respondent_id="character"))'
+    assert charls_identity_data_read(respondent, 'raw_data_household.csv', ['householdid','year','respondent_id'], True)
+    assert not charls_identity_data_read(respondent, 'raw_data_household.csv', ['householdid','year'], True)
+    assert not charls_identity_data_read(respondent, 'raw_data_household.csv', ['householdid','year','respondent_id'], False)
+    assert not charls_identity_data_read(respondent.replace('respondent_id="character"', 'value="character"'), 'raw_data_household.csv', ['householdid','year','respondent_id','value'], True)
     # Exercise the actual outline call, including the separate household read.
     with tempfile.TemporaryDirectory() as tmp:
         root=Path(tmp);script=root/'define_charls.R'

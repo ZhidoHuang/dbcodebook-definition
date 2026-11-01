@@ -110,7 +110,7 @@ def _chinese(text, field):
 
 def _condition_ids(text):
     # DN005_OtherCountry and DN005 denote the same question, DN0050 does not.
-    return {identifier for identifier in re.findall(r"(?<![A-Za-z0-9_])([A-Z]+\d+)(?=_|[^A-Za-z0-9_]|$)", str(text))
+    return {identifier for identifier in re.findall(r"(?<![A-Za-z0-9_])([A-Z]+\d+(?:-\d+)*)(?=_|[^A-Za-z0-9_]|$)", str(text))
             if not re.fullmatch(r"W\d+", identifier)}
 
 
@@ -241,7 +241,16 @@ def _validate_topic_exit(item, jump, record):
                     for q in record.get('questionnaire_evidence', [])
                     if q.get('questionnaire_module') == module
                     and period in {period_key(str(p)) for p in q.get('periods', [])}}
-        if _question_alias(target) in internal:
+        # When the paper reuses a number in different sections, keep the real
+        # number and record the verified destination section independently.
+        target_section = finding.get('destination_questionnaire_section')
+        source_section = finding.get('source_questionnaire_section')
+        if target_section is not None or source_section is not None:
+            if any(not isinstance(x, str) or not x.strip() for x in (source_section, target_section)):
+                raise ValueError('topic_exit needs both original source and destination sections')
+        different_section = (target_section is not None and
+                             target_section.strip().casefold() != source_section.strip().casefold())
+        if _question_alias(target) in internal and not different_section:
             raise ValueError('topic_exit destination is inside the same period/topic')
 
 
@@ -252,6 +261,7 @@ def display_answers(item, record, *, _combine=True):
     absent. Once present, a field must be complete; never silently fall back.
     Source quotations and CAPI text are read without mutation.
     """
+    validate_uncoded_options(item)
     policy = record.get("questionnaire_display_policy")
     if policy not in (None, POLICY):
         raise ValueError(f"unknown questionnaire_display_policy: {policy}")
@@ -479,3 +489,37 @@ def _combined_options(item, record):
     if any([positions[value] for value in values] != sorted(positions[value] for value in values) for values in member_orders):
         raise ValueError("combined options cannot reverse source option order")
     return [options[value] for value in order]
+
+
+
+def validate_uncoded_options(item):
+    """Narrow declaration only; original-material facts require human review."""
+    if "uncoded_options" not in item:
+        return False
+    d = item["uncoded_options"]
+    opts = item.get("options")
+    display = item.get("display") or {}
+    if (not isinstance(d, dict) or set(d) != {"selection", "value_role", "evidence"}
+            or d.get("selection") not in ("single", "multiple")
+            or d.get("value_role") != "local_identity_not_original_code"
+            or not isinstance(d.get("evidence"), str) or not d["evidence"].strip()
+            or not isinstance(item.get("periods"), list) or len(item["periods"]) != 1
+            or item.get("response_type") != "closed_options"
+            or item.get("local_material_status") != "verified"
+            or item.get("question_text_mode") != "verified_quote"
+            or item.get("question_text_complete") is not True
+            or item.get("options_complete") is not True
+            or item.get("skip_logic_status") != "none" or item.get("skip_logic") != []
+            or "combined_options" in display or display.get("record_only_option_values")
+            or not isinstance(opts, list) or not opts
+            or any(not isinstance(o, dict) or "original_code" not in o or o["original_code"] is not None for o in opts)):
+        raise ValueError("uncoded_options requires one period, evidenced single or multiple selection, null original codes, and no jumps, record-only or combined options")
+    return True
+
+
+def original_option_comparison(item, expected_options):
+    if not validate_uncoded_options(item):
+        return [f"{o['value']} {o['label']}" for o in expected_options]
+    if len(expected_options) != len(item["options"]):
+        raise ValueError("uncoded_options must preserve all labels")
+    return [o["label"] for o in expected_options]

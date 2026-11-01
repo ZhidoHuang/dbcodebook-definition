@@ -4,7 +4,7 @@
 - 本文件保留条件实例；基础模板已迁入对应操作任务。模板只展示写法，不另设规则。
 - 本文按成稿展示顺序排列；实际编写与条件读取见[执行与读取](../references/rules/stages/03-copy.md#执行与读取)。一次定位本任务适用的栏目，不要求依次读完全部例子。
 - 花括号内是填写提示，成稿时替换为实际内容；可选部分不用时删除。
-- 文案顶部元数据按[模块展示例外](../references/rules/stages/03-copy.md#模块展示例外)填写，按该表对应来源记录的类型；不含问卷定义的模块符合例外时省略整个Criteria，不搬写到其它栏目。
+- 文案顶部元数据按[定义展示](../references/rules/stages/03-copy.md#定义展示)填写。所有最终变量都编写 Criteria。
 - 组分概览与详情仅展示计算成分和最终定义变量；单份分组映射使用英文模块名或业务类别名；最终结果例如“Diabetes Module”，计算成分例如“Diabetes Module·Components”，不在文案中手工排版或叠加标题。输入与示例见[内容类别分组](../references/rules/stages/05-generate.md#正式输出与图表)。
 
 ```yaml
@@ -526,7 +526,7 @@ Wave 6–11 的选项编码为 01=Yes、02=No；其余时期为 1=Yes、2=No。
 
 ## 5. Criteria：每个变量怎样得到
 
-完整模式使用本节；省略范围见[模块展示例外](../references/rules/stages/03-copy.md#模块展示例外)。基础写法已随操作迁入 [对应任务](../references/rules/copy/core.md#criteria任务)；下方只保留条件实例。
+所有主题使用本节。基础写法已随操作迁入 [对应任务](../references/rules/copy/core.md#criteria任务)；下方只保留条件实例。
 
 **直接保留原分类的定义逻辑片段**：
 

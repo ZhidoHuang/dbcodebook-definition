@@ -24,4 +24,25 @@ fails(check_public_raw_reads(lines, "CHARLS"))
 fails(check_public_raw_reads(c('dt <- read.csv("raw_data.csv", colClasses=c(householdid="character", year="character"))',lines[2]), "CHARLS", source_record_path=args[[2]]))
 fails(check_public_raw_reads(c('dt <- read.csv("raw_data_household.csv")',lines[2]), "CHARLS", source_record_path=args[[2]]))
 check_public_raw_reads(c('dt <- read.csv("raw_data.csv")', lines[2]), "CHARLS")
+
+# A default household respondent identifier may be preserved only when the
+# actual household file contains it; other columns and contracts stay guarded.
+raw_dir <- tempfile("charls_household_identity_")
+dir.create(raw_dir)
+writeLines("householdid,year,respondent_id,ha007", file.path(raw_dir, "raw_data_household.csv"))
+respondent_lines <- c(
+  'dt <- read.csv("raw_data_household.csv", colClasses=c(householdid="character", year="character", respondent_id="character"))',
+  lines[2]
+)
+check_public_raw_reads(respondent_lines, "CHARLS", source_dir=raw_dir, source_record_path=args[[2]])
+fails(check_public_raw_reads(
+  c('dt <- read.csv("raw_data_household.csv", colClasses=c(householdid="character", year="character", ha007="character"))', lines[2]),
+  "CHARLS", source_dir=raw_dir, source_record_path=args[[2]]
+))
+fails(check_public_raw_reads(
+  c('dt <- read.csv("raw_data.csv", colClasses=c(id="character", respondent_id="character"))', lines[2]),
+  "CHARLS", source_dir=raw_dir
+))
+writeLines("householdid,year,ha007", file.path(raw_dir, "raw_data_household.csv"))
+fails(check_public_raw_reads(respondent_lines, "CHARLS", source_dir=raw_dir, source_record_path=args[[2]]))
 cat("HOUSEHOLD_R_IDENTITY_PASS\n")

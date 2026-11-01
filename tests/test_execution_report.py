@@ -113,6 +113,32 @@ execution_report.validate_full_definition_completion(
 assert full_report["timing_coverage"]["status"] == "incomplete"
 assert full_report["timing_coverage"]["untracked_seconds"] == 180
 
+with tempfile.TemporaryDirectory() as evidence_dir:
+    evidence = Path(evidence_dir) / "actual.txt"
+    evidence.write_text("existing evidence", encoding="utf-8")
+    evidence_report = copy.deepcopy(full_report)
+    stage = evidence_report["stages"][0]
+    stage.update(status="evidence_only", started_at=None, finished_at=None, elapsed_seconds=None,
+                 summary=["实际核查，未单独计时"], evidence=[{"path": str(evidence),
+                 "sha256": execution_report.hashlib.sha256(evidence.read_bytes()).hexdigest()}])
+    execution_report.validate_full_definition_completion(evidence_report, full_end)
+    assert evidence_report["timing_coverage"]["untracked_seconds"] == 60
+    tampered = copy.deepcopy(evidence_report)
+    tampered["stages"][0]["evidence"][0]["sha256"] = "0" * 64
+    expect_system_exit(lambda: execution_report.validate_full_definition_completion(tampered, full_end), "已改变")
+    fabricated = copy.deepcopy(evidence_report)
+    fabricated["stages"][0]["elapsed_seconds"] = 0
+    expect_system_exit(lambda: execution_report.validate_full_definition_completion(fabricated, full_end), "不能填入计时")
+    missing_evidence = copy.deepcopy(evidence_report)
+    missing_evidence["stages"][0]["evidence"] = []
+    expect_system_exit(lambda: execution_report.validate_full_definition_completion(missing_evidence, full_end), "必须有说明与证据")
+    invalid_stage = copy.deepcopy(evidence_report)
+    invalid_stage["stages"].append({**invalid_stage["stages"][0], "stage_id": "review"})
+    expect_system_exit(lambda: execution_report.validate_full_definition_completion(invalid_stage, full_end), "不支持")
+    missing_review = copy.deepcopy(evidence_report)
+    missing_review["reviews"] = []
+    expect_system_exit(lambda: execution_report.validate_full_definition_completion(missing_review, full_end), "缺少已完成审核")
+
 
 def browser_result(process_dir: Path) -> Path:
     report = json.loads((process_dir / "execution_report.json").read_text(encoding="utf-8"))
@@ -146,6 +172,35 @@ def run(*args: str, ok: bool = True) -> subprocess.CompletedProcess[str]:
     if not ok and result.returncode == 0:
         raise AssertionError("command unexpectedly succeeded")
     return result
+
+
+with tempfile.TemporaryDirectory() as temp_dir:
+    folder = Path(temp_dir)
+    evidence_path = folder / "evidence.txt"
+    evidence_path.write_text("actual pre-existing evidence", encoding="utf-8")
+    report = copy.deepcopy(full_report)
+    report.update(database="CHARLS", topic_id="003", topic_name="test", task="test",
+                  status="stopped", finished_at=execution_report.iso(full_end), issues=[],
+                  run_id="evidence-test", summary=["原停止原因"])
+    for review in report["reviews"]:
+        review.update(created_during_run=False, turn_count=1, nickname="test", running_seconds=1,
+                      between_rounds_seconds=0)
+    report["stages"] = report["stages"][1:]
+    for stage in report["stages"]:
+        stage.update(name=stage["stage_id"], role="test", model="test", mode="work", elapsed_seconds=60, summary=[])
+    (folder / "execution_report.json").write_text(json.dumps(report), encoding="utf-8")
+    run("stage-evidence", "--process-dir", temp_dir, "--stage-id", "locate", "--name", "定位",
+        "--summary", "既有定位已核实，未单独计时", "--evidence", str(evidence_path))
+    run("stage-evidence", "--process-dir", temp_dir, "--stage-id", "locate", "--name", "重复",
+        "--summary", "不可覆盖", "--evidence", str(evidence_path), ok=False)
+    run("finish", "--process-dir", temp_dir, "--status", "completed_with_issues", "--summary", "事后收口")
+    closed = json.loads((folder / "execution_report.json").read_text(encoding="utf-8"))
+    assert closed["finished_at"] == execution_report.iso(full_end)
+    assert closed["completion_amendments"][0]["original_finished_at"] == execution_report.iso(full_end)
+    assert closed["timing_coverage"]["untracked_seconds"] == 60
+    assert "未单独计时" in (folder / "执行报告.md").read_text(encoding="utf-8")
+    evidence_path.write_text("changed", encoding="utf-8")
+    run("check", "--report", str(folder / "execution_report.json"), ok=False)
 
 
 with tempfile.TemporaryDirectory() as temp_dir:

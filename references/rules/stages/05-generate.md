@@ -21,7 +21,7 @@
 
 - 从头运行同一正式脚本，不另建第二份脚本或手改产物。
 - 检查退出码和唯一当前日志。runner 默认覆盖当前日志；确需保留旧日志作对照时才传 `-ArchiveDir`。
-- 公共生成器按[模块展示例外](03-copy.md#模块展示例外)确定应生成内容；生成前比较实际文案输入，生成后自动提取实际展示的摘要、问卷、Criteria、小book和参考说明核对文字一致性，不另做一轮人工全文比对。
+- 公共生成器为每个最终变量生成定义内容；生成前比较实际文案输入，生成后自动提取实际展示的摘要、问卷、Criteria、小book和参考说明核对文字一致性，不另做一轮人工全文比对。
 - 文本不一致不交付，需改字先回文案。
 - 来源卡由正式来源关系生成。
 - 文字一致不代表定义正确；计算、数据及整套产物的完整性由下一步结果验证负责。
@@ -42,9 +42,9 @@
 - 同一时期的题号在多个题组重复时，在对应questionnaire_evidence中用questionnaire_module填写文案题组名称；无歧义的旧记录可省略。
 - 不能由检查器猜选其中一组。
 
-后台调用 `copy <- read_definition_copy(analysis_vars)`，将 `display_policy = copy$display_policy` 传给 `render_definition_bundle()`；展示模式由[模块展示例外](03-copy.md#模块展示例外)统一决定。
+后台调用 `copy <- read_definition_copy(analysis_vars)`，将 `display_policy = copy$display_policy` 传给 `render_definition_bundle()`；所有主题均生成完整 Criteria。
 将 `criteria`、`criteria_intro`、`summary_entry`、`summary_insight_items`、`reference_lines`、`summary_selection`、`definition_basis` 传给现有生成器。
-完整模式的 `definition_data$Criteria`、定义 HTML 和笔记使用同一份文案；不能另写正文或覆盖 `copy$summary_selection`。
+`definition_data$Criteria`、定义 HTML 和笔记使用同一份文案；不能另写正文或覆盖 `copy$summary_selection`。
 
 | 输入情况 | 处理 |
 | --- | --- |
@@ -143,7 +143,7 @@ summary_groups <- c(defined_a = "研究概念一", defined_b = "研究概念二"
 - `component_card_labels` 用于已明确要求保留旧卡片说明的更新：逐项采用已核实的旧说明，不改统计、分析字典或摘要。新稿的名称仍按当前方案生成。
 - `summary_groups` 仅服务摘要事实核对，不控制概览或详情分组。`component_groups` 须显式提供，生成器不猜模块名。旧的原始变量分组映射须改为本接口后再生成。
 - 分组后的最终结果相对顺序必须与 `analysis_vars` 一致；成分及分组顺序由方案确定。完整数据表和完整字典中最终结果的相对顺序也须一致。
-- 程序核对展示变量、单层分组、两处归属及顺序；组分的业务含义由来源方案核实。简化展示仍只省略 Criteria，不恢复原始变量展示。
+- 程序核对展示变量、单层分组、两处归属及顺序；组分的业务含义由来源方案核实。所有主题均生成 Criteria；原始变量不进入组分概览和详情。
 - detail 片段自行提供 `## 定义的组分概览` 和 `## 定义的组分详情`；笔记拼装器不得再额外添加“定义的组分详情”。
 - 最终笔记各保留一个标题，不能形成“详情 → 概览 → 详情”的重复结构。
 - 周期热图文字始终使用深色。周期不超过 6 个时单行显示；超过 6 个时按原顺序分两行，两行仍溢出才使用横向滑动与箭头。

@@ -20,7 +20,14 @@ check_public_raw_reads <- function(lines, database = "CHARLS", source_dir = ".",
   if (toupper(database) == "NHANES") identity_names <- c("SEQN", "YEAR", "RowIndex", "DOC_FILE")
   if (toupper(database) == "NHANESIII") identity_names <- c("SEQN", "_survey_period", "_period")
   if (toupper(database) == "NHIS") identity_names <- c("ID","Wave_id","Survey_year","Record_id","Baseline_year","Imputation_number")
-  if (household) identity_names <- c(identity_names, "year")
+  if (household) {
+    identity_names <- c(identity_names, "year")
+    household_header <- file.path(source_dir, "raw_data_household.csv")
+    if (file.exists(household_header) &&
+        "respondent_id" %in% names(read.csv(household_header, nrows = 0L))) {
+      identity_names <- c(identity_names, "respondent_id")
+    }
+  }
   boundary <- grep("^# 输出\\s*$", lines)
   if (length(boundary)) lines <- head(lines, boundary[[1]] - 1L)
   expressions <- parse(text = lines, keep.source = FALSE)

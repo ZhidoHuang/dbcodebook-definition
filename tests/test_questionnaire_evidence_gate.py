@@ -509,6 +509,8 @@ def main() -> int:
         record_path.write_text(json.dumps(download_record), encoding="utf-8")
         selection_path.write_text("fa002_p\nfa003_p\n", encoding="utf-8")
         assert checker.validate_download_selection(record_path, selection_path, "001")["ok"]
+        from mixed_source_fixture import exercise
+        exercise(checker, download_record, tmp, selection_path)
 
         # The public entrypoint supplies the record's own directory for topic scope.
         topic_download = copy.deepcopy(download_record)

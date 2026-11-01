@@ -293,6 +293,23 @@ class DisplayAnswersTests(unittest.TestCase):
         item['display']['skip_logic'][0]['destination'] = '本期转到 DN040'
         display_answers(item, r)  # Question IDs are checked; translation is human-reviewed.
 
+    def test_hyphenated_subquestion_destination_identity(self):
+        record=evidence(['2019']);item=record['questionnaire_evidence'][0]
+        item['skip_logic'][0]['destination']='Q3-1'
+        item['display']['skip_logic'][0]['destination']='跳至 Q3-1'
+        display_answers(item,record)
+        for wrong in ('Q3-2','Q3-10','Q30-1','Q3'):
+            item['display']['skip_logic'][0]['destination']='跳至 '+wrong
+            with self.subTest(wrong=wrong),self.assertRaises(ValueError):
+                display_answers(item,record)
+        item['skip_logic'][0]['destination']='Q3-12-2'
+        item['display']['skip_logic'][0]['destination']='跳至 Q3-12-2'
+        display_answers(item,record)
+        item['display']['skip_logic'][0]['destination']='跳至 Q3-12-3'
+        with self.assertRaises(ValueError): display_answers(item,record)
+        self.assertTrue(route_matches('跳至 Q3-1','跳至 Q3-1'))
+        self.assertFalse(route_matches('跳至 Q3-1','跳至 Q3-10'))
+
     def test_route_markdown_and_spaces_preserve_id_boundaries(self):
         self.assertTrue(route_matches('转到 DN005', '转到 `DN005`'))
         self.assertTrue(route_matches('MN005_ModeQues=1 时进入 DN040', '`MN005_ModeQues` = `1` 时进入 **DN040**'))

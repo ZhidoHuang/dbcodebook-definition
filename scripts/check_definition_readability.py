@@ -19,6 +19,7 @@ from definition_display import resolve_display_policy
 from questionnaire_groups import period_keys, original_options, question_matches, unverified_question_periods
 from questionnaire_groups import validate_shared_option_rows
 from questionnaire_groups import question_identity, validate_display_titles
+from questionnaire_display import original_option_comparison
 from questionnaire_display import validate_display_sequence, display_route_destination
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
@@ -253,6 +254,8 @@ def validate_questionnaire_rendering(
     note_text = note_path.read_text(encoding="utf-8-sig")
     parser.feed(note_text)
     document = Document(note_text).root
+    from published_source_acceptance import check_disclosure
+    published = check_disclosure(record, record_path, note_text)
     # Normalize only the in-memory checking view; the published heading stays
     # short and its per-period identifiers remain visible in the following note.
     for section in parser.sections:
@@ -415,6 +418,8 @@ def validate_questionnaire_rendering(
             inherited_jumps = referenced_jump_options(visible_id, jump_entries)
             cross_options = cross_period_options(question_block_text(node), section["label"], question_id,
                                                  [p[:3] for p in cross_periods if p[3] == section.get("module", "")])
+            if "uncoded_options" in item and (cross_options or referenced or shared_options):
+                fail(f"final note period {period} uncoded_options does not support shared or cross-period references")
             if cross_options and (options or referenced or shared_options):
                 fail(f"final note period {period} repeats or ambiguously references cross-period options for {question_id}")
             if expected_jumps and line["instruction_count"] < 1 and not (shared_routes or inherited_jumps):
@@ -428,7 +433,7 @@ def validate_questionnaire_rendering(
                 fail(f"final note repeats common options for {question_id}")
             option_text = cross_options or shared_options or original_options(referenced or [option.text() for option in options], section["period_notes"][0]["text"] + "\n" + node.text(), period)
             if item.get("response_type") == "closed_options":
-                expected_text = [normalized(f"{option['value']} {option['label']}") for option in expected_options]
+                expected_text = [normalized(value) for value in original_option_comparison(item, expected_options)]
                 if [normalized(option) for option in option_text] != expected_text:
                     fail(f"final note period {period} option values/labels/order differ for {question_id}; expected={expected_text!r}; actual={[normalized(option.text()) for option in options]!r}")
             for jump in expected_jumps:
@@ -446,7 +451,8 @@ def validate_questionnaire_rendering(
             rendered_pairs.add((question_id, str(period)))
 
     return {
-        "status": "QUESTIONNAIRE_RENDERING_PASS",
+        "status": "PUBLISHED_UNKNOWN_RENDERING_PASS" if published else "QUESTIONNAIRE_RENDERING_PASS",
+        **({'published_operational_assignment': {'generation_origin':'unknown','assignment_status':'exhaustive','unclassified_persons':0,'result_anchor_pairs':len(published['assignment_pairs'])}} if published else {}),
         "source_record": {
             "path": SOURCE_RECORD_NAME,
             "sha256": sha256_file(record_path),
@@ -555,11 +561,7 @@ def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
     source_path = process_dir / SOURCE_RECORD_NAME
     source_record = json.loads(source_path.read_text(encoding="utf-8-sig")) if source_path.is_file() else None
     policy = resolve_display_policy(copy_text, record=source_record)
-    required_headings = ["## 摘要导读", "## 小book提示"]
-    if not policy["compact_module"]:
-        required_headings.append("## Criteria")
-    elif re.search(r"(?m)^##\s+Criteria\s*$", copy_text):
-        fail("compact module reader copy must omit Criteria")
+    required_headings = ["## 摘要导读", "## 小book提示", "## Criteria"]
     for heading in required_headings:
         if heading not in copy_text:
             fail(f"reader copy is missing required heading: {heading}")

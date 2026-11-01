@@ -164,5 +164,6 @@ def resolve_display_policy(text, analysis_vars=None, record=None):
         raise ValueError("实际 analysis_vars 与 approved_analysis_vars 的变量或顺序不一致")
     if kind in ("module", "questionnaire_module") and not names:
         raise ValueError("module 展示判断需要实际 analysis_vars，不能从标题或文案猜测数量")
+    # Keep this field for existing R callers; Criteria is now required for every topic.
     return {"topic_kind": kind, "analysis_vars": names or [],
-            "compact_module": kind == "module" and len(names) > 10}
+            "compact_module": False}

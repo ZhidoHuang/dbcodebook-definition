@@ -1,4 +1,4 @@
-"""Checker boundary and adversarial fixtures for explicit compact modules."""
+"""Checker boundary and adversarial fixtures for modules with complete Criteria."""
 from pathlib import Path
 import html
 import importlib.util
@@ -86,7 +86,7 @@ def main():
         reordered=reorder_flat_tree(rendered,['A','B'],{},True)
         assert reordered.index('data-tree-variable="A"') < reordered.index('data-tree-variable="B"')
     names = [f"V.{i}" for i in range(31)]
-    for kind, count, compact in (("module", 10, False), ("module", 11, True), ("module", 30, True), ("questionnaire_module", 11, False), ("standard", 11, False)):
+    for kind, count, compact in (("module", 10, False), ("module", 11, False), ("module", 30, False), ("questionnaire_module", 11, False), ("standard", 11, False)):
         copy = f"---\ntopic_kind: {kind}\n---\n"
         record = dict(topic_kind="module" if kind=="questionnaire_module" else kind, approved_analysis_vars=names[:count])
         assert resolve_display_policy(copy, record=record)["compact_module"] is compact
@@ -98,12 +98,14 @@ def main():
         formal = Path(tmp)
         detail = formal / "topic_detail.html"
         good = surface(names)
+        (formal / "文案.md").write_text("## 摘要导读\n检测模块。", encoding="utf-8")
+        (formal / "raw_codebook.csv").write_text("newname\nraw\n", encoding="utf-8")
 
         def checks(note=good, detail_text=good):
             detail.write_text(detail_text, encoding="utf-8")
             results = []
-            c.check_compact_surfaces(formal, note, names, results)
-            c.check_category_order(formal, note, results, compact_module=True)
+            c.check_result_presentation(formal, note, names, {}, results)
+            c.check_category_order(formal, note, results)
             return results
 
         assert all(r["ok"] for r in checks())
@@ -137,18 +139,13 @@ def main():
         parser = c.DefinedSurfaceParser()
         parser.feed(surface(escaped))
         assert parser.variables == parser.overview_variables == escaped
-        for broken in (surface(names[:-1]), surface(names + [names[0]]), surface(names + ['Extra']), surface(list(reversed(names))),
+        for broken in (surface(names[:-1]), surface(names + [names[0]]), surface(list(reversed(names))),
                        good.replace('href="#var-V.0"', 'href="#var-Other"'),
                        good + '<span class="var-name" id="var-raw">raw</span>',
                        good.replace('id="var-V.0"', 'id="var-Other"'),
-                       good + '<summary>Source variables</summary>',
-                       good + '<table><tr><th>Criteria</th></tr></table>'):
+                       good + '<summary>Source variables</summary>'):
             assert any(not r["ok"] for r in checks(broken)), broken[:100]
             assert any(not r["ok"] for r in checks(detail_text=broken)), broken[:100]
-        (formal / "topic_definition.html").write_text("stale", encoding="utf-8")
-        assert any(not r["ok"] for r in checks())
-        (formal / "topic_definition.html").unlink()
-
         # Full mode also compares actual result order, ignoring source rows.
         result = []
         (formal / "文案.md").write_text("## 摘要导读\n无需关系树。", encoding="utf-8")
@@ -170,7 +167,7 @@ def main():
         (formal / "文案.md").write_text(copy, encoding="utf-8")
         record = dict(topic_kind="module", approved_analysis_vars=names)
         note = ('## 摘要导读\n' + '这是对变量模块、适用人群、调查时期和结果用途的完整说明。' * 3
-                + '\n## 定义的组分概览\n' + good)
+                + '\n## 定义\n<table>' + ''.join(f'<tr><td class="plain-cell">{n}</td></tr>' for n in names) + '</table>\n## 定义的组分概览\n' + good)
         (formal / "note.md").write_text(note, encoding="utf-8")
         detail.write_text(good, encoding="utf-8")
         workbook(formal / "cb.xlsx", [["Variable"]] + [[n] for n in names])
@@ -180,15 +177,17 @@ def main():
         results = []
         c.check_summary_facts(formal, "db.xlsx", "cb.xlsx", results, "nhanes", record=record)
         assert all(r["ok"] for r in results), results
-        assert not any(r["check"] == "definition table variables and order" for r in results)
+        assert any(r["check"] == "definition table variables and order" for r in results)
         text_results = []
-        c.check_required_user_text(formal, ["适用人群"], text_results, dict(compact_module=True))
+        (formal / "topic_definition.html").write_text("适用人群", encoding="utf-8")
+        c.check_required_user_text(formal, ["适用人群"], text_results)
         assert all(r["ok"] for r in text_results), text_results
         workbook(formal / "db.xlsx", [["SEQN", "YEAR"] + names[:-1]])
         results = []
         c.check_summary_facts(formal, "db.xlsx", "cb.xlsx", results, "nhanes", record=record)
         assert any(not r["ok"] and r["check"] == "definition variables in analysis_db" for r in results)
-        for kind, subset in (("module", names[:10]), ("questionnaire_module", names), ("standard", names)):
+        (formal / "note.md").write_text("## 摘要导读\n旧模块。\n## 定义的组分概览\n" + good, encoding="utf-8")
+        for kind, subset in (("module", names), ("module", names[:10]), ("questionnaire_module", names), ("standard", names)):
             (formal / "文案.md").write_text(f"---\ntopic_kind: {kind}\n---\n", encoding="utf-8")
             workbook(formal / "cb.xlsx", [["Variable"]] + [[n] for n in subset])
             results = []
@@ -202,7 +201,7 @@ def main():
         complete_impact(r, formal, process)
         original = (formal / "文案.md").read_text(encoding="utf-8")
         without_criteria = original[:original.index("## Criteria")] + original[original.index("## 小book提示"):]
-        for kind, count, accepted in (("module", 10, False), ("module", 11, True), ("questionnaire_module", 11, False), ("standard", 11, False)):
+        for kind, count, accepted in (("module", 10, False), ("module", 11, False), ("questionnaire_module", 11, False), ("standard", 11, False)):
             (formal / "文案.md").write_text(f"---\ntopic_kind: {kind}\n---\n" + without_criteria, encoding="utf-8")
             (process / r.SOURCE_RECORD_NAME).write_text(json.dumps(dict(topic_kind="module" if kind=="questionnaire_module" else kind, approved_analysis_vars=names[:count])), encoding="utf-8")
             if accepted:
@@ -215,39 +214,17 @@ def main():
                 else:
                     raise AssertionError("ordinary display must still require Criteria")
 
-    # Use the same isolated artifact/result fixture as mechanical_delivery,
-    # but actually bind compact copy, its source plan and 31-result workbook.
-    from writing_evidence import scope_bindings
+    # Large modules without Criteria must fail the delivery path as well.
     with tempfile.TemporaryDirectory() as tmp:
         formal, process = Path(tmp) / "formal", Path(tmp) / "process"
         formal.mkdir()
         complete_impact(r, formal, process)
         copy_path = formal / "文案.md"
         original = copy_path.read_text(encoding="utf-8")
-        compact_copy = ("---\ntopic_kind: module\n---\n"
-                        + original[:original.index("## Criteria")]
-                        + original[original.index("## 小book提示"):])
-        copy_path.write_text(compact_copy, encoding="utf-8")
-        r.write_json(process / r.SOURCE_RECORD_NAME, dict(schema_version=1,
-            topic_kind="module", approved_analysis_vars=names))
-        content = dict(FIXTURE_CONTENT, criteria={})
-        note = render_note(content)
-        note = note[:note.index("## 定义\n")] + "## 定义的组分概览\n" + surface(names) + "\n" + note[note.index("## 参考资料说明"):]
-        files = dict(note="note.md", public_r="define.R", analysis_db="db.xlsx", analysis_codebook="cb.xlsx")
-        (formal / files["note"]).write_text(note, encoding="utf-8")
-        (formal / files["public_r"]).write_text("# isolated gate fixture\n", encoding="utf-8")
-        workbook(formal / files["analysis_codebook"], [["Variable"]] + [[n] for n in names])
-        workbook(formal / files["analysis_db"], [["SEQN", "YEAR"] + names, ["1", "2011"] + [0] * len(names)])
-        initialize_fixture_audit(r, formal, process, "025", files)
-        initialized = r.initialize_audit(formal, process, "025", files, overwrite=True)
-        bindings = scope_bindings(formal, process, initialized["artifacts"])
-        assert set(bindings) == {"title_summary", "definition_logic", "criteria", "insight_card", "references"}
-        assert all(isinstance(digest, str) and len(digest) == 64 for digest in bindings.values())
-        checked = r.validate_audit(formal, process, "025")
-        assert checked["writing_quality"] == "NOT_ASSESSED" and checked["scope_count"] == 0
-        assert r.verify_existing_readiness(formal, process, "025")["ok"]
-        assert not list(formal.glob("*_definition.html"))
-    print("COMPACT_MODULE_CHECKS_PASS: module10/11, questionnaire11 and standard11 boundaries, exact coverage, stale/source/duplicate rejection, real workbooks, scope_bindings and compact init/check/verify-ready")
+        copy_path.write_text("---\ntopic_kind: module\n---\n" + original[:original.index("## Criteria")] + original[original.index("## 小book提示"):], encoding="utf-8")
+        r.write_json(process / r.SOURCE_RECORD_NAME, dict(schema_version=1, topic_kind="module", approved_analysis_vars=names))
+        assert_failure(lambda: r.validate_impact(formal, process, "025"))
+    print("COMPACT_MODULE_CHECKS_PASS: all topic types require Criteria; source/order/group coverage and real workbooks")
 
 
 if __name__ == "__main__":

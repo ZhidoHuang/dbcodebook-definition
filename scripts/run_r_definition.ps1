@@ -406,6 +406,9 @@ if ($definitionTask) {
   $resolvedSourceChecker = Resolve-RequiredPath -Path $sourceCheckerPath -Kind "Definition source-record checker"
   $resolvedRawCodebook = Resolve-RequiredPath -Path $rawCodebook -Kind "raw_codebook.csv"
 
+  # Reader/source checks must consume the same explicitly supplied trust config.
+  if ($Config) { $env:DBCODEBOOK_DEFINITION_CONFIG = $configPath }
+
   & $resolvedPython @pythonArguments -X utf8 (Join-Path $PSScriptRoot "check_reader_copy.py") `
     --copy $resolvedReaderCopy --record $resolvedSourceRecord --require-result-identity
   if ($LASTEXITCODE -ne 0) {

@@ -43,10 +43,16 @@ local({
     "本主题定义 **11** 个变量：**检测数值**。", "", "## 小book提示", "",
     "保留每日发布的检测数值。"), "文案.md", useBytes=TRUE)
   writeLines(c("# synthetic public code", "print('fixture')", "# 输出"), "define_fixture.R")
+  criteria_lines <- unlist(lapply(seq_along(vars), function(i) c(
+    paste0("### ", vars[i]), "", "#### 定义", "", paste0("检测", i, "的发布数值。"), "",
+    "#### 定义逻辑", "", "保留来源发布的检测数值。", "", "#### 分类", "", "- [数值] 检测单位。", "")))
+  writeLines(c(readLines("文案.md", encoding="UTF-8"), "", "## Criteria", "", criteria_lines), "文案.md", useBytes=TRUE)
   copy <- read_definition_copy(vars)
-  stopifnot(isTRUE(copy$display_policy$compact_module), length(copy$criteria)==0L)
+  stopifnot(!copy$display_policy$compact_module, identical(names(copy$criteria), vars))
   reject <- function(expr) stopifnot(inherits(tryCatch({force(expr); NULL}, error=identity), "error"))
   reject(validate_definition_display_policy(copy$display_policy, rev(vars)))
+  stale_policy <- copy$display_policy; stale_policy$compact_module <- TRUE
+  reject(validate_definition_display_policy(stale_policy, vars))
   stopifnot(is.null(validate_definition_display_policy(NULL, vars)))
   # A business category must not silently change the final variable order.
   sample_wide <- data.frame(Variable=vars, category="Defined variables")
@@ -76,7 +82,7 @@ local({
     real_long(heat_df, meta_df, ...)
   }
   generate_html_definition <- function(...) {
-    if (compact_test) stop("Compact module attempted a definition table")
+    # Definition output is required for a module of any size.
     dbCodeBookr::generate_html_definition(...)
   }
   # Source the function into this scope so its calls resolve the observing wrappers.
@@ -91,15 +97,14 @@ local({
     file_stem="compact", note_name="note.md", qa_title="fixture QA", transaction_id="fixture",
     script_file="define_fixture.R", database="NHANES", cycle_order=periods,
     reference_lines=copy$reference_lines, display_policy=copy$display_policy)
-  stopifnot(length(detail_calls)==1L, !is.null(long_inputs),
-    !file.exists("NHANES_compact_definition.html"), file.exists("NHANES_compact_detail.html"))
+  stopifnot(length(detail_calls)==2L, !is.null(long_inputs),
+    file.exists("NHANES_compact_definition.html"), file.exists("NHANES_compact_detail.html"))
   note <- readLines("note.md", encoding="UTF-8")
   html <- paste(readLines("NHANES_compact_detail.html", encoding="UTF-8"), collapse="\n")
-  stopifnot(!any(note %in% c("## 定义", "## Criteria")),
+  stopifnot("## 定义" %in% note,
+    !any(grepl("STALE_DEFINITION", readLines("NHANES_compact_definition.html"))),
     !grepl("Source variables", html, fixed=TRUE), grepl('data-variable-role="defined"', html, fixed=TRUE),
-    grepl('data-defined-overview="true"', html, fixed=TRUE),
     grepl('data-component-group="检测" data-variable-role="defined">检测</a>', html, fixed=TRUE),
-    all(vapply(paste0('data-defined-variable="', vars, '"'), grepl, logical(1), x=html, fixed=TRUE)),
     !grepl("SOURCE_ONLY_MARKER", html, fixed=TRUE),
     all(vapply(vars, grepl, logical(1), x=html, fixed=TRUE)),
     identical(before_hashes, tools::md5sum(files)),
@@ -138,7 +143,7 @@ local({
   }
   stopifnot(file.exists("NHANES_legacy_definition.html"),
     "## 定义" %in% readLines("legacy-note.md", encoding="UTF-8"),
-    length(detail_calls)==3L, identical(before_hashes, tools::md5sum(files)))
+    length(detail_calls)==4L, identical(before_hashes, tools::md5sum(files)))
   # A calculated intermediate is displayed, while its raw input is never charted.
   component_db <- db
   component_db$deficit <- as.integer(component_db[[single]] > 1)
@@ -162,5 +167,5 @@ local({
     identical(before_hashes, tools::md5sum(files)))
   setwd(before_dir)
   unlink(folder, recursive=TRUE)
-  cat("COMPACT_MODULE_RENDER_PASS: 11 variables; real detail HTML and one chart pass; no source charts or definition output; four xlsx and original objects unchanged; dotted names and legacy NULL-policy full render pass\n")
+  cat("COMPACT_MODULE_RENDER_PASS: 11 variables; real detail HTML and complete Criteria; no source charts; four xlsx and original objects unchanged; dotted names and legacy NULL-policy full render pass\n")
 })

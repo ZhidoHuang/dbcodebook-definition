@@ -25,6 +25,9 @@ def validate_local_evidence(record, record_path):
     access = record.get('source_access')
     if access is None:
         return None
+    if isinstance(access, dict) and access.get('mode') == 'mixed_charls_v1':
+        from mixed_source_evidence import validate_mixed
+        return validate_mixed(record, record_path)
     if not isinstance(access, dict) or access.get('mode') != 'local_dictionary':
         raise ValueError('Unsupported explicit source_access mode')
     base = Path(record_path).parent

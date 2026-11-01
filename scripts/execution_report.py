@@ -38,6 +38,7 @@ STAGE_STATUS = {
     "completed_with_issues": "完成，期间发现问题",
     "failed": "异常停止",
     "skipped": "未执行",
+    "evidence_only": "已核实既有工作，未单独计时",
 }
 
 ISSUE_STATUS = {
@@ -139,7 +140,7 @@ def validate_full_definition_completion(
     if "validation" not in latest and any(key in latest for key in ("results", "review")):
         required_stages.pop("validation")
         required_stages.update(results="结果验证", review="成品交接")
-    terminal_statuses = {"completed", "completed_with_issues", "skipped"}
+    terminal_statuses = {"completed", "completed_with_issues", "skipped", "evidence_only"}
     missing = [
         f"{stage_id}（{label}）"
         for stage_id, label in required_stages.items()
@@ -158,6 +159,18 @@ def validate_full_definition_completion(
         raise SystemExit(
             "完整定义流程的未执行环节没有说明原因：" + "、".join(unexplained_skips)
         )
+
+    for stage in latest.values():
+        if stage.get("status") == "evidence_only":
+            evidence = stage.get("evidence", [])
+            if stage.get("stage_id") not in ("locate", "sources", "download", "formal_r"):
+                raise SystemExit("该环节不支持既有工作证据代替阶段登记。")
+            if not stage.get("summary") or not evidence or stage.get("started_at") or stage.get("finished_at") or stage.get("elapsed_seconds") is not None:
+                raise SystemExit("既有工作记录必须有说明与证据，且不能填入计时。")
+            for item in evidence:
+                path = Path(item["path"])
+                if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != item["sha256"]:
+                    raise SystemExit("既有工作证据不存在或已改变：" + str(path))
 
     validate_exploration(report)
 
@@ -609,12 +622,14 @@ def render_markdown(report: dict[str, Any]) -> str:
         lines.insert(8, f"- 未归属阶段时间：{duration_text(timing['untracked_seconds'])}；计时覆盖：{timing['status']}。不推定其为工作或等待，不影响成果完成状态。")
     for correction in report.get("start_amendments", []):
         lines.insert(8, f"- 起始时间更正：{correction['previous_started_at']} → {correction['started_at']}；依据：{correction['evidence']}")
+    for amendment in report.get("completion_amendments", []):
+        lines.insert(8, f"- 收口更正：{amendment['recorded_at']}；原停止时间 {amendment['original_finished_at']}；{amendment['reason']}")
     if not stages:
         lines.append("| 尚未开始 | - | - | - | 未执行 | - | - |")
     else:
         for stage in stages:
             duration = stage.get("elapsed_seconds")
-            if duration is None:
+            if duration is None and stage.get("started_at"):
                 duration = elapsed_seconds(stage["started_at"])
             summary = "；".join(stage.get("summary", [])) or "-"
             lines.append(
@@ -624,10 +639,16 @@ def render_markdown(report: dict[str, Any]) -> str:
                     role=stage["role"],
                     model=(stage.get("model") or "未核实") + " / " + (stage.get("model_evidence", {}).get("effort") or "未核实"),
                     status=STAGE_STATUS[stage["status"]],
-                    duration=duration_text(duration),
+                    duration=duration_text(duration) if duration is not None else "未单独计时",
                     summary=summary.replace("|", "\\|"),
                 )
             )
+    evidence_stages = [stage for stage in stages if stage.get("evidence")]
+    if evidence_stages:
+        lines.extend(["", "### 未单独计时的既有工作证据", ""])
+        for stage in evidence_stages:
+            for item in stage["evidence"]:
+                lines.append(f"- {stage['name']}：{item['path']}；SHA-256：{item['sha256']}")
 
     preparations = [s for s in stages if s["stage_id"] == "website_preparation"]
     if preparations:
@@ -842,6 +863,30 @@ def command_init(args: argparse.Namespace) -> dict[str, Any]:
     return {"ok": True, "run_id": report["run_id"]}
 
 
+def command_stage_evidence(args: argparse.Namespace) -> dict[str, Any]:
+    report_path, markdown_path = paths(args.process_dir)
+    report = load(report_path)
+    if report.get("status") not in ("running", "stopped"):
+        raise SystemExit("只有执行中或已停止待收口的报告可登记既有工作。")
+    if any(s["stage_id"] == args.stage_id for s in report["stages"]):
+        raise SystemExit("该环节已有记录，不覆盖。")
+    if not args.summary.strip():
+        raise SystemExit("必须说明已核实工作和未单独计时的范围。")
+    evidence = []
+    for path in args.evidence:
+        path = path.expanduser().resolve()
+        if not path.is_file():
+            raise SystemExit(f"证据文件不存在：{path}")
+        evidence.append({"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+    report["stages"].append({"stage_id": args.stage_id, "attempt": 1, "name": args.name,
+        "role": "既有工作，实际执行者见证据", "model": "未核实", "mode": "work",
+        "status": "evidence_only", "started_at": None, "finished_at": None,
+        "elapsed_seconds": None, "summary": [args.summary], "outputs": [],
+        "evidence": evidence, "recorded_at": iso()})
+    save(report_path, markdown_path, report)
+    return {"ok": True, "stage_id": args.stage_id, "evidence": evidence}
+
+
 def command_stage_start(args: argparse.Namespace) -> dict[str, Any]:
     report_path, markdown_path = paths(args.process_dir)
     report = load(report_path)
@@ -993,6 +1038,9 @@ def command_turn_timing(args):
 def command_finish(args: argparse.Namespace) -> dict[str, Any]:
     report_path, markdown_path = paths(args.process_dir)
     report = load(report_path)
+    if report.get("status") != "running" and not (report.get("status") == "stopped" and
+            args.status == "completed_with_issues" and any(s.get("status") == "evidence_only" for s in report["stages"])):
+        raise SystemExit("报告已经结束；只有补充既有证据的停止报告可按有问题完成收口。")
     running = [stage["stage_id"] for stage in report["stages"] if stage["status"] == "running"]
     if running and running != ["website_closure"]:
         raise SystemExit("仍有执行中的环节：" + ", ".join(running))
@@ -1006,9 +1054,15 @@ def command_finish(args: argparse.Namespace) -> dict[str, Any]:
             raise SystemExit("仍有失败环节未完成重试；不能标记完成。")
         if args.status == "completed" and report["issues"]:
             raise SystemExit("存在问题记录；请使用 completed_with_issues。")
-        validate_full_definition_completion(report, now())
+        completion_end = parse_time(report["finished_at"]) if report.get("status") == "stopped" and report.get("finished_at") else now()
+        validate_full_definition_completion(report, completion_end)
+    previous_end = report.get("finished_at") if report.get("status") == "stopped" else None
+    if previous_end:
+        report.setdefault("completion_amendments", []).append({"recorded_at": iso(), "previous_status": "stopped",
+            "original_finished_at": previous_end, "previous_summary": report.get("summary", []),
+            "reason": "核验既有工作证据后收口；保留原停止时间，不将事后登记计入原执行耗时。"})
     report["status"] = args.status
-    report["finished_at"] = now().isoformat(timespec="milliseconds")
+    report["finished_at"] = previous_end or now().isoformat(timespec="milliseconds")
     if running == ["website_closure"]:
         closure = latest_stage(report, "website_closure")
         closure.update(status="completed", finished_at=report["finished_at"],
@@ -1333,6 +1387,14 @@ def build_parser() -> argparse.ArgumentParser:
     stage_start.add_argument("--model", default="")
     stage_start.add_argument("--mode", choices=tuple(STAGE_MODE), default="work")
     stage_start.set_defaults(func=command_stage_start)
+
+    stage_evidence = subparsers.add_parser("stage-evidence", help="Record verified prior work without inventing stage timing")
+    stage_evidence.add_argument("--process-dir", required=True)
+    stage_evidence.add_argument("--stage-id", required=True, choices=("locate", "sources", "download", "formal_r"))
+    stage_evidence.add_argument("--name", required=True)
+    stage_evidence.add_argument("--summary", required=True)
+    stage_evidence.add_argument("--evidence", type=Path, action="append", required=True)
+    stage_evidence.set_defaults(func=command_stage_evidence)
 
     stage_finish = subparsers.add_parser("stage-finish")
     stage_finish.add_argument("--process-dir", required=True)

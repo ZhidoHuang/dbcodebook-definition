@@ -101,42 +101,6 @@ class DefinedSurfaceParser(HTMLParser):
             self.overview_depth -= 1
 
 
-def check_compact_surfaces(formal_dir: Path, note_text: str, variables: list[str], results: list[dict]) -> None:
-    """Compact modules omit Criteria but retain a complete Defined display."""
-    forbidden = sorted(path.name for path in formal_dir.glob("*_definition.html"))
-    if forbidden:
-        fail(results, "compact module omitted definition artifact", forbidden)
-    else:
-        ok(results, "compact module omitted definition artifact")
-    detail_files = sorted(formal_dir.glob("*_detail.html"))
-    if len(detail_files) != 1:
-        fail(results, "compact module detail artifact", [path.name for path in detail_files])
-        return
-    for label, text in (("note", note_text), ("detail", detail_files[0].read_text(encoding="utf-8-sig"))):
-        if (re.search(r"(?mi)^##\s+(?:定义|Definition|Criteria)\s*$", text)
-                or re.search(r'<td\b[^>]*\bclass=[\"\'][^\"\']*\bplain-cell\b', text, re.I)
-                or re.search(r'<th\b[^>]*>\s*(?:Definition|Criteria)\s*</th>', text, re.I)):
-            fail(results, f"compact module {label} omitted definition table", "Definition/Criteria table remains")
-        else:
-            ok(results, f"compact module {label} omitted definition table")
-        pairs = extract_category_pairs(text)
-        if not pairs or any(role not in {"component", "defined"} for _, role in pairs):
-            fail(results, f"compact module {label} categories", pairs)
-        else:
-            ok(results, f"compact module {label} categories", pairs)
-        parser = DefinedSurfaceParser()
-        parser.feed(text)
-        if parser.invalid_detail_markers or parser.variables != variables:
-            fail(results, f"compact module {label} variable coverage", {"expected": variables, "actual": parser.variables, "invalid_markers": parser.invalid_detail_markers})
-        else:
-            ok(results, f"compact module {label} variable coverage", variables)
-        result_overview = [v for v in parser.overview_variables if v in variables or v not in parser.component_overview_variables]
-        if parser.overview_count != 1 or result_overview != variables:
-            fail(results, f"compact module {label} overview coverage", {"expected": variables, "actual": parser.overview_variables, "overview_tables": parser.overview_count})
-        else:
-            ok(results, f"compact module {label} overview coverage", variables)
-
-
 def formal_note_files(formal_dir: Path) -> list[Path]:
     return sorted(
         path
@@ -1139,7 +1103,7 @@ def parse_definition_table(note_text: str) -> list[str]:
 
 
 def check_summary_prose(note_text: str, results: list[dict], compact_module: bool = False) -> None:
-    end_heading = r"(?:定义的组分概览|定义的组分详情|材料)" if compact_module else "定义"
+    end_heading = "定义"
     section = re.search(
         r"(?ms)^## 摘要导读\s*$\n(.*?)^## " + end_heading + r"\s*$",
         note_text,
@@ -1309,6 +1273,8 @@ def charls_identity_data_read(source: str, raw_name: str, header: list[str], hou
             return False
         identities.append(pair[1])
     allowed = {'householdid', 'year', 'id'} if household else {'id', 'householdid', 'communityid'}
+    if household and raw_name == 'raw_data_household.csv' and 'respondent_id' in header:
+        allowed.add('respondent_id')
     return (bool(identities) and len(identities) == len(set(identities))
             and set(identities) <= allowed
             and (not header or set(identities) <= set(header))
@@ -1892,22 +1858,19 @@ def check_summary_facts(
         fail(results, "definition display policy", str(exc))
         return
     check_summary_prose(note_text, results, policy["compact_module"])
-    if policy["compact_module"]:
-        check_compact_surfaces(formal_dir, note_text, codebook_variables, results)
+    try:
+        definition_variables = parse_definition_table(note_text)
+    except ValueError as exc:
+        fail(results, "definition table structure", str(exc))
+        return
+    if definition_variables == codebook_variables:
+        ok(results, "definition table variables and order", definition_variables)
     else:
-        try:
-            definition_variables = parse_definition_table(note_text)
-        except ValueError as exc:
-            fail(results, "definition table structure", str(exc))
-            return
-        if definition_variables == codebook_variables:
-            ok(results, "definition table variables and order", definition_variables)
-        else:
-            fail(
-                results,
-                "definition table variables and order",
-                {"expected": codebook_variables, "actual": definition_variables},
-            )
+        fail(
+            results,
+            "definition table variables and order",
+            {"expected": codebook_variables, "actual": definition_variables},
+        )
     missing_from_db = [name for name in codebook_variables if name not in db_header]
     if missing_from_db:
         fail(results, "definition variables in analysis_db", missing_from_db)
@@ -1931,18 +1894,6 @@ def check_required_user_text(formal_dir: Path, required: list[str], results: lis
     if not required:
         return
     notes = formal_note_files(formal_dir)
-    if policy and policy["compact_module"]:
-        if len(notes) != 1:
-            fail(results, "required user text sources", "Expected one rendered note")
-            return
-        # Detail HTML contains variable details, not the note's summary prose.
-        missing = {path.name: [item for item in required if item not in visible_text(path.read_text(encoding="utf-8-sig"))] for path in notes}
-        missing = {name: values for name, values in missing.items() if values}
-        if missing:
-            fail(results, "required user text", missing)
-        else:
-            ok(results, "required user text", required)
-        return
     definitions = sorted(formal_dir.glob("*definition*.html"))
     if len(notes) != 1 or len(definitions) != 1:
         fail(results, "required user text sources", {
@@ -1971,9 +1922,6 @@ def visible_text_with_breaks(value: str) -> str:
 
 def check_criteria_evolution(formal_dir: Path, required: list[str], results: list[dict], policy: dict | None = None) -> None:
     if not required:
-        return
-    if policy and policy["compact_module"]:
-        fail(results, "Criteria evolution scope", "compact modules cannot request omitted Criteria checks")
         return
     definitions = sorted(formal_dir.glob("*definition*.html"))
     notes = formal_note_files(formal_dir)
@@ -2066,6 +2014,21 @@ def main() -> int:
         source_path = args.process_dir / "definition_search_record.json"
         if source_path.is_file():
             source_record = json.loads(source_path.read_text(encoding="utf-8-sig"))
+            from published_source_acceptance import check_disclosure,validate as validate_published_source
+            try:
+                published=validate_published_source(source_record,source_path)
+                if published:
+                    notes=list(formal_dir.glob('*笔记.md'))
+                    definitions=list(formal_dir.glob('*_definition.html'))
+                    if len(notes)!=1 or len(definitions)!=1:
+                        raise ValueError('Published-origin disclosure requires one actual note and definition HTML')
+                    for artifact in notes+definitions:
+                        check_disclosure(source_record,source_path,artifact.read_text(encoding='utf-8-sig'))
+                    ok(results,'scoped published-source disclosure',{'generation_origin':'unknown','operational_assignment':'exhaustive','unclassified_persons':0,'artifacts':[p.name for p in notes+definitions]})
+            except (OSError,ValueError) as error:
+                fail(results,'scoped published-source disclosure',str(error))
+                print(json.dumps({'ok':False,'checks':results},ensure_ascii=False,indent=2))
+                return 1
     knhanes_person_contract = None
     if args.db == "knhanes" and (formal_dir / "raw_codebook.csv").is_file():
         try:
@@ -2114,8 +2077,6 @@ def main() -> int:
     except ValueError as exc:
         fail(results, "definition display policy", str(exc))
         policy = {"compact_module": False}
-    if policy["compact_module"]:
-        expected_files = [name for name in expected_files if not name.endswith("_definition.html")]
     if args.complete:
         try:
             expected_files = include_formal_r(formal_dir, expected_files)

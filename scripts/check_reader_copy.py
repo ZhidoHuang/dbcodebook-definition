@@ -13,6 +13,7 @@ from reference_format import reference_items, render_references
 from questionnaire_groups import period_keys, original_options, question_matches, question_identifiers, unverified_question_periods
 from questionnaire_groups import validate_shared_option_rows
 from questionnaire_groups import question_identity, validate_display_titles
+from questionnaire_display import original_option_comparison
 from questionnaire_display import validate_display_sequence, display_route_destination
 from questionnaire_display import (requires_questionnaire_display, display_question, display_answers, cross_period_options,
     shared_question_info, referenced_options, referenced_jump_options,
@@ -443,13 +444,11 @@ def read_copy(path, expected_vars=None, record=None, *, require_result_identity=
     if re.search(r"<(?:div|span|section|style)\b", text, re.I):
         raise ValueError("文案.md 只能保存纯文案，不能含展示 HTML。")
     parts = sections(text, 2)
-    required = ("摘要导读", "小book提示") if policy["compact_module"] else ("摘要导读", "Criteria", "小book提示")
+    required = ("摘要导读", "Criteria", "小book提示")
     for key in required:
         if not normalized(parts.get(key, "")):
             raise ValueError(f"文案缺少内容：{key}")
     criteria = {}
-    if policy["compact_module"] and "Criteria" in parts:
-        raise ValueError("不含问卷定义的模块最终变量超过 10 个时，不编写 Criteria 栏目")
     for variable, body in sections(parts.get("Criteria", ""), 3).items():
         if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", variable):
             raise ValueError(f"Criteria 应按实际分析变量逐项列出：{variable}")
@@ -464,9 +463,9 @@ def read_copy(path, expected_vars=None, record=None, *, require_result_identity=
         if "注意点" in fields and not normalized(fields["注意点"]):
             raise ValueError(f"Criteria/{variable}/注意点 为空；无内容时省略栏目")
         criteria[variable] = fields
-    if not criteria and not policy["compact_module"]:
+    if not criteria:
         raise ValueError("Criteria 没有按最终分析变量逐项填写")
-    if not policy["compact_module"] and expected_vars is not None and list(criteria) != list(expected_vars):
+    if expected_vars is not None and list(criteria) != list(expected_vars):
         raise ValueError(f"Criteria 变量或顺序不一致：文案={list(criteria)}，定义={list(expected_vars)}")
     if not policy["analysis_vars"]:
         policy = resolve_display_policy(text, list(criteria), record)
@@ -768,7 +767,7 @@ def compare_content(copy, actual, *, source=False):
         elif "questionnaire_flows" in actual and expected_flows != actual["questionnaire_flows"]:
             raise ValueError("问卷流程图的内容、顺序或缩进与文案不一致")
     policy = copy.get("display_policy", {})
-    criteria_check = "criteria_omission" if policy.get("compact_module") else "criteria"
+    criteria_check = "criteria"
     return {"ok": True, "variables": policy.get("analysis_vars", list(copy["criteria"])), "checked": ["summary", criteria_check, "insight", "references"]}
 
 
@@ -782,9 +781,7 @@ def note_content(text, *, compact_module=False):
     if len(insight) > 1:
         raise ValueError("成品有重复的小book提示卡")
     tables = list(root.find(lambda e: e.tag == "table" and any(c.tag == "tr" and "".join(t.text() for t in c.children if isinstance(t, Element) and t.tag == "th") == "DefinitionCriteriadetail" for c in e.children if isinstance(c, Element))))
-    if compact_module and (tables or "定义" in parts or "Criteria" in parts):
-        raise ValueError("简化模块成品不生成 Definition / Criteria / detail 定义表及其栏目")
-    if not compact_module and len(tables) != 1:
+    if len(tables) != 1:
         raise ValueError("成品必须有一份 Definition / Criteria / detail 定义表")
     criteria = {}
     for row in tables[0].children if tables else []:
@@ -948,13 +945,16 @@ def questionnaire_copy_errors(copy, record):
             except ValueError as error:
                 errors.append(f"{label}: {error}")
                 continue
+            if "uncoded_options" in item and (cross_options or referenced or shared_options):
+                errors.append(f"{label}: uncoded_options does not support shared or cross-period references")
+                continue
             if cross_options:
                 if options or referenced or shared_options:
                     errors.append(f"{label}: cross-period options repeated or ambiguous")
                     continue
                 option_text = cross_options
             if item.get("response_type") == "closed_options":
-                expected = [normalized(f"{o['value']} {o['label']}") for o in expected_options]
+                expected = [normalized(value) for value in original_option_comparison(item, expected_options)]
                 if [normalized(o) for o in option_text] != expected:
                     errors.append(f"{label}: option values/labels/order differ; expected={expected!r}; actual={[normalized(o['text']) for o in options]!r}")
             for jump in expected_jumps:
@@ -1003,6 +1003,8 @@ def main():
         record = None
         if args.record:
             record = json.loads(Path(args.record).read_text(encoding="utf-8-sig"))
+            from published_source_acceptance import check_disclosure
+            check_disclosure(record, args.record, Path(args.copy).read_text(encoding="utf-8-sig"))
         if args.analysis_codebook:
             expected = codebook_variables(args.analysis_codebook, expected)
         require_identity = args.require_result_identity

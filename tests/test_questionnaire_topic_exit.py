@@ -123,6 +123,25 @@ class TopicExitTests(unittest.TestCase):
         r['questionnaire_evidence'].append(target)
         with self.assertRaisesRegex(ValueError,'inside'):display_answers(item,r)
 
+    def test_same_identifier_in_different_verified_sections(self):
+        record=exit_record();item=record['questionnaire_evidence'][0]
+        target=copy.deepcopy(item); target.update(question_id='DN005', display_required=False, display_omission_reason='模拟同组已选题', rendered_in_copy=False, copy_locator='不展示：模拟')
+        record['questionnaire_evidence'].append(target)
+        jump=item['display']['skip_logic'][0]; finding=jump['topic_exit_evidence'][0]
+        with self.assertRaisesRegex(ValueError,'inside'): display_answers(item,record)
+        finding['source_questionnaire_section']='测试主题'
+        finding['destination_questionnaire_section']='口腔健康'
+        display_answers(item,record)
+        self.check_both(block('Wave 1').replace('转到 DN005', '结束该主题'),record,True)
+        for section in ['测试主题',' 测试主题 ','', '  ', 17]:
+            finding['destination_questionnaire_section']=section
+            with self.subTest(section=section),self.assertRaises(ValueError): display_answers(item,record)
+        finding['destination_questionnaire_section']='口腔健康'
+        for field,invalid in [('evidence',''),('returns_to_topic',True),('destination','DN006')]:
+            saved=finding[field];finding[field]=invalid
+            with self.subTest(field=field),self.assertRaises(ValueError): display_answers(item,record)
+            finding[field]=saved
+
     def test_abbreviation_is_exact_and_keeps_trigger_matching(self):
         self.assertTrue(route_matches('转到 DN005', '结束该主题。', allow_topic_exit=True))
         for text in ['不结束该主题', '结束该主题后继续', '结束', '结束该主题（转到 DN006）']:
