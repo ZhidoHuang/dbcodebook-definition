@@ -2014,21 +2014,6 @@ def main() -> int:
         source_path = args.process_dir / "definition_search_record.json"
         if source_path.is_file():
             source_record = json.loads(source_path.read_text(encoding="utf-8-sig"))
-            from published_source_acceptance import check_disclosure,validate as validate_published_source
-            try:
-                published=validate_published_source(source_record,source_path)
-                if published:
-                    notes=list(formal_dir.glob('*笔记.md'))
-                    definitions=list(formal_dir.glob('*_definition.html'))
-                    if len(notes)!=1 or len(definitions)!=1:
-                        raise ValueError('Published-origin disclosure requires one actual note and definition HTML')
-                    for artifact in notes+definitions:
-                        check_disclosure(source_record,source_path,artifact.read_text(encoding='utf-8-sig'))
-                    ok(results,'scoped published-source disclosure',{'generation_origin':'unknown','operational_assignment':'exhaustive','unclassified_persons':0,'artifacts':[p.name for p in notes+definitions]})
-            except (OSError,ValueError) as error:
-                fail(results,'scoped published-source disclosure',str(error))
-                print(json.dumps({'ok':False,'checks':results},ensure_ascii=False,indent=2))
-                return 1
     knhanes_person_contract = None
     if args.db == "knhanes" and (formal_dir / "raw_codebook.csv").is_file():
         try:

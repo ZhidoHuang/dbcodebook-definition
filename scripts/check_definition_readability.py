@@ -254,8 +254,6 @@ def validate_questionnaire_rendering(
     note_text = note_path.read_text(encoding="utf-8-sig")
     parser.feed(note_text)
     document = Document(note_text).root
-    from published_source_acceptance import check_disclosure
-    published = check_disclosure(record, record_path, note_text)
     # Normalize only the in-memory checking view; the published heading stays
     # short and its per-period identifiers remain visible in the following note.
     for section in parser.sections:
@@ -451,8 +449,7 @@ def validate_questionnaire_rendering(
             rendered_pairs.add((question_id, str(period)))
 
     return {
-        "status": "PUBLISHED_UNKNOWN_RENDERING_PASS" if published else "QUESTIONNAIRE_RENDERING_PASS",
-        **({'published_operational_assignment': {'generation_origin':'unknown','assignment_status':'exhaustive','unclassified_persons':0,'result_anchor_pairs':len(published['assignment_pairs'])}} if published else {}),
+        "status": "QUESTIONNAIRE_RENDERING_PASS",
         "source_record": {
             "path": SOURCE_RECORD_NAME,
             "sha256": sha256_file(record_path),

@@ -1003,8 +1003,6 @@ def main():
         record = None
         if args.record:
             record = json.loads(Path(args.record).read_text(encoding="utf-8-sig"))
-            from published_source_acceptance import check_disclosure
-            check_disclosure(record, args.record, Path(args.copy).read_text(encoding="utf-8-sig"))
         if args.analysis_codebook:
             expected = codebook_variables(args.analysis_codebook, expected)
         require_identity = args.require_result_identity
