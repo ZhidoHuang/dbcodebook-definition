@@ -42,9 +42,6 @@ with tempfile.TemporaryDirectory() as tmp:
         result=subprocess.run([sys.executable,'-X','utf8',str(ROOT/'scripts'/script),*map(str,args)],capture_output=True,text=True,encoding='utf-8')
         assert (result.returncode == 0) == succeeds, result.stdout+result.stderr
         return result
-    rejected = run('update_reader_copy.py', 'prepare', '--formal-dir', p, '--process-dir', process,
-                   '--reason', 'Explicit fixture for the normal current-file update entry', succeeds=False)
-    assert '--retain-baseline' in rejected.stderr and not process.exists()
     run('execution_report.py','init','--process-dir',process,'--database','test','--topic-id','fixture','--topic-name','fixture','--task','first-copy test','--workflow','general')
     run('execution_report.py','stage-start','--process-dir',process,'--stage-id','copy','--name','copy','--role','test')
     original=(ROOT/'tests/fixtures/writing-inputs/reader-copy.md').read_bytes()

@@ -331,7 +331,6 @@ cat("OFFLINE_DICTIONARY_AND_ALL_NA_NOTE_PASS\n")
     assert not checks[-1]['ok'],checks
     import csv
     from check_definition_output import read_xlsx_rows, read_table_rows
-    from update_reader_copy import workbook_content, formal_table
     csv_files=list(files)
     for index in (0,2):
         csv_files[index]=files[index].replace('.xlsx','.csv')
@@ -340,12 +339,10 @@ cat("OFFLINE_DICTIONARY_AND_ALL_NA_NOTE_PASS\n")
     checks=[]
     check_workbook_contract(folder,csv_files,csv_files[2],csv_files[3],['source_a','source_b'],['defined_value'],checks)
     assert checks[-1]['ok'],checks
-    assert formal_table(csv_files[0]) and formal_table(csv_files[2]) and not formal_table('raw_data.csv')
-    content=workbook_content(folder/csv_files[2])
     rows=read_table_rows(folder/csv_files[2])
     with (folder/csv_files[2]).open('w',encoding='utf-8',newline='') as stream:
         csv.writer(stream,quoting=csv.QUOTE_ALL).writerows(rows)
-    assert workbook_content(folder/csv_files[2])==content,'CSV quoting/BOM alone changed semantic content'
+    assert read_table_rows(folder/csv_files[2])==rows,'CSV quoting/BOM alone changed semantic content'
     with (folder/csv_files[2]).open('w',encoding='utf-8',newline='') as stream:
         csv.writer(stream).writerows(rows[:-1])
     checks=[]

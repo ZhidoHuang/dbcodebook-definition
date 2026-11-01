@@ -55,6 +55,25 @@ class RelocationTests(unittest.TestCase):
     def projected(self):
         return self.helper().report(self.report_path, roles=(self.role,))
 
+    def test_read_only_cli(self):
+        import subprocess
+        import sys
+        command = [sys.executable, '-X', 'utf8', str(Path(__file__).resolve().parents[1]/'scripts/report_relocation.py'),
+                   '--report', str(self.report_path), '--path-map', str(self.map_path),
+                   '--formal-dir', str(self.formal), '--process-dir', str(self.process),
+                   '--role', self.role]
+        snapshot = lambda: {str(p): p.read_bytes() for p in self.process.parent.rglob('*') if p.is_file()}
+        before = snapshot()
+        result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(json.loads(result.stdout)['current_report_modified'])
+        self.assertEqual(snapshot(), before)
+        self.input.write_text('changed calculation', encoding='utf-8')
+        before = snapshot()
+        result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(snapshot(), before)
+
     def test_relocation_preserves_original_and_failed_status(self):
         before = self.report_path.read_bytes()
         helper = self.helper()
@@ -195,103 +214,6 @@ class RelocationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             eh.validate_exploration(projected)
 
-    def test_relocated_prepare_reuses_current_then_archived_exploration(self):
-        """Real prepare/init lifecycle only; no R, research or real review occurs."""
-        import update_reader_copy as update
-
-        source = self.process / "definition_search_record.json"
-        source.write_text('{"database":"synthetic","topic_id":"999","definition_plan":{"formula":"x"}}', encoding="utf-8")
-        old_process = "Z:\\synthetic_missing_history\\process"
-        self.write_map([{"old": self.old, "new": str(self.formal)},
-                        {"old": old_process, "new": str(self.process)}])
-        raw = self.formal / "raw_codebook.csv"
-        raw.write_text("Variable,newname\nx,x\n", encoding="utf-8")
-        (self.formal / "raw_data.csv").write_text("x\n1\n", encoding="utf-8")
-        (self.formal / "文案.md").write_text("Synthetic fixture; no actual review or research.", encoding="utf-8")
-
-        def historical_bindings(paths):
-            bound = er.input_hashes(paths, source_scope="research_v1")
-            return {(self.old if Path(path).parent == self.formal else old_process) + "\\" + Path(path).name: digest
-                    for path, digest in bound.items()}
-
-        start, finish = "2026-01-01T00:00:00Z", "2026-01-01T00:02:00Z"
-        report = {"schema_version": 1, "run_id": "synthetic-history", "database": "synthetic", "topic_id": "999",
-                  "topic_name": "Synthetic relocation lifecycle fixture", "task": "Synthetic only", "workflow": "general",
-                  "status": "completed", "started_at": start, "finished_at": finish, "summary": [], "issues": [],
-                  "stages": [], "stage_reviews": {}, "reviews": [], "primary_agent_id": "synthetic-primary",
-                  "exploration_policy": eh.POLICY}
-
-        def add_review(role, agent_id, inputs):
-            report["reviews"].append({"role": role, "agent_id": agent_id, "closed": True, "unfinished_turns": 0,
-                                      "rounds": [{"started_at": start, "outcome": "completed"}]})
-            report["stage_reviews"][role] = {"status": "pass", "mode": "independent", "agent_id": agent_id,
-                "started_at": start, "finished_at": finish, "inputs": copy.deepcopy(inputs), "source_scope": "research_v1",
-                "evidence": "Synthetic test fixture, not an actual review"}
-
-        common = historical_bindings([source])
-        report["exploration"] = {"started_at": start, "inputs": common, "branches": {}}
-        outputs = {}
-        for branch, role in eh.ROLES.items():
-            output = self.process / ("synthetic_branch_" + branch + ".md")
-            output.write_text("Synthetic branch evidence " + branch, encoding="utf-8")
-            outputs[branch] = output
-            add_review(role, "synthetic-agent-" + branch, common)
-            report["exploration"]["branches"][branch] = {"agent_id": "synthetic-agent-" + branch,
-                "review_started_at": start, "review_finished_at": finish, "outputs": historical_bindings([output])}
-        decision = self.process / "synthetic_decision.md"
-        decision.write_text("Synthetic merge fixture only", encoding="utf-8")
-        report["exploration"]["merge"] = {"status": "ready", "unresolved": [], "decision": historical_bindings([decision]),
-            "record": old_process + "\\" + source.name, "plan_hash": eh.plan_hash(source, 2), "hash_version": 2}
-        add_review(er.COMBINED_REVIEW_ROLE, "synthetic-r-agent", historical_bindings([self.input, source, raw]))
-        current_path = self.process / er.REPORT_NAME
-        update.write(current_path, report)
-        original_bytes = current_path.read_bytes()
-        result = {"ok": True, "scope": "complete", "artifacts": {path.name: update.digest(path) for path in self.formal.iterdir()},
-                  "source_sha256": update.digest(source)}
-        update.write(self.process / "result_check.json", result)
-        update.write(self.process / "readability_audit.json", {"unresolved_issues": [], "artifacts": {}})
-        update.write(self.process / "definition_change_impact.json", {"schema_version": 3, "changed_dimensions": ["copy"]})
-        args = SimpleNamespace(formal_dir=self.formal, process_dir=self.process, path_map=self.map_path,
-                               legacy_report=None, reason="Synthetic prepare lifecycle; no real review, R or production generation")
-        self.assertEqual(update.prepare(args)["status"], "PREPARED")
-        first = update.read(current_path)
-        eh.validate_exploration(first, source)
-        inherited = first["exploration"]
-        self.assertEqual(inherited["started_at"], start)
-        self.assertEqual(inherited["merge"]["plan_hash"], report["exploration"]["merge"]["plan_hash"])
-        for branch, role in eh.ROLES.items():
-            self.assertEqual(inherited["branches"][branch]["agent_id"], report["exploration"]["branches"][branch]["agent_id"])
-            self.assertEqual(list(inherited["branches"][branch]["outputs"].values()),
-                             list(report["exploration"]["branches"][branch]["outputs"].values()))
-            for key in ("agent_id", "started_at", "finished_at"):
-                self.assertEqual(first["stage_reviews"][role][key], report["stage_reviews"][role][key])
-            self.assertEqual(first["stage_reviews"][role]["prior_agent_record"],
-                             next(agent for agent in report["reviews"] if agent["role"] == role))
-        snapshot = Path(inherited["from_report"])
-        self.assertEqual(snapshot.read_bytes(), original_bytes)
-        self.assertEqual(inherited["from_report_hash"], hashlib.sha256(original_bytes).hexdigest())
-        self.assertEqual((self.process / "archived_runs" / "synthetic-history" / er.REPORT_NAME).read_bytes(), original_bytes)
-
-        def finish_synthetic_run():
-            # Simulate an ended fixture run; no claims of production completion.
-            current = update.read(current_path)
-            current.update(status="completed", finished_at=er.iso())
-            for stage in current["stages"]:
-                stage.update(status="completed", finished_at=er.iso())
-            update.write(current_path, current)
-
-        args.path_map = None
-        finish_synthetic_run()
-        self.assertEqual(update.prepare(args)["status"], "PREPARED")
-        # The general update's next init archives the already relocated source;
-        # a later prepare must discover that archive, never the missing old root.
-        finish_synthetic_run()
-        self.assertEqual(update.prepare(args)["status"], "PREPARED")
-        self.assertEqual(snapshot.read_bytes(), original_bytes)
-        finish_synthetic_run()
-        outputs["a"].write_text("Changed synthetic evidence", encoding="utf-8")
-        with self.assertRaisesRegex(ValueError, "产出已变化"):
-            update.prepare(args)
 
 
 if __name__ == "__main__":

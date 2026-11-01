@@ -94,6 +94,33 @@ def main():
     expanded, _ = expand_period_tables(overview, ['1989','2009'])
     assert 'colspan="5"' in expanded and '<td class="year-cell">7</td>' in expanded
     assert expanded.count('class="year-cell"') == 2
+    # Real public CLI: local display changes only; no reports or version folders.
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        note = root/'note.md'
+        note.write_text(old, encoding='utf-8')
+        raw = root/'raw_data.csv'
+        raw.write_bytes(b'id,x\n1,7\n')
+        command = [sys.executable, '-X', 'utf8', str(ROOT/'scripts/definition_display.py'),
+                   'periods', '--input', str(note), '--database', 'SHARE']
+        first = subprocess.run(command, capture_output=True, text=True, encoding='utf-8')
+        assert first.returncode == 0, first.stderr
+        assert json.loads(first.stdout)['changed'] is True
+        assert note.read_text(encoding='utf-8') == new
+        signature = note.read_bytes()
+        second = subprocess.run(command, capture_output=True, text=True, encoding='utf-8')
+        assert second.returncode == 0 and not json.loads(second.stdout)['changed']
+        assert note.read_bytes() == signature
+        assert set(p.name for p in root.iterdir()) == {'note.md', 'raw_data.csv'}
+        assert raw.read_bytes() == b'id,x\n1,7\n'
+        note.write_bytes(b'\xef\xbb\xbf' + ('prefix\r\n'+old+'\r\nsuffix').encode('utf-8'))
+        preserved = subprocess.run(command, capture_output=True, text=True, encoding='utf-8')
+        assert preserved.returncode == 0, preserved.stderr
+        assert note.read_bytes() == b'\xef\xbb\xbf' + ('prefix\r\n'+new+'\r\nsuffix').encode('utf-8')
+        # Unsupported or malformed inputs fail before writing any content.
+        note.write_text('no period table', encoding='utf-8')
+        failed = subprocess.run(command, capture_output=True, text=True, encoding='utf-8')
+        assert failed.returncode != 0 and note.read_text(encoding='utf-8') == 'no period table'
     print("DEFINITION_DISPLAY_PASS: module modes and complete period grids; existing counts unchanged")
     return 0
 

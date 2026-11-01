@@ -119,6 +119,36 @@ def expand_period_tables(text, periods):
     return text, details
 
 
+def complete_period_file(path, database, language=None, dataset_id=None):
+    """Render the existing period grid in place; no data, reports or backups."""
+    import os
+    import tempfile
+    path = Path(path).resolve(strict=True)
+    original_bytes = path.read_bytes()
+    original = original_bytes.decode('utf-8-sig')
+    observed = re.findall(r"class=['\"]dbcb-var-cycle-label['\"][^>]*>(.*?)</span>", original)
+    for header in re.findall(r'<table\b[^>]*class="heatmap-table"[^>]*>\s*<tr>(.*?)</tr>', original, re.S):
+        observed += re.findall(r'<th[^>]*>(.*?)</th>', header, re.S)[3:]
+    periods = display_periods(database, [html.unescape(x) for x in observed], language, dataset_id)
+    rendered, tables = expand_period_tables(original, periods)
+    if not tables:
+        raise ValueError('文件中没有可识别的周期表；未修改文件')
+    if rendered != original:
+        temporary = None
+        try:
+            encoding = 'utf-8-sig' if original_bytes.startswith(b'\xef\xbb\xbf') else 'utf-8'
+            with tempfile.NamedTemporaryFile(mode='w', encoding=encoding, newline='',
+                                             dir=path.parent, delete=False) as stream:
+                temporary = Path(stream.name)
+                stream.write(rendered)
+            os.replace(temporary, path)
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
+    return {'ok': True, 'path': str(path), 'changed': rendered != original,
+            'periods': periods, 'tables': len(tables), 'scope': 'period_display_only'}
+
+
 def topic_kind(value="standard"):
     if value not in ("standard", "module", "questionnaire_module"):
         raise ValueError("topic_kind must be standard, module or questionnaire_module")
@@ -167,3 +197,18 @@ def resolve_display_policy(text, analysis_vars=None, record=None):
     # Keep this field for existing R callers; Criteria is now required for every topic.
     return {"topic_kind": kind, "analysis_vars": names or [],
             "compact_module": False}
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description='Render existing period grids without recalculating data')
+    parser.add_argument('command', choices=['periods'])
+    parser.add_argument('--input', type=Path, required=True)
+    parser.add_argument('--database', required=True)
+    parser.add_argument('--language')
+    parser.add_argument('--dataset-id')
+    args = parser.parse_args()
+    try:
+        print(json.dumps(complete_period_file(args.input, args.database, args.language, args.dataset_id), ensure_ascii=False))
+    except (ValueError, OSError, KeyError) as error:
+        parser.exit(1, str(error) + '\n')

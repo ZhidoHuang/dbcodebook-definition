@@ -688,13 +688,13 @@ def validate_result_check(formal_dir: Path, process_dir: Path, artifacts: dict) 
         if target.parent != formal_dir.resolve() or not target.is_file() or sha256_file(target) != expected:
             fail("结果检查的输入或产物已变化：" + name)
     if record.get('validation_mode') == 'period_display':
-        from update_reader_copy import validate_period_result
+        from legacy_delivery_checks import validate_period_result
         try:
             validate_period_result(record, formal_dir, process_dir)
         except (ValueError, OSError, KeyError) as exc:
             fail('周期展示局部验证无效：' + str(exc))
     elif record.get('validation_mode') == 'copy_sections' or 'copy_sections' in record:
-        from update_reader_copy import validate_text_result
+        from legacy_delivery_checks import validate_text_result
         try:
             validate_text_result(record, formal_dir, process_dir)
         except (ValueError, OSError, KeyError) as exc:
@@ -1255,7 +1255,7 @@ def validate_audit(
         if component_only:
             from component_display import verify
         elif metadata_only:
-            from update_reader_copy import verify_metadata_update as verify
+            from legacy_delivery_checks import verify_metadata_update as verify
         elif summary_only:
             from definition_summary import verify
         else:

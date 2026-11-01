@@ -1,5 +1,6 @@
 """Verify historical component-display receipts; no preparation or generation."""
 import hashlib,json,os,subprocess
+from legacy_delivery_checks import historical_tool_digest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]; MARKER='component_display_update.json'
 def sha(p):
@@ -10,8 +11,8 @@ def sha(p):
 def read(p): return json.loads(Path(p).read_text(encoding='utf-8-sig'))
 def tools(config_path):
  names=['component_display.py','component_display_ast.R','component_write_safety.R','run_r_definition.ps1','r_environment.ps1','update_reader_copy.py','check_definition_readability.py','check_reader_copy.py','check_definition_output.py','render_definition_bundle.R','summary_fact_helpers.R','definition_display.py','reference_format.py','questionnaire_display.py','questionnaire_groups.py','r_runtime.py','skill_config.py']
- result={n:sha(ROOT/'scripts'/n) for n in names}
- for n in ['display-periods.json','database-routing.json','database-themes.json','rules/stages/05-generate.md']:result['references/'+n]=sha(ROOT/'references'/n)
+ result={n:historical_tool_digest('scripts/'+n).lower() for n in names}
+ for n in ['display-periods.json','database-routing.json','database-themes.json','rules/stages/05-generate.md']:result['references/'+n]=historical_tool_digest('references/'+n).lower()
  config=read(config_path);rscript=config['executables']['rscript'];env=os.environ.copy()
  for name in ('LC_ALL','LC_CTYPE','LANG'):env.pop(name,None)
  libpath=config.get('paths',{}).get('r_library');
@@ -36,7 +37,7 @@ def inputs(f,p):
  if sha(p/'website_sync_result.json')!=b['history']['website_sync_result.json']:raise ValueError('previous attachment decision changed')
  for n,h in b['proof_files'].items():
   if not Path(n).is_file() or sha(n)!=h:raise ValueError('previous metadata proof changed')
- from update_reader_copy import verify_metadata_update
+ from legacy_delivery_checks import verify_metadata_update
  verify_metadata_update(Path(b['proof_formal']),Path(b['proof_process']),b['topic'])
  prior=read(Path(b['proof_process'])/'definition_metadata_update.json')['candidate_hashes']
  if {n:h.upper() for n,h in b['hashes'].items()}!={n:h.upper() for n,h in prior.items()}:raise ValueError('previous proof does not bind baseline')

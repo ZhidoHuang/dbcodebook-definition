@@ -119,6 +119,8 @@ class ReportRelocation:
             review = report.get("stage_reviews", {}).get(role)
             if review and "inputs" in review:
                 review["inputs"] = self._bindings(review["inputs"])
+            if review and review.get("review_output"):
+                review["review_output"]["path"] = self._path(review["review_output"]["path"])
             # reused_from is historical attribution; validators do not read it.
         key = str(source)
         digest = hashlib.sha256(content).hexdigest()
@@ -149,3 +151,38 @@ class ReportRelocation:
             stream.write(encoded)
         return {"manifest": str(manifest_path), "sha256": hashlib.sha256(encoded).hexdigest(),
                 "report_count": len(reports), "mapping_count": len(self.used_mappings), "reports": reports}
+
+
+def main():
+    import argparse
+    import execution_report as er
+    from exploration_handoff import validate_exploration
+    parser = argparse.ArgumentParser(description='Read-only verification of relocated review evidence')
+    parser.add_argument('--report', type=Path, required=True)
+    parser.add_argument('--path-map', type=Path, required=True)
+    parser.add_argument('--formal-dir', type=Path, required=True)
+    parser.add_argument('--process-dir', type=Path, required=True)
+    parser.add_argument('--role', action='append', default=[])
+    parser.add_argument('--exploration', action='store_true')
+    args = parser.parse_args()
+    if not args.role and not args.exploration:
+        parser.error('Select a review role or exploration evidence')
+    try:
+        helper = ReportRelocation(args.path_map, args.formal_dir, args.process_dir)
+        report = helper.report(args.report, args.role, args.exploration)
+        if report.get('status') == 'running':
+            raise ValueError('Cannot relocate a running report')
+        for role in args.role:
+            er.validate_stage_review(report, role)
+        if args.exploration:
+            validate_exploration(report)
+        print(json.dumps({'ok': True, 'scope': 'selected_historical_evidence',
+                          'roles': args.role, 'exploration': args.exploration,
+                          'mapped_files': len(helper.used_mappings),
+                          'current_report_modified': False}, ensure_ascii=False))
+    except (ValueError, OSError, KeyError) as error:
+        parser.exit(1, str(error) + '\n')
+
+
+if __name__ == '__main__':
+    main()
