@@ -135,6 +135,11 @@ def main():
         result.update(scope="complete", status="MACHINE_CHECK_PASS")
         path.write_text(json.dumps(result), encoding="utf-8")
         assert review.validate_result_check(formal, process, artifacts)["scope"] == "complete"
+        for invalid in ({"copy_sections": None}, {"period_display": {}},
+                        {"validation_mode": "copy_sections", "copy_sections": {}}):
+            path.write_text(json.dumps(dict(result, **invalid)), encoding="utf-8")
+            rejects(lambda: review.validate_result_check(formal, process, artifacts), "历史检查")
+        path.write_text(json.dumps(result), encoding="utf-8")
         check_program_binding(root, formal, process, artifacts, result)
         source_path = process / review.SOURCE_RECORD_NAME
         original_source = source_path.read_bytes()

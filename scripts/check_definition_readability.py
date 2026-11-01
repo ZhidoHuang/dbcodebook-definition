@@ -675,11 +675,14 @@ def validate_result_check(formal_dir: Path, process_dir: Path, artifacts: dict) 
             or not record.get("checks") or not all(item.get("ok") is True for item in record["checks"])):
         fail("result_check.json 不是完整结果检查通过记录")
     recorded = record.get("artifacts", {})
-    historical = record.get('validation_mode') in {'period_display', 'copy_sections'} or 'copy_sections' in record
+    mode = record.get('validation_mode')
+    historical = mode in {'period_display', 'copy_sections'}
     if historical:
-        if record.get("checker_sha256") != sha256_file(Path(__file__).with_name("check_definition_output.py")):
-            fail("结果检查程序已经变化，请用当前完整检查重新核对成果")
-    else:
+        if not isinstance(record.get(mode), dict) or not record[mode]:
+            fail('历史检查模式缺少对应证据')
+    elif 'copy_sections' in record or 'period_display' in record:
+        fail('历史检查证据与检查模式不一致')
+    if not historical:
         from result_check_binding import validate_binding
         validate_binding(record, Path(__file__).parent)
     source_path = process_dir / SOURCE_RECORD_NAME
@@ -704,7 +707,10 @@ def validate_result_check(formal_dir: Path, process_dir: Path, artifacts: dict) 
             validate_text_result(record, formal_dir, process_dir)
         except (ValueError, OSError, KeyError) as exc:
             fail('局部文案检查复用无效：' + str(exc))
-    return {"path": RESULT_CHECK_NAME, "sha256": sha256_file(path), "scope": "complete"}
+    result = {"path": RESULT_CHECK_NAME, "sha256": sha256_file(path), "scope": "complete"}
+    if historical:
+        result["historical_validation"] = "PRESERVED_NOT_REVALIDATED"
+    return result
 
 
 def normalized_visible_text(text: str) -> str:

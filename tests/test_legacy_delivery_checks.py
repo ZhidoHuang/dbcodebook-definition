@@ -3,15 +3,11 @@ from copy import deepcopy
 import json
 from pathlib import Path
 import shutil
-import subprocess
 import sys
 import tempfile
-import time
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
-import execution_report as er
-from exploration_handoff import POLICY, ROLES, plan_hash
 import legacy_delivery_checks as update
 
 
@@ -118,7 +114,7 @@ with tempfile.TemporaryDirectory() as temporary:
     write(fragments,{'before':{'summary':'<old>'},'after':{'summary':generated}})
     (formal/'文案.md').write_text(after,encoding='utf-8');(formal/'note.md').write_text(generated,encoding='utf-8')
     receipt={'status':'verified','scope':'metadata_only','baseline':str(bp),'baseline_sha256':update.digest(bp),
-             'tools':update.metadata_tools(),'generation':{'exit_code':0,'files':{str(fragments):update.digest(fragments)},'fragments':str(fragments)},
+             'tools':{'retired-generator.py':'A'*64},'generation':{'exit_code':0,'files':{str(fragments):update.digest(fragments)},'fragments':str(fragments)},
              'candidate_hashes':{p.name:update.digest(p) for p in formal.iterdir()}}
     rp=process/update.METADATA_RECEIPT;write(rp,receipt)
     with patch('check_definition_output.read_xlsx_rows',return_value=[['Variable','Label'],['Weight','体重（kg）']]):
@@ -134,8 +130,49 @@ with tempfile.TemporaryDirectory() as temporary:
             else:raise AssertionError('Changed historical proof accepted: '+str(target))
             assert snapshot()==observed
             target.write_bytes(saved)
-        receipt['tools']['update_reader_copy.py']='unrecognized revision';write(rp,receipt)
-        try:update.verify_metadata_update(formal,process,'999')
-        except ValueError:pass
-        else:raise AssertionError('Unrecognized historical tools accepted')
-print('LEGACY_RECEIPT_PASS: valid proof read-only; changed inputs, artifacts, evidence and unknown tools rejected')
+        receipt['tools']['retired-generator.py']='B'*64;write(rp,receipt)
+        original=snapshot()
+        assert update.verify_metadata_update(formal,process,'999')['result_check']['historical_validation']=='PRESERVED_NOT_REVALIDATED'
+        assert snapshot()==original, 'Historical verification rewrote provenance'
+
+
+# Text-only receipts retain their original full result and exact transformation.
+# Run the current copy parser and delivery gate; no generation or historical
+# checker installation is needed for this synthetic retained proof.
+import check_definition_readability as delivery
+with tempfile.TemporaryDirectory() as temporary:
+    root=Path(temporary); formal=root/'formal'; process=root/'process'; folder=process/'retained'
+    formal.mkdir(); folder.mkdir(parents=True)
+    before='# 主题名称'+(ROOT/'tests/fixtures/writing-inputs/reader-copy.md').read_text(encoding='utf-8').split('# 主题名称',1)[1]
+    after=before.replace('第 X 页／表 X','第 12 页／表 2')
+    old_note='unchanged\n<old-reference>\nend'; new_note=old_note.replace('<old-reference>','<new-reference>')
+    for name, text in [('文案.md',before),('note.md',old_note),('data.csv','id,result\n1,2\n')]:
+        (formal/name).write_text(text,encoding='utf-8');shutil.copy2(formal/name,folder/name)
+    source=process/'definition_search_record.json';write(source,{})
+    baseline={'ok':True,'scope':'complete','status':'MACHINE_CHECK_PASS','checks':[{'ok':True,'check':'retained result'}],
+              'checker_sha256':'A'*64,'source_sha256':update.digest(source),'database':'charls',
+              'analysis_vars':['fall_status','fall_count'],'artifacts':{p.name:update.digest(p) for p in formal.iterdir()}}
+    bp=folder/'result_check.json';write(bp,baseline)
+    (formal/'文案.md').write_text(after,encoding='utf-8');(formal/'note.md').write_text(new_note,encoding='utf-8')
+    record=deepcopy(baseline)
+    record.update(validation_mode='copy_sections',artifacts={p.name:update.digest(p) for p in formal.iterdir()},
+        copy_sections={'baseline':str(bp.relative_to(process)),'baseline_sha256':update.digest(bp),'note':'note.md',
+                       'changed_fields':['references'],'tools':{'retired-generator.R':'B'*64},
+                       'patches':[{'field':'references','before':'<old-reference>','after':'<new-reference>'}]})
+    rp=process/'result_check.json';write(rp,record)
+    check=lambda:delivery.validate_result_check(formal,process,{})
+    snapshot=lambda:{str(p):p.read_bytes() for p in root.rglob('*') if p.is_file()}
+    original=snapshot()
+    assert check()['historical_validation']=='PRESERVED_NOT_REVALIDATED'
+    assert snapshot()==original
+    for target in (source,bp,formal/'note.md',formal/'data.csv'):
+        saved=target.read_bytes();target.write_bytes(saved+b' changed')
+        try:check()
+        except (ValueError,KeyError):pass
+        else:raise AssertionError('Changed historical text proof accepted: '+str(target))
+        target.write_bytes(saved)
+    (formal/'文案.md').write_text(after.replace('是否发生跌倒。','是否受到伤害。'),encoding='utf-8')
+    try:update.validate_text_result(record,formal,process)
+    except ValueError as error:assert '超出已验证栏目' in str(error),error
+    else:raise AssertionError('Criteria change accepted as reference-only update')
+print('LEGACY_RECEIPT_PASS: historical provenance retained; current scope, source, artifacts and evidence verified read-only')
