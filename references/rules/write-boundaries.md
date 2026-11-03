@@ -132,9 +132,11 @@ $Cli = @((& $Python -X utf8 "$Skill/scripts/skill_config.py" --config $Config --
 $CliArgs = @($Cli | Select-Object -Skip 1)
 & $Cli[0] @CliArgs "-s=$Session" snapshot --filename "$Process/browser-state.md"
 # 仅首次建立或确认会话已关闭时执行 open：
-& $Cli[0] @CliArgs "-s=$Session" open $PageUrl --browser msedge --headed --profile $Profile
+& $Cli[0] @CliArgs "-s=$Session" open $PageUrl --browser msedge --headed --profile $Profile --config "$Skill/references/playwright.config.json"
 ```
 
+- 首次打开或恢复会话均带上仓库内的 `references/playwright.config.json`。该配置通过 `--disable-gpu` 使用软件渲染，避免新建本机 profile 丢失已验证的浏览器兼容设置；不覆盖 profile 内的登录资料。新设备同步此配置，profile 和登录资料仍留在本机。
+- 首次应用配置时确认启动参数及实际 GPU 渲染状态，并验证从其他应用切回后的手动操作。复用已验证的运行中会话不重复检查；配置更新不自动重启正在使用的会话。
 - 全页快照保存到上述文件后，只读取当前操作需要的目录、搜索结果或对话框段落，不把整页表格输出到模型上下文。
 - 当前CLI支持 `find <text>` 搜索可见快照及 `snapshot <已观察到的ref或唯一选择器>` 获取局部；先通过 `--help` 核实本机版本支持。
 - 操作已返回快照文件时直接按需读取，不紧接着再输出一次全页 snapshot。
