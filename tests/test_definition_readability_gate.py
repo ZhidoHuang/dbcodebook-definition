@@ -14,7 +14,7 @@ from test_reader_copy import render_note
 
 FIXTURE_QUESTION = "过去一年，您或您的配偶从父母那里得到过经济支持吗？"
 FIXTURE_CONTENT = {
-    "summary": f"问卷询问：\"{FIXTURE_QUESTION}\"这道题用于判断**家庭是否从父母获得支持**。",
+    "summary": f"问卷询问：\"{FIXTURE_QUESTION}\"这道题用于判断①**家庭是否从父母获得支持**。",
     "criteria": {"support_status": {
         "定义": "家庭在过去一年是否从父母获得经济支持。",
         "定义逻辑": "回答是记为[1]，回答否记为[0]；没有回答保留缺失。",
@@ -53,7 +53,7 @@ def complete_impact(checker, formal: Path, process: Path) -> None:
     question = FIXTURE_QUESTION
     copy.write_text(
         "## 摘要导读\n"
-        f"问卷询问：\"{question}\"这道题用于判断**家庭是否从父母获得支持**。\n\n"
+        f"问卷询问：\"{question}\"这道题用于判断①**家庭是否从父母获得支持**。\n\n"
         "## Criteria\n### support_status\n#### 定义\n家庭在过去一年是否从父母获得经济支持。\n\n"
         "#### 定义逻辑\n回答是记为[1]，回答否记为[0]；没有回答保留缺失。\n\n"
         "#### 分类\n- [1] 是\n- [0] 否\n\n"
@@ -457,12 +457,109 @@ def main() -> int:
         )
 
         complete_impact(checker, formal, process)
+        # Current records use content/structure checks, not a minimum prose length.
+        impact_path = process / checker.IMPACT_NAME
+        original_impact = json.loads(impact_path.read_text(encoding="utf-8"))
+        short_impact = json.loads(json.dumps(original_impact))
+        short_impact.update(schema_version=checker.IMPACT_SCHEMA_VERSION,
+                            status=checker.IMPACT_SCOPE_STATUS, change_summary="修正字典。")
+        short_impact["question_groups"][0].update(name="支持", respondent="本人",
+            official_source="问卷p48", definition_use="支持判定", draft_location="摘要")
+        checker.write_json(impact_path, short_impact)
+        checker.validate_impact(formal, process, "025")
+        short_impact["change_summary"] = ""
+        checker.write_json(impact_path, short_impact)
+        expect_failure(lambda: checker.validate_impact(formal, process, "025"), "change_summary")
+        checker.write_json(impact_path, original_impact)
         initialize_fixture_audit(checker, formal, process, "025", files)
+        # Current delivery needs only the two analysis workbooks; inherited
+        # full workbooks remain mandatory when the result record declares them.
+        result_path = process / checker.RESULT_CHECK_NAME
+        original_result = result_path.read_bytes()
+        bound = {role: {"path": name, "sha256": checker.sha256_file(formal / name)}
+                 for role, name in files.items()}
+        assert checker.validate_result_check(formal, process, bound)["scope"] == "complete"
+        result_record = json.loads(original_result.decode("utf-8"))
+        legacy_tables = [formal / "db_old.xlsx", formal / "codebook_old.xlsx"]
+        for table in legacy_tables:
+            table.write_text("retained historical table", encoding="utf-8")
+            result_record["artifacts"][table.name] = checker.sha256_file(table)
+        checker.write_json(result_path, result_record)
+        assert checker.validate_result_check(formal, process, bound)["scope"] == "complete"
+        legacy_tables[0].unlink()
+        expect_failure(lambda: checker.validate_result_check(formal, process, bound), "已变化")
+        legacy_tables[1].unlink()
+        result_path.write_bytes(original_result)
         audit_path = process / checker.AUDIT_NAME
         complete_audit(checker, audit_path)
         # A new execution-first topic can publish without an extra reader role.
         ready = checker.validate_audit(formal, process, "025")
         assert ready["reader_review"] == {"status": "NOT_REQUESTED", "required": False}
+        assert ready["supplementary_review"] is None
+        # An older publication report without the field is equivalent to None.
+        readiness_path = process / checker.REPORT_NAME
+        old_readiness = json.loads(readiness_path.read_text(encoding="utf-8"))
+        old_readiness.pop("supplementary_review")
+        checker.write_json(readiness_path, old_readiness)
+        assert checker.verify_existing_readiness(formal, process, "025")["supplementary_review"] is None
+
+        from execution_report import input_hashes
+        note = formal / files["note"]
+        review_input = process / "supplementary_input.txt"
+        review_output = process / "supplementary_output.txt"
+        review_input.write_text("current evidence", encoding="utf-8")
+        review_output.write_text("independent reviewer conclusion", encoding="utf-8")
+        role = "成品补充审核"
+        review = {
+            "status": "pass", "mode": "independent", "agent_id": "reviewer",
+            "evidence": "checked current artifacts", "inputs": input_hashes([note, review_input]),
+            "review_output": {"path": str(review_output), "sha256": checker.sha256_file(review_output).lower()},
+            "findings": [],
+        }
+        execution_path = process / "execution_report.json"
+        execution = {"primary_agent_id": "author", "stage_reviews": {role: review}}
+        checker.write_json(execution_path, execution)
+        supplementary = checker.validate_audit(formal, process, "025")
+        assert supplementary["supplementary_review"]["record"]["agent_id"] == "reviewer"
+        checker.verify_existing_readiness(formal, process, "025")
+        # A new or changed review must also invalidate the earlier readiness report.
+        review["evidence"] = "updated conclusion"
+        checker.write_json(execution_path, execution)
+        expect_failure(lambda: checker.verify_existing_readiness(formal, process, "025"), "supplementary_review")
+        review["evidence"] = "checked current artifacts"
+        for status in ("pending", "blocked"):
+            review["status"] = status
+            checker.write_json(execution_path, execution)
+            expect_failure(lambda: checker.validate_audit(formal, process, "025"), role)
+        review["status"] = "pass"
+        review["findings"] = [{"resolved": False}]
+        checker.write_json(execution_path, execution)
+        expect_failure(lambda: checker.validate_audit(formal, process, "025"), "Unresolved")
+        review["findings"] = []
+        for mode, agent_id, output in (("isolated", "reviewer", review["review_output"]),
+                                       ("independent", "author", review["review_output"]),
+                                       ("independent", "reviewer", None)):
+            review.update(mode=mode, agent_id=agent_id, review_output=output)
+            checker.write_json(execution_path, execution)
+            expect_failure(lambda: checker.validate_audit(formal, process, "025"), "独立代理")
+        review.update(mode="independent", agent_id="reviewer", review_output={
+            "path": str(review_output), "sha256": checker.sha256_file(review_output).lower()})
+        review["inputs"] = input_hashes([review_input])
+        checker.write_json(execution_path, execution)
+        expect_failure(lambda: checker.validate_audit(formal, process, "025"), "未绑定")
+        review["inputs"] = input_hashes([note, review_input])
+        checker.write_json(execution_path, execution)
+        original_note = note.read_bytes()
+        note.write_bytes(original_note + b"\nchanged")
+        expect_failure(lambda: checker.publication_supplementary_review(process, note), "输入已变化")
+        note.write_bytes(original_note)
+        review_output.write_text("changed conclusion", encoding="utf-8")
+        expect_failure(lambda: checker.validate_audit(formal, process, "025"), "交付的结论缺失或已变化")
+        review_output.write_text("independent reviewer conclusion", encoding="utf-8")
+        review_input.write_text("changed evidence", encoding="utf-8")
+        expect_failure(lambda: checker.validate_audit(formal, process, "025"), "输入已变化")
+        execution_path.unlink()
+        checker.validate_audit(formal, process, "025")
         assert "review_scope" in ready and "full_read_confirmation" not in ready
         assert "audited_at" not in ready and checker.validate_iso_datetime(ready["checked_at"])
         current_audit = json.loads(audit_path.read_text(encoding="utf-8"))

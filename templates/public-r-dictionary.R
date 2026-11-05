@@ -1,11 +1,14 @@
 # ----------- 4 变量字典 -----------
 # defined_value 是格式占位；实际名称按第1步命名规范填写。
 # 按已定方案填写：analysis_vars 沿用 approved_analysis_vars 的展示顺序；
-# result_labels 使用各结果的 display_name。计算语句的先后不改变此顺序。
+# result_labels 使用文案检查生成的标签：名称加已确认单位，如“血糖（mmol/L）”；无单位只用名称。
+# 将生成值写入下面这一个向量，公开 R 不在运行时读取过程记录。计算顺序不改变展示顺序。
+# 后续输出和结果检查复用这些清单；模板中的可选处理按本主题实际需要选用。
 analysis_vars <- c("defined_value")
 result_labels <- c(defined_value = "定义结果")
 
-# 统一最终文字分类的书写形式；不处理来源列、数值结果或是/否的 0/1。
+# 可选：仅在最终文字分类实际需要规范书写时采用以下函数和循环。
+# 全数值结果或分类文字已符合要求时，省略这一整段；不处理来源列或数值 0/1。
 format_category_values <- function(values) {
   labels <- if (is.factor(values)) levels(values) else unique(values[!is.na(values)])
   formatted <- trimws(gsub("[[:space:]_]+", " ", labels))
@@ -27,14 +30,17 @@ for (variable in analysis_vars) {
 
 map <- data.frame(Variable = character(), original_vars = character())
 add_mapping <- function(map, variable, source_vars) {
-  rbind(map, data.frame(
-    Variable = variable,
-    original_vars = paste(unique(source_vars), collapse = ", ")
-  ))
+  rbind(
+    map,
+    data.frame(
+      Variable = variable,
+      original_vars = paste(unique(source_vars), collapse = ", ")
+    )
+  )
 }
 map <- add_mapping(map, "defined_value", c("source_a", "source_b"))
 
-codebook <- lapply(seq_len(nrow(map)), function(i) {
+codebook_rows <- lapply(seq_len(nrow(map)), function(i) {
   variable <- map$Variable[i]
   source_vars <- strsplit(map$original_vars[i], ", ", fixed = TRUE)[[1]]
   source_names <- name_z$Variable[match(source_vars, name_z$newname)]
@@ -47,8 +53,10 @@ codebook <- lapply(seq_len(nrow(map)), function(i) {
     count = length(source_vars)
   )
 })
-analysis_codebook <- bind_rows(codebook)
-analysis_codebook <- analysis_codebook[match(analysis_vars, analysis_codebook$Variable), ]
+analysis_codebook <- bind_rows(codebook_rows)
+analysis_codebook <- analysis_codebook[
+  match(analysis_vars, analysis_codebook$Variable),
+]
 
 # 以下为默认 CHARLS 个人期身份列示例；按实际数据库替换身份、来源及其标签。
 # 仅真实来源记录显式声明 household_period 且用户已确认家庭年度单位时，改为
@@ -59,37 +67,46 @@ identity_vars <- c("ID", "id", "year")
 identity_labels <- c(ID = "个人时期记录标识", id = "个人标识", year = "调查年")
 raw_vars <- c("source_a", "source_b")
 source_labels <- c(source_a = "来源 A", source_b = "来源 B")
-db_data <- data[c(identity_vars, raw_vars, analysis_vars)]
+# 共用列只保留一次，并随最终结果一起按 analysis_vars 排列。
+db_data <- data[c(identity_vars, setdiff(raw_vars, analysis_vars), analysis_vars)]
 analysis_data <- data[c(identity_vars, analysis_vars)]
 
 identity_codebook <- data.frame(
-  Variable = identity_vars, original_vars = identity_vars, processed_vars = identity_vars,
-  Label = unname(identity_labels[identity_vars]), count = 1L
+  Variable = identity_vars,
+  original_vars = identity_vars,
+  processed_vars = identity_vars,
+  Label = unname(identity_labels[identity_vars]),
+  count = 1L
 )
 source_codebook <- data.frame(
-  Variable = raw_vars, original_vars = name_z$Variable[match(raw_vars, name_z$newname)],
-  processed_vars = raw_vars, Label = unname(source_labels[raw_vars]), count = 1L
+  Variable = raw_vars,
+  original_vars = name_z$Variable[match(raw_vars, name_z$newname)],
+  processed_vars = raw_vars,
+  Label = unname(source_labels[raw_vars]),
+  count = 1L
 )
+# 共用列优先匹配来源行；分析字典仍保留结果行。
 codebook <- bind_rows(identity_codebook, source_codebook, analysis_codebook)
 codebook <- codebook[match(names(db_data), codebook$Variable), ]
-# 完整字典是表格；各列对应 db_data。分析字典仅含最终结果。
+# 内部字典各列对应 db_data，用于后台展示；分析字典仅含最终结果。
 # 按本主题替换文件名，并按第5步设置实际业务分组。
 # ----------- 5 正式输出 -----------
-openxlsx::write.xlsx(db_data, "db_topic.xlsx", overwrite = TRUE)
-openxlsx::write.xlsx(codebook, "codebook_topic.xlsx", overwrite = TRUE)
-openxlsx::write.xlsx(analysis_data, "analysis_db_topic.xlsx", overwrite = TRUE)
-openxlsx::write.xlsx(analysis_codebook, "analysis_codebook_topic.xlsx", overwrite = TRUE)
-# 经确认使用CSV时，仅将两份数据表的写入替换为：
-# write.csv(db_data, "db_topic.csv", row.names = FALSE, na = "", fileEncoding = "UTF-8")
+write.xlsx(analysis_data, "analysis_db_topic.xlsx", overwrite = TRUE)
+write.xlsx(analysis_codebook, "analysis_codebook_topic.xlsx", overwrite = TRUE)
+# 经确认使用CSV时，仅将分析数据表的写入替换为：
 # write.csv(analysis_data, "analysis_db_topic.csv", row.names = FALSE, na = "", fileEncoding = "UTF-8")
 
 # 输出
-# 后台 QA、HTML 与笔记生成放在此处；上面的四份正式表格属于公开代码。
+# 后台 QA、HTML 与笔记生成放在此处；上面的两份正式表格属于公开代码。
 # 按第5步加载公共helper后读取文案，完整生成调用须包含以下展示参数：
 # copy <- read_definition_copy(analysis_vars)
 # render_definition_bundle(..., display_policy = copy$display_policy)
 
 # 已确认并在来源记录声明的 CHARLS 家庭年度主题，后台须显式传：
-# render_definition_bundle(..., analysis_unit = "household_period",
-#   identity_keys = c("householdid", "year"), display_policy = copy$display_policy)
+# render_definition_bundle(
+#   ...,
+#   analysis_unit = "household_period",
+#   identity_keys = c("householdid", "year"),
+#   display_policy = copy$display_policy
+# )
 # 这两个字面参数与来源记录一致，RStudio独立执行也不依赖runner或过程目录。

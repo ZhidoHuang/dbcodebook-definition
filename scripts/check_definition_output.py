@@ -448,6 +448,9 @@ def read_xlsx_rows(path: Path) -> list[list[object]]:
                 element.clear()
                 if sheet_data is not None:
                     sheet_data.remove(element)
+    if rows:
+        width = len(rows[0])
+        rows[1:] = [row + [None] * max(0, width - len(row)) for row in rows[1:]]
     return rows
 
 
@@ -489,7 +492,11 @@ def _xlsx_row_values(row, shared_strings) -> list[object]:
                     value = shared_strings[int(value_node.text)]
                 else:
                     raw = value_node.text or ""
-                    if re.fullmatch(r"-?\d+(\.\d+)?", raw):
+                    if cell_type in {"str", "e"}:
+                        value = raw
+                    elif cell_type == "b":
+                        value = raw == "1"
+                    elif re.fullmatch(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?", raw):
                         number = float(raw)
                         value = int(number) if number.is_integer() else number
                     else:
@@ -572,39 +579,188 @@ def workbook_source_columns(formal, raw_vars, analysis_vars, summaries):
 
 def source_result_label_roles(formal, dictionary, analysis_dictionary, raw_vars, analysis_vars, plan):
     """Accept distinct Labels only when both source and approved result roles match."""
+    from definition_display import confirmed_result_label
     full = {row[dictionary[0].index("Variable")]: dict(zip(dictionary[0], row))
             for row in dictionary[1:]}
     analysis = {row[analysis_dictionary[0].index("Variable")]: dict(zip(analysis_dictionary[0], row))
                 for row in analysis_dictionary[1:]}
-    mismatched = [name for name in analysis_vars if full[name].get("Label") != analysis[name].get("Label")]
-    if not mismatched:
+    planned_shared = {item.get("analysis_var") for item in (plan or [])
+                      if isinstance(item, dict) and item.get("analysis_var") in raw_vars}
+    requires_source_check = [name for name in analysis_vars if name in planned_shared
+                             or full[name].get("Label") != analysis[name].get("Label")]
+    if not requires_source_check:
         return []
     with (formal / "raw_codebook.csv").open(encoding="utf-8-sig", newline="") as handle:
         raw = list(csv.DictReader(handle))
     accepted = []
-    for name in mismatched:
+    for name in requires_source_check:
         sources = [row for row in raw if row.get("newname") == name]
         results = [row for row in (plan or []) if isinstance(row, dict) and row.get("analysis_var") == name]
         if name not in raw_vars or len(sources) != 1 or len(results) != 1:
             raise ValueError("Label role lacks a unique selected source and approved result: " + name)
         source, result, entry = sources[0], results[0], full[name]
         source_label = next((source[key] for key in ("Label", "Easy label", "Easy.label") if key in source), None)
-        result_label = result.get("meaning")
+        result_label = confirmed_result_label(result)
         if (not source.get("Variable") or not isinstance(source_label, str) or not source_label.strip()
-                or not isinstance(result_label, str) or not result_label.strip()
                 or entry.get("original_vars") != source["Variable"]
                 or entry.get("processed_vars") != name or str(entry.get("count")) not in ("1", "1.0")
-                or entry.get("Label") != source_label or analysis[name].get("Label") != result_label):
+                or entry.get("Label") != source_label
+                or (result_label is not None and analysis[name].get("Label") != result_label)):
             raise ValueError("Source/result Label or identity differs from its declared role: " + name)
         accepted.append({"variable": name, "source_identity": source["Variable"],
-                         "source_Label": source_label, "result_Label": result_label})
+                         "source_Label": source_label, "result_Label": analysis[name].get("Label"),
+                         "result_Label_checked": result_label is not None})
     return accepted
 
 
-def check_workbook_contract(formal, expected_files, analysis_db, analysis_codebook, raw_vars, analysis_vars, results, source_summaries=None, medicine_record=None, charls_multifile_contract=None, result_label_plan=None):
+def verified_default_sources(formal, database):
+    """Return only database-specific default identities present in actual raw headers."""
+    db = (database or '').lower()
+    if not db:
+        return set()
+    defaults = (set(expected_raw_header(db, [])) if db in {
+        'charls', 'elsa', 'hrs', 'share', 'klosa', 'chns', 'knhanes', 'nhanes', 'nhanesiii', 'nhis'
+    } else set())
+    if db == 'elsa':
+        defaults.add('Wave_id')
+    elif db == 'charls':
+        defaults.update(('householdid', 'respondent_id'))
+    elif db == 'nhanesiii':
+        defaults.update(('_survey_period', '_period'))
+    elif db == 'hrs':
+        from hrs_export_contract import codebook_defaults
+        defaults.update(codebook_defaults(formal / 'raw_codebook.csv'))
+    elif db == 'share':
+        from share_export_contract import IDENTIFIERS
+        defaults.update(IDENTIFIERS)
+    elif db == 'mhas':
+        from mhas_export_contract import IDENTIFIERS, SOURCE_IDENTIFIERS
+        defaults.update(IDENTIFIERS)
+        defaults.update(set().union(*SOURCE_IDENTIFIERS.values()))
+    elif db == 'nhis':
+        from nhis_export_contract import DEFAULTS, OPTIONAL_DEFAULTS
+        defaults.update(DEFAULTS + OPTIONAL_DEFAULTS)
+    raw_headers = set().union(*(set(read_csv_header(path)) for path in formal.glob('raw_data*.csv')))
+    return defaults & raw_headers
+
+
+def check_analysis_workbook_contract(formal, analysis_db, analysis_codebook, raw_vars, analysis_vars,
+                                     results, source_summaries=None, medicine_record=None,
+                                     charls_multifile_contract=None, result_label_plan=None, database=None):
+    """Check the delivered analysis table and dictionary against recorded sources."""
+    from definition_display import confirmed_result_label
+    check = "analysis table and dictionary contents"
+    if any(not name or not (formal / name).is_file() for name in (analysis_db, analysis_codebook)):
+        fail(results, check, "missing analysis table or dictionary")
+        return
+    data, dictionary = [read_table_rows(formal / name) for name in (analysis_db, analysis_codebook)]
+    if not data or not dictionary:
+        fail(results, check, "empty analysis table or dictionary")
+        return
+    header, dict_header = data[0], dictionary[0]
+    identities = [name for name in header if name not in analysis_vars]
+    if len(header) != len(set(header)) or header != identities + analysis_vars:
+        fail(results, check, "analysis table must contain identities followed by final results")
+        return
+    if any(len(row) > len(header) for row in data[1:]):
+        fail(results, check, "data row exceeds header width")
+        return
+    raw_identity_candidates = set(identities) & set(raw_vars)
+    if raw_identity_candidates:
+        try:
+            unexpected = raw_identity_candidates - verified_default_sources(formal, database)
+            if unexpected:
+                fail(results, check, {"raw_business_columns_in_analysis_identity": sorted(unexpected)})
+                return
+        except (OSError, ValueError) as exc:
+            fail(results, check, str(exc))
+            return
+    required = {"Variable", "original_vars", "processed_vars", "Label", "count"}
+    if not required <= set(dict_header) or len(dict_header) != len(set(dict_header)):
+        fail(results, check, {"missing_dictionary_columns": sorted(required - set(dict_header))})
+        return
+    entries = [dict(zip(dict_header, row)) for row in dictionary[1:]]
+    if [entry.get("Variable") for entry in entries] != analysis_vars:
+        fail(results, check, "analysis dictionary variables or order differ")
+        return
+    try:
+        _, summary_mapping = workbook_source_columns(formal, raw_vars, analysis_vars, source_summaries)
+        medicine_fields = []
+        if medicine_record:
+            from nhanes_export_contract import medicine_source_columns
+            medicine_fields = medicine_source_columns(formal, medicine_record)
+            if set(medicine_fields) & (set(raw_vars) | set(analysis_vars) | set(identities)):
+                raise ValueError('Medicine source columns conflict with other fields')
+        with (formal / "raw_codebook.csv").open(encoding="utf-8-sig", newline="") as handle:
+            raw_rows = list(csv.DictReader(handle))
+        raw_map = {}
+        for row in raw_rows:
+            alias = row.get("newname")
+            if alias in raw_vars:
+                if alias in raw_map or not row.get("Variable"):
+                    raise ValueError("Missing or duplicate source identity: " + str(alias))
+                raw_map[alias] = row["Variable"]
+        raw_map.update({name: name for name in medicine_fields})
+        raw_dictionary_aliases = {row.get("newname") for row in raw_rows}
+        for name in verified_default_sources(formal, database):
+            if name not in raw_dictionary_aliases:
+                raw_map.setdefault(name, name)
+        planned = {}
+        for item in (result_label_plan or []):
+            if isinstance(item, dict) and item.get("analysis_var") in analysis_vars:
+                name = item["analysis_var"]
+                if name in planned:
+                    raise ValueError("Duplicate result label plan: " + name)
+                planned[name] = confirmed_result_label(item)
+        checked, source_checks, unverified_intermediates = [], {}, {}
+        join_keys = (charls_multifile_contract or {}).get("join_identity_columns", [])
+        for entry in entries:
+            name = entry["Variable"]
+            sources = split_csv(entry.get("processed_vars"))
+            if not sources or len(sources) != len(set(sources)):
+                raise ValueError("Missing or duplicate source mapping: " + name)
+            if set(sources) & set(join_keys):
+                raise ValueError("Join-only identity is mapped as a measurement: " + name)
+            confirmed = [source for source in sources if source in raw_map]
+            if not confirmed:
+                raise ValueError("No verified raw or default source mapping: " + name)
+            if any(source in raw_dictionary_aliases and source not in raw_map for source in sources):
+                raise ValueError("Source mapping includes an unselected raw alias: " + name)
+            for source in sources:
+                if source in summary_mapping and not set(summary_mapping[source]) <= set(sources):
+                    raise ValueError("Summary mapping omits original sources: " + name)
+            source_checks[name] = confirmed
+            unverified = [source for source in sources if source not in raw_map]
+            if unverified:
+                unverified_intermediates[name] = unverified
+            expected_names = ", ".join(raw_map.get(source, source) for source in sources)
+            if entry.get("original_vars") != expected_names or str(entry.get("count")) not in (str(len(sources)), str(float(len(sources)))):
+                raise ValueError("Source identities or count differ: " + name)
+            if planned.get(name) is not None:
+                if entry.get("Label") != planned[name]:
+                    raise ValueError("Result Label differs from confirmed display name and unit: " + name)
+                checked.append(name)
+    except (ValueError, OSError, KeyError, TypeError) as exc:
+        fail(results, check, str(exc))
+        return
+    ok(results, check, {"rows": len(data) - 1, "result_columns": analysis_vars,
+                        "source_mapping": "analysis_dictionary_to_raw_codebook",
+                        "source_inputs_checked": source_checks,
+                        "intermediate_inputs_not_checked": unverified_intermediates,
+                        "result_labels_checked": checked,
+                        "result_labels_not_checked": [name for name in analysis_vars if name not in checked],
+                        "cross_table_comparison": "not_performed_no_full_tables",
+                        "formula_recomputation": "not_performed"})
+
+
+def check_workbook_contract(formal, expected_files, analysis_db, analysis_codebook, raw_vars, analysis_vars, results, source_summaries=None, medicine_record=None, charls_multifile_contract=None, result_label_plan=None, database=None):
     """Compare actual cells, not file existence or declared argument lists."""
     full = [n for n in expected_files if n.startswith("db_") and n.endswith((".xlsx",'.csv'))]
     dictionaries = [n for n in expected_files if n.startswith("codebook_") and n.endswith(".xlsx")]
+    if not full and not dictionaries:
+        return check_analysis_workbook_contract(formal, analysis_db, analysis_codebook, raw_vars,
+            analysis_vars, results, source_summaries, medicine_record, charls_multifile_contract,
+            result_label_plan, database)
     if len(full) != 1 or len(dictionaries) != 1:
         fail(results, "four workbook contents", "expected one full table and one full dictionary")
         return
@@ -663,8 +819,15 @@ def check_workbook_contract(formal, expected_files, analysis_db, analysis_codebo
     if len(full_rows) != len(analysis_rows):
         fail(results, "four workbook contents", "full and analysis tables have different row counts")
         return
+    if (any(len(row) > len(full_header) for row in full_rows[1:]) or
+            any(len(row) > len(analysis_header) for row in analysis_rows[1:])):
+        fail(results, "four workbook contents", "data row exceeds header width")
+        return
     indexes = [full_header.index(name) for name in analysis_header]
-    if [[row[i] if i < len(row) else None for i in indexes] for row in full_rows[1:]] != analysis_rows[1:]:
+    full_values = [[row[i] if i < len(row) else None for i in indexes] for row in full_rows[1:]]
+    analysis_values = [[row[i] if i < len(row) else None for i in range(len(analysis_header))]
+                       for row in analysis_rows[1:]]
+    if full_values != analysis_values:
         fail(results, "four workbook contents", "shared identities/results or row order differ")
         return
     for name, rows, expected_variables in ((dictionaries[0], dictionary, full_header),
@@ -677,6 +840,37 @@ def check_workbook_contract(formal, expected_files, analysis_db, analysis_codebo
         if variables != expected_variables:
             fail(results, "four workbook contents", {"dictionary": name, "expected": expected_variables, "actual": variables})
             return
+    from definition_display import confirmed_result_label
+    planned_labels = {}
+    try:
+        for item in (result_label_plan or []):
+            if not isinstance(item, dict) or item.get("analysis_var") not in analysis_vars:
+                continue
+            expected_label = confirmed_result_label(item)
+            if expected_label is not None:
+                name = item["analysis_var"]
+                if name in planned_labels:
+                    raise ValueError("Duplicate result label plan: " + name)
+                planned_labels[name] = expected_label
+    except ValueError as exc:
+        fail(results, "four workbook contents", str(exc))
+        return
+    planned_shared = any(isinstance(item, dict) and item.get("analysis_var") in raw_vars
+                         and item.get("analysis_var") in analysis_vars for item in (result_label_plan or []))
+    if (planned_labels or planned_shared) and "Label" not in analysis_dictionary[0]:
+        fail(results, "four workbook contents", "Analysis dictionary lacks Label")
+        return
+    if planned_shared and "Label" not in dictionary[0]:
+        fail(results, "four workbook contents", "Full dictionary lacks source Label")
+        return
+    if planned_labels:
+        labels = {row[analysis_dictionary[0].index("Variable")]: dict(zip(analysis_dictionary[0], row)).get("Label")
+                  for row in analysis_dictionary[1:]}
+        for name, expected_label in planned_labels.items():
+            if labels.get(name) != expected_label:
+                fail(results, "four workbook contents", {"variable": name, "expected_Label": expected_label,
+                                                          "actual_Label": labels.get(name)})
+                return
     label_roles = []
     if "Label" in dictionary[0] and "Label" in analysis_dictionary[0]:
         try:
@@ -694,7 +888,9 @@ def check_workbook_contract(formal, expected_files, analysis_db, analysis_codebo
                 return
     ok(results, "four workbook contents", {"rows": len(analysis_rows) - 1, "source_columns": source_columns,
                                            "source_summaries": summary_mapping,
-                                           "result_columns": analysis_vars, "source_result_label_roles": label_roles})
+                                           "result_columns": analysis_vars, "source_result_label_roles": label_roles,
+                                           "result_labels_checked": list(planned_labels),
+                                           "result_labels_not_checked": [name for name in analysis_vars if name not in planned_labels]})
 
 
 def check_identity_values(
@@ -1151,7 +1347,7 @@ def check_summary_prose(note_text: str, results: list[dict], compact_module: boo
             period_style = "constructed"
         elif period_index == 0 and actual_title in {"问卷设计", "问卷设计变化"}:
             period_style = "questionnaire"
-        if not has_period_note or actual_title not in expected_titles or len(body_text) < 80:
+        if not has_period_note or actual_title not in expected_titles or not body_text.replace(actual_title, "", 1).strip():
             period_issues.append(html.unescape(label))
     card_blocks = re.findall(
         r"(?s)<!-- summary-insight-card:start -->(.*?)<!-- summary-insight-card:end -->",
@@ -1177,7 +1373,7 @@ def check_summary_prose(note_text: str, results: list[dict], compact_module: boo
         "legacy_five_column_table": legacy_table,
     }
     if (
-        len(opening_text) < 30
+        not opening_text
         or period_issues
         or not card_ok
         or source_count != 0
@@ -1569,8 +1765,8 @@ def check_public_dictionary(source_public: str, results: list[dict]) -> None:
         ("packages", r"包|环境"),
         ("read data", r"读取.*数据|数据读取"),
         ("definition", r"重编码|分波次|处理|计分|定义"),
-        ("variable dictionary", r"^变量字典$"),
-        ("formal output", r"^正式输出$"),
+        ("variable dictionary", r"^(?:变量|分析)字典$"),
+        ("formal output", r"^(?:正式输出|输出结果)$"),
     ]
     matched_positions: list[int] = []
     missing: list[str] = []
@@ -1602,7 +1798,7 @@ def check_public_dictionary(source_public: str, results: list[dict]) -> None:
         (
             match.end()
             for match, heading in zip(heading_matches, normalized_headings)
-            if heading == "变量字典"
+            if re.fullmatch(semantic_patterns[3][1], heading)
         ),
         None,
     )
@@ -1610,7 +1806,7 @@ def check_public_dictionary(source_public: str, results: list[dict]) -> None:
         (
             match.start()
             for match, heading in zip(heading_matches, normalized_headings)
-            if heading == "正式输出"
+            if re.fullmatch(semantic_patterns[4][1], heading)
             and dictionary_start is not None
             and match.start() > dictionary_start
         ),
@@ -1632,18 +1828,10 @@ def check_public_dictionary(source_public: str, results: list[dict]) -> None:
     mapped_vars = (
         analysis_vars if direct_map_uses_analysis_vars else helper_mapped_vars
     )
-    mapping_is_built = (
-        "add_mapping <- function" in dictionary or direct_map_uses_analysis_vars
-    )
-    map_drives_codebook = mapping_is_built and all(
-        token in dictionary
-        for token in [
-            "map <- data.frame",
-            "codebook <- lapply",
-            "map$Variable",
-            "map$original_vars",
-        ]
-    )
+    mapping_is_built = bool(re.search(r"\badd_mapping\s*<-\s*function\s*\(", dictionary)) or direct_map_uses_analysis_vars
+    map_drives_codebook = mapping_is_built and all(re.search(pattern, dictionary) for pattern in (
+        r"\bmap\s*<-\s*data\.frame\s*\(", r"\b(?:codebook|codebook_rows)\s*<-\s*lapply\s*\(",
+        r"\bmap\s*\$\s*Variable\b", r"\bmap\s*\$\s*original_vars\b"))
     missing_mapping = [variable for variable in analysis_vars if variable not in mapped_vars]
     if not analysis_vars or missing_mapping or bypass or not map_drives_codebook:
         fail(results, "mapping variable dictionary", {
@@ -2056,7 +2244,7 @@ def main() -> int:
     if args.complete:
         table_format = (source_record or {}).get('data_table_format','xlsx')
         data_files = [n for n in expected_files if n.startswith('db_') or n == args.analysis_db]
-        if table_format not in {'xlsx','csv'} or len(data_files) != 2 or any(Path(n).suffix.lower() != '.'+table_format for n in data_files):
+        if table_format not in {'xlsx','csv'} or len(data_files) not in (1, 2) or any(Path(n).suffix.lower() != '.'+table_format for n in data_files):
             fail(results,'final data table format',{'declared':table_format,'files':data_files})
         else:
             ok(results,'final data table format',{'data':table_format,'codebooks':'xlsx'})
@@ -2076,9 +2264,7 @@ def main() -> int:
             required_names.update(path.name for path in raw_members)
         missing = required_names - set(expected_files)
         roles = {"public_r": any(name.lower().endswith(".r") for name in expected_files),
-                 "note": any(name.endswith(".md") and name != READER_COPY_NAME for name in expected_files),
-                 "db": any(name.startswith("db_") and name.endswith((".xlsx",'.csv')) for name in expected_files),
-                 "codebook": any(name.startswith("codebook_") and name.endswith(".xlsx") for name in expected_files)}
+                 "note": any(name.endswith(".md") and name != READER_COPY_NAME for name in expected_files)}
         if missing or not all(roles.values()):
             fail(results, "complete artifact scope", {"missing_files": sorted(missing), "roles": roles})
     for name in expected_files:
@@ -2326,6 +2512,14 @@ def main() -> int:
             ok(results, "analysis_db columns", header)
         ok(results, "analysis_db dimensions", {"rows": len(rows) - 1, "cols": len(header)})
 
+        from definition_display import compare_result_values
+        try:
+            comparison = compare_result_values(rows, source_record,
+                csv_input=Path(args.analysis_db).suffix.lower() == ".csv")
+            (fail if comparison["errors"] else ok)(results, "registered result types and values", comparison)
+        except ValueError as exc:
+            fail(results, "registered result types and values", str(exc))
+
         raw_data_path = formal_dir / primary_raw_name
         if raw_data_path.exists():
             identity_header = list(dict.fromkeys(name for path in raw_members for name in read_csv_header(path))) if args.db in {"mhas", "knhanes", "klosa"} else read_csv_header(raw_data_path)
@@ -2369,18 +2563,22 @@ def main() -> int:
                                  else (source_record or {}).get("source_summaries") if args.db == "nhanes" else None),
                                 source_record if args.db == "nhanes" else None,
                                 charls_multifile_contract=charls_multifile_contract,
-                                result_label_plan=(source_record or {}).get("definition_plan"))
+                                result_label_plan=(source_record or {}).get("definition_plan"),
+                                database=args.db)
 
     if args.complete and args.db == "knhanes" and "person_aggregation" in (knhanes_person_contract or {}):
         try:
             from knhanes_person_aggregation import expected_person_summaries, validate_summary_cells
             expected, summaries, stats = expected_person_summaries(formal_dir, source_record, knhanes_person_contract)
             full_names = [name for name in expected_files if name.startswith("db_") and name.endswith((".xlsx", ".csv"))]
-            if len(full_names) != 1:
-                raise ValueError("Expected exactly one full person-level table")
-            full = read_table_rows(formal_dir / full_names[0])
-            checked = validate_summary_cells(full[0], full[1:], expected, summaries)
-            ok(results, "KNHANES repeated-source summary cells", dict(checked, aggregation=stats))
+            table = read_table_rows(formal_dir / (full_names[0] if full_names else args.analysis_db))
+            present = {name: spec for name, spec in summaries.items() if name in table[0]}
+            if full_names and len(present) != len(summaries):
+                raise ValueError("Workbook omits declared summary columns")
+            checked = validate_summary_cells(table[0], table[1:], expected, present)
+            ok(results, "KNHANES repeated-source summary cells", dict(checked, aggregation=stats,
+                checked_summary_columns=list(present),
+                summary_columns_not_in_delivered_table=[name for name in summaries if name not in present]))
         except (ValueError, OSError) as exc:
             fail(results, "KNHANES repeated-source summary cells", str(exc))
 
@@ -2424,7 +2622,13 @@ def main() -> int:
     passed = all(item["ok"] for item in results)
     payload = {"ok": passed, "scope": "complete" if args.complete else "partial",
                "status": ("MACHINE_CHECK_PASS" if args.complete else "PARTIAL_CHECK_PASS") if passed else "CHECK_FAILED",
-               "checks": results}
+               "checks": results,
+               "verification_scope": {
+                   "basis": "listed_mechanical_checks_only",
+                   "formula_recomputation": "not_performed_by_this_command",
+                   "official_source_truth": "not_assessed_by_this_command",
+                   "writing_quality": "not_assessed_by_this_command",
+               }}
     if args.complete and passed:
         payload["artifacts"] = {
             path.name: hashlib.sha256(path.read_bytes()).hexdigest().upper()

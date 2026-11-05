@@ -34,13 +34,13 @@ local({
   book$processed_vars[book$Variable==vars[1]] <- analysis_book$processed_vars[1]
   book$count[book$Variable==vars[1]] <- 2L
   before_objects <- list(db=db, book=book, analysis=analysis, analysis_book=analysis_book)
-  files <- c("db.xlsx", "codebook.xlsx", "analysis_db.xlsx", "analysis_codebook.xlsx")
-  objects <- list(db, book, analysis, analysis_book)
+  files <- c("analysis_db.xlsx", "analysis_codebook.xlsx")
+  objects <- list(analysis, analysis_book)
   for (i in seq_along(files)) write.xlsx(objects[[i]], files[i])
   before_hashes <- tools::md5sum(files)
   writeLines(c("---", "topic_kind: module", "---", "",
     "# NHANES — 检测模块（Test Module）", "", "## 摘要导读", "",
-    "本主题定义 **11** 个变量：**检测数值**。", "", "## 小book提示", "",
+    paste0("本主题定义 **11** 个变量：", paste0("[[序号:", seq_along(vars), "]]**检测", seq_along(vars), "**", collapse="、"), "。"), "", "## 小book提示", "",
     "保留每日发布的检测数值。"), "文案.md", useBytes=TRUE)
   writeLines(c("# synthetic public code", "print('fixture')", "# 输出"), "define_fixture.R")
   criteria_lines <- unlist(lapply(seq_along(vars), function(i) c(
@@ -119,7 +119,7 @@ local({
   compact_test <- FALSE
   single <- vars[1]
   writeLines(c("# NHANES — 检测（Test）", "", "## 摘要导读", "",
-    "本主题定义 **1** 个变量：**检测数值**。", "", "## Criteria", "",
+    "本主题定义 **1** 个变量：①**检测数值**。", "", "## Criteria", "",
     paste0("### ", single), "", "#### 定义", "", "检测的发布数值。", "",
     "#### 定义逻辑", "", "保留来源发布的检测数值。", "", "#### 分类", "",
     "- [数值] 检测单位。", "", "## 小book提示", "", "保留每日发布的检测数值。"),
@@ -167,5 +167,33 @@ local({
     identical(before_hashes, tools::md5sum(files)))
   setwd(before_dir)
   unlink(folder, recursive=TRUE)
-  cat("COMPACT_MODULE_RENDER_PASS: 11 variables; real detail HTML and complete Criteria; no source charts; four xlsx and original objects unchanged; dotted names and legacy NULL-policy full render pass\n")
+  cat("COMPACT_MODULE_RENDER_PASS: 11 variables; real detail HTML and complete Criteria; no source charts; two xlsx and original objects unchanged; dotted names and legacy NULL-policy full render pass\n")
+})
+
+local({
+  root <- normalizePath(".", winslash="/")
+  before_dir <- getwd()
+  folder <- tempfile("definition_template_")
+  dir.create(folder)
+  on.exit({ setwd(before_dir); unlink(folder, recursive=TRUE) }, add=TRUE)
+  setwd(folder)
+  suppressPackageStartupMessages(library(dplyr))
+  suppressPackageStartupMessages(library(openxlsx))
+  data <- data.frame(ID=c("a", "b"), id=c("1", "2"), year=c(2011, 2011),
+    source_a=c(1, 2), source_b=c(2, 3), defined_value=c(3, 5))
+  name_z <- data.frame(Variable=c("A (file)", "B (file)"), newname=c("source_a", "source_b"))
+  source(file.path(root, "templates/public-r-dictionary.R"), encoding="UTF-8", local=TRUE)
+  stopifnot(identical(sort(list.files()), c("analysis_codebook_topic.xlsx", "analysis_db_topic.xlsx")))
+  exported_data <- read.xlsx("analysis_db_topic.xlsx")
+  exported_dictionary <- read.xlsx("analysis_codebook_topic.xlsx")
+  stopifnot(identical(names(exported_data), c("ID", "id", "year", "defined_value")),
+    identical(exported_data$defined_value, c(3, 5)),
+    identical(exported_dictionary$Variable, "defined_value"),
+    identical(exported_dictionary$processed_vars, "source_a, source_b"),
+    all(c("source_a", "source_b") %in% names(db_data)),
+    identical(codebook$Variable, names(db_data)))
+  source(file.path(root, "scripts/render_definition_bundle.R"), encoding="UTF-8", local=TRUE)
+  stopifnot(identical(format_definition_card_sources(analysis_codebook, name_z, codebook),
+    c(defined_value="A (file)=source_a, B (file)=source_b")))
+  cat("PUBLIC_TEMPLATE_OUTPUTS_PASS\n")
 })

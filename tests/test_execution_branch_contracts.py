@@ -86,8 +86,8 @@ def check_source_result_label_fixture(full_dictionary=None, analysis_dictionary=
         analysis_dictionary = [header, ["shared","RAW_X","shared","Shared result",1],
                                ["defined","RAW_X","shared","Defined result",1]]
         raw_rows = [{"Variable":"RAW_X","newname":"shared","Label":"Official source"}]
-        plan = [{"analysis_var":"shared","meaning":"Shared result"},
-                {"analysis_var":"defined","meaning":"Defined result"}]
+        plan = [{"analysis_var":"shared","meaning":"Shared result","display_name":"Shared result","unit":""},
+                {"analysis_var":"defined","meaning":"Defined result","display_name":"Defined result","unit":""}]
     full_dictionary, analysis_dictionary, raw_rows, plan = map(deepcopy,
         (full_dictionary, analysis_dictionary, raw_rows, plan))
     vi = full_dictionary[0].index("Variable")
@@ -121,6 +121,56 @@ def check_source_result_label_fixture(full_dictionary=None, analysis_dictionary=
             assert checks[-1]['ok']==accepted,(label,checks)
             cases.append({'case':label,'expected_accept':accepted,'actual':checks[-1]})
         run('exact source/result roles',True)
+        named_plan=deepcopy(plan)
+        named_result=next(row for row in named_plan if row['analysis_var']==shared)
+        named_result['display_name']=analysis_dictionary[ai][analysis_dictionary[0].index('Label')]
+        named_result['unit']=''
+        named_result['meaning']='A longer explanation of the approved result.'
+        run('display name differs from meaning',True,result_plan=named_plan)
+        unit_plan=deepcopy(named_plan)
+        shared_spec=next(row for row in unit_plan if row['analysis_var']==shared)
+        shared_spec['unit']='mmol/L'
+        separate_spec=next(row for row in unit_plan if row['analysis_var']==separate)
+        separate_spec['display_name']=analysis_dictionary[next(i for i,row in enumerate(analysis_dictionary[1:],1) if row[av]==separate)][analysis_dictionary[0].index('Label')]
+        separate_spec['unit']='kg'
+        units=deepcopy(tables)
+        separate_ai=next(i for i,row in enumerate(units[files[3]][1:],1) if row[av]==separate)
+        units[files[3]][ai][analysis_dictionary[0].index('Label')]=shared_spec['display_name']+'（mmol/L）'
+        units[files[3]][separate_ai][analysis_dictionary[0].index('Label')]=separate_spec['display_name']+'（kg）'
+        units[files[1]][di][full_dictionary[0].index('Label')]=separate_spec['display_name']+'（kg）'
+        run('confirmed units shared and nonshared',True,data=units,result_plan=unit_plan)
+        overwritten_source=deepcopy(units)
+        overwritten_source[files[1]][fi][full_dictionary[0].index('Label')]=shared_spec['display_name']+'（mmol/L）'
+        run('same-name source label remains official even if labels equal',False,data=overwritten_source,result_plan=unit_plan)
+        for wrong in (shared_spec['display_name'], shared_spec['display_name']+'（mg/dL）'):
+            changed=deepcopy(units);changed[files[3]][ai][analysis_dictionary[0].index('Label')]=wrong
+            run('shared missing or wrong unit',False,data=changed,result_plan=unit_plan)
+        for wrong in (separate_spec['display_name'], separate_spec['display_name']+'（mg/dL）'):
+            changed=deepcopy(units)
+            changed[files[3]][separate_ai][analysis_dictionary[0].index('Label')]=wrong
+            changed[files[1]][di][full_dictionary[0].index('Label')]=wrong
+            run('equal nonshared labels missing or wrong unit',False,data=changed,result_plan=unit_plan)
+        unitless_plan=deepcopy(unit_plan)
+        next(row for row in unitless_plan if row['analysis_var']==shared)['unit']=''
+        unitless=deepcopy(units)
+        unitless[files[3]][ai][analysis_dictionary[0].index('Label')]=shared_spec['display_name']
+        run('explicit unitless result',True,data=unitless,result_plan=unitless_plan)
+        run('explicit unitless result rejects appended unit',False,data=units,result_plan=unitless_plan)
+        categorical_plan=deepcopy(unitless_plan)
+        categorical=next(row for row in categorical_plan if row['analysis_var']==shared)
+        categorical['value_type']='categorical'
+        run('categorical explicitly unitless',True,data=unitless,result_plan=categorical_plan)
+        del categorical['unit']
+        run('legacy categorical unit not checked',True,data=units,result_plan=categorical_plan)
+        already_unit=deepcopy(unit_plan)
+        next(row for row in already_unit if row['analysis_var']==shared)['display_name'] += '（mmol/L）'
+        run('display name already ends with confirmed unit',True,data=units,result_plan=already_unit)
+        changed=deepcopy(tables)
+        changed[files[3]][ai][analysis_dictionary[0].index('Label')]=named_result['meaning']
+        run('meaning is not the result label',False,data=changed,result_plan=named_plan)
+        empty_name=deepcopy(named_plan)
+        next(row for row in empty_name if row['analysis_var']==shared)['display_name']=''
+        run('blank display name cannot fall back to meaning',False,result_plan=empty_name)
         run('no approved label plan',False,result_plan=[])
         equal=deepcopy(tables)
         for row in equal[files[3]][1:]:
@@ -145,8 +195,22 @@ def check_source_result_label_fixture(full_dictionary=None, analysis_dictionary=
         run('duplicate result plan',False,result_plan=duplicate)
         missing=[row for row in plan if row['analysis_var']!=shared]
         run('missing result plan',False,result_plan=missing)
-        empty=deepcopy(plan);next(row for row in empty if row['analysis_var']==shared)['meaning']=''
-        run('blank result meaning',False,result_plan=empty)
+        empty=deepcopy(plan);next(row for row in empty if row['analysis_var']==shared)['unit']=None
+        run('invalid confirmed unit',False,result_plan=empty)
+        old_plan=deepcopy(plan);old_shared=next(row for row in old_plan if row['analysis_var']==shared)
+        old_shared.pop('unit',None)
+        old_values=deepcopy(tables)
+        old_values[files[3]][ai][analysis_dictionary[0].index('Label')]=old_shared['display_name']+'（mmol/L）'
+        run('legacy unit unknown is not guessed',True,data=old_values,result_plan=old_plan)
+        wrong_old=deepcopy(old_values)
+        wrong_old[files[1]][fi][full_dictionary[0].index('original_vars')]='WRONG'
+        run('legacy unknown unit still checks source identity',False,data=wrong_old,result_plan=old_plan)
+        wrong_old=deepcopy(old_values)
+        wrong_old[files[1]][fi][full_dictionary[0].index('Label')]='Wrong source label'
+        run('legacy unknown unit still checks source label',False,data=wrong_old,result_plan=old_plan)
+        same_wrong=deepcopy(old_values)
+        same_wrong[files[1]][fi][full_dictionary[0].index('Label')]=old_values[files[3]][ai][analysis_dictionary[0].index('Label')]
+        run('legacy equal labels still check planned source label',False,data=same_wrong,result_plan=old_plan)
         changed=deepcopy(tables);changed[files[2]][1][-1]+=1
         run('shared result value drift',False,data=changed)
         changed=deepcopy(tables);changed[files[2]][1][0]+=1
@@ -235,7 +299,7 @@ with tempfile.TemporaryDirectory(prefix='definition_branch_contracts_') as tmp:
 
 ## 摘要导读
 
-本主题定义“**合计分数**”，共 **1** 个变量。
+本主题定义①“**合计分数**”，共 **1** 个变量。
 
 ''' + questionnaire + '''
 ## Criteria
@@ -276,6 +340,35 @@ data <- data.frame(ID=paste0("001_",years),id="001",year=years,
 name_z <- data.frame(Variable=c("source_a", "source_b"), newname=c("source_a", "source_b"),
                     Easy.label=c("来源 A", "来源 B"),Module="fixture")
 template <- readLines(file.path(root,"templates/public-r-dictionary.R"), encoding="UTF-8")
+local({
+  # Execute the real template with a shared source/result after another result.
+  # A simple unique(identity, raw, result) would put source_a in the wrong order.
+  data <- data.frame(ID=c("a", "b"), id=c("01", "02"), year=c(2011L, 2013L),
+                     source_a=c(11, NA), source_b=c(20, 21), defined_value=c(4, 6))
+  original <- data
+  name_z <- data.frame(Variable=c("RAW_A (file)", "RAW_B (file)"),
+                       newname=c("source_a", "source_b"))
+  shared_template <- sub('analysis_vars <- c("defined_value")',
+    'analysis_vars <- c("defined_value", "source_a")', template, fixed=TRUE)
+  shared_template <- sub('result_labels <- c(defined_value = "定义结果")',
+    'result_labels <- c(defined_value = "定义结果", source_a = "共享结果")',
+    shared_template, fixed=TRUE)
+  shared_template <- sub('map <- add_mapping(map, "defined_value", c("source_a", "source_b"))',
+    'map <- add_mapping(map, "defined_value", c("source_a", "source_b"))\nmap <- add_mapping(map, "source_a", "source_a")',
+    shared_template, fixed=TRUE)
+  eval(parse(text=shared_template), envir=environment())
+  expected <- c("ID", "id", "year", "source_b", "defined_value", "source_a")
+  stopifnot(identical(names(db_data), expected),
+    identical(codebook$Variable, expected),
+    identical(analysis_codebook$Variable, c("defined_value", "source_a")),
+    identical(db_data, original[expected]),
+    identical(analysis_data, original[c("ID", "id", "year", "defined_value", "source_a")]),
+    codebook$Label[codebook$Variable == "source_a"] == "来源 A",
+    codebook$original_vars[codebook$Variable == "source_a"] == "RAW_A (file)",
+    analysis_codebook$Label[analysis_codebook$Variable == "source_a"] == "共享结果",
+    isTRUE(all.equal(openxlsx::read.xlsx("analysis_db_topic.xlsx"), analysis_data, check.attributes=FALSE)),
+    isTRUE(all.equal(openxlsx::read.xlsx("analysis_codebook_topic.xlsx"), analysis_codebook, check.attributes=FALSE)))
+})
 template <- sub("Defined value", "合计分数", template, fixed=TRUE)
 eval(parse(text=template))
 stopifnot(is.data.frame(codebook), identical(codebook$Variable,names(db_data)),
@@ -322,32 +415,148 @@ cat("OFFLINE_DICTIONARY_AND_ALL_NA_NOTE_PASS\n")
     contents=(folder/'note.md').read_text(encoding='utf-8')
     (folder/'note.md').write_text(contents.replace(item['paraphrase_reason'],'错误的原因。'),encoding='utf-8')
     rejects(lambda: delivery.validate_questionnaire_rendering(folder,folder,'note.md'),'verified paraphrase')
-    files=['db_topic.xlsx','codebook_topic.xlsx','analysis_db_topic.xlsx','analysis_codebook_topic.xlsx']
+    files=['analysis_db_topic.xlsx','analysis_codebook_topic.xlsx']
     checks=[]
-    check_workbook_contract(folder,files,files[2],files[3],['source_a','source_b'],['defined_value'],checks)
+    check_workbook_contract(folder,files,files[0],files[1],['source_a','source_b'],['defined_value'],checks)
     assert checks[-1]['ok'],checks
     checks=[]
-    check_workbook_contract(folder,files,files[2],files[3],['source_a'],['defined_value'],checks)
+    check_workbook_contract(folder,files,files[0],files[1],['source_a'],['defined_value'],checks)
     assert not checks[-1]['ok'],checks
     import csv
     from check_definition_output import read_xlsx_rows, read_table_rows
     csv_files=list(files)
-    for index in (0,2):
+    for index in (0,):
         csv_files[index]=files[index].replace('.xlsx','.csv')
         with (folder/csv_files[index]).open('w',encoding='utf-8-sig',newline='') as stream:
             csv.writer(stream).writerows(read_xlsx_rows(folder/files[index]))
     checks=[]
-    check_workbook_contract(folder,csv_files,csv_files[2],csv_files[3],['source_a','source_b'],['defined_value'],checks)
+    check_workbook_contract(folder,csv_files,csv_files[0],csv_files[1],['source_a','source_b'],['defined_value'],checks)
     assert checks[-1]['ok'],checks
-    rows=read_table_rows(folder/csv_files[2])
-    with (folder/csv_files[2]).open('w',encoding='utf-8',newline='') as stream:
+    rows=read_table_rows(folder/csv_files[0])
+    with (folder/csv_files[0]).open('w',encoding='utf-8',newline='') as stream:
         csv.writer(stream,quoting=csv.QUOTE_ALL).writerows(rows)
-    assert read_table_rows(folder/csv_files[2])==rows,'CSV quoting/BOM alone changed semantic content'
-    with (folder/csv_files[2]).open('w',encoding='utf-8',newline='') as stream:
-        csv.writer(stream).writerows(rows[:-1])
+    assert read_table_rows(folder/csv_files[0])==rows,'CSV quoting/BOM alone changed semantic content'
+    broken=deepcopy(rows);broken[2][0]=broken[1][0];broken[2][1]=broken[1][1];broken[2][2]=broken[1][2]
     checks=[]
-    check_workbook_contract(folder,csv_files,csv_files[2],csv_files[3],['source_a','source_b'],['defined_value'],checks)
-    assert not checks[-1]['ok'],'CSV output omitted a record without rejection'
+    assert not check_long_table(broken,broken[0],checks,'charls'),'duplicate identity must be rejected'
+
+
+def check_analysis_only_workbook_fixture():
+    """The new delivery checks actual result cells and source lineage without full tables."""
+    import csv
+    from unittest.mock import patch
+    import check_definition_output as output
+    files=['analysis_db_topic.xlsx','analysis_codebook_topic.xlsx']
+    tables={files[0]:[['ID','year','shared','result'],['a','2011',1,2]],
+            files[1]:[['Variable','original_vars','processed_vars','Label','count'],
+                      ['shared','RAW_A (file)','shared','原值',1],
+                      ['result','RAW_A (file), RAW_B (file)','shared, b','结果（kg）',2]]}
+    plan=[{'analysis_var':'shared','display_name':'原值','unit':''},
+          {'analysis_var':'result','display_name':'结果','unit':'kg'}]
+    with tempfile.TemporaryDirectory() as tmp:
+        folder=Path(tmp)
+        for name in files:(folder/name).touch()
+        with (folder/'raw_codebook.csv').open('w',encoding='utf-8',newline='') as stream:
+            writer=csv.DictWriter(stream,fieldnames=['Variable','newname','File type'])
+            writer.writeheader();writer.writerows([{'Variable':'RAW_A (file)','newname':'shared','File type':'reID'},
+                                                  {'Variable':'RAW_B (file)','newname':'b','File type':'reID'}])
+        def run(values, declared=None):
+            checks=[]
+            with patch.object(output,'read_table_rows',side_effect=lambda path:values[path.name]):
+                check_workbook_contract(folder,declared or files,files[0],files[1],['shared','b'],
+                                        ['shared','result'],checks,result_label_plan=plan)
+            return checks[-1]
+        ok=run(tables);assert ok['ok'],ok
+        assert ok['detail']['cross_table_comparison']=='not_performed_no_full_tables'
+        assert ok['detail']['formula_recomputation']=='not_performed'
+        for column,value in [('original_vars','WRONG'),('processed_vars','shared, unknown'),
+                             ('count',3),('Label','结果（mmol/L）')]:
+            bad=deepcopy(tables);bad[files[1]][2][bad[files[1]][0].index(column)]=value
+            assert not run(bad)['ok'],column
+        component=deepcopy(tables)
+        component[files[1]][2][1:3]=['RAW_A (file), component','shared, component']
+        component_check=run(component)
+        assert component_check['ok'] and component_check['detail']['intermediate_inputs_not_checked']=={'result':['component']}
+        component[files[1]][2][1:3]=['component','component'];component[files[1]][2][4]=1
+        assert not run(component)['ok'],'intermediate-only mapping lacks verified source'
+        summary={'variable':'source_summary','source_variables':['shared','b'],'method':'sum'}
+        combined=deepcopy(tables)
+        combined[files[1]][2][1:3]=['RAW_A (file), RAW_B (file), source_summary','shared, b, source_summary']
+        combined[files[1]][2][4]=3
+        checks=[]
+        with patch.object(output,'read_table_rows',side_effect=lambda path:combined[path.name]):
+            check_workbook_contract(folder,files,files[0],files[1],['shared','b'],['shared','result'],checks,
+                                    source_summaries=[summary],result_label_plan=plan)
+        assert checks[-1]['ok'],checks
+        combined[files[1]][2][1:3]=['RAW_A (file), source_summary','shared, source_summary']
+        combined[files[1]][2][4]=2
+        checks=[]
+        with patch.object(output,'read_table_rows',side_effect=lambda path:combined[path.name]):
+            check_workbook_contract(folder,files,files[0],files[1],['shared','b'],['shared','result'],checks,
+                                    source_summaries=[summary],result_label_plan=plan)
+        assert not checks[-1]['ok'],'summary must retain all original source mappings'
+        for wrong in ([['ID','year','result','shared'],['a','2011',2,1]],
+                      [['ID','year','shared','result'],['a','2011',1,2,99]]):
+            bad=deepcopy(tables);bad[files[0]]=wrong;assert not run(bad)['ok']
+        bad=deepcopy(tables)
+        bad[files[0]]=[['ID','year','b','shared','result'],['a','2011',9,1,2]]
+        assert not run(bad)['ok'],'raw business column must not be treated as an identity'
+        bad=deepcopy(tables);bad[files[1]][1],bad[files[1]][2]=bad[files[1]][2],bad[files[1]][1]
+        assert not run(bad)['ok'],'dictionary order'
+        assert not run(tables,files+['db_topic.xlsx'])['ok'],'partial legacy pair must fail'
+        csv_name='analysis_db_topic.csv';(folder/csv_name).touch()
+        csv_tables={csv_name:tables[files[0]],files[1]:tables[files[1]]}
+        checks=[]
+        with patch.object(output,'read_table_rows',side_effect=lambda path:csv_tables[path.name]):
+            check_workbook_contract(folder,[csv_name,files[1]],csv_name,files[1],['shared','b'],
+                                    ['shared','result'],checks,result_label_plan=plan)
+        assert checks[-1]['ok'],checks
+        # NHANES defaults may be actual definition inputs only when present in source CSVs.
+        (folder/'raw_data.csv').write_text('SEQN,YEAR,shared,b\n1,2011-2012,1,2\n',encoding='utf-8')
+        default_sources=deepcopy(tables)
+        default_sources[files[1]][2][1]='RAW_A (file), SEQN, YEAR'
+        default_sources[files[1]][2][2]='shared, SEQN, YEAR'
+        default_sources[files[1]][2][4]=3
+        checks=[]
+        with patch.object(output,'read_table_rows',side_effect=lambda path:default_sources[path.name]):
+            check_workbook_contract(folder,files,files[0],files[1],['shared','b'],['shared','result'],checks,
+                                    result_label_plan=plan,database='nhanes')
+        assert checks[-1]['ok'],checks
+        checks=[]
+        with patch.object(output,'read_table_rows',side_effect=lambda path:default_sources[path.name]):
+            check_workbook_contract(folder,files,files[0],files[1],['shared','b'],['shared','result'],checks,
+                                    result_label_plan=plan,database='charls')
+        assert checks[-1]['ok'] and checks[-1]['detail']['intermediate_inputs_not_checked']['result']==['SEQN','YEAR']
+        (folder/'raw_data.csv').write_text('SEQN,shared,b\n1,1,2\n',encoding='utf-8')
+        checks=[]
+        with patch.object(output,'read_table_rows',side_effect=lambda path:default_sources[path.name]):
+            check_workbook_contract(folder,files,files[0],files[1],['shared','b'],['shared','result'],checks,
+                                    result_label_plan=plan,database='nhanes')
+        assert checks[-1]['ok'] and checks[-1]['detail']['intermediate_inputs_not_checked']['result']==['YEAR']
+        for db, defaults in [('charls',['year']), ('elsa',['Wave_id']),
+                             ('nhanesiii',['SEQN','_survey_period','_period'])]:
+            (folder/'raw_data.csv').write_text(','.join([*defaults,'shared','b'])+'\n',encoding='utf-8')
+            with_defaults=deepcopy(tables)
+            with_defaults[files[1]][2][1]=', '.join(['RAW_A (file)',*defaults])
+            with_defaults[files[1]][2][2]=', '.join(['shared',*defaults])
+            with_defaults[files[1]][2][4]=1+len(defaults)
+            checks=[]
+            with patch.object(output,'read_table_rows',side_effect=lambda path:with_defaults[path.name]):
+                check_workbook_contract(folder,files,files[0],files[1],['shared','b'],['shared','result'],checks,
+                                        result_label_plan=plan,database=db)
+            assert checks[-1]['ok'],(db,checks)
+        # A dictionary alias cannot be downgraded to a bare default identity.
+        with (folder/'raw_codebook.csv').open('a',encoding='utf-8',newline='') as stream:
+            csv.writer(stream).writerow(['YEAR (selected source)','YEAR','uniqID'])
+        (folder/'raw_data.csv').write_text('SEQN,YEAR,shared,b\n1,2011-2012,1,2\n',encoding='utf-8')
+        checks=[]
+        with patch.object(output,'read_table_rows',side_effect=lambda path:default_sources[path.name]):
+            check_workbook_contract(folder,files,files[0],files[1],['shared','b'],['shared','result'],checks,
+                                    result_label_plan=plan,database='nhanes')
+        assert not checks[-1]['ok'],'selected source identity must not silently become a bare default'
+
+
+check_analysis_only_workbook_fixture()
 
 
 def check_charls_psu_join_identity_fixture():
@@ -377,4 +586,4 @@ def check_charls_psu_join_identity_fixture():
 
 check_charls_psu_join_identity_fixture()
 
-print('EXECUTION_BRANCH_CONTRACTS_PASS: evidence/copy/note, all-NA generation, four actual workbooks, seven key shapes, CHNS identity types')
+print('EXECUTION_BRANCH_CONTRACTS_PASS: evidence/copy/note, all-NA generation, analysis workbooks, legacy four-table fixtures, seven key shapes, CHNS identity types')
