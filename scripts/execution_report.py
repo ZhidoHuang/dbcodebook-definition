@@ -561,11 +561,12 @@ def command_review_stage(args):
     reviews = report.setdefault("stage_reviews", {})
     if args.command == "review-start":
         scope = getattr(args, "r_scope", "full")
-        inputs = input_hashes(args.input, scope, SOURCE_SCOPE)
+        source_scope = "legacy" if args.role == "成品补充审核" else SOURCE_SCOPE
+        inputs = input_hashes(args.input, scope, source_scope)
         previous = reviews.get(args.role)
         if previous:
             report.setdefault("stage_review_history", {}).setdefault(args.role, []).append(dict(previous))
-        reviews[args.role] = {"status": "pending", "started_at": iso(), "inputs": inputs, "r_scope": scope, "source_scope": SOURCE_SCOPE}
+        reviews[args.role] = {"status": "pending", "started_at": iso(), "inputs": inputs, "r_scope": scope, "source_scope": source_scope}
         if previous and any(not f["resolved"] for f in previous.get("findings", [])):
             reviews[args.role]["findings"] = [dict(f) for f in previous["findings"] if not f["resolved"]]
     else:

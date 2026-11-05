@@ -131,4 +131,26 @@ with tempfile.TemporaryDirectory() as temporary:
     r.write_text("x <- 2\n# 输出\nprint(x)\n", encoding="utf-8")
     rejects(lambda: validate_stage_review(report, "fixture", inputs), "输入已变化")
 
-print("STAGE_REVIEW_TESTS_PASS: actual/latest review, execution input binding, public scope, CLI handoff, archived reuse, pending/blocked cannot reuse")
+with tempfile.TemporaryDirectory() as temporary:
+    from argparse import Namespace
+    from execution_report import command_init, command_review_stage, SOURCE_SCOPE
+    root = Path(temporary)
+    command_init(Namespace(process_dir=str(root), database="test", topic_id="review",
+        topic_name="review", task="supplementary input binding", workflow="general",
+        archive_previous=False))
+    plan_path = root / "definition_search_record.json"
+    plan = {"approved_analysis_vars":["x"], "display_name":"原显示名"}
+    plan_path.write_text(json.dumps(plan), encoding="utf-8")
+    for role in ("成品补充审核", "fixture-existing-role"):
+        command_review_stage(Namespace(command="review-start",process_dir=str(root),role=role,
+            input=[plan_path],r_scope="full"))
+    report = json.loads((root / "execution_report.json").read_text(encoding="utf-8"))
+    review = report["stage_reviews"]["成品补充审核"]
+    assert review["source_scope"] == "legacy"
+    assert report["stage_reviews"]["fixture-existing-role"]["source_scope"] == SOURCE_SCOPE
+    assert input_hashes([plan_path], source_scope=review["source_scope"]) == review["inputs"]
+    plan["display_name"] = "已更改显示名"
+    plan_path.write_text(json.dumps(plan), encoding="utf-8")
+    assert input_hashes([plan_path], source_scope=review["source_scope"]) != review["inputs"]
+
+print("STAGE_REVIEW_TESTS_PASS: actual/latest review, execution input binding, public scope, supplementary full plan, CLI handoff, archived reuse, pending/blocked cannot reuse")

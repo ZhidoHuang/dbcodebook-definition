@@ -11,7 +11,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from check_reader_copy import compare_content, read_copy, validate_note, require_equal, criteria_fields, read_questionnaire_copy, sections
+from check_reader_copy import compare_content, read_copy, validate_note, require_equal, criteria_fields, read_questionnaire_copy, sections, validate_summary_numbers
 
 
 def rejects(action, reason):
@@ -100,6 +100,38 @@ stopifnot(identical(format_category_values(c(NA_character_)), NA_character_))
         folder = Path(directory)
         path = folder / "文案.md"
         original = (ROOT / "tests/fixtures/writing-inputs" / "reader-copy.md").read_text(encoding="utf-8")
+        legacy = original.replace('①“**是否发生跌倒**”和②“**跌倒次数**”两个变量',
+                                  '“**是否发生跌倒**”和“**跌倒次数**”两个变量')
+        assert original != legacy
+        # Historical comparison keeps its original semantics even with a known variable list.
+        from legacy_delivery_checks import text_update_changes
+        path.write_text(legacy, encoding="utf-8")
+        legacy_content = read_copy(path, ["fall_status", "fall_count"])
+        assert legacy_content["summary"]
+        assert compare_content(legacy_content, copy.deepcopy(legacy_content), source=True)["ok"]
+        changed_path = folder / "changed.md"
+        changed_path.write_text(legacy.replace("问卷所问时间内的跌倒情况", "所问时期的跌倒情况"), encoding="utf-8")
+        assert text_update_changes(path, changed_path, {}, ["fall_status", "fall_count"]) == ["summary"]
+        note = folder / "note.md"
+        note.write_text(render_note(legacy_content), encoding="utf-8")
+        rejects(lambda: validate_note(path, note, analysis_vars=["fall_status", "fall_count"]), "摘要最终变量编号")
+        record = folder / "record.json"
+        record.write_text(json.dumps({"approved_analysis_vars": ["fall_status", "fall_count"]}), encoding="utf-8")
+        for arguments in (["--analysis-vars", "fall_status,fall_count"], ["--record", str(record)]):
+            run = subprocess.run([sys.executable, "-X", "utf8", str(ROOT / "scripts/check_reader_copy.py"), "--copy", str(path), *arguments],
+                                 capture_output=True, text=True, encoding="utf-8")
+            assert run.returncode != 0 and "摘要最终变量编号" in run.stdout, run.stdout + run.stderr
+        for summary in ("①甲、②乙", "[[序号:1]]甲、2\u20dd乙"):
+            validate_summary_numbers(summary, 2)
+        for summary in ("甲、乙", "①甲、乙", "②乙、①甲", "①甲、①乙", "①甲、②乙、③丙"):
+            rejects(lambda: validate_summary_numbers(summary, 2), "摘要最终变量编号")
+        validate_summary_numbers("①甲、②乙，2011 年，x=1+2，`③`。[链接](https://example.org/③)\n\n```text\n③树\n```", 2)
+        large = "".join(chr(0x2460 + i) for i in range(20))
+        large += "".join(chr(0x3251 + i) for i in range(15))
+        large += "".join(chr(0x32b1 + i) for i in range(15))
+        large += "51\u20dd" + "".join(f"[[序号:{n}]]" for n in range(52, 133))
+        validate_summary_numbers(large, 132)
+        rejects(lambda: validate_summary_numbers(large.replace("[[序号:100]]", ""), 132), "摘要最终变量编号")
         path.write_text(original, encoding="utf-8")
         content = read_copy(path, ["fall_status", "fall_count"])
         assert "注意点" not in content["criteria"]["fall_status"]
@@ -182,6 +214,17 @@ stopifnot(grepl("<code>raw_a[1]&lt;a</code>", copy$criteria$fall_status, fixed=T
 actual <- list(summary=render_summary_entry_paragraph(copy$summary_entry, "#A33842"),
                criteria=copy$criteria, insight="", references=tail(copy$reference_lines, 1))
 definition_copy_check(source=actual)
+# Native circles, legacy composite circles and explicit large ordinals share
+# rendering without affecting code, links, questionnaire or Criteria numbering.
+markers <- "① ㊿ 51\\u20dd [[序号:100]] [[序号:132]]"
+badges <- summary_render_number_badges(paste0(markers, '<code>①</code><a href="/①">link</a>'))
+stopifnot(all(vapply(c("1","50","51","100","132"), function(n)
+  grepl(paste0('data-summary-number="',n,'"'),badges,fixed=TRUE), logical(1))),
+  grepl('<code>①</code>',badges,fixed=TRUE), grepl('href="/①"',badges,fixed=TRUE),
+  grepl('font-size:0.5em',badges,fixed=TRUE),
+  grepl('vertical-align:middle;',badges,fixed=TRUE),
+  !grepl('vertical-align:-',badges,fixed=TRUE))
+writeLines(badges, "number-badges.html", useBytes=TRUE)
 bad <- actual
 bad$criteria$fall_status <- criteria_block(criteria_heading("定义"), criteria_item("only one field"))
 failed <- tryCatch({definition_copy_check(source=bad); FALSE}, error=function(e) TRUE)
@@ -208,6 +251,15 @@ cat("R_COPY_FORWARD_PASS\\n")
         assert run.returncode == 0, run.stdout + run.stderr
         assert "R_COPY_FORWARD_PASS" in run.stdout
         assert validate_note(path, note)["ok"]
+        from check_reader_copy import visible_markup, summary_number_tokens
+        badges = (folder / "number-badges.html").read_text(encoding="utf-8")
+        assert visible_markup(badges) == "[[序号:1]] [[序号:50]] [[序号:51]] [[序号:100]] [[序号:132]]①link\n"
+        assert summary_number_tokens("①㊿51\u20dd") == "[[序号:1]][[序号:50]][[序号:51]]"
+        rejects(lambda: visible_markup(badges.replace('data-summary-number="100"', 'data-summary-number="101"')), "可见数字")
+        # Neither dropping nor changing an ordinal may pass the text comparison.
+        requires = summary_number_tokens("①甲、51\u20dd乙")
+        rejects(lambda: require_equal(requires, "[[序号:1]]甲、[[序号:52]]乙", "summary"), "不一致")
+        rejects(lambda: require_equal(requires, "[[序号:1]]甲、乙", "summary"), "不一致")
         # Exercise the same dotted name through the real Python -> R loader,
         # source comparison and rendered-note comparison, without renaming it.
         path.write_text(path.read_text(encoding="utf-8").replace("fall_status", "Lab_value_ng.ml"), encoding="utf-8")

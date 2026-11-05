@@ -696,6 +696,41 @@ summary_join_concepts <- function(concepts, final_count, theme_color) {
   paste0(paste0(rendered[-length(rendered)], collapse = ""), "和", rendered[length(rendered)])
 }
 
+summary_render_number_badges <- function(markup) {
+  circles <- intToUtf8(c(0x2460:0x2473, 0x3251:0x325f, 0x32b1:0x32bf), multiple = TRUE)
+  pattern <- paste0("\\[\\[序号:[1-9][0-9]*\\]\\]|[0-9]+\u20dd|[", paste0(circles, collapse = ""), "]")
+  # Transform text nodes only; attributes and inline code retain their content.
+  chunks <- regmatches(markup, gregexpr("<[^>]*>|[^<]+", markup, perl = TRUE))[[1]]
+  in_code <- FALSE
+  for (i in seq_along(chunks)) {
+    chunk <- chunks[[i]]
+    if (startsWith(chunk, "<")) {
+      if (grepl("^<code(?:\\s|>)", chunk, perl = TRUE)) in_code <- TRUE
+      if (grepl("^</code\\s*>", chunk, perl = TRUE)) in_code <- FALSE
+      next
+    }
+    if (in_code) next
+    hits <- gregexpr(pattern, chunk, perl = TRUE)
+    tokens <- regmatches(chunk, hits)[[1]]
+    if (!length(tokens)) next
+    badges <- vapply(tokens, function(token) {
+      number <- match(token, circles)
+      value <- if (is.na(number)) gsub("[^0-9]", "", token) else as.character(number)
+      size <- if (nchar(value) == 1L) "0.8" else if (nchar(value) == 2L) "0.65" else "0.5"
+      paste0('<span data-summary-number="', value,
+        '" style="display:inline-flex;align-items:center;justify-content:center;',
+        'box-sizing:border-box;width:1.1em;height:1.1em;border:1px solid currentColor;',
+        'border-radius:50%;vertical-align:middle;transform:translateY(-0.1em);margin-right:0.18em;',
+        'text-indent:0;white-space:nowrap;font-size:inherit;line-height:1;">',
+        '<span style="font-family:Arial,sans-serif;font-size:', size,
+        'em;line-height:1;letter-spacing:0;">', value, '</span></span>')
+    }, character(1))
+    regmatches(chunk, hits) <- list(badges)
+    chunks[[i]] <- chunk
+  }
+  paste0(chunks, collapse = "")
+}
+
 render_summary_entry_paragraph <- function(entry, theme_color) {
   if (!is.null(entry$paragraphs)) {
     if (!is.list(entry$paragraphs) || length(entry$paragraphs) == 0) {
@@ -720,14 +755,14 @@ render_summary_entry_paragraph <- function(entry, theme_color) {
       paste0(
         '<div class="summary-entry-paragraph" data-summary-entry-paragraph="true" ',
         'style="margin:0 0 0.75em;text-indent:', if (i == 1) '0' else '2em', ';">',
-        summary_render_parts(parts, theme_color),
+        summary_render_number_badges(summary_render_parts(parts, theme_color)),
         '</div>'
       )
     }, character(1))
     return(paste0(rendered, collapse = ""))
   }
   if (!is.null(entry$parts)) {
-    return(summary_render_parts(entry$parts, theme_color))
+    return(summary_render_number_badges(summary_render_parts(entry$parts, theme_color)))
   }
   description <- if (is.null(entry$description)) "" else entry$description
   if (!nzchar(description)) stop("摘要第一段的主题内容说明不能为空。")

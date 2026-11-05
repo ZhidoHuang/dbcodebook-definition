@@ -74,7 +74,7 @@ def reorder_flat_tree(text,order,aliases,rendered=False):
         pattern=r'(<pre\b[^>]*data-summary-tree="true"[^>]*><code>)(.*?)(</code></pre>)'
         result=r'<span data-tree-role="result"(?: data-tree-variable="([^"]+)")?>([^<]+)</span>'
     else:
-        pattern=r'(^```text[^\n]*\n)(.*?)(^```[ \t]*$)'
+        pattern=r'(^```(?:text|tree)[^\n]*\n)(.*?)(^```[ \t]*$)'
         result=r'\[\[result:(?:([A-Za-z][A-Za-z0-9_.]*)\|)?([^\]]+)\]\]'
     def change(m):
         lines=m[2].splitlines();marked=[(i,re.search(result,line)) for i,line in enumerate(lines)]
@@ -91,8 +91,11 @@ def reorder_flat_tree(text,order,aliases,rendered=False):
             if rendered:
                 line=re.sub(r'(<span data-tree-role="connector">)[├└]─(</span>)',lambda n:n[1]+('└' if i==len(order)-1 else '├')+'─'+n[2],line,count=1)
             else:
-                if not re.match(r'^[├└]─ ',line):raise ValueError('Tree has nested results')
-                line=('└' if i==len(order)-1 else '├')+line[1:]
+                if m[1].startswith('```tree'):
+                    if not line.startswith('- '):raise ValueError('Tree has nested results')
+                else:
+                    if not re.match(r'^[├└]─ ',line):raise ValueError('Tree has nested results')
+                    line=('└' if i==len(order)-1 else '├')+line[1:]
             rebuilt.append(line)
         return m[1]+'\n'.join(lines[:start]+rebuilt)+('\n' if not rendered else '')+m[3]
     return re.sub(pattern,change,text,flags=re.M|re.S)

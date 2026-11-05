@@ -73,7 +73,21 @@ class Document(HTMLParser):
 def visible_markup(text):
     # Markdown code in a mixed Markdown/HTML note must survive HTML parsing.
     text = re.sub(r"`([^`]+)`", lambda m: "<code>" + escape(m[1]) + "</code>", str(text))
-    return Document(text).root.text()
+    root = Document(text).root
+    for badge in root.find(lambda e: "data-summary-number" in e.attrs):
+        number = badge.attrs["data-summary-number"]
+        if not re.fullmatch(r"[1-9][0-9]*", number) or badge.text() != number:
+            raise ValueError("摘要编号属性与可见数字不一致")
+        badge.children = [f"[[序号:{number}]]"]
+    return root.text()
+
+
+def summary_number_tokens(text):
+    """Compare the same ordinal across native circles and rendered badges."""
+    circles = "".join(chr(n) for a, b in ((0x2460, 0x2473), (0x3251, 0x325f),
+                                        (0x32b1, 0x32bf)) for n in range(a, b + 1))
+    text = re.sub("[" + circles + "]", lambda m: f"[[序号:{circles.index(m[0]) + 1}]]", text)
+    return re.sub(r"([0-9]+)\u20dd", lambda m: f"[[序号:{m[1]}]]", text)
 
 
 def normalized(text):
@@ -249,7 +263,7 @@ def sections(text, level):
 
 
 def check_tree_result_order(summary, variables, display_names, *, require_explicit=False,
-                            tree_omission_reason=None):
+                            tree_omission_reason=None, result_spec=None):
     """Use explicit result identities; retain exact-name matching for old trees."""
     def identity_text(text):
         return re.sub(r"\s+", "", text).translate(str.maketrans({"（": "(", "）": ")", "μ": "µ"}))
@@ -261,6 +275,7 @@ def check_tree_result_order(summary, variables, display_names, *, require_explic
             continue
         has_tree = True
         root = Document(block.get("role_html", "")).root
+        result_position = 0
         for i, node in enumerate(root.children):
             if not isinstance(node, Element) or node.attrs.get("data-tree-role") != "result":
                 continue
@@ -275,7 +290,10 @@ def check_tree_result_order(summary, variables, display_names, *, require_explic
                         break
                 else:
                     break
+            if result_position in block.get("unitless_result_positions", []):
+                meta += "（无单位）"  # Explicit input declaration, omitted from the rendered tree.
             nodes.append((node.text(), meta, node.attrs.get("data-tree-variable")))
+            result_position += 1
     if not has_tree:
         if require_explicit:
             if not isinstance(tree_omission_reason, str) or not tree_omission_reason.strip():
@@ -301,7 +319,20 @@ def check_tree_result_order(summary, variables, display_names, *, require_explic
                 values = re.findall(r"[（(]([^（）()]+)[）)]", meta)
                 if not any(value.strip() for value in values):
                     raise ValueError(f"关系树/{variable} 缺少取值或单位 meta：在名称旁用圆括号填写，不以时期代替")
-        return {"scope": "explicit_results", "variables": actual, "references": len(nodes) - len(actual)}
+        units_checked = []
+        for _, meta, variable in nodes:
+            unit = (result_spec or {}).get(variable, {}).get("unit")
+            if unit:
+                # Match the agreed display unit. Do not infer or convert units.
+                meta_value = identity_text(meta)
+                unit_value = identity_text(unit)
+                range_prefix = r"(?:[<>≤≥]?[+-]?\d+(?:\.\d+)?(?:[–—~～-][+-]?\d+(?:\.\d+)?)?)?"
+                if not re.fullmatch(r"\(" + range_prefix + re.escape(unit_value) + r"\)", meta_value):
+                    raise ValueError(f"关系树/{variable} 单位与方案不一致：树={meta}，方案={unit}")
+                if variable not in units_checked:
+                    units_checked.append(variable)
+        return {"scope": "explicit_results", "variables": actual, "references": len(nodes) - len(actual),
+                "units_checked": units_checked}
     if set(display_names) != set(variables) or any(not isinstance(v, str) or not v.strip() for v in display_names.values()):
         raise ValueError("最终变量缺少完整 display_name 对应，不能猜测树节点身份")
     lookup = {identity_text(label): variable for variable, label in display_names.items()}
@@ -354,6 +385,68 @@ def semantic_tree(text):
     return block
 
 
+def outline_tree(text):
+    """Generate branch connectors from an indented outline, preserving content."""
+    lines = [line.rstrip() for line in text.splitlines() if line.strip()]
+    if not lines or lines[0].startswith((" ", "\t", "- ")):
+        raise ValueError("tree 首行填写主题或结果名称，不缩进")
+    headers, nodes = [lines[0]], []
+    for line in lines[1:]:
+        if "\t" in line:
+            raise ValueError("tree 层级使用两个空格，不使用 Tab")
+        match = re.fullmatch(r"( *)- (\S.*)", line)
+        if not match:
+            if not nodes and re.fullmatch(r"\[\[(?:relation|meta|period|component):.+\]\]", line):
+                headers.append(line)
+                continue
+            raise ValueError("tree 分支使用 - 开头，每深入一层增加两个空格")
+        depth = len(match[1]) // 2
+        if len(match[1]) % 2 or depth > (nodes[-1][0] + 1 if nodes else 0):
+            raise ValueError("tree 层级不能跳级，每层使用两个空格")
+        nodes.append((depth, match[2]))
+    if not nodes:
+        raise ValueError("tree 至少包含一个分支")
+    if any(re.search(r"[│├└─┐┘┬┤]", line) for line in lines):
+        raise ValueError("tree 树线由程序生成；右侧汇合图使用 text")
+
+    # A sibling remains only if the next node at this depth or above is a sibling.
+    last = []
+    for index, (depth, _) in enumerate(nodes):
+        following = next((d for d, _ in nodes[index + 1:] if d <= depth), -1)
+        last.append(following != depth)
+    rendered, ancestors = list(headers), []
+    for index, (depth, content) in enumerate(nodes):
+        ancestors = ancestors[:depth]
+        prefix = "".join("   " if end else "│  " for end in ancestors)
+        rendered.append(prefix + ("└─ " if last[index] else "├─ ") + content)
+        ancestors.append(last[index])
+
+    def decorate(match):
+        role, value = match[1], match[2].strip()
+        pairs = (("[", "]"), ("（", "）"), ("(", ")"))
+        for left, right in pairs:
+            if value.startswith(left) and value.endswith(right):
+                value = value[1:-1].strip()
+                break
+        if not value:
+            raise ValueError("tree 时期或 meta 内容不能为空")
+        value = f"[{value}]" if role == "period" else f"（{value}）"
+        return "[[meta:" + value + "]]"
+
+    marked = re.sub(r"\[\[(period|meta):((?:\[[^\[\]\n]*\]|[^\[\]\n])+)\]\]",
+                    decorate, "\n".join(rendered))
+    # Keep explicit unitless declarations for input validation, not for display.
+    # Missing metadata must not become an implicit unitless declaration.
+    unitless = r"\[\[meta:（(?:无单位|无量纲)）\]\]"
+    positions = [marked[:m.start()].count("[[result:") for m in re.finditer(
+        r"\[\[result:[^\[\]\n]+\]\][ \t]*" + unitless, marked)]
+    marked = re.sub(r"[ \t]*" + unitless, "", marked)
+    block = semantic_tree(marked)
+    if positions:
+        block["unitless_result_positions"] = positions
+    return block
+
+
 def summary_blocks(text):
     """Parse prose and literal trees once; renderers must not reinterpret fences."""
     lines = str(text).splitlines()
@@ -367,7 +460,7 @@ def summary_blocks(text):
     i = 0
     while i < len(lines):
         line = lines[i]
-        fence = re.fullmatch(r" {0,3}(`{3,}|~{3,})(?:(?:text|plaintext)(?:[ \t]+([^\r\n]+?))?)?[ \t]*", line)
+        fence = re.fullmatch(r" {0,3}(`{3,}|~{3,})(?:(text|plaintext|tree)(?:[ \t]+([^\r\n]+?))?)?[ \t]*", line)
         if fence:
             flush()
             marker, body = fence[1], []
@@ -379,12 +472,12 @@ def summary_blocks(text):
                 raise ValueError("摘要代码树缺少结束围栏")
             if not any(x.strip() for x in body):
                 raise ValueError("摘要代码树不能为空")
-            block = semantic_tree("\n".join(body))
-            if fence[2]:
-                block['label'] = fence[2].strip()
+            block = (outline_tree if fence[2] == "tree" else semantic_tree)("\n".join(body))
+            if fence[3]:
+                block['label'] = fence[3].strip()
             blocks.append(block)
         elif re.match(r" {0,3}(?:`{3,}|~{3,})", line):
-            raise ValueError("摘要代码树使用无语言或 text 围栏")
+            raise ValueError("摘要代码树使用 tree；旧树或右侧汇合图使用无语言或 text 围栏")
         elif line.startswith("    "):
             flush()
             body = []
@@ -406,6 +499,19 @@ def summary_blocks(text):
 
 def summary_prose(text):
     return "\n\n".join(b["text"] for b in summary_blocks(text) if b["type"] == "paragraph")
+
+
+def validate_summary_numbers(summary, count):
+    """Check authored result ordinals only when the final variable count is known."""
+    prose = summary_prose(summary)
+    # Code and link destinations are literal material, not result badges.
+    prose = re.sub(r"(`+)(.+?)\1", "", prose)
+    prose = re.sub(r"\]\([^\n)]*\)", "]", prose)
+    tokens = summary_number_tokens(prose)
+    numbers = [int(n) for n in re.findall(r"\[\[序号:([0-9]+)\]\]", tokens)]
+    expected = list(range(1, count + 1))
+    if numbers != expected:
+        raise ValueError(f"摘要最终变量编号必须按顺序连续为 1..{count}：实际={numbers}")
 
 
 def rendered_summary_trees(markup):
@@ -482,6 +588,9 @@ def read_copy(path, expected_vars=None, record=None, *, require_result_identity=
                                  for v, fields in criteria.items()}
     result["summary_blocks"] = summary_blocks(result["summary"])
     plan = (record or {}).get("definition_plan", [])
+    if record is not None:
+        result["result_labels"] = {}
+        result["result_labels_not_checked"] = list(policy["analysis_vars"])
     if require_result_identity:
         variables = policy["analysis_vars"]
         if not isinstance(plan, list) or not plan or any(not isinstance(item, dict) for item in plan):
@@ -495,11 +604,22 @@ def read_copy(path, expected_vars=None, record=None, *, require_result_identity=
             raise ValueError("definition_plan.display_name 须能唯一区分最终结果")
     if require_result_identity or any("display_name" in item for item in plan) or any(
             'data-tree-variable=' in block.get("role_html", "") for block in result["summary_blocks"]):
+        from definition_display import result_specs, confirmed_result_label
+        specs, missing_facts = result_specs(record)
+        result["result_facts_not_checked"] = missing_facts
+        result["result_labels"] = {}
+        result["result_labels_not_checked"] = []
+        for variable in policy["analysis_vars"]:
+            label = confirmed_result_label(specs.get(variable, {}))
+            if label is None:
+                result["result_labels_not_checked"].append(variable)
+            else:
+                result["result_labels"][variable] = label
         result["result_order_check"] = check_tree_result_order(
             result["summary"], policy["analysis_vars"],
             {item.get("analysis_var", item.get("analysis_variable")): item.get("display_name") for item in plan},
             require_explicit=require_result_identity,
-            tree_omission_reason=(record or {}).get("tree_omission_reason"))
+            tree_omission_reason=(record or {}).get("tree_omission_reason"), result_spec=specs)
     if "问卷" in parts:
         result["questionnaire"] = read_questionnaire_copy(parts["问卷"])
     return result
@@ -737,6 +857,8 @@ def compare_content(copy, actual, *, source=False):
             expected = "\n\n".join(insight_items(expected))
         if field == "summary" and not source and "summary_blocks" in actual and "summary_trees" not in actual:
             value = "\n\n".join(b["text"] for b in summary_blocks(value))
+        if field == "summary":
+            expected, value = summary_number_tokens(expected), summary_number_tokens(value)
         require_equal(expected, value, field)
     actual_criteria = actual.get("criteria", {})
     if list(copy["criteria"]) != list(actual_criteria):
@@ -768,7 +890,13 @@ def compare_content(copy, actual, *, source=False):
             raise ValueError("问卷流程图的内容、顺序或缩进与文案不一致")
     policy = copy.get("display_policy", {})
     criteria_check = "criteria"
-    return {"ok": True, "variables": policy.get("analysis_vars", list(copy["criteria"])), "checked": ["summary", criteria_check, "insight", "references"]}
+    checked = ["summary", criteria_check, "insight", "references", "criteria_intro", "definition_basis"]
+    if copy.get("questionnaire"):
+        checked.append("questionnaire")
+    if any(block["type"] == "code_tree" for block in copy.get("summary_blocks", [])):
+        checked.append("tree_content_and_bindings")
+    return {"ok": True, "variables": policy.get("analysis_vars", list(copy["criteria"])),
+            "checked": checked, "scope": "copy_to_generated_content_equality", "writing_quality": "not_assessed"}
 
 
 def note_content(text, *, compact_module=False):
@@ -831,6 +959,8 @@ def validate_note(copy_path, note_path, codebook_path=None, record=None, analysi
         actual = codebook_variables(codebook_path, expected)
         expected = actual
     copy = read_copy(copy_path, expected, record)
+    if expected is not None or (record or {}).get("approved_analysis_vars"):
+        validate_summary_numbers(copy["summary"], len(copy["display_policy"]["analysis_vars"]))
     text = Path(note_path).read_text(encoding="utf-8-sig")
     insight_markup_content(text, copy["insight"])
     result = compare_content(copy, note_content(text, compact_module=copy["display_policy"]["compact_module"]))
@@ -1010,6 +1140,8 @@ def main():
             report = json.loads((Path(args.process_dir) / "execution_report.json").read_text(encoding="utf-8-sig"))
             require_identity = require_identity or report.get("workflow") == "full_definition"
         copy = read_copy(args.copy, expected, record, require_result_identity=require_identity)
+        if expected is not None or (record or {}).get("approved_analysis_vars"):
+            validate_summary_numbers(copy["summary"], len(copy["display_policy"]["analysis_vars"]))
         errors = questionnaire_copy_errors(copy, record) if record else []
         # Only verify declared markup; semantic completeness remains an author's judgment.
         errors.extend(summary_markup_errors(copy["summary"]))
@@ -1028,6 +1160,10 @@ def main():
         if args.export:
             Path(args.export).write_text(json.dumps(copy, ensure_ascii=False, indent=2), encoding="utf-8")
         if record is not None:
+            result["result_order_check"] = copy.get("result_order_check", {"scope": "not_checked"})
+            result["result_facts_not_checked"] = copy.get("result_facts_not_checked", {})
+            result["result_labels"] = copy.get("result_labels", {})
+            result["result_labels_not_checked"] = copy.get("result_labels_not_checked", copy["display_policy"]["analysis_vars"])
             result["questionnaire_check"] = {
                 "scope": "record_to_copy" if record.get("schema_version", 0) >= 6 else "not_checked_legacy_record",
                 "original_material_check": "not_performed_by_this_command",

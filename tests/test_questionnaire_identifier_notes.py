@@ -131,7 +131,7 @@ for wave in range(1, 12):
 
 with tempfile.TemporaryDirectory() as folder:
     folder = Path(folder)
-    doc = '# TEST — 活动（Activity）\n\n## 摘要导读\n\n本主题定义“**活动**”，共 **1** 个变量。\n\n' + TEXT
+    doc = '# TEST — 活动（Activity）\n\n## 摘要导读\n\n本主题定义①“**活动**”，共 **1** 个变量。\n\n' + TEXT
     doc += '\n## Criteria\n### X\n#### 定义\n活动。\n#### 定义逻辑\n保留回答。\n#### 分类\n- [0] 否\n- [1] 是\n'
     doc += '\n## 小book提示\n\n本主题没有需要单独提示的主题级边界\n'
     (folder / '文案.md').write_text(doc, encoding='utf-8')

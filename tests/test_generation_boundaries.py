@@ -29,7 +29,7 @@ assert questionnaire_copy_errors({'questionnaire':parsed},{'schema_version':6,'q
     {'question_id':'Q1','periods':['2011'],'question_text':'完整原题','response_type':'open'}]})
 doc='''## 摘要导读
 
-本主题定义“**活动困难**”。
+本主题定义①“**活动困难**”。
 
 '''+q+'''
 ## Criteria

@@ -10,6 +10,128 @@ from pathlib import Path
 from html.parser import HTMLParser
 
 
+def confirmed_result_label(spec):
+    """Format only a confirmed display name and an explicitly recorded unit."""
+    if not isinstance(spec, dict) or "display_name" not in spec or "unit" not in spec:
+        return None
+    name, unit = spec["display_name"], spec["unit"]
+    if not isinstance(name, str) or not name.strip() or name != name.strip():
+        raise ValueError("display_name must be non-empty text without surrounding whitespace")
+    if not isinstance(unit, str) or unit != unit.strip():
+        raise ValueError("unit must be text without surrounding whitespace")
+    suffix = f"（{unit}）" if unit else ""
+    return name if not suffix or name.endswith(suffix) else name + suffix
+
+
+def result_specs(record):
+    """Read confirmed facts, never infer a prefix, unit or type from a name."""
+    record = record or {}
+    version = record.get("result_spec_version")
+    if isinstance(version, bool) or version not in (None, 1):
+        raise ValueError("result_spec_version must be 1")
+    specs, not_checked = {}, {}
+    plan = record.get("definition_plan", [])
+    if not isinstance(plan, list):
+        raise ValueError("definition_plan must be a list")
+    for item in plan:
+        if not isinstance(item, dict):
+            raise ValueError("definition_plan entries must be objects")
+        name = item.get("analysis_var")
+        if not isinstance(name, str) or not name:
+            raise ValueError("definition_plan.analysis_var must be non-empty")
+        if name in specs:
+            raise ValueError("definition_plan repeats " + name)
+        missing = [key for key in ("prefix", "value_type") if key not in item]
+        kind = item.get("value_type")
+        if kind is not None and kind not in ("numeric", "categorical"):
+            raise ValueError(name + ": value_type must be numeric or categorical")
+        if kind == "numeric" and "unit" not in item:
+            missing.append("unit")
+        if kind == "categorical" and "allowed_values" not in item:
+            missing.append("allowed_values")
+        if version == 1 and missing:
+            raise ValueError(name + ": missing result facts: " + ", ".join(missing))
+        if missing:
+            not_checked[name] = missing
+        if "prefix" in item:
+            prefix = item["prefix"]
+            if not isinstance(prefix, str) or (prefix and not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*_", prefix)):
+                raise ValueError(name + ": prefix must be an explicit prefix or an empty string")
+            if not name.startswith(prefix):
+                raise ValueError(name + ": differs from confirmed prefix " + prefix)
+        if "unit" in item and (not isinstance(item["unit"], str) or item["unit"] != item["unit"].strip()):
+            raise ValueError(name + ": unit must be text; use an empty string for no unit")
+        if "allowed_values" in item:
+            values = item["allowed_values"]
+            if not isinstance(values, list) or not values:
+                raise ValueError(name + ": allowed_values must be a non-empty list")
+            for value in values:
+                if value is None or isinstance(value, bool) or not isinstance(value, (str, int, float)):
+                    raise ValueError(name + ": allowed_values must contain actual non-missing values")
+                if isinstance(value, str) and (not value.strip() or value.strip().upper() in {"NA", "N/A", "NULL", "NAN"}):
+                    raise ValueError(name + ": missing values are not categories")
+                if isinstance(value, (int, float)) and not math.isfinite(value):
+                    raise ValueError(name + ": allowed_values must be finite")
+                if kind == "categorical" and not isinstance(value, str):
+                    raise ValueError(name + ": categorical values must be labels")
+                if kind == "numeric" and not isinstance(value, (int, float)):
+                    raise ValueError(name + ": numeric values must be numbers")
+            if len(values) != len(set(values)):
+                raise ValueError(name + ": allowed_values repeats a value")
+        specs[name] = item
+    if version == 1 and not specs:
+        raise ValueError("result_spec_version=1 requires definition_plan")
+    for name in record.get("approved_analysis_vars", []):
+        if name not in specs:
+            if version == 1:
+                raise ValueError(name + ": missing definition_plan entry")
+            not_checked[name] = ["prefix", "value_type", "unit_or_allowed_values"]
+    return specs, not_checked
+
+
+def compare_result_values(rows, record, *, csv_input=False):
+    """Check actual result cells against the registered type and valid values."""
+    specs, not_checked = result_specs(record)
+    header = rows[0] if rows else []
+    checked, errors = [], []
+    for name, spec in specs.items():
+        kind, allowed = spec.get("value_type"), spec.get("allowed_values")
+        if kind is None and allowed is None:
+            continue
+        if name not in header:
+            errors.append({"variable": name, "error": "result column missing"})
+            continue
+        index, count, invalid, examples = header.index(name), 0, 0, []
+        for row_number, row in enumerate(rows[1:], start=2):
+            value = row[index] if index < len(row) else None
+            if value is None:
+                continue
+            count += 1
+            actual = value
+            if csv_input and kind == "numeric":
+                try:
+                    actual = float(value)
+                except (TypeError, ValueError):
+                    actual = value
+            valid = True
+            if kind == "numeric":
+                valid = isinstance(actual, (int, float)) and not isinstance(actual, bool) and math.isfinite(actual)
+            elif kind == "categorical":
+                valid = isinstance(actual, str)
+            if allowed is not None:
+                valid = valid and actual in allowed
+            if not valid:
+                invalid += 1
+                if len(examples) < 5:
+                    examples.append({"row": row_number, "value": value})
+        checked.append({"variable": name, "value_type": kind, "nonmissing": count,
+                        "allowed_values_checked": allowed is not None})
+        if invalid:
+            errors.append({"variable": name, "invalid_cells": invalid, "examples": examples})
+    return {"checked": checked, "not_checked": not_checked, "errors": errors,
+            "scope": "registered_types_and_values", "formulas_recomputed": False}
+
+
 def remove_source_navigation(text):
     """Remove only the legacy generated source-navigation container."""
     class NavigationBlocks(HTMLParser):

@@ -58,12 +58,21 @@ assert '总分不再标准化' in trees[2]['text']
 # Exercise the shared-item template itself through the same renderer, with only
 # the two totals marked as delivered results and all six items as components.
 template = (ROOT / 'templates/reader-copy.md').read_text(encoding='utf-8')
-shared_tree = re.search(r'```text 两种总分\n.*?\n```', template, re.S)[0]
+shared_tree = re.search(r'```tree 两种总分\n.*?\n```', template, re.S)[0]
 shared = [b for b in summary_blocks(shared_tree) if b['type'] == 'code_tree'][0]
 assert shared['role_html'].count('data-tree-role="result"') == 2
 assert shared['role_html'].count('data-tree-role="component"') == 6
+# The input component in this outline participates in the connected chain.
+chain_template = template.split('**三、条目 → 计算 → 结果**', 1)[1]
+chain_source = re.search(r'```tree .*?\n```', chain_template, re.S)[0]
+chain_source = re.sub(r'\{[^}]+\}', 'example', chain_source)
+chain = summary_blocks(chain_source)[0]
+assert chain['text'].splitlines()[1].startswith('└─ example')
+assert chain['text'].splitlines()[2].startswith('   └─ example → example')
+assert chain['text'].splitlines()[3].startswith('      └─ example')
+trees.append(chain)
 # Render the category preview examples, including Chinese labels, 0/1 and ellipsis.
-demographic_tree = re.search(r'```text 人口学\n.*?\n```', template, re.S)[0]
+demographic_tree = re.search(r'```tree 人口学\n.*?\n```', template, re.S)[0]
 demographic = summary_blocks(demographic_tree)[0]
 assert '（男／女）' in demographic['text']
 assert '（0/1）' in demographic['text']
@@ -72,6 +81,57 @@ trees.append(demographic)
 
 trees.append(shared)
 trees.append(role_block)
+outline_source = '''```tree 体型指标
+体型指标 [[period:2011、2013、2015 年]]
+- 体型
+  - [[result:BMI|体质指数（BMI）]] [[meta:kg/m²]]：[[relation:体重除以身高平方]]
+  - [[result:WHtR|腰高比（WHtR）]] [[meta:无量纲]]
+- 血脂相关 [[period:2011、2015 年]]
+  - [[result:LAP|脂质蓄积指数（LAP）]] [[meta:cm·mmol/L]]
+    - [[component:甘油三酯]] [[meta:mmol/L]]
+  - [[result:VAI|内脏脂肪指数（VAI）]] [[meta:无量纲]]
+```'''
+outline = summary_blocks(outline_source)[0]
+assert outline['text'] == '''体型指标 [2011、2013、2015 年]
+├─ 体型
+│  ├─ 体质指数（BMI） （kg/m²）：体重除以身高平方
+│  └─ 腰高比（WHtR）
+└─ 血脂相关 [2011、2015 年]
+   ├─ 脂质蓄积指数（LAP） （cm·mmol/L）
+   │  └─ 甘油三酯 （mmol/L）
+   └─ 内脏脂肪指数（VAI）'''
+assert outline['unitless_result_positions'] == [1, 3]
+assert '无量纲' not in outline['role_html'] and '无单位' not in outline['role_html']
+assert summary_blocks(outline_source.replace('无量纲', '无单位')) == [outline]
+from check_reader_copy import check_tree_result_order
+outline_names = {'BMI': '体质指数（BMI）', 'WHtR': '腰高比（WHtR）',
+                 'LAP': '脂质蓄积指数（LAP）', 'VAI': '内脏脂肪指数（VAI）'}
+assert check_tree_result_order(outline_source, list(outline_names), outline_names,
+                              require_explicit=True)['variables'] == list(outline_names)
+for missing in ['', '[[period:2011年]]']:
+    try:
+        check_tree_result_order(outline_source.replace('[[meta:无量纲]]', missing),
+                                list(outline_names), outline_names, require_explicit=True)
+    except ValueError as error:
+        assert '缺少取值或单位 meta' in str(error)
+    else:
+        raise AssertionError('Missing metadata was treated as unitless')
+assert '（无量纲）' in summary_blocks('```text 旧树\n旧树\n└─ [[result:WHtR|腰高比]] [[meta:（无量纲）]]\n```')[0]['text']
+assert outline['role_html'].count('data-tree-variable=') == 4
+assert '[[period:' not in outline['role_html']
+assert '<span data-tree-role="meta">[2011、2015 年]</span>' in outline['role_html']
+# Existing wrappers do not become double parentheses; label content and order stay intact.
+assert summary_blocks(outline_source.replace('[[meta:kg/m²]]', '[[meta:（kg/m²）]]')) == [outline]
+assert summary_blocks(outline_source.replace('[[period:2011、2015 年]]', '[[period:[2011、2015 年]]]')) == [outline]
+trees.append(outline)  # Exercise the same shared R renderer, not a test-only render path.
+for body in ['标题\n    - 跳级', '标题\n - 奇数缩进', '标题\n\t- Tab',
+             '标题\n├─ 手写线', '标题\n- A\n说明混入分支', '标题\n- [[meta: ]]']:
+    try:
+        summary_blocks('```tree 例\n' + body + '\n```')
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('Malformed outline accepted: ' + body)
 for bad in ['```text 例\n[[unknown:名字]]\n```', '```text 例\n[[meta:未闭合\n```']:
     try:
         summary_blocks(bad)
@@ -144,7 +204,7 @@ with tempfile.TemporaryDirectory(prefix='tree_identity_') as directory:
 
     def check(nodes, source_record, error=None, extra=()):
         tree = '' if nodes is None else '```text 跌倒\n跌倒\n' + '\n'.join(nodes) + '\n```'
-        doc.write_text(before + '## 摘要导读\n\n本主题定义“**是否发生跌倒**”和“**跌倒次数**”。\n\n' + tree + '\n\n## Criteria' + after, encoding='utf-8')
+        doc.write_text(before + '## 摘要导读\n\n本主题定义①“**是否发生跌倒**”和②“**跌倒次数**”。\n\n' + tree + '\n\n## Criteria' + after, encoding='utf-8')
         rec.write_text(json.dumps(source_record, ensure_ascii=False), encoding='utf-8')
         cmd = [sys.executable, '-B', '-X', 'utf8', str(ROOT/'scripts/check_reader_copy.py'),
                '--copy', str(doc), '--record', str(rec), *extra]
@@ -182,6 +242,10 @@ with tempfile.TemporaryDirectory(prefix='tree_identity_') as directory:
     check(explicit, record, extra=strict)
     parsed = read_copy(doc, record=record, require_result_identity=True)
     assert sum(b.get('role_html', '').count('data-tree-variable=') for b in parsed['summary_blocks']) == 2
+    doc.write_text(doc.read_text(encoding='utf-8').replace('```text 跌倒', '```tree 跌倒')
+                   .replace('├─ ', '- ').replace('└─ ', '- '), encoding='utf-8')
+    outlined = read_copy(doc, record=record, require_result_identity=True)
+    assert outlined['summary_blocks'] == parsed['summary_blocks']
 
     # The normal full workflow must enforce the contract without an author
     # remembering the optional CLI switch. First rejected draft stays captured.

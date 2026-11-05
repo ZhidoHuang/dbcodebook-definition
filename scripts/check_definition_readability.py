@@ -543,7 +543,7 @@ def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
     reviewed_at = validate_iso_datetime(impact.get("reviewed_at")) if legacy_impact else None
     reviewer = nonempty_text(impact.get("reviewer"), "impact reviewer", 3) if legacy_impact else None
     change_summary = nonempty_text(
-        impact.get("change_summary"), "change_summary", 20
+        impact.get("change_summary"), "change_summary", 20 if legacy_impact else 1
     )
     dimensions = impact.get("changed_dimensions")
     if not isinstance(dimensions, list) or not dimensions:
@@ -570,13 +570,13 @@ def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
         nonempty_text(
             impact.get("question_groups_not_applicable_reason"),
             "question_groups_not_applicable_reason",
-            20,
+            20 if legacy_impact else 1,
         )
     seen_groups: set[tuple[str, tuple[str, ...]]] = set()
     for index, group in enumerate(groups, start=1):
         if not isinstance(group, dict):
             fail(f"question group {index} must be an object")
-        name = nonempty_text(group.get("name"), f"question group {index} name", 2)
+        name = nonempty_text(group.get("name"), f"question group {index} name", 2 if legacy_impact else 1)
         periods = group.get("periods")
         if not isinstance(periods, list) or not periods:
             fail(f"question group {index} periods must be a non-empty list")
@@ -587,15 +587,15 @@ def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
         if key in seen_groups:
             fail(f"duplicate question group: {name} / {normalized_periods}")
         seen_groups.add(key)
-        nonempty_text(group.get("respondent"), f"question group {index} respondent", 2)
+        nonempty_text(group.get("respondent"), f"question group {index} respondent", 2 if legacy_impact else 1)
         nonempty_text(
-            group.get("official_source"), f"question group {index} official_source", 8
+            group.get("official_source"), f"question group {index} official_source", 8 if legacy_impact else 1
         )
         nonempty_text(
-            group.get("definition_use"), f"question group {index} definition_use", 8
+            group.get("definition_use"), f"question group {index} definition_use", 8 if legacy_impact else 1
         )
         nonempty_text(
-            group.get("draft_location"), f"question group {index} draft_location", 4
+            group.get("draft_location"), f"question group {index} draft_location", 4 if legacy_impact else 1
         )
         mode = group.get("question_mode")
         if mode not in ("verified_quote", "verified_translation", "plain_paraphrase"):
@@ -604,7 +604,7 @@ def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
                 "or verified_translation or plain_paraphrase"
             )
         question_text = nonempty_text(
-            group.get("question_text"), f"question group {index} question_text", 8
+            group.get("question_text"), f"question group {index} question_text", 8 if legacy_impact else 1
         )
         if question_text not in copy_text:
             fail(
@@ -615,7 +615,7 @@ def validate_impact(formal_dir: Path, process_dir: Path, topic_id: str) -> dict:
             nonempty_text(
                 group.get("paraphrase_reason"),
                 f"question group {index} paraphrase_reason",
-                12,
+                12 if legacy_impact else 1,
             )
         if legacy_impact and group.get("result") != "pass":
             fail(f"question group {index} result must be pass")
@@ -1048,6 +1048,7 @@ def validate_reader_review(
     with review_path.open("r", encoding="utf-8-sig") as handle:
         review = json.load(handle)
     reader_schema = review.get("schema_version")
+    legacy_reader = reader_schema == LEGACY_READER_REVIEW_SCHEMA_VERSION
     if reader_schema not in {
         LEGACY_READER_REVIEW_SCHEMA_VERSION,
         READER_REVIEW_SCHEMA_VERSION,
@@ -1062,13 +1063,13 @@ def validate_reader_review(
     if review.get("status") != READER_REVIEW_PASS_STATUS:
         fail(f"reader review status must be {READER_REVIEW_PASS_STATUS}")
     reviewed_at = validate_iso_datetime(review.get("reviewed_at"))
-    reviewer = nonempty_text(review.get("reviewer"), "reader reviewer", 3)
+    reviewer = nonempty_text(review.get("reviewer"), "reader reviewer", 3 if legacy_reader else 1)
     if reviewer.casefold() == author_reviewer.casefold():
         fail("ordinary-reader reviewer must differ from the author reviewer")
     confirmation = nonempty_text(
         review.get("reader_only_confirmation"),
         "reader_only_confirmation",
-        30,
+        30 if legacy_reader else 1,
     )
     if review.get("note") != note_artifact:
         fail("reader review is stale because the final note changed")
@@ -1105,7 +1106,7 @@ def validate_reader_review(
         if block.get("result") != "pass":
             fail(f"reader review block {name} result must be pass")
         excerpt = nonempty_text(
-            block.get("original_excerpt"), f"{name}.original_excerpt", 8
+            block.get("original_excerpt"), f"{name}.original_excerpt", 8 if legacy_reader else 1
         )
         normalized_excerpt = normalized_visible_text(excerpt)
         if normalized_excerpt not in visible_note:
@@ -1113,7 +1114,7 @@ def validate_reader_review(
         if normalized_excerpt not in source_by_name[name]:
             fail(f"reader review block {name} excerpt comes from a different block")
         paraphrase = nonempty_text(
-            block.get("plain_paraphrase"), f"{name}.plain_paraphrase", 20
+            block.get("plain_paraphrase"), f"{name}.plain_paraphrase", 20 if legacy_reader else 1
         )
         normalized_paraphrase = normalized_visible_text(paraphrase)
         if normalized_paraphrase == normalized_visible_text(excerpt):
@@ -1125,7 +1126,7 @@ def validate_reader_review(
             )
         paraphrase_owners[normalized_paraphrase] = name
         subject = nonempty_text(
-            block.get("who_when_what"), f"{name}.who_when_what", 16
+            block.get("who_when_what"), f"{name}.who_when_what", 16 if legacy_reader else 1
         )
         normalized_subject = normalized_visible_text(subject)
         if normalized_subject in subject_owners:
@@ -1135,9 +1136,9 @@ def validate_reader_review(
             )
         subject_owners[normalized_subject] = name
         nonempty_text(
-            block.get("possible_confusion"), f"{name}.possible_confusion", 12
+            block.get("possible_confusion"), f"{name}.possible_confusion", 12 if legacy_reader else 1
         )
-        nonempty_text(block.get("resolution"), f"{name}.resolution", 12)
+        nonempty_text(block.get("resolution"), f"{name}.resolution", 12 if legacy_reader else 1)
     unresolved = review.get("unresolved_issues")
     if not isinstance(unresolved, list):
         fail("reader review unresolved_issues must be a list")
@@ -1247,6 +1248,26 @@ def validate_iso_datetime(value: object) -> str:
     return text
 
 
+def publication_supplementary_review(process_dir: Path, note_path: Path) -> dict | None:
+    """Validate a registered review without inventing one for existing work."""
+    from execution_report import REPORT_NAME as EXECUTION_REPORT_NAME, validate_stage_review
+
+    path = process_dir / EXECUTION_REPORT_NAME
+    if not path.is_file():
+        return None
+    report = json.loads(path.read_text(encoding="utf-8-sig"))
+    role = "成品补充审核"
+    if role not in report.get("stage_reviews", {}):
+        return None
+    review = report["stage_reviews"][role]
+    if (review.get("mode") != "independent" or not review.get("review_output")
+            or not report.get("primary_agent_id") or not review.get("agent_id")
+            or review["agent_id"] == report["primary_agent_id"]):
+        fail("成品补充审核需要独立代理和实际交付")
+    validate_stage_review(report, role, [note_path])
+    return {"role": role, "record": review}
+
+
 def validate_audit(
     formal_dir: Path,
     process_dir: Path,
@@ -1272,6 +1293,9 @@ def validate_audit(
         else:
             from definition_order import verify
         result = verify(formal_dir, process_dir, topic_id)
+        result["supplementary_review"] = publication_supplementary_review(
+            process_dir, formal_dir / result["artifacts"]["note"]["path"]
+        )
         result.update(status='PUBLISH_READY', checked_at=datetime.now(timezone.utc).isoformat())
         if write_report:
             write_json(report_path or process_dir / REPORT_NAME, result)
@@ -1479,6 +1503,9 @@ def validate_audit(
         "change_impact": current_impact,
         "questionnaire_rendering": questionnaire_rendering,
         "reader_review": reader_review,
+        "supplementary_review": publication_supplementary_review(
+            process_dir, formal_dir / current_hashes["note"]["path"]
+        ),
         "content_consistency": content_consistency,
         "checked_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -1548,6 +1575,7 @@ def verify_existing_readiness(
             recorded.get("reader_review"),
             current.get("reader_review"),
         ),
+        ("supplementary_review", recorded.get("supplementary_review"), current.get("supplementary_review")),
         (
             "questionnaire_rendering",
             recorded.get("questionnaire_rendering"),
@@ -1592,6 +1620,7 @@ def verify_existing_readiness(
         "change_impact": current["change_impact"],
         "questionnaire_rendering": current["questionnaire_rendering"],
         "reader_review": current["reader_review"],
+        "supplementary_review": current.get("supplementary_review"),
         "verified_at": datetime.now(timezone.utc).isoformat(),
         "upload": upload,
     }

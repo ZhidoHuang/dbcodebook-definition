@@ -82,6 +82,10 @@ def main():
         assert Counter(re.findall(r'\[\[(?:result|meta):.*?\]\]',flat))==Counter(re.findall(r'\[\[(?:result|meta):.*?\]\]',changed))
         bound=flat.replace('result:乙','result:B|乙').replace('result:甲','result:A|甲')
         assert '├─ [[result:A|甲]]' in reorder_flat_tree(bound,['A','B'],{})
+        outline=bound.replace('```text','```tree').replace('├─ ','- ').replace('└─ ','- ')
+        reordered_outline=reorder_flat_tree(outline,['A','B'],{})
+        assert reordered_outline.index('result:A|') < reordered_outline.index('result:B|')
+        assert '├' not in reordered_outline and reordered_outline.count('\n- ') == 2
         rendered='<pre data-summary-tree="true"><code>结果\n<span data-tree-role="connector">├─</span> <span data-tree-role="result" data-tree-variable="B">乙</span>\n<span data-tree-role="connector">└─</span> <span data-tree-role="result" data-tree-variable="A">甲</span></code></pre>'
         reordered=reorder_flat_tree(rendered,['A','B'],{},True)
         assert reordered.index('data-tree-variable="A"') < reordered.index('data-tree-variable="B"')

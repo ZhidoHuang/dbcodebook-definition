@@ -788,9 +788,11 @@ def validate_logic_review(record: dict) -> None:
         required.extend(REQUIRED_V3_LOGIC_CHECKS)
     if schema_version >= 7:
         required.extend(REQUIRED_V7_LOGIC_CHECKS)
+    # Old records may contain these declarations. False still means unfinished;
+    # true is not evidence that a formula, name or source has been verified.
     for field in required:
-        if review.get(field) is not True:
-            fail(f"logic_review.{field} must be true")
+        if field in review and review[field] is not True:
+            fail(f"logic_review.{field} records unfinished work")
     if review.get("result") not in LOGIC_RESULTS:
         fail(f"logic_review.result must be one of {sorted(LOGIC_RESULTS)}")
     issues = record.get("logic_issues")
@@ -832,6 +834,8 @@ def validate_download_selection(
         return {"ok": True, "mode": "pre_download_selection", "topic_id": topic_id,
                 "variables": len(selected), "alias_families": checked["alias_families"],
                 "selection_file": str(selection_path)}
+    from definition_display import result_specs
+    specs, unregistered_facts = result_specs(record)
     validate_logic_review(record)
 
     groups = record.get("source_groups")
@@ -1533,6 +1537,8 @@ def validate_record(
     if unrecorded_paths:
         fail(f"R summary uses directories absent from source evidence: {unrecorded_paths}")
 
+    from definition_display import result_specs
+    specs, unregistered_facts = result_specs(record)
     validate_logic_review(record)
     issues = record["logic_issues"]
     result = record["logic_review"]["result"]
@@ -1551,6 +1557,16 @@ def validate_record(
         "raw_variables": len(raw_vars),
         "analysis_vars": approved_names,
         "logic_issues": len(issues),
+        "result_facts": {"prefixes_checked": [name for name, spec in specs.items() if "prefix" in spec],
+                         "not_checked": unregistered_facts,
+                         "units_and_values": "registration_only_actual_comparison_in_copy_and_output_checks"},
+        "verification_scope": {
+            "source_identity": "record_and_export_comparison",
+            "questionnaire": "registered_evidence_structure_and_coverage",
+            "path_counts": "registration_only_not_recomputed",
+            "logic_review": "unresolved_issue_check_not_quality_assessment",
+            "source_truth_and_formula_suitability": "not_assessed_by_this_command",
+        },
     }
 
 

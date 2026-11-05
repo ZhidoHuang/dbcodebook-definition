@@ -23,7 +23,7 @@ def block(label):
 questionnaire = block('分期问卷的展示格式')
 intro = block('前置跳题补零的写法')
 criteria = block('计算公式与计算条件的写法')
-summary = '## 摘要导读\n\n本主题定义“**困难项目数**”。\n\n'
+summary = '## 摘要导读\n\n本主题定义 **2** 个变量：①“**进食困难**”、②“**困难项目数**”。\n\n'
 document = summary + questionnaire + '\n\n' + intro + '\n\n' + criteria + '\n\n## 小book提示\n\n本主题没有需要单独提示的主题级边界\n'
 q = read_questionnaire_copy(questionnaire)
 groups = list(q.values())
@@ -131,6 +131,8 @@ definition_copy_check(note="note.md")
     assert rendered.count('data-summary-question-option="true"') == 17  # 2011: four shared answers + one jump; 2020: 4 + 2 + 4 + 2
     assert '→ 跳至 DB004。' in rendered
     assert '跳至 <code>DB004</code>' not in rendered
+    assert '跳过 DB001–DB015' in rendered
+    assert '跳过 <code>DB001</code>' not in rendered
     assert '共同跳题（' not in rendered
     assert '的跳题规则与' not in rendered
     assert validate_note(path, note)['ok']
@@ -150,7 +152,9 @@ definition_copy_check(note="note.md")
             pass
         else:
             raise AssertionError('Rendered mutation passed: ' + old)
-    note.write_text(rendered.replace('两道步行题只要有困难回答，就不补零。', ''), encoding='utf-8')
+    changed = rendered.replace('任一题有困难时不补零', '')
+    assert changed != rendered, 'Imputation exception was not rendered'
+    note.write_text(changed, encoding='utf-8')
     try:
         validate_note(path, note)
     except ValueError:
