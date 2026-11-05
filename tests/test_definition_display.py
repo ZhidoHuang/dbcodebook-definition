@@ -64,6 +64,17 @@ def main():
             {"JC_weight": "体重"}, require_explicit=True, result_spec=specs)["units_checked"] == ["JC_weight"]
     rejects(lambda: check_tree_result_order(tree.replace("meta:kg", "meta:mmHg"), ["JC_weight"],
             {"JC_weight": "体重"}, require_explicit=True, result_spec=specs), "单位与方案不一致")
+    for metadata in ("[[meta:0–100 kg]] [[period:Wave 2、4、6]]",
+                     "[[period:Wave 2、4、6]] [[meta:0–100 kg]]"):
+        with_period = tree.replace("[[meta:kg]]", metadata)
+        for explicit in (False, True):
+            assert check_tree_result_order(with_period, ["JC_weight"], {"JC_weight": "体重"},
+                    require_explicit=explicit, result_spec=specs)["units_checked"] == ["JC_weight"]
+            rejects(lambda: check_tree_result_order(with_period.replace("100 kg", "100 mmHg"),
+                    ["JC_weight"], {"JC_weight": "体重"}, require_explicit=explicit,
+                    result_spec=specs), "单位与方案不一致")
+    rejects(lambda: check_tree_result_order(tree.replace("[[meta:kg]]", "[[period:kg]]"),
+            ["JC_weight"], {"JC_weight": "体重"}, require_explicit=False, result_spec=specs), "单位与方案不一致")
     # Excel scientific notation is a number; a text or Boolean cell is not.
     row_xml = f'<row xmlns="{NS_MAIN[1:-1]}"><c r="A1"><v>1E-5</v></c><c r="B1" t="str"><v>12</v></c><c r="C1" t="b"><v>1</v></c></row>'
     assert _xlsx_row_values(ET.fromstring(row_xml), []) == [0.00001, "12", True]

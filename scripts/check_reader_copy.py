@@ -269,6 +269,7 @@ def check_tree_result_order(summary, variables, display_names, *, require_explic
         return re.sub(r"\s+", "", text).translate(str.maketrans({"（": "(", "）": ")", "μ": "µ"}))
 
     nodes = []
+    unit_metadata = []
     has_tree = False
     for block in summary_blocks(summary):
         if block["type"] != "code_tree":
@@ -280,19 +281,25 @@ def check_tree_result_order(summary, variables, display_names, *, require_explic
             if not isinstance(node, Element) or node.attrs.get("data-tree-role") != "result":
                 continue
             meta = ""
+            unit_meta = ""
             for sibling in root.children[i + 1:]:
                 if isinstance(sibling, str):
                     if sibling.strip() or "\n" in sibling:
                         break
                 elif sibling.attrs.get("data-tree-role") == "meta":
-                    meta += sibling.text()
-                    if not require_explicit:
+                    value = sibling.text()
+                    meta += value
+                    # Periods use square brackets; keep them out of the unit comparison.
+                    if not value.strip().startswith("["):
+                        unit_meta += value
+                    if not require_explicit and not (result_spec or {}).get(node.attrs.get("data-tree-variable"), {}).get("unit"):
                         break
                 else:
                     break
             if result_position in block.get("unitless_result_positions", []):
                 meta += "（无单位）"  # Explicit input declaration, omitted from the rendered tree.
             nodes.append((node.text(), meta, node.attrs.get("data-tree-variable")))
+            unit_metadata.append(unit_meta)
             result_position += 1
     if not has_tree:
         if require_explicit:
@@ -320,11 +327,11 @@ def check_tree_result_order(summary, variables, display_names, *, require_explic
                 if not any(value.strip() for value in values):
                     raise ValueError(f"关系树/{variable} 缺少取值或单位 meta：在名称旁用圆括号填写，不以时期代替")
         units_checked = []
-        for _, meta, variable in nodes:
+        for (_, meta, variable), unit_meta in zip(nodes, unit_metadata):
             unit = (result_spec or {}).get(variable, {}).get("unit")
             if unit:
                 # Match the agreed display unit. Do not infer or convert units.
-                meta_value = identity_text(meta)
+                meta_value = identity_text(unit_meta)
                 unit_value = identity_text(unit)
                 range_prefix = r"(?:[<>≤≥]?[+-]?\d+(?:\.\d+)?(?:[–—~～-][+-]?\d+(?:\.\d+)?)?)?"
                 if not re.fullmatch(r"\(" + range_prefix + re.escape(unit_value) + r"\)", meta_value):
