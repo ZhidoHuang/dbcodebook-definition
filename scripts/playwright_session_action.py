@@ -53,6 +53,7 @@ const wrapPage = p => ({
     evaluate: (...args) => p.evaluate(...args),
     waitForLoadState: ({state, ...options}) => p.waitForLoadState(state, convertOptions(options)),
     waitForURL: (url, options) => p.waitForURL(url, convertOptions(options)),
+    waitForResponse: (predicate, options) => p.waitForResponse(predicate, convertOptions(options)),
     waitForEvent: async (name, options) => {
       if (name === "download" && typeof downloadAttemptId !== 'undefined') {
         const record = downloadCapture(p, downloadAttemptId, downloadTarget);
@@ -88,14 +89,46 @@ const nodeRepl = {write: value => {actionResult = JSON.parse(value);}};
 '''
 
 
-def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None, retain_receipt=False, receipt_scope=None):
+def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None, retain_receipt=False, receipt_scope=None,
+              recovery_url=None):
     if not tab_id:
         return code
     return """async defaultPage => {
       let selected;
       const bindingWarnings = [];
       const targetKey = Symbol.for('dbCodeBook.targetId');
-      const candidates = [defaultPage, ...defaultPage.context().pages().filter(p => p !== defaultPage)];
+      const context = defaultPage.context();
+      const targetsKey = Symbol.for('dbCodeBook.boundTargets');
+      const targets = context[targetsKey] || (context[targetsKey] = new Map());
+      const wanted = %s, receiptId = %s, scope = %s, recoveryUrl = %s;
+      const receiptsKey = Symbol.for('dbCodeBook.syncReceipts');
+      const receipts = context[receiptsKey] || (context[receiptsKey] = new Map());
+      const preparing = scope?.kind === 'website-prepare';
+      const priorPreparation = () => {
+        if (!preparing) return null;
+        if (receipts.has(receiptId)) {
+          const earlier = receipts.get(receiptId);
+          if (earlier.tab_id !== wanted || JSON.stringify(earlier.scope) !== JSON.stringify(scope))
+            throw new Error('Preparation receipt identity differs; do not replay');
+          return earlier;
+        }
+        const bound = targets.get(wanted);
+        const active = [...receipts.values()].find(r => (r.tab_id === wanted ||
+          (bound && (targets.get(r.tab_id) === bound || r.tab_id === bound[targetKey]))) &&
+          (r.state === 'running' || (r.scope?.step === 'submit' &&
+           r.submission_requested !== false && !r.resolution &&
+           r.result?.status !== 'ARTICLE_PAGE_RETURNED' && r.result?.status !== 'SYNC_SAVE_REJECTED')));
+        if (active) throw new Error('BOUND_ACTION_PENDING: observe original receipt ' + active.id);
+        return null;
+      };
+      const previous = priorPreparation();
+      if (previous) return await previous.operation;
+      const expiresAt = %s;
+      if (expiresAt && Date.now() >= expiresAt) throw new Error('Bound action expired before execution; action was not started');
+      const known = targets.get(wanted);
+      const pages = context.pages();
+      const cached = pages.find(p => p[targetKey] === wanted);
+      const candidates = [...new Set([cached, defaultPage, ...pages].filter(Boolean))];
       for (const candidate of candidates) {
         if (candidate.isClosed()) continue;
         if (!candidate[targetKey]) {
@@ -114,8 +147,26 @@ def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None, retain_receipt=
         }
         if (candidate[targetKey] === %s) { selected = candidate; break; }
       }
+      let recovered = false;
+      if (!selected && preparing && recoveryUrl && known) {
+        if (known.isClosed()) {
+          selected = await context.newPage();
+          targets.set(wanted, selected);
+        } else if (pages.includes(known)) {
+          // This page was created by an earlier recovery of this same binding.
+          selected = known;
+        }
+        recovered = !!selected;
+        if (selected && !selected[targetKey]) {
+          const cdp = await context.newCDPSession(selected);
+          try {selected[targetKey] = (await cdp.send('Target.getTargetInfo')).targetInfo.targetId;}
+          finally {await cdp.detach();}
+        }
+      }
       if (!selected) throw new Error('Bound tab is closed or unavailable; do not select another tab');
-      const expiresAt = %s;
+      targets.set(selected[targetKey], selected);
+      const concurrent = priorPreparation();
+      if (concurrent) return await concurrent.operation;
       if (expiresAt && Date.now() >= expiresAt) throw new Error('Bound action expired before execution; action was not started');
       const dbCodeBookBoundPage = selected;
       const cancellations = [], pending = [];
@@ -127,17 +178,19 @@ def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None, retain_receipt=
           error => {record.error = String(error);}));
       };
       selected.on('dialog', onDialog);
-      const receiptId = %s;
       const dbCodeBookOperationReceipt = {id:receiptId, tab_id:%s, scope:%s,
         state:'running', started_at:new Date().toISOString(), submission_requested:null};
       if (%s) {
-        const context = selected.context();
-        const key = Symbol.for('dbCodeBook.syncReceipts');
-        const receipts = context[key] || (context[key] = new Map());
         receipts.set(receiptId, dbCodeBookOperationReceipt);
       }
       const operation = (async () => { try {
+        if (recovered && selected.url() === 'about:blank')
+          await selected.goto(recoveryUrl, {waitUntil:'domcontentloaded', timeout:Math.max(1, expiresAt-Date.now())});
         const result = await (%s)(selected);
+        if (preparing && result && typeof result === 'object') {
+          result.tab_id = selected[targetKey];
+          result.binding_recovered = recovered;
+        }
         await Promise.all(pending);
         if (cancellations.some(item => !item.confirmed)) throw new Error('Native dialog cancellation failed: ' + JSON.stringify(cancellations));
         if (bindingWarnings.length && result && typeof result === 'object' && !Array.isArray(result)) {
@@ -146,6 +199,10 @@ def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None, retain_receipt=
         if (!cancellations.length) return result;
         return result && typeof result === 'object' && !Array.isArray(result)
           ? {...result, native_dialogs: cancellations} : {result, native_dialogs: cancellations};
+      } catch (error) {
+        if (preparing) return {ok:false, status:'WEBSITE_PREPARE_INCOMPLETE',
+          error:String(error), tab_id:selected[targetKey], binding_recovered:recovered};
+        throw error;
       } finally { selected.off('dialog', onDialog); } })();
       dbCodeBookOperationReceipt.operation = operation;
       operation.then(result => Object.assign(dbCodeBookOperationReceipt,
@@ -154,7 +211,8 @@ def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None, retain_receipt=
           {state:'failed', error:String(error), finished_at:new Date().toISOString()}));
       if (receiptId) selected[Symbol.for('dbCodeBook.boundAction')] = dbCodeBookOperationReceipt;
       return await operation;
-    }""" % (json.dumps(tab_id), json.dumps(expires_at_ms), json.dumps(receipt_id), json.dumps(tab_id),
+    }""" % (json.dumps(tab_id), json.dumps(receipt_id), json.dumps(receipt_scope), json.dumps(recovery_url),
+           json.dumps(expires_at_ms), json.dumps(tab_id), json.dumps(tab_id),
            json.dumps(receipt_scope), str(bool(retain_receipt)).lower(), code)
 
 
@@ -244,17 +302,19 @@ class Session:
             raise RuntimeError(result.stdout + result.stderr)
         return result.stdout
 
-    def code(self, code):
-        receipt_id = uuid.uuid4().hex
+    def code(self, code, *, receipt_id=None, expires_at_ms=None, recovery_url=None):
+        receipt_id = receipt_id or uuid.uuid4().hex
+        expires_at_ms = expires_at_ms or int((time.time() + self.operation_timeout) * 1000)
         self.last_receipt_id = receipt_id
         if self.retain_receipts and self.tab_id:
             self.code_path.with_suffix('.receipt.json').write_text(json.dumps({
                 'receipt_id':receipt_id, 'tab_id':self.tab_id, 'scope':self.receipt_scope,
                 'recorded_at':time.time(), 'phase_timeout_seconds':self.operation_timeout,
+                'expires_at_ms':expires_at_ms,
             }, ensure_ascii=False, indent=2), encoding='utf-8')
         with temporary_browser_script(bind_code(code, self.tab_id, receipt_id,
-                                               int((time.time() + 40) * 1000),
-                                               self.retain_receipts, self.receipt_scope)) as path:
+                                               expires_at_ms,
+                                               self.retain_receipts, self.receipt_scope, recovery_url)) as path:
             output = self.call("--raw", "run-code", "--filename", str(path))
         # The CLI returns early when its selected tab opens a dialog, even if
         # our bound handler dismisses it. Retrieve that same operation only;
@@ -339,6 +399,52 @@ class Session:
         return self.code('async page => ({url: page.url(), editor: await page.locator("#editor").count()})')
 
 
+def run_website_prepare(session, action, output_path):
+    """Resume an uncertain preparation receipt instead of replaying navigation."""
+    from prepare_website import browser_code
+    browser_code(action)  # Validate identity and recovery URL before browser access.
+    fingerprint = hashlib.sha256(json.dumps(action, sort_keys=True, ensure_ascii=False).encode('utf-8')).hexdigest()
+    scope = {'kind': 'website-prepare', 'action_sha256': fingerprint}
+    receipt_path = session.code_path.with_suffix('.receipt.json')
+    prior = json.loads(receipt_path.read_text(encoding='utf-8-sig')) if receipt_path.is_file() else None
+    result = json.loads(output_path.read_text(encoding='utf-8-sig')) if output_path.is_file() else {}
+    pending = prior and (result.get('receipt_id') != prior.get('receipt_id') or
+                         result.get('status') == 'WEBSITE_PREPARE_PENDING')
+    if pending and (prior.get('tab_id') != session.tab_id or prior.get('scope') != scope):
+        return {'ok': False, 'status': 'WEBSITE_PREPARE_PENDING', 'operation_completed': False,
+                'receipt_id': prior['receipt_id'], 'tab_id': prior.get('tab_id'),
+                'message': 'Resume the original preparation action and binding before changing inputs.'}
+    receipt_id = prior['receipt_id'] if pending else uuid.uuid4().hex
+    # 35 seconds includes dispatch/binding; the CLI has 5 more seconds to return.
+    deadline = prior['expires_at_ms'] if pending else int((time.time() + 35) * 1000)
+    session.retain_receipts = True
+    session.receipt_scope = scope
+    session.operation_timeout = 40
+    recovery_url = None if action.get('create') else action['base_url'].rstrip('/') + '/nodes/post/' + str(action['post_id']) + '/'
+    try:
+        payload = session.code(browser_code(action, deadline), receipt_id=receipt_id,
+                               expires_at_ms=deadline, recovery_url=recovery_url)
+        payload.update(receipt_id=receipt_id, operation_completed=True)
+        return payload
+    except subprocess.TimeoutExpired as exc:
+        return {'ok': False, 'status': 'WEBSITE_PREPARE_PENDING', 'receipt_id': receipt_id,
+                'tab_id': session.tab_id, 'operation_completed': False,
+                'next_action': 'repeat_same_prepare_to_observe', 'error': str(exc)}
+    except (RuntimeError, OSError) as exc:
+        message = str(exc)
+        if any(marker in message for marker in ('Bound action expired before execution',
+                                                'Bound tab is closed or unavailable',
+                                                'BOUND_ACTION_PENDING:',
+                                                'Preparation receipt identity differs')):
+            return {'ok': False, 'status': 'WEBSITE_PREPARE_NOT_STARTED',
+                    'receipt_id': receipt_id, 'tab_id': session.tab_id,
+                    'operation_completed': True, 'error': message}
+        # Transport failure is not evidence that the browser operation stopped.
+        return {'ok': False, 'status': 'WEBSITE_PREPARE_PENDING', 'receipt_id': receipt_id,
+                'tab_id': session.tab_id, 'operation_completed': False,
+                'next_action': 'repeat_same_prepare_to_observe', 'error': str(exc)}
+
+
 def validate_sync_files(payload):
     files = [{"path": payload["note"], "sha256": payload.get("note_sha256")},
              *payload["attachments"]]
@@ -398,9 +504,16 @@ def run_sync(session, action, preflight):
             perform('attachment_' + str(index + state['keep'] + 1),
                     lambda: session.upload("#documents-sidebar-input", attachment["path"]), 65)
         validate_sync_files(payload)
-        # Record uncertain submissions truthfully; timeout recovery uses a fresh task window.
+        # A timeout does not say whether the save request reached the server.
         submitted = True
-        return perform('submit', step)
+        result = perform('submit', step)
+        if not result.get('ok'):
+            result['observation'] = {
+                'receipt_id':getattr(session, 'last_receipt_id', None),
+                'tab_id':getattr(session, 'tab_id', None), 'step':active_step,
+                'scope':dict(session.receipt_scope),
+            }
+        return result
     except Exception as exc:
         session.deadline = None  # Recovery is disclosed separately, not a second submission.
         result = {"ok": False, "status": "SUBMISSION_UNCERTAIN" if submitted else "SYNC_FAILED",
@@ -414,7 +527,7 @@ def run_sync(session, action, preflight):
                   "editor_page_restored": False,
                   "content_rollback_status": "NOT_VERIFIED"}
         # The CLI may time out while the original browser operation is still running.
-        # Non-timeout failures may use the observer; timeouts follow the documented fresh-window retry.
+        # Observe the original operation before considering another submission.
         result['preload_sha256'] = payload.get('preload_sha256')
         result['phase_timings_ms'] = phase_timings
         result['observation'] = {
@@ -422,11 +535,8 @@ def run_sync(session, action, preflight):
             'tab_id':getattr(session, 'tab_id', None), 'step':active_step,
             'scope':dict(session.receipt_scope),
         }
-        is_timeout = isinstance(exc, (TimeoutError, subprocess.TimeoutExpired)) or bool(
-            re.search(r'timeout|timed out|超时', str(exc), re.IGNORECASE))
-        result['next_action'] = ('close_task_window_and_retry_in_new_window'
-                                 if is_timeout else 'sync-observe')
-        result['save_check_required_before_retry'] = not is_timeout
+        result['next_action'] = 'sync-observe'
+        result['save_check_required_before_retry'] = submitted
         return result
     finally:
         session.deadline = None
@@ -469,7 +579,10 @@ def observe_sync(session, action, failed_result):
         })]); } finally {clearTimeout(timer);}
       }
       let returnedPost=null, returnedUrl=null;
-      if (receipt.state==='failed' && receipt.submission_requested===true && expectedScope.step==='submit') {
+      const save = receipt.result?.save_response;
+      const endedWithResponse = receipt.state==='completed' && receipt.result?.status==='SUBMISSION_UNCERTAIN'
+        && save?.http_status>=200 && save?.http_status<300 && save?.status!=='error';
+      if ((receipt.state==='failed' || endedWithResponse) && receipt.submission_requested===true && expectedScope.step==='submit') {
         returnedUrl=page.url();
         const element=await page.locator('#post-data').count();
         if (element) returnedPost=await page.locator('#post-data').evaluate(el=>{
@@ -487,6 +600,8 @@ def observe_sync(session, action, failed_result):
                   original_status=failed_result.get('status'))
     if observed['state'] == 'completed' and observation['step'] == 'submit':
         result = observed.get('result') or {}
+        if result.get('status') == 'SYNC_SAVE_REJECTED':
+            return {**result, 'recovery':common}
         if result.get('status') == 'ARTICLE_PAGE_RETURNED' and result.get('ok') is True:
             if any(result.get(key) != payload.get(key) for key in keys):
                 raise ValueError('Recovered result belongs to another synchronization')
@@ -494,7 +609,14 @@ def observe_sync(session, action, failed_result):
     # The original wait may end before the already-submitted page returns.
     # Apply the normal URL completion condition to that same bound receipt;
     # preserve the failed receipt rather than relabeling it as completed.
-    if (observed['state']=='failed' and observation['step']=='submit'
+    original_result = observed.get('result') or {}
+    save_response = original_result.get('save_response') or {}
+    ended_with_response = (observed['state']=='completed'
+        and original_result.get('status')=='SUBMISSION_UNCERTAIN'
+        and 200 <= save_response.get('http_status', 0) < 300
+        and save_response.get('status') != 'error'
+        and all(original_result.get(key)==payload.get(key) for key in keys))
+    if ((observed['state']=='failed' or ended_with_response) and observation['step']=='submit'
             and observed.get('submission_requested') is True
             and all((observed.get('verified') or {}).get(k) is True for k in
                     ('edit_url_verified','title_verified','body_verified','attachment_order_verified'))):
@@ -504,8 +626,12 @@ def observe_sync(session, action, failed_result):
         post=observed.get('returned_post') or {}
         correct_update=payload.get('create') or (
             current.path.replace('/local-','/')==urlsplit(payload.get('post_url','')).path.replace('/local-','/'))
+        edit_id = re.fullmatch(r'/nodes/edit/([1-9][0-9]*)/', expected.path)
+        allowed_ids = {match[1]} if match else set()
+        if not payload.get('create') and edit_id:
+            allowed_ids.add(edit_id[1])
         if (current.scheme==expected.scheme and current.netloc==expected.netloc and match
-                and str(post.get('id'))==match[1] and correct_update
+                and str(post.get('id')) in allowed_ids and correct_update
                 and post.get('title')==payload.get('desired_title')
                 and post.get('documents')==[x['name'] for x in payload['attachments']]):
             validate_sync_files(payload)
@@ -513,7 +639,8 @@ def observe_sync(session, action, failed_result):
                 'preload_sha256':payload['preload_sha256'],'post_url':observed['url'],
                 'browser_elapsed_ms':failed_result['browser_elapsed_ms'],
                 'phase_timings_ms':failed_result.get('phase_timings_ms',{}),
-                'late_navigation_observed':True,'original_operation_state':'failed',
+                'late_navigation_observed':True,'original_operation_state':observed['state'],
+                'save_response':save_response or None,
                 'recovered_original_result':False,
                 'quality_checks':{**observed['verified'],'article_page_returned':True}}
     status = {'running':'SYNC_ACTION_PENDING','unavailable':'SYNC_RECEIPT_UNAVAILABLE'}
@@ -529,6 +656,31 @@ def observe_sync(session, action, failed_result):
         'SYNC_NOT_SUBMITTED':'prepare_after_original_operation_ended',
     }[result['status']]
     return result
+
+
+def record_sync_resolution(session, failed_result, result):
+    """Record an already verified conclusion without rewriting the original receipt."""
+    if result.get('status') not in {'ARTICLE_PAGE_RETURNED', 'ARTICLE_SAVED_CONFIRMED',
+                                   'SYNC_NOT_SUBMITTED', 'SYNC_SAVE_REJECTED'}:
+        return
+    observation = failed_result.get('observation') or {}
+    if not observation.get('receipt_id'):
+        return
+    evidence = {'receipt_id': observation['receipt_id'], 'tab_id': observation.get('tab_id'),
+                'scope': observation.get('scope'), 'status': result['status']}
+    try:
+        acknowledged = session.code('''async page => {
+          const proof = EVIDENCE;
+          const receipt = page.context()[Symbol.for('dbCodeBook.syncReceipts')]?.get(proof.receipt_id);
+          if (!receipt || receipt.state === 'running' || receipt.tab_id !== proof.tab_id ||
+              JSON.stringify(receipt.scope) !== JSON.stringify(proof.scope)) return {recorded:false};
+          receipt.resolution = {status:proof.status, recorded_at:new Date().toISOString()};
+          return {recorded:true};
+        }'''.replace('EVIDENCE', json.dumps(evidence)))
+        result['receipt_resolution_recorded'] = acknowledged.get('recorded') is True
+    except (RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
+        result['receipt_resolution_recorded'] = False
+        result['receipt_resolution_error'] = str(exc)
 
 
 def saved_note_sections(note):
@@ -704,18 +856,15 @@ def main() -> None:
         print(json.dumps(payload, ensure_ascii=False))
         raise SystemExit(0 if payload.get('ok') else 1)
     if args.mode == "website-prepare":
-        from prepare_website import browser_code
         if not args.tab_id or not args.action:
             parser.error('website-prepare requires --tab-id and --action')
         try:
-            code = browser_code(read_action(args.action))
+            payload = run_website_prepare(
+                Session(args.session, args.session_workdir,
+                        args.out.with_suffix('.browser.js'), config, args.tab_id),
+                read_action(args.action), args.out)
         except ValueError as exc:
             parser.error(str(exc))
-        try:
-            payload = Session(args.session, args.session_workdir,
-                              args.out.with_suffix('.browser.js'), config, args.tab_id).code(code)
-        except (RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
-            payload = {'ok': False, 'status': 'WEBSITE_PREPARE_INCOMPLETE', 'error': str(exc)}
         args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
         print(json.dumps(payload, ensure_ascii=False))
         raise SystemExit(0 if payload.get('ok') else 1)
@@ -795,6 +944,10 @@ def main() -> None:
           if (!selected) throw new Error('Observed tab index no longer exists');
           const cdp=await page.context().newCDPSession(selected);
           try { const result=await cdp.send('Target.getTargetInfo');
+            selected[Symbol.for('dbCodeBook.targetId')]=result.targetInfo.targetId;
+            const key=Symbol.for('dbCodeBook.boundTargets');
+            const targets=page.context()[key] || (page.context()[key]=new Map());
+            targets.set(result.targetInfo.targetId,selected);
             return {ok:true,tab_id:result.targetInfo.targetId,url:selected.url()}; }
           finally {await cdp.detach();}
         }''' % args.tab_index)
@@ -828,6 +981,7 @@ def main() -> None:
                 payload = observe_sync(session, action, read_action(args.result))
                 if payload.get("late_navigation_observed"):
                     payload["original_result_path"] = str(args.result.resolve())
+            record_sync_resolution(session, read_action(args.result), payload)
         except (ValueError, RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
             payload = {'ok':False, 'status':'SYNC_CONFIRMATION_INCOMPLETE',
                        'error':str(exc), 'read_only':True, 'allow_resubmit':False,

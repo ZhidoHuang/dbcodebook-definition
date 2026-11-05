@@ -1997,9 +1997,32 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
     }}
 
     stepStarted = Date.now();
+    const saveUrl = payload.create
+      ? payload.edit_url.replace(/\/nodes\/.*$/, '/nodes/api/posts/')
+      : payload.edit_url.replace(/\/nodes\/edit\/(\d+)\/$/, '/nodes/api/posts/$1/update/');
+    const saveMethod = payload.create ? 'POST' : 'PUT';
+    const matchesSave = request => request.url() === saveUrl && request.method() === saveMethod;
+    const receipt = typeof dbCodeBookOperationReceipt !== 'undefined' ? dbCodeBookOperationReceipt : {{}};
+    receipt.save_request_seen = false;
+    // Attach before clicking. Both waits handle rejection even if the other finishes first.
+    tab.playwright.waitForEvent('request', {{predicate:matchesSave, timeoutMs:30000}})
+      .then(() => {{receipt.save_request_seen = true;}}, () => {{}});
+    const saveResponse = tab.playwright.waitForResponse(response => matchesSave(response.request()),
+      {{timeoutMs:30000}}).then(async response => {{
+        let data = null, bodyError = null;
+        try {{ data = await response.json(); }} catch (error) {{bodyError = String(error);}}
+        const evidence = {{url:saveUrl, method:saveMethod, http_status:response.status(),
+          status:typeof data?.status === 'string' ? data.status : null,
+          message:typeof data?.message === 'string' ? data.message.slice(0, 1000) : null,
+          body_error:bodyError}};
+        receipt.save_response = evidence;
+        // A successful HTTP response still requires the correct article URL below.
+        return {{evidence, accepted:response.ok() && data?.status !== 'error',
+          rejected:!response.ok() || data?.status === 'error'}};
+      }}).catch(error => ({{error:String(error)}}));
     const returned = tab.playwright.waitForURL(
       payload.success_url_pattern, {{ timeoutMs: 30000, waitUntil: "commit" }}
-    );
+    ).then(() => ({{}}), error => ({{error:String(error)}}));
     submissionStarted = true;
     if (typeof dbCodeBookOperationReceipt !== 'undefined') {{
       dbCodeBookOperationReceipt.submission_requested = true;
@@ -2011,7 +2034,19 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
     }} else {{
       await tab.playwright.getByRole("button", {{ name: "更新文章" }}).click({{ noWaitAfter: true }});
     }}
-    await returned;
+    const saved = await saveResponse;
+    if (!saved.accepted) {{
+      return {{ok:false, status:saved.rejected ? 'SYNC_SAVE_REJECTED' : 'SUBMISSION_UNCERTAIN',
+        phase:'submit', sync_started_at:payload.sync_started_at, sync_run_id:payload.sync_run_id,
+        sync_attempt:payload.sync_attempt, preload_sha256:payload.preload_sha256,
+        save_request_seen:receipt.save_request_seen, save_response:saved.evidence || null,
+        error:saved.evidence?.message || saved.error || '保存响应无法确认成功',
+        browser_elapsed_ms:Date.now()-startedAt,
+        next_action:saved.rejected ? 'report_save_error' : 'sync-observe',
+        content_rollback_status:'NOT_VERIFIED'}};
+    }}
+    const navigation = await returned;
+    if (navigation.error) throw new Error(navigation.error);
     const postUrl = await tab.url();
     if (!validDbCodeBookPostUrl(postUrl, payload)) {{
       throw new Error(`提交后未返回文章地址：${{postUrl}}`);
@@ -2021,6 +2056,7 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
     return {{
       ok: true,
       status: "ARTICLE_PAGE_RETURNED",
+      save_response: saved.evidence,
       sync_started_at: payload.sync_started_at,
       sync_run_id: payload.sync_run_id,
       sync_attempt: payload.sync_attempt,

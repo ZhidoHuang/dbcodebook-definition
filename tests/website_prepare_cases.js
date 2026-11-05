@@ -6,7 +6,7 @@ const existing = {base_url:origin,create:false,post_id:'132',edit_id:null,identi
 function fake(options={}) {
   const s = {url:origin+'/nodes/post/132/',auth:true,title:'CHARLS — ADL',body:'saved body',
     button:'发布文章', attachments:2, ready:true, clicks:[], clickOptions:[], navigations:[],
-    hitPoints:[], measurements:0, viewport:{width:1000,height:600},
+    hitPoints:[], measurements:0, loadWaits:0, evaluations:0, clock:0, viewport:{width:1000,height:600},
     rect:{left:10,top:10,right:110,bottom:50}, border:2, ...options};
   global.window = {__GUIDE_USER__:{authenticated:s.auth},innerWidth:s.viewport.width,innerHeight:s.viewport.height};
   const child = {};
@@ -19,10 +19,20 @@ function fake(options={}) {
     elementFromPoint:(x,y)=>{s.hitPoints.push({x,y});return s.obscured?{}:s.hitChild?child:editElement;}};
   const page = {
     url:()=>s.url,
-    evaluate:async fn=>fn(),
+    waitForLoadState:async(state,options)=>{
+      assert.equal(state,'domcontentloaded');assert.ok(options.timeout>0);s.loadWaits++;
+      if(s.destroyAuthOnce && s.loadWaits===1) s.pendingNavigation=true;
+      else s.pendingNavigation=false;
+    },
+    evaluate:async fn=>{
+      s.evaluations++;
+      if(s.pendingNavigation || s.destroyAuthAlways) throw new Error('Execution context was destroyed, most likely because of a navigation');
+      if(s.expireOn==='auth' && s.evaluations===1) s.clock=25001;
+      return fn();
+    },
     goto:async url=>{s.navigations.push(url);s.url=url;},
-    locator:sel=>({count:async()=>1,waitFor:async()=>{},innerText:async()=>s.title,
-      evaluate:async fn=>{assert.equal(sel,'.edit-post-btn:visible');s.measurements++;return fn(editElement);},
+    locator:sel=>({count:async()=>{if(s.expireOn==='login-count')s.clock=25001;return 1;},waitFor:async()=>{},innerText:async()=>s.title,
+      evaluate:async fn=>{assert.equal(sel,'.edit-post-btn:visible');s.measurements++;const value=fn(editElement);if(s.expireOn==='measurement')s.clock=25001;return value;},
       click:async options=>{
         assert.equal(options.force,undefined);s.clicks.push(sel);s.clickOptions.push(options);
         if(sel==='.edit-post-btn:visible')s.url=origin+'/nodes/edit/335/';
@@ -39,13 +49,15 @@ function fake(options={}) {
 }
 let caseCount=0;
 async function run(action,opts,status) {
-  const {page,s}=fake(opts);const result=await prepareWebsite(page,action);
+  const {page,s}=fake(opts);const clock=Date.now;Date.now=()=>s.clock;
+  let result;try {result=await prepareWebsite(page,action);} finally {Date.now=clock;}
   assert.equal(result.status,status,JSON.stringify(result));caseCount++;return {result,s};
 }
 (async()=>{
   let r=await run(existing,{},'WEBSITE_EDITOR_READY');
   assert.equal(r.result.edit_id,'335');assert.deepEqual(r.s.clicks,['.edit-post-btn:visible']);
   assert.equal(r.result.body_length,10);
+  assert.equal(r.s.loadWaits,1);
   assert.equal(r.s.clickOptions[0].position,undefined);assert.deepEqual(r.s.hitPoints,[]);
   const croppedCases=[
     [{left:-80,top:10,right:20,bottom:50},{x:87,y:18},{x:9,y:30}],
@@ -66,7 +78,18 @@ async function run(action,opts,status) {
   assert.match(r.result.error,/no visible clickable area/);assert.equal(r.s.clicks.length,0);
   r=await run(existing,{rect:{left:10,top:700,right:110,bottom:740}},'WEBSITE_EDITOR_READY');
   assert.equal(r.s.clickOptions[0].position,undefined);assert.deepEqual(r.s.hitPoints,[]);
-  await run({...existing,edit_id:'335'},{url:origin+'/nodes/edit/335/'},'WEBSITE_EDITOR_READY');
+  r=await run({...existing,edit_id:'335'},{url:origin+'/nodes/edit/335/'},'WEBSITE_EDITOR_READY');
+  assert.deepEqual(r.s.clicks,[]);assert.deepEqual(r.s.navigations,[]);
+  r=await run(existing,{destroyAuthOnce:true},'WEBSITE_EDITOR_READY');
+  assert.equal(r.s.loadWaits,2);assert.equal(r.s.clicks.length,1);
+  r=await run(existing,{destroyAuthAlways:true},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.equal(r.s.loadWaits,2);assert.deepEqual(r.s.clicks,[]);
+  r=await run(existing,{expireOn:'measurement'},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.match(r.result.error,/deadline exceeded/);assert.deepEqual(r.s.clicks,[]);
+  r=await run({...existing,open_login:true},{auth:false,expireOn:'login-count'},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.match(r.result.error,/deadline exceeded/);assert.deepEqual(r.s.clicks,[]);
+  r=await run(existing,{expireOn:'auth'},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.match(r.result.error,/deadline exceeded/);assert.deepEqual(r.s.clicks,[]);assert.deepEqual(r.s.navigations,[]);
   r=await run(existing,{url:origin+'/nodes/edit/999/'},'EDITOR_ALREADY_OPEN');
   assert.equal(r.s.navigations.length,0);
   await run(existing,{url:'http://other/nodes/post/132/'},'WRONG_SITE');

@@ -1291,7 +1291,13 @@ def command_website_finish(args: argparse.Namespace) -> dict[str, Any]:
         summary = ["原同步返回不明；已通过只读确认正文和附件保存，未取得原同步直接返回回执。"]
         duration = elapsed_seconds(stage["started_at"], finished.isoformat())
     elif result.get("late_navigation_observed") is True:
-        if (result.get("read_only") is not True or result.get("original_operation_state") != "failed"
+        response = result.get("save_response") or {}
+        completed_response = (result.get("original_operation_state") == "completed"
+            and result.get("original_status") == "SUBMISSION_UNCERTAIN"
+            and type(response.get("http_status")) is int and 200 <= response["http_status"] < 300
+            and response.get("status") != "error")
+        if (result.get("read_only") is not True
+                or not (result.get("original_operation_state") == "failed" or completed_response)
                 or result.get("recovered_original_result") is not False
                 or type(result.get("observed_at")) not in (int, float)
                 or not math.isfinite(result["observed_at"])):
@@ -1300,8 +1306,8 @@ def command_website_finish(args: argparse.Namespace) -> dict[str, Any]:
         if finished < parse_time(stage["started_at"]) or finished > now() + timedelta(seconds=1):
             raise SystemExit("延迟返回的实际观察时间无效。")
         stage_status = "completed_with_issues"
-        summary = ["原提交等待超时；同次回执已核实原标签延迟返回正确文章，标题和附件顺序一致，未重复提交。",
-                   "阶段墙钟包括超时后的其他工作和延迟观察，不等于纯浏览器处理时间；原操作耗时另见原始结果。"]
+        summary = ["原提交结果未确认；同次回执已核实原标签返回正确文章，标题和附件顺序一致，未重复提交。",
+                   "阶段墙钟包括提交后的其他工作和延迟观察，不等于纯浏览器处理时间；原操作耗时另见原始结果。"]
         duration, evidence_outputs = elapsed_seconds(stage["started_at"], finished.isoformat()), []
     else:
         values = [result.get(key) for key in ("dispatch_latency_ms", "browser_elapsed_ms",

@@ -14,6 +14,7 @@ import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from playwright_session_action import (
     build_code, bind_code, Session, run_sync, observe_sync, confirm_saved_sync, saved_note_sections,
+    run_website_prepare, record_sync_resolution,
 )
 from unittest.mock import patch
 from recover_dbcodebook_export import build_download_browser_action
@@ -45,6 +46,167 @@ other.context=target.context=()=>context;
 })().catch(error=>{console.error(error);process.exitCode=1;});
 """.replace("BOUND", bound).replace("UNKNOWN", unknown), encoding="utf-8")
     subprocess.run(["node", str(script)], check=True)
+
+
+def exercise_prepare_reentry(root):
+    scope = {'kind': 'website-prepare', 'action_sha256': 'fixture'}
+    code = "async page => {page.calls++; await page.ready; return {ok:true,status:'WEBSITE_EDITOR_READY'};}"
+    first = bind_code(code, 'target', 'first', retain_receipt=True, receipt_scope=scope)
+    other = bind_code(code, 'target', 'other', retain_receipt=True, receipt_scope=scope)
+    failing = bind_code("async page => {page.calls++; throw Error('ended failure');}",
+                        'target', 'failed', retain_receipt=True, receipt_scope=scope)
+    script = root / 'prepare-reentry.cjs'
+    source = r"""
+const assert = require('node:assert/strict');
+const key = Symbol.for('dbCodeBook.targetId');
+let release;
+const context = {pages:()=>[page]};
+const page = {context:()=>context,isClosed:()=>false,on:()=>{},off:()=>{},calls:0,
+  [key]:'target',ready:new Promise(resolve=>{release=resolve;})};
+(async()=>{
+  const a=(__FIRST__)(page), b=(__FIRST__)(page);
+  assert.equal(page.calls,1,'pending reentry must not rerun');
+  await assert.rejects(()=>(__OTHER__)(page),/BOUND_ACTION_PENDING/);
+  release(); const [x,y]=await Promise.all([a,b]);
+  assert.deepEqual(x,y);assert.equal(x.tab_id,'target');
+  assert.deepEqual(await (__FIRST__)(page),x);assert.equal(page.calls,1,'completed reentry must not rerun');
+  const receipts=context[Symbol.for('dbCodeBook.syncReceipts')];
+  receipts.set('uncertain-submit',{id:'uncertain-submit',tab_id:'target',state:'failed',scope:{step:'submit'}});
+  await assert.rejects(()=>(__OTHER__)(page),/BOUND_ACTION_PENDING/);
+  receipts.delete('uncertain-submit');
+  const failed=await (__FAILED__)(page);
+  assert.equal(failed.status,'WEBSITE_PREPARE_INCOMPLETE');assert.match(failed.error,/ended failure/);
+  assert.equal((await (__OTHER__)(page)).ok,true,'ended failure permits a new attempt');
+  assert.equal(page.calls,3);
+})().catch(e=>{console.error(e);process.exitCode=1;});
+"""
+    script.write_text(source.replace('__FIRST__', first).replace('__OTHER__', other)
+                      .replace('__FAILED__', failing), encoding='utf-8')
+    subprocess.run(['node', str(script)], check=True)
+
+
+def exercise_prepare_closed_target(root):
+    scope = {'kind': 'website-prepare', 'action_sha256': 'fixture'}
+    body = "async page => ({ok:true,url:page.url()})"
+    def bound(target, receipt):
+        return bind_code(body, target, receipt, expires_at_ms=4102444800000,
+                         retain_receipt=True, receipt_scope=scope,
+                         recovery_url='http://localhost/nodes/post/132/')
+    generated = {}
+    class Capture:
+        def code(self, code):
+            generated['code'] = code
+            return {'recorded':True}
+    for status, receipt in [('ARTICLE_PAGE_RETURNED','submit'),
+                            ('ARTICLE_SAVED_CONFIRMED','submit2')]:
+        result = {'status':status}
+        record_sync_resolution(Capture(), {'observation':{'receipt_id':receipt,
+            'tab_id':'new-target','scope':{'step':'submit'}}}, result)
+        assert result['receipt_resolution_recorded'] is True
+        generated[receipt] = generated['code']
+    script = root / 'prepare-closed-target.cjs'
+    source = r"""
+const assert=require('node:assert/strict');
+const key=Symbol.for('dbCodeBook.targetId');let created=0,gotos=0;
+const old={name:'old',closed:false,isClosed(){return this.closed},on:()=>{},off:()=>{},
+  url:()=> 'http://localhost/nodes/post/132/',[key]:'target'};
+const other={name:'other',isClosed:()=>false,on:()=>{},off:()=>{},[key]:'other'};
+let pages=[old,other];
+const context={pages:()=>pages,newPage:async()=>{
+  created++;let address='about:blank';
+  const p={name:'replacement',isClosed:()=>false,on:()=>{},off:()=>{},context:()=>context,
+    url:()=>address,setUrl:url=>{address=url;},goto:async url=>{gotos++;address=url;}};
+  pages.push(p);return p;
+},newCDPSession:async page=>({send:async()=>({targetInfo:{targetId:page.name==='replacement'?'new-target':page.name}}),detach:async()=>{}})};
+old.context=other.context=()=>context;
+(async()=>{
+ const initial=await (__INITIAL__)(old);assert.equal(initial.tab_id,'target');assert.equal(initial.binding_recovered,false);
+ old.closed=true;pages=[other];
+ const result=await (__RECOVERY__)(other);
+ assert.equal(created,1);assert.equal(result.tab_id,'new-target');assert.equal(result.binding_recovered,true);
+ assert.equal(result.url,'http://localhost/nodes/post/132/');
+ const page=pages.find(p=>p.name==='replacement');page.setUrl('http://localhost/nodes/edit/335/');
+ page.unsaved='unsaved editor content';
+ const receipts=context[Symbol.for('dbCodeBook.syncReceipts')];
+ const submit={id:'submit',tab_id:'new-target',state:'running',scope:{step:'submit'},
+   submission_requested:true,result:{status:'SUBMISSION_UNCERTAIN'}};
+ receipts.set('submit',submit);
+ await assert.rejects(()=>(__AGAIN__)(other),/BOUND_ACTION_PENDING/);
+ assert.deepEqual(await (__ACK__)(page),{recorded:false});
+ assert.equal(submit.resolution,undefined);
+ submit.state='failed';
+ await assert.rejects(()=>(__AGAIN__)(other),/BOUND_ACTION_PENDING/);
+ const originalResult=submit.result, originalState=submit.state;
+ assert.deepEqual(await (__ACK__)(page),{recorded:true});
+ assert.equal(submit.result,originalResult);assert.equal(submit.state,originalState);
+ assert.equal(submit.resolution.status,'ARTICLE_PAGE_RETURNED');
+ const again=await (__AGAIN__)(other);assert.equal(created,1);assert.equal(again.tab_id,'new-target');
+ assert.equal(again.url,'http://localhost/nodes/edit/335/');assert.equal(gotos,1);
+ assert.equal(page.unsaved,'unsaved editor content');
+ const submit2={id:'submit2',tab_id:'new-target',state:'completed',scope:{step:'submit'},
+   submission_requested:true,result:{status:'SUBMISSION_UNCERTAIN'}};
+ receipts.set('submit2',submit2);
+ await assert.rejects(()=>(__AFTER__)(other),/BOUND_ACTION_PENDING/);
+ const saved=submit2.result;
+ assert.deepEqual(await (__ACK2__)(page),{recorded:true});
+ assert.equal(submit2.result,saved);assert.equal(submit2.state,'completed');
+ assert.equal(submit2.resolution.status,'ARTICLE_SAVED_CONFIRMED');
+ assert.equal((await (__AFTER__)(other)).url,'http://localhost/nodes/edit/335/');
+ receipts.set('not-submitted',{id:'not-submitted',tab_id:'new-target',state:'failed',
+   scope:{step:'submit'},submission_requested:false});
+ assert.equal((await (__NOT_SUBMITTED__)(other)).ok,true);
+ await assert.rejects(()=>(__UNKNOWN__)(other),/Bound tab is closed or unavailable/);
+ assert.equal(created,1,'unknown tab cannot create a replacement');
+})().catch(e=>{console.error(e);process.exitCode=1;});
+"""
+    script.write_text(source.replace('__INITIAL__', bound('target','initial'))
+                      .replace('__RECOVERY__', bound('target','recovery'))
+                      .replace('__AGAIN__', bound('target','again'))
+                      .replace('__AFTER__', bound('target','after'))
+                      .replace('__NOT_SUBMITTED__', bound('target','not-submitted-prepare'))
+                      .replace('__ACK__', generated['submit'])
+                      .replace('__ACK2__', generated['submit2'])
+                      .replace('__UNKNOWN__', bound('unknown','unknown')), encoding='utf-8')
+    subprocess.run(['node', str(script)], check=True)
+
+
+def exercise_prepare_python_receipt(root):
+    output = root / 'prepare-result.json'
+    action = {'base_url':'http://localhost:8000', 'post_id':'132',
+              'identity_title_parts':['CHARLS','ADL']}
+    class FakeSession:
+        tab_id = 'target'
+        code_path = root / 'prepare-result.browser.js'
+        calls = []
+        def code(self, code, *, receipt_id, expires_at_ms, recovery_url):
+            self.calls.append((receipt_id, expires_at_ms, recovery_url))
+            self.code_path.with_suffix('.receipt.json').write_text(json.dumps({
+                'receipt_id':receipt_id, 'tab_id':self.tab_id, 'scope':self.receipt_scope,
+                'expires_at_ms':expires_at_ms}), encoding='utf-8')
+            if len(self.calls)==1:
+                raise subprocess.TimeoutExpired('fixture', 40)
+            return {'ok':False, 'status':'WEBSITE_PREPARE_INCOMPLETE', 'error':'ended failure'}
+    session = FakeSession()
+    pending = run_website_prepare(session, action, output)
+    assert pending['status']=='WEBSITE_PREPARE_PENDING' and not pending['operation_completed']
+    output.write_text(json.dumps(pending), encoding='utf-8')
+    receipt_path = session.code_path.with_suffix('.receipt.json')
+    receipt_before, output_before = receipt_path.read_bytes(), output.read_bytes()
+    changed = {**action, 'post_id':'133'}
+    blocked = run_website_prepare(session, changed, output)
+    assert blocked['status']=='WEBSITE_PREPARE_PENDING' and len(session.calls)==1
+    assert receipt_path.read_bytes()==receipt_before and output.read_bytes()==output_before
+    session.tab_id = 'different-target'
+    assert run_website_prepare(session, action, output)['status']=='WEBSITE_PREPARE_PENDING'
+    assert len(session.calls)==1 and receipt_path.read_bytes()==receipt_before
+    session.tab_id = 'target'
+    resumed = run_website_prepare(session, action, output)
+    assert resumed['operation_completed'] and resumed['status']=='WEBSITE_PREPARE_INCOMPLETE'
+    assert session.calls[0]==session.calls[1], 'same output and action must reuse identity and deadline'
+    output.write_text(json.dumps(resumed), encoding='utf-8')
+    later = run_website_prepare(session, action, output)
+    assert later['operation_completed'] and session.calls[2][0]!=session.calls[0][0]
+    assert session.calls[0][2]=='http://localhost:8000/nodes/post/132/'
 
 
 def exercise_sync_receipts(root):
@@ -107,7 +269,7 @@ const page = {context:() => context, isClosed:() => false, imports:0,
   assert.equal(page.imports, 1);
 })().catch(error => {console.error(error);process.exitCode=1;});
 """.replace("ORIGINAL", original).replace("UNRELATED", unrelated)
-       .replace("REJECTED", rejected).replace("EXPIRED", expired)
+       .replace("(REJECTED)", "(" + rejected + ")").replace("EXPIRED", expired)
        .replace("RECEIPT", json.dumps(receipt_id)).replace("SCOPE", json.dumps(scope)), encoding="utf-8")
     subprocess.run(["node", str(script)], check=True)
 
@@ -166,6 +328,20 @@ def exercise_sync_observation(root, action, failed_result):
         assert late['ok'] and late['late_navigation_observed'] and late['status']=='ARTICLE_PAGE_RETURNED'
         assert late['original_operation_state']=='failed' and not late['recovered_original_result']
         check_files.assert_called_once_with(late_action['payload'])
+    # The public URL can use a remote ID while post-data uses the local edit ID.
+    response_action=copy.deepcopy(late_action)
+    response_action['payload'].update(create=False,edit_url='http://localhost/nodes/edit/377/',post_url='http://localhost/nodes/post/123/')
+    observer.observed.update(state='completed',returned_post={**observer.observed['returned_post'],'id':377},
+        result={**original_result,'ok':False,'status':'SUBMISSION_UNCERTAIN',
+                'save_response':{'http_status':200,'status':None}})
+    with patch('playwright_session_action.validate_sync_files'):
+        assert observe_sync(observer,response_action,late_failed)['status']=='ARTICLE_PAGE_RETURNED'
+        observer.observed['result']['save_response']['http_status']=400
+        assert observe_sync(observer,response_action,late_failed)['status']=='SYNC_SAVE_CHECK_REQUIRED'
+        observer.observed['result']['save_response']['http_status']=200
+        observer.observed['returned_post']['id']=999
+        assert observe_sync(observer,response_action,late_failed)['status']=='SYNC_SAVE_CHECK_REQUIRED'
+    observer.observed.update(state='failed',returned_post={**observer.observed['returned_post'],'id':123})
     observer.observed['url']=None
     assert observe_sync(observer,late_action,late_failed)['status']=='SYNC_SAVE_CHECK_REQUIRED'
     observer.observed['url']='http://localhost/nodes/post/local-123/'
@@ -610,6 +786,9 @@ const page = {
         except ValueError:
             pass
         exercise_current_target_first(root)
+        exercise_prepare_reentry(root)
+        exercise_prepare_closed_target(root)
+        exercise_prepare_python_receipt(root)
         exercise_sync_receipts(root)
         # File selection returns before client-side parsing finishes. A slower first
         # file must finish rendering before a faster second file can be selected.
@@ -739,9 +918,20 @@ const page = {
                 raise TimeoutError("upload timed out")
             timed_out.upload = timeout_upload
             timeout_result = run_sync(timed_out, website, {"preload_script": ""})
-            assert timeout_result["next_action"] == "close_task_window_and_retry_in_new_window"
+            assert timeout_result["next_action"] == "sync-observe"
             assert timeout_result["save_check_required_before_retry"] is False
             assert not timeout_result["ok"]
+            timed_submit = FakeSession()
+            original_submit = timed_submit.code
+            def timeout_submit(code):
+                if timed_submit.code_calls == 2:
+                    raise TimeoutError('save response timed out')
+                return original_submit(code)
+            timed_submit.code = timeout_submit
+            timeout_result = run_sync(timed_submit, website, {"preload_script": ""})
+            assert timeout_result['status'] == 'SUBMISSION_UNCERTAIN'
+            assert timeout_result['next_action'] == 'sync-observe'
+            assert timeout_result['save_check_required_before_retry'] is True
             for item in files:
                 calls.clear()
                 item.write_bytes(b"changed after readiness")

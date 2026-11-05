@@ -556,17 +556,23 @@ with tempfile.TemporaryDirectory() as temp_dir:
     late_report=late_process / "execution_report.json"
     before_late=late_report.read_bytes()
     for invalid in [dict(late,read_only=False),dict(late,original_operation_state="running"),
+                    dict(late,original_operation_state="completed"),
+                    dict(late,original_operation_state="completed",original_status="SUBMISSION_UNCERTAIN",
+                         save_response={"http_status":400}),
                     dict(late,observed_at=float("nan")),dict(late,observed_at=(t0+timedelta(seconds=999)).timestamp())]:
         late_path.write_text(json.dumps(invalid),encoding="utf-8")
         with patch.object(execution_report,"now",return_value=t0+timedelta(seconds=456)):
             expect_system_exit(lambda:execution_report.command_website_finish(
                 execution_report.argparse.Namespace(process_dir=str(late_process),result=late_path)),"延迟返回")
         assert late_report.read_bytes()==before_late
-    late_path.write_text(json.dumps(late),encoding="utf-8")
-    with patch.object(execution_report,"now",return_value=t0+timedelta(seconds=456)):
-        execution_report.command_website_finish(execution_report.argparse.Namespace(process_dir=str(late_process),result=late_path))
-    late_stage=execution_report.latest_stage(json.loads(late_report.read_text(encoding="utf-8")),"website_sync")
-    assert late_stage["status"]=="completed_with_issues" and late_stage["elapsed_seconds"]==100
+    for valid in [late,dict(late,original_operation_state="completed",original_status="SUBMISSION_UNCERTAIN",
+                           save_response={"http_status":200,"status":None})]:
+        late_report.write_bytes(before_late)
+        late_path.write_text(json.dumps(valid),encoding="utf-8")
+        with patch.object(execution_report,"now",return_value=t0+timedelta(seconds=456)):
+            execution_report.command_website_finish(execution_report.argparse.Namespace(process_dir=str(late_process),result=late_path))
+        late_stage=execution_report.latest_stage(json.loads(late_report.read_text(encoding="utf-8")),"website_sync")
+        assert late_stage["status"]=="completed_with_issues" and late_stage["elapsed_seconds"]==100
 
 with tempfile.TemporaryDirectory() as temp_dir:
     from datetime import datetime, timedelta, timezone
