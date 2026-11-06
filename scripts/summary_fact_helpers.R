@@ -723,7 +723,7 @@ summary_render_number_badges <- function(markup) {
         'border-radius:50%;vertical-align:middle;transform:translateY(-0.1em);margin-right:0.18em;',
         'text-indent:0;white-space:nowrap;font-size:inherit;line-height:1;">',
         '<span style="font-family:Arial,sans-serif;font-size:', size,
-        'em;line-height:1;letter-spacing:0;">', value, '</span></span>')
+        'em;line-height:1;letter-spacing:0;text-box:trim-both cap alphabetic;">', value, '</span></span>')
     }, character(1))
     regmatches(chunk, hits) <- list(badges)
     chunks[[i]] <- chunk

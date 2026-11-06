@@ -1,6 +1,6 @@
 # 模板填写说明
 
-从下方“主题名称”开始复制填写；本说明不进入主题正文。填写各栏时分别对照[摘要](../../../references/rules/copy/core.md#3-摘要最终得到什么)、[Criteria](../../../references/rules/copy/core.md#5-criteria每个变量怎样得到)、[小book](../../../references/rules/copy/core.md#6-小book跨变量或整个主题的使用限制)及[参考资料](../../../references/rules/copy/core.md#7-参考资料说明)要求。下方跌倒示例只演示填写格式，不代表所有主题的结果顺序和组成。
+从下方“主题名称”开始复制填写；本说明不进入主题正文。填写各栏时分别对照[摘要](../../../references/rules/copy/core.md#3-摘要最终得到什么)、[Criteria](../../../references/rules/copy/core.md#5-criteria每个变量怎样得到)、[小book](../../../references/rules/copy/core.md#6-小book理解和使用本主题所需的补充说明)及[参考资料](../../../references/rules/copy/core.md#7-参考资料说明)要求。下方跌倒示例只演示填写格式，不代表所有主题的结果顺序和组成。
 
 - 保留摘要导读、Criteria、小book提示和参考资料说明四个二级标题；Criteria的三级标题使用实际变量名，四级标题为规定栏目。没有注意点时删除整个栏目。
 - 摘要结果名称写成“**名称**”，共享的“是否发生”“金额”等结果维度各自标记，不能只强调组名；数量只标数字，如 `**5** 个`。同一段或连续信息块内同一概念只强调首次出现，后面用普通文字或自然指代。
