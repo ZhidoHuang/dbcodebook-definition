@@ -27,6 +27,32 @@ NS_REL = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
 NS_PACKAGE_REL = "{http://schemas.openxmlformats.org/package/2006/relationships}"
 READER_COPY_NAME = "文案.md"
 
+OUTPUT_OPTIONS = (
+    "db", "language", "dataset_id", "complete", "expected_files", "raw_vars",
+    "analysis_db", "analysis_columns", "analysis_codebook", "analysis_vars",
+    "check_summary_facts", "forbid_vars", "required_user_text",
+    "criteria_evolution_text", "log_prefix", "require_log_exit_code", "max_md",
+)
+
+
+def repeat_options(args: argparse.Namespace) -> None:
+    """Reuse the declared check scope, never the previous pass conclusion."""
+    if not args.formal_dir or not args.process_dir:
+        raise ValueError("--repeat requires --formal-dir and --process-dir")
+    record = json.loads(args.repeat.read_text(encoding="utf-8-sig"))
+    options = record.get("check_options")
+    if not isinstance(options, dict) or set(options) != set(OUTPUT_OPTIONS):
+        raise ValueError("Previous report has no complete check options; supply the explicit check arguments once")
+    if record.get("formal_dir") != str(args.formal_dir.resolve()):
+        raise ValueError("Previous check belongs to a different formal directory")
+    source = args.process_dir / "definition_search_record.json"
+    if hashlib.sha256(source.read_bytes()).hexdigest().upper() != record.get("source_sha256"):
+        raise ValueError("Source plan changed; confirm and supply the current check arguments")
+    if options.get("complete") is not True:
+        raise ValueError("--repeat requires a previously declared complete scope")
+    for name, value in options.items():
+        setattr(args, name, value)
+
 
 def display_policy(formal_dir: Path, analysis_vars: list[str] | None = None, record: dict | None = None) -> dict:
     """Resolve the explicit copy/plan contract, never infer a module from its prose."""
@@ -172,9 +198,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--require-log-exit-code", action="store_true")
     parser.add_argument("--max-md", type=int, default=1)
     parser.add_argument("--report", type=Path, help="Optional QA report path.")
+    parser.add_argument("--repeat", type=Path, help="Rerun the declared checks from the specified report against current files; requires an unchanged source plan.")
+    parser.add_argument("--brief", action="store_true", help="Print status and failures; retain the full report on disk.")
     args = parser.parse_args()
+    if args.repeat:
+        conflicting = ["--" + name.replace("_", "-") for name in OUTPUT_OPTIONS
+                       if any(token.split("=", 1)[0] == "--" + name.replace("_", "-") for token in sys.argv[1:])]
+        if conflicting or args.public_r_script:
+            parser.error("--repeat cannot override the recorded scope: " + ", ".join(conflicting))
+        try:
+            repeat_options(args)
+        except (OSError, ValueError, TypeError) as error:
+            parser.error(str(error))
     if args.complete and args.report is None and args.process_dir is not None:
         args.report = args.process_dir / "result_check.json"
+    if args.brief and args.report is None:
+        parser.error("--brief requires a report destination")
     if args.complete:
         required = ("formal_dir", "process_dir", "expected_files", "raw_vars", "analysis_db",
                     "analysis_columns", "analysis_codebook", "analysis_vars",
@@ -2629,6 +2668,12 @@ def main() -> int:
                    "official_source_truth": "not_assessed_by_this_command",
                    "writing_quality": "not_assessed_by_this_command",
                }}
+    if args.complete:
+        payload["formal_dir"] = str(formal_dir.resolve())
+        payload["check_options"] = {name: getattr(args, name) for name in OUTPUT_OPTIONS}
+        source_path = args.process_dir / "definition_search_record.json"
+        if source_path.is_file():
+            payload["source_sha256"] = hashlib.sha256(source_path.read_bytes()).hexdigest().upper()
     if args.complete and passed:
         payload["artifacts"] = {
             path.name: hashlib.sha256(path.read_bytes()).hexdigest().upper()
@@ -2641,7 +2686,12 @@ def main() -> int:
         payload["checker_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest().upper()
         payload["checker_binding"] = checker_binding
     text = json.dumps(payload, ensure_ascii=False, indent=2)
-    print(text)
+    if args.brief:
+        print(json.dumps({"ok": passed, "scope": payload["scope"], "status": payload["status"],
+                          "failures": [item for item in results if not item["ok"]],
+                          "report": str(args.report)}, ensure_ascii=False))
+    else:
+        print(text)
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(text + "\n", encoding="utf-8")

@@ -245,6 +245,47 @@ def prepare_sync_command(formal: Path, process: Path) -> subprocess.CompletedPro
     return result
 
 
+def check_repeated_output_scope():
+    from argparse import Namespace
+    import hashlib
+    import check_definition_output as output
+
+    with tempfile.TemporaryDirectory(prefix="output_scope_") as tmp:
+        root = Path(tmp)
+        formal, process = root / "formal", root / "process"
+        formal.mkdir()
+        process.mkdir()
+        source = process / "definition_search_record.json"
+        source.write_text('{"database":"nhanes"}', encoding="utf-8")
+        options = dict.fromkeys(output.OUTPUT_OPTIONS)
+        options.update(db="nhanes", complete=True, raw_vars="original_a",
+                       analysis_vars="defined_a", check_summary_facts=True,
+                       require_log_exit_code=True, max_md=1)
+        record = {"ok": False, "formal_dir": str(formal.resolve()),
+                  "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest().upper(),
+                  "check_options": options}
+        path = process / "chosen_check.json"
+        path.write_text(json.dumps(record), encoding="utf-8")
+        # The explicitly selected report wins over an older default report.
+        (process / "result_check.json").write_text("{}", encoding="utf-8")
+        args = Namespace(formal_dir=formal, process_dir=process, repeat=path)
+        output.repeat_options(args)
+        assert args.raw_vars == "original_a" and args.analysis_vars == "defined_a"
+        assert args.check_summary_facts and args.require_log_exit_code
+        # A previous failure supplies only scope, not a pass or saved result.
+        assert not hasattr(args, "ok") and not hasattr(args, "checks")
+        original = source.read_bytes()
+        source.write_text('{"database":"elsa"}', encoding="utf-8")
+        expect_failure(lambda: output.repeat_options(args), "Source plan changed")
+        source.write_bytes(original)
+        args.formal_dir = root / "other"
+        expect_failure(lambda: output.repeat_options(args), "different formal directory")
+        args.formal_dir = formal
+        record.pop("check_options")
+        path.write_text(json.dumps(record), encoding="utf-8")
+        expect_failure(lambda: output.repeat_options(args), "no complete check options")
+
+
 def check_website_prepare_identity():
     checker = load_checker()
     with tempfile.TemporaryDirectory(prefix="website_identity_") as tmp:
@@ -307,6 +348,7 @@ const tab = {url:async () => payload.edit_url, playwright:{locator:() => ({waitF
 
 def main() -> int:
     checker = load_checker()
+    check_repeated_output_scope()
     check_website_prepare_identity()
     with tempfile.TemporaryDirectory(prefix="readability_gate_") as tmp:
         root = Path(tmp)

@@ -15,10 +15,15 @@
 ## 完整检查入口
 
 ```powershell
-& $Python scripts/check_definition_output.py --complete --db $Database --formal-dir $Formal --process-dir $Process --expected-files $ExpectedFiles --raw-vars $RawVars --analysis-db $AnalysisDb --analysis-columns $AnalysisColumns --analysis-codebook $AnalysisCodebook --analysis-vars $AnalysisVars --check-summary-facts --require-log-exit-code --report "$Process/result_check.json"
+& $Python scripts/check_definition_output.py --complete --db $Database --formal-dir $Formal --process-dir $Process --expected-files $ExpectedFiles --raw-vars $RawVars --analysis-db $AnalysisDb --analysis-columns $AnalysisColumns --analysis-codebook $AnalysisCodebook --analysis-vars $AnalysisVars --check-summary-facts --require-log-exit-code --brief
 ```
 
 - 参数来自已定方案，不重新手写一份变量口径。
+- 完整报告自动保存到过程目录，终端只返回结果和失败项。来源方案和检查范围未变时，使用下列命令重新检查当前文件，参数取自明确指定的报告，不沿用旧的通过结论。曾使用自定义报告路径时，传入那份报告。旧报告尚未保存参数、方案改变或检查范围需改变时，使用上方显式命令。
+
+```powershell
+& $Python scripts/check_definition_output.py --repeat "$Process/result_check.json" --formal-dir $Formal --process-dir $Process --brief
+```
 - 检查约束依据本主题的分析单位、结果类型及筛选或汇总方案确定，不套用其他主题的假设。通用结构、类型和字典一致性复用本入口；主题只补实际未覆盖的业务核验，不再抄一套重复断言。
 - 按[方案中的结果信息](01-source-plan.md#可直接比较的结果信息)比较实际导出值的类型及允许取值。报告分别列出已比较和未登记的项目；全部缺失的变量仍按本页要求核实原因。该比较不复算公式，也不证明单位换算正确。
 - ExpectedFiles 包含本次应交付的 raw、正式 R、笔记、分析数据和分析字典、定义 HTML、详情 HTML 和 QA。核对每个最终变量的 Criteria 均已生成，类型及变量顺序与已确认方案一致。
