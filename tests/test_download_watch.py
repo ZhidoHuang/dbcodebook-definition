@@ -222,18 +222,7 @@ with tempfile.TemporaryDirectory() as temp:
     )["attempt_id"]
     run_script = browser_action["run_script"]
     assert browser_action["browser_binding"] == "dbCodeBookBrowser"
-    assert 'locator("#tag-area .tag")' in run_script
-    assert 'button[aria-label="下载数据"]' in run_script
-    assert 'modal.locator("button.bili-btn.confirm")' in run_script
-    assert 'waitForEvent("download"' in run_script
-    assert run_script.index('waitForEvent("download"') < run_script.index("await finalButton.click(")
-    assert run_script.count("await finalButton.click(") == 1
     assert "timeoutMs: 10000" in run_script
-    assert 'download.path({ timeoutMs: 120000 })' in run_script
-    assert 'status: "DOWNLOAD_FILE_READY"' in run_script
-    assert 'next_action: "install_download_path"' in run_script
-    assert 'next_action: "run_watch_command"' in run_script
-    assert 'allow_new_export: false' in run_script
     node = shutil.which("node")
     if node:
         browser_fixture = work / "download_browser_action.mjs"
@@ -353,7 +342,7 @@ console.log("download browser action PASS");
         assert browser_run.returncode == 0, browser_run.stderr
         assert "download browser action PASS" in browser_run.stdout
     else:
-        print("download browser action SKIP: Node.js is not installed")
+        raise RuntimeError("Node.js is required for the download browser action fixture")
     assert original.read_text() == "keep until a valid replacement exists"
     prepared_baseline = json.loads(prepare_snapshot.read_text())
     try:

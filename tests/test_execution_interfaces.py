@@ -66,6 +66,15 @@ check_charls_identity_combinations()
 
 with tempfile.TemporaryDirectory() as temporary:
     root = Path(temporary)
+    script = root / 'definition.R'
+    script.write_text('score <- x + 1\n# 输出\nrender()\n', encoding='utf-8')
+    (root / 'define_wrong.R').write_text('wrong <- TRUE', encoding='utf-8')
+    checks = []
+    check_public_code_outline(root, '### 2-代码材料\n```r\nscore <- x + 1\n```', checks, 'elsa', script)
+    assert any(c['check'] == 'public R source synchronization' and c['ok'] for c in checks), checks
+
+with tempfile.TemporaryDirectory() as temporary:
+    root = Path(temporary)
     cli = root / "portable cli.js"
     cli.touch()
     config = {"executables": {"playwright_cli": str(cli), "node": sys.executable}}

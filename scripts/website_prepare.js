@@ -11,15 +11,29 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
   const sameSite = () => new URL(page.url()).origin === action.base_url;
   const editorPath = /^\/nodes\/edit\/(?:([1-9][0-9]*)\/)?$/;
   const matchesTitle = title => action.identity_title_parts.every(part => title.includes(part));
+  const isTimeout = error => error?.name === 'TimeoutError' || /timeout|timed out/i.test(String(error));
+  async function navigate(url) {
+    try {
+      await page.goto(url, {waitUntil: 'commit', timeout: Math.min(5000, remaining())});
+    } catch (error) {
+      // Navigation may have reached the target even when its event wait timed out.
+      // Continue only on that URL; login and page controls are checked below.
+      if (!isTimeout(error) || page.url() !== url) throw error;
+    }
+    remaining();
+  }
   async function login() {
     remaining();
     if (!sameSite()) return fail('WRONG_SITE');
     let authenticated;
     try {
+      await page.waitForFunction(() => window.__GUIDE_USER__
+        && 'authenticated' in window.__GUIDE_USER__, null, {timeout: remaining()});
       authenticated = await page.evaluate(() => window.__GUIDE_USER__?.authenticated ?? null);
     } catch (error) {
       if (!/execution context was destroyed|cannot find context with specified id|because of a navigation/i.test(String(error))) throw error;
-      await page.waitForLoadState('domcontentloaded', {timeout: remaining()});
+      await page.waitForFunction(() => typeof window.__GUIDE_USER__?.authenticated === 'boolean',
+        null, {timeout: remaining()});
       remaining();
       if (!sameSite()) return fail('WRONG_SITE');
       authenticated = await page.evaluate(() => window.__GUIDE_USER__?.authenticated ?? null);
@@ -38,8 +52,6 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
     return fail('LOGIN_REQUIRED');
   }
   try {
-    await page.waitForLoadState('domcontentloaded', {timeout: remaining()});
-    remaining();
     let blocked = await login();
     remaining();
     if (blocked) return blocked;
@@ -50,16 +62,28 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
       // Do not leave an editor: it may contain unsaved user work.
       if (action.create ? !!currentEditor[1] : (!editId || currentEditor[1] !== editId))
         return fail('EDITOR_ALREADY_OPEN', {message: 'Keep this editor; supply its verified edit_id or use the task article page.'});
+      if (!action.create) {
+        // Use the editor's existing read-only endpoint to verify its public article.
+        const post = await page.evaluate(async ({editId, timeout}) => {
+          const response = await fetch('/nodes/api/posts/' + editId + '/',
+            {signal: AbortSignal.timeout(timeout)});
+          if (!response.ok) throw new Error('Editor article identity could not be read');
+          const data = await response.json();
+          return {id: data.post?.id, url: data.post?.public_url};
+        }, {editId, timeout: Math.min(5000, remaining())});
+        remaining();
+        if (String(post.id) !== editId || typeof post.url !== 'string'
+            || new URL(post.url, action.base_url).href !== action.base_url + '/nodes/post/' + action.post_id + '/')
+          return fail('EDITOR_IDENTITY_MISMATCH');
+      }
     } else if (action.create) {
       phase = 'open_editor';
-      await page.goto(action.base_url + '/nodes/edit/', {waitUntil: 'domcontentloaded', timeout: remaining()});
-      remaining();
+      await navigate(action.base_url + '/nodes/edit/');
     } else {
       phase = 'article';
       const articlePath = '/nodes/post/' + action.post_id + '/';
       if (path !== articlePath) {
-        await page.goto(action.base_url + articlePath, {waitUntil: 'domcontentloaded', timeout: remaining()});
-        remaining();
+        await navigate(action.base_url + articlePath);
       }
       blocked = await login();
       remaining();
@@ -99,10 +123,16 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
         return {x: x - paddingLeft, y: y - paddingTop};
       });
       remaining();
-      await edit.click({timeout: remaining(), ...(visiblePosition ? {position: visiblePosition} : {})});
+      await edit.click({timeout: remaining(), noWaitAfter: true,
+        ...(visiblePosition ? {position: visiblePosition} : {})});
       remaining();
-      await page.waitForURL(url => url.origin === action.base_url && editorPath.test(url.pathname)
-        && !!url.pathname.match(editorPath)[1], {timeout: remaining(), waitUntil: 'domcontentloaded'});
+      const atEditor = url => url.origin === action.base_url && editorPath.test(url.pathname)
+        && !!url.pathname.match(editorPath)[1];
+      try {
+        await page.waitForURL(atEditor, {timeout: Math.min(5000, remaining()), waitUntil: 'commit'});
+      } catch (error) {
+        if (!isTimeout(error) || !atEditor(new URL(page.url()))) throw error;
+      }
       remaining();
       editId = new URL(page.url()).pathname.match(editorPath)[1];
       if (action.edit_id && editId !== action.edit_id) return fail('EDITOR_IDENTITY_MISMATCH', {edit_id: editId});

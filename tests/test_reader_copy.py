@@ -40,7 +40,13 @@ def render_note(content):
 
 
 def main():
-    from check_reader_copy import format_category_label, format_copy_categories
+    from check_reader_copy import format_category_label, format_copy_categories, summary_markup_errors, validate_summary_marks
+    assert summary_markup_errors('只有数量，得到 **5** 个结果。')
+    assert summary_markup_errors('得到生活质量总分。')
+    assert not summary_markup_errors('“**总分**”由“**生活掌控**”等维度组成。')
+    assert summary_markup_errors('“**总分**”以及 **未闭合')
+    validate_summary_marks('**总分**，共 **5** 个', '<span data-summary-concept="true">总分</span>，共 <span data-summary-count="true">5</span> 个')
+    rejects(lambda: validate_summary_marks('**总分**', '总分'), '总分')
     assert format_category_label("  less   than 1 ") == "Less than 1"
     assert format_category_label("with COPD") == "With COPD"
     assert format_category_label("  McDonald ") == "McDonald"

@@ -1645,6 +1645,7 @@ def build_cua_sync_action(
     edit_id: str | None = None,
     language: str | None = None,
     dataset_id: str | None = None,
+    website_prepare: dict | None = None,
 ) -> dict:
     navigation = upload.get('navigation_removal')
     if navigation:
@@ -1712,9 +1713,32 @@ def build_cua_sync_action(
         if language not in {"en", "ko"}:
             fail("KLoSA publication requires verified source language en or ko")
         database_category = {"en": "KLoSA（英文）", "ko": "KLoSA（韩文）"}[language]
-    website_title = website_title.strip() if website_title else f"{database.upper()} {topic_name}"
+    identity_title = None
+    if website_prepare is not None:
+        if create:
+            fail("--website-prepare is only supported for existing articles")
+        if not isinstance(website_prepare, dict):
+            fail("Invalid website preparation result")
+        page = website_prepare
+        prepared_edit = str(page.get("edit_id") or "")
+        if (page.get("ok") is not True or page.get("status") != "WEBSITE_EDITOR_READY"
+            or page.get("authenticated") is not True or page.get("create") is not False
+            or str(page.get("post_id")) != post_id
+            or not re.fullmatch(r"[1-9][0-9]*", prepared_edit)
+            or (edit_id is not None and edit_id != prepared_edit)
+            or page.get("url") != f"{base_url}/nodes/edit/{prepared_edit}/"
+            or not isinstance(page.get("category"), str)
+            or page["category"].strip().casefold() != database_category.casefold()
+            or not isinstance(page.get("title"), str) or not page["title"].strip()
+            or database_label.casefold() not in page["title"].casefold()):
+            fail("Website preparation does not match the site, post, editor, database or authenticated identity")
+        edit_id = prepared_edit
+        identity_title = page["title"]
+        expected_title_parts = [database_label]
+    explicit_title = bool(website_title)
+    website_title = website_title.strip() if website_title else (identity_title or f"{database.upper()} {topic_name}")
     # Topic numbers belong to local organization, not the published title.
-    if str(topic_id).isdigit():
+    if str(topic_id).isdigit() and (identity_title is None or explicit_title):
         website_title = re.sub(
             rf"^0*{re.escape(str(int(topic_id)))}[\s_—–.、:：-]+", "", website_title
         ).strip()
@@ -1739,8 +1763,10 @@ def build_cua_sync_action(
         "post_url_prefix": f"{base_url}/nodes/post/",
         "edit_url": f"{base_url}/nodes/edit/" if create else f"{base_url}/nodes/edit/{edit_id or post_id.removeprefix('local-')}/",
         "success_url_pattern": "**/nodes/post/*/",
-        "identity_title_parts": expected_title_parts,
-        "expected_title_parts": expected_title_parts,
+        "identity_title_parts": [identity_title] if identity_title else expected_title_parts,
+        "identity_title_exact": identity_title,
+        "identity_category": website_prepare["category"] if identity_title else None,
+        "expected_title_parts": [website_title] if identity_title else expected_title_parts,
         "desired_title": website_title,
         "note": upload["note"],
         "note_sha256": sha256_file(Path(upload["note"])),
@@ -1795,6 +1821,20 @@ async function chooseVisibleFile(tab, selector, filePath) {{
   const chooser = await chooserPromise;
   await chooser.setFiles([filePath]);
 }}
+async function verifyPreparedIdentity(tab, payload) {{
+  if (!payload.identity_title_exact) return;
+  if (await tab.url() !== payload.edit_url) throw new Error("已准备的编辑页已改变");
+  await tab.playwright.locator("#title").waitFor({{state:"visible"}});
+  const state = await tab.playwright.evaluate(() => ({{
+    title: document.querySelector('#title')?.value,
+    category: document.querySelector('#category')?.value,
+    editor: !!document.querySelector('#editor'),
+    button: document.querySelector('.btn-publish')?.textContent.trim()
+  }}));
+  if (state.title !== payload.identity_title_exact || state.category !== payload.identity_category ||
+      !state.editor || state.button !== '更新文章')
+    throw new Error("已准备的文章标题、数据库或编辑控件已变化");
+}}
 async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
   const phase = checkpoint?.phase;
   if (typeof dbCodeBookOperationReceipt !== 'undefined') {{
@@ -1826,8 +1866,8 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
       throw new Error("上传过程中编辑页已改变，停止提交");
     }}
     if (!phase || phase === "prepare") {{
-    if (await tab.url() !== payload.edit_url) await tab.goto(payload.edit_url);
-    await tab.playwright.waitForLoadState({{ state: "domcontentloaded" }});
+    if (payload.identity_title_exact) await verifyPreparedIdentity(tab, payload);
+    else if (await tab.url() !== payload.edit_url) await tab.goto(payload.edit_url);
     const currentUrl = await tab.playwright.evaluate(() => location.href);
     if (currentUrl !== payload.edit_url) {{
       throw new Error(`未进入指定编辑页：${{currentUrl}}`);
@@ -2111,7 +2151,7 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
       attachment_signatures: payload.attachments.map(item => ({{name: item.name, sha256: item.sha256}}))
     }};
   }} catch (error) {{
-    if (!checkpoint && !submissionStarted) {{
+    if (!checkpoint && !submissionStarted && !payload.identity_title_exact) {{
       try {{ await tab.goto(payload.edit_url); }} catch {{}}
     }}
     throw error;
@@ -2121,6 +2161,7 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
                      + "\n" + helper_script)
     preload_script = helper_script + rf'''
 var dbCodeBookSyncPreflightTab = await resolveDbCodeBookTab({existing_tab_match_json});
+await verifyPreparedIdentity(dbCodeBookSyncPreflightTab, {json.dumps(payload, ensure_ascii=False)});
 nodeRepl.write(JSON.stringify({{
   ok: true,
   status: "SYNC_TAB_READY",
@@ -2186,18 +2227,18 @@ def parse_args() -> argparse.Namespace:
     check_parser = subparsers.add_parser("check")
     add_common_arguments(check_parser)
     check_parser.add_argument("--report", type=Path)
-    check_parser.add_argument("--order-only", action="store_true", help="Verify an immutable permutation receipt; preserve names, values and definition content")
-    check_parser.add_argument("--summary-only", action="store_true", help="Verify an approved introduction replacement and exact preservation of other artifacts")
-    check_parser.add_argument("--component-only", action="store_true")
-    check_parser.add_argument("--metadata-only", action="store_true", help="Verify explicit metadata delta against retained baseline; no historical full revalidation")
+    check_parser.add_argument("--order-only", action="store_true", help="Verify an existing historical permutation receipt; preserve names, values and definition content")
+    check_parser.add_argument("--summary-only", action="store_true", help="Verify an existing historical introduction receipt and exact preservation of other artifacts")
+    check_parser.add_argument("--component-only", action="store_true", help="Verify an existing historical component-display receipt")
+    check_parser.add_argument("--metadata-only", action="store_true", help="Verify an existing historical metadata receipt against its retained baseline")
 
     verify_parser = subparsers.add_parser("verify-ready")
     add_common_arguments(verify_parser)
     verify_parser.add_argument("--start-sync", action="store_true")
-    verify_parser.add_argument("--order-only", action="store_true", help="Use the previously verified permutation-only publication scope")
-    verify_parser.add_argument("--summary-only", action="store_true", help="Use the approved introduction-only publication scope")
-    verify_parser.add_argument("--component-only", action="store_true")
-    verify_parser.add_argument("--metadata-only", action="store_true", help="Verify explicit metadata delta against retained baseline; no historical full revalidation")
+    verify_parser.add_argument("--order-only", action="store_true", help="Recheck the historical permutation-only publication scope")
+    verify_parser.add_argument("--summary-only", action="store_true", help="Recheck the historical introduction-only publication scope")
+    verify_parser.add_argument("--component-only", action="store_true", help="Recheck the historical component-display publication scope")
+    verify_parser.add_argument("--metadata-only", action="store_true", help="Recheck the historical metadata publication scope")
     verify_parser.add_argument("--database")
     verify_parser.add_argument("--topic-name")
     verify_parser.add_argument("--post-id")
@@ -2208,6 +2249,7 @@ def parse_args() -> argparse.Namespace:
     verify_parser.add_argument("--taxonomy-plan", type=Path, help="Current dropdown choices; creation requires reviewed options and reason")
     verify_parser.add_argument("--base-url")
     verify_parser.add_argument("--website-title")
+    verify_parser.add_argument("--website-prepare", type=Path, help="Current WEBSITE_EDITOR_READY result for an existing article")
     verify_parser.add_argument("--without-data-attachment", action="store_true", help="Omit the analysis data attachment for an explicit user instruction; local data validation and the codebook attachment remain required")
     verify_parser.add_argument("--component-prepare", type=Path, help="Current website-prepare result for component-only synchronization")
     return parser.parse_args()
@@ -2221,7 +2263,7 @@ def main() -> int:
     sync = None
     sync_requested = args.command == "verify-ready" and args.start_sync
     browser_target_requested = args.command == "verify-ready" and any(
-        (args.database, args.topic_name, args.post_id, args.base_url, args.create)
+        (args.database, args.topic_name, args.post_id, args.base_url, args.create, args.website_prepare)
     )
     try:
         if args.command == "verify-ready" and args.component_only:
@@ -2291,6 +2333,7 @@ def main() -> int:
                 component_only=args.component_only,
             )
             if browser_target_requested:
+                website_prepare = json.loads(args.website_prepare.read_text(encoding="utf-8-sig")) if args.website_prepare else None
                 if args.component_only:
                     page = json.loads(args.component_prepare.read_text(encoding="utf-8-sig"))
                     previous = result["upload"].get("previous_sync", {})
@@ -2334,6 +2377,7 @@ def main() -> int:
                     edit_id=args.edit_id,
                     language=source_language,
                     dataset_id=source_dataset,
+                    website_prepare=website_prepare,
                     cross_database_topic=args.cross_database_topic,
                     taxonomy_plan=json.loads(args.taxonomy_plan.read_text(encoding="utf-8-sig")) if args.taxonomy_plan else None,
                 )
@@ -2352,6 +2396,7 @@ def main() -> int:
                         edit_id=args.edit_id,
                         language=source_language,
                         dataset_id=source_dataset,
+                        website_prepare=website_prepare,
                         cross_database_topic=args.cross_database_topic,
                         taxonomy_plan=json.loads(args.taxonomy_plan.read_text(encoding="utf-8-sig")) if args.taxonomy_plan else None,
                         sync_run_id=sync["run_id"], sync_attempt=sync["attempt"],

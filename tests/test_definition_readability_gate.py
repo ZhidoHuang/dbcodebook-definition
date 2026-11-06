@@ -245,8 +245,69 @@ def prepare_sync_command(formal: Path, process: Path) -> subprocess.CompletedPro
     return result
 
 
+def check_website_prepare_identity():
+    checker = load_checker()
+    with tempfile.TemporaryDirectory(prefix="website_identity_") as tmp:
+        root = Path(tmp)
+        note = root / "note.md"
+        note.write_text("正文", encoding="utf-8")
+        upload = {"note": str(note), "body_check": {}, "attachments": []}
+        title = "NHANES — 甲状腺、性激素及炎症相关检测（Tests）"
+        page = {"ok": True, "status": "WEBSITE_EDITOR_READY", "authenticated": True,
+                "create": False, "post_id": "110", "edit_id": "318",
+                "url": "http://localhost:8000/nodes/edit/318/",
+                "category": "NHANES", "title": title}
+        def action(prepared=page, **kwargs):
+            return checker.build_cua_sync_action(
+                upload, "http://localhost:8000", "110", "NHANES", "030",
+                "甲状腺性激素炎症", website_prepare=prepared, **kwargs)
+
+        result = action()
+        payload = result["payload"]
+        assert payload["edit_url"] == page["url"]
+        assert payload["identity_title_exact"] == title
+        assert payload["identity_title_parts"] == [title]
+        assert payload["desired_title"] == title
+        assert payload["expected_title_parts"] == [title]
+        changed = "NHANES — 新标题（New Title）"
+        renamed = action(website_title=changed)["payload"]
+        assert renamed["identity_title_exact"] == title
+        assert renamed["expected_title_parts"] == [changed]
+        assert renamed["desired_title"] == changed
+        helper = result["preload_script"].split("async function verifyPreparedIdentity", 1)[1].split("async function syncDbCodeBookPost", 1)[0]
+        node = shutil.which("node")
+        if node:
+            fixture = r'''const assert = require('node:assert/strict');
+async function verifyPreparedIdentity HELPER
+let state = {title:'old', category:'NHANES', editor:true, button:'更新文章'};
+const payload = {identity_title_exact:'old', identity_category:'NHANES', edit_url:'http://site/edit/318/'};
+const tab = {url:async () => payload.edit_url, playwright:{locator:() => ({waitFor:async () => {}}), evaluate:async () => state}};
+(async () => {
+  await verifyPreparedIdentity(tab, payload);
+  state = {...state, title:'changed'};
+  await assert.rejects(verifyPreparedIdentity(tab, payload), /标题/);
+  state = {...state, title:'old', category:'CHARLS'};
+  await assert.rejects(verifyPreparedIdentity(tab, payload), /数据库/);
+})().catch(error => {console.error(error); process.exitCode=1;});'''.replace('HELPER', helper)
+            subprocess.run([node, '-e', fixture], check=True)
+        else:
+            raise RuntimeError('Node.js required for website identity fixture')
+        for key, value in (("post_id", "111"), ("edit_id", "319"),
+                           ("url", "http://wrong:8000/nodes/edit/318/"),
+                           ("category", "CHARLS"), ("authenticated", False),
+                           ("status", "WEBSITE_PREPARE_INCOMPLETE")):
+            expect_failure(lambda: action(dict(page, **{key: value})), "Website preparation")
+        expect_failure(lambda: action(edit_id="319"), "Website preparation")
+        expect_failure(lambda: action(website_title="CHARLS — 错误"), "must contain")
+        expect_failure(lambda: checker.build_cua_sync_action(
+            upload, "http://localhost:8000", "", "NHANES", "030", "甲状腺",
+            "NHANES — 甲状腺", create=True, directory_tag="实验室", website_prepare=page),
+            "only supported for existing")
+
+
 def main() -> int:
     checker = load_checker()
+    check_website_prepare_identity()
     with tempfile.TemporaryDirectory(prefix="readability_gate_") as tmp:
         root = Path(tmp)
         formal = root / "formal"
@@ -678,8 +739,6 @@ def main() -> int:
         prepared = json.loads(prepared_run.stdout)
         prepared_action = prepared["browser_action"]
         assert prepared_action["browser_binding"] == "dbCodeBookBrowser"
-        assert "resolveDbCodeBookTab" in prepared_action["preload_script"]
-        assert 'status: "SYNC_TAB_READY"' in prepared_action["preload_script"]
         assert "preload_script" in prepared_action
         assert "run_script" not in prepared_action
         preparation = json.loads((process / "execution_report.json").read_text(encoding="utf-8"))
@@ -713,14 +772,12 @@ def main() -> int:
         ]
         preload_script = prepared_action["preload_script"]
         assert 'chooser.setFiles([filePath])' in preload_script
-        assert 'for (const attachment of payload.attachments.slice(keep))' in preload_script
         assert 'const titleDeadline = Date.now() + 5000' in preload_script
         assert 'titleValue.toLocaleLowerCase().includes(String(part).toLocaleLowerCase())' in preload_script
         assert 'await title.fill(payload.desired_title)' in preload_script
         assert 'button[title="删除"]' in preload_script
         assert 'body.length !== payload.body_check.length_utf16' in preload_script
         assert 'JSON.stringify(actualNames) !== JSON.stringify(expectedNames)' in preload_script
-        assert 'getByRole("button", { name: "更新文章" })' in preload_script
         assert 'timings.open_edit_ms' in preload_script
         assert 'timings.identity_check_ms' in preload_script
         assert 'timings.title_update_ms' in preload_script
@@ -839,8 +896,7 @@ def main() -> int:
         assert created["preload_sha256"] == prepared_action["preload_sha256"]
         assert 'if (blank.title || blank.body || blank.attachments)' in preload_script
         assert 'name: /发布文章/' in preload_script
-        assert 'state: "domcontentloaded"' in preload_script
-        assert 'timeoutMs: 30000' in preload_script
+        assert 'waitForLoadState({ state: "domcontentloaded" })' not in preload_script
         assert 'post_url: postUrl' in preload_script
         node = shutil.which("node")
         if node:

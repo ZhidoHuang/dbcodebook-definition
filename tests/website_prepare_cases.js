@@ -24,21 +24,40 @@ function fake(options={}) {
       if(s.destroyAuthOnce && s.loadWaits===1) s.pendingNavigation=true;
       else s.pendingNavigation=false;
     },
-    evaluate:async fn=>{
+    evaluate:async (fn,arg)=>{
       s.evaluations++;
-      if(s.pendingNavigation || s.destroyAuthAlways) throw new Error('Execution context was destroyed, most likely because of a navigation');
+      if((s.destroyAuthOnce && s.evaluations===1) || s.pendingNavigation || s.destroyAuthAlways)
+        throw new Error('Execution context was destroyed, most likely because of a navigation');
       if(s.expireOn==='auth' && s.evaluations===1) s.clock=25001;
+      if(arg?.editId) {
+        if(s.identityReadError)throw new Error('Editor article identity could not be read');
+        return {id:arg.editId,url:'/nodes/post/'+(s.actualPostId || '132')+'/'};
+      }
       return fn();
     },
-    goto:async url=>{s.navigations.push(url);s.url=url;},
+    goto:async (url,options)=>{
+      s.navigations.push(url);
+      assert.equal(options.waitUntil,'commit');
+      if(!s.navigationStuck) s.url=url;
+      if(s.navigationTimeout || s.navigationStuck) throw new Error('page.goto: Timeout exceeded');
+      if(s.navigationError) throw new Error(s.navigationError);
+    },
     locator:sel=>({count:async()=>{if(s.expireOn==='login-count')s.clock=25001;return 1;},waitFor:async()=>{},innerText:async()=>s.title,
       evaluate:async fn=>{assert.equal(sel,'.edit-post-btn:visible');s.measurements++;const value=fn(editElement);if(s.expireOn==='measurement')s.clock=25001;return value;},
       click:async options=>{
         assert.equal(options.force,undefined);s.clicks.push(sel);s.clickOptions.push(options);
-        if(sel==='.edit-post-btn:visible')s.url=origin+'/nodes/edit/335/';
+        if(sel==='.edit-post-btn:visible') {
+          assert.equal(options.noWaitAfter,true);
+          if(!s.editorNavigationStuck)s.url=origin+'/nodes/edit/335/';
+        }
       }}),
-    waitForURL:async fn=>assert.ok(fn(new URL(s.url))),
+    waitForURL:async (fn,options)=>{
+      assert.equal(options.waitUntil,'commit');
+      if(s.editorNavigationTimeout || s.editorNavigationStuck)throw new Error('page.waitForURL: Timeout exceeded');
+      assert.ok(fn(new URL(s.url)));
+    },
     waitForFunction:async(fn,arg)=>{
+      if(arg===null) {s.pendingNavigation=false;assert.ok(fn());return;}
       // Simulate delayed editor population; a visible input alone is insufficient.
       if(!arg) assert.equal(fn(arg), false);
       if(s.ready) s.button=arg?'发布文章':'更新文章';
@@ -57,7 +76,7 @@ async function run(action,opts,status) {
   let r=await run(existing,{},'WEBSITE_EDITOR_READY');
   assert.equal(r.result.edit_id,'335');assert.deepEqual(r.s.clicks,['.edit-post-btn:visible']);
   assert.equal(r.result.body_length,10);
-  assert.equal(r.s.loadWaits,1);
+  assert.equal(r.s.loadWaits,0);
   assert.equal(r.s.clickOptions[0].position,undefined);assert.deepEqual(r.s.hitPoints,[]);
   const croppedCases=[
     [{left:-80,top:10,right:20,bottom:50},{x:87,y:18},{x:9,y:30}],
@@ -80,10 +99,26 @@ async function run(action,opts,status) {
   assert.equal(r.s.clickOptions[0].position,undefined);assert.deepEqual(r.s.hitPoints,[]);
   r=await run({...existing,edit_id:'335'},{url:origin+'/nodes/edit/335/'},'WEBSITE_EDITOR_READY');
   assert.deepEqual(r.s.clicks,[]);assert.deepEqual(r.s.navigations,[]);
+  r=await run({...existing,edit_id:'335'},{url:origin+'/nodes/edit/335/',actualPostId:'999'},'EDITOR_IDENTITY_MISMATCH');
+  assert.deepEqual(r.s.clicks,[]);assert.deepEqual(r.s.navigations,[]);
+  r=await run({...existing,edit_id:'335'},{url:origin+'/nodes/edit/335/',identityReadError:true},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.deepEqual(r.s.clicks,[]);assert.deepEqual(r.s.navigations,[]);
   r=await run(existing,{destroyAuthOnce:true},'WEBSITE_EDITOR_READY');
-  assert.equal(r.s.loadWaits,2);assert.equal(r.s.clicks.length,1);
+  assert.equal(r.s.loadWaits,0);assert.equal(r.s.clicks.length,1);
   r=await run(existing,{destroyAuthAlways:true},'WEBSITE_PREPARE_INCOMPLETE');
-  assert.equal(r.s.loadWaits,2);assert.deepEqual(r.s.clicks,[]);
+  assert.equal(r.s.loadWaits,0);assert.deepEqual(r.s.clicks,[]);
+  r=await run(existing,{url:origin+'/',navigationTimeout:true},'WEBSITE_EDITOR_READY');
+  assert.equal(r.s.navigations.length,1);assert.equal(r.s.clicks.length,1);assert.equal(r.s.loadWaits,0);
+  r=await run(existing,{editorNavigationTimeout:true},'WEBSITE_EDITOR_READY');
+  assert.equal(r.s.clicks.length,1);assert.equal(r.s.navigations.length,0);
+  r=await run(existing,{url:origin+'/',navigationStuck:true},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.equal(r.s.navigations.length,1);assert.equal(r.s.clicks.length,0);
+  r=await run(existing,{editorNavigationStuck:true},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.equal(r.s.clicks.length,1);assert.equal(r.s.navigations.length,0);
+  r=await run(existing,{url:origin+'/',navigationError:'net::ERR_CONNECTION_REFUSED'},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.equal(r.s.clicks.length,0);
+  r=await run(existing,{editorNavigationTimeout:true,ready:false},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.equal(r.s.clicks.length,1);
   r=await run(existing,{expireOn:'measurement'},'WEBSITE_PREPARE_INCOMPLETE');
   assert.match(r.result.error,/deadline exceeded/);assert.deepEqual(r.s.clicks,[]);
   r=await run({...existing,open_login:true},{auth:false,expireOn:'login-count'},'WEBSITE_PREPARE_INCOMPLETE');

@@ -184,8 +184,13 @@ def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None, retain_receipt=
         receipts.set(receiptId, dbCodeBookOperationReceipt);
       }
       const operation = (async () => { try {
-        if (recovered && selected.url() === 'about:blank')
-          await selected.goto(recoveryUrl, {waitUntil:'domcontentloaded', timeout:Math.max(1, expiresAt-Date.now())});
+        if (recovered && selected.url() === 'about:blank') {
+          try {
+            await selected.goto(recoveryUrl, {waitUntil:'commit', timeout:Math.min(5000, Math.max(1, expiresAt-Date.now()))});
+          } catch (error) {
+            if (!/timeout|timed out/i.test(String(error)) || selected.url() !== recoveryUrl) throw error;
+          }
+        }
         const result = await (%s)(selected);
         if (preparing && result && typeof result === 'object') {
           result.tab_id = selected[targetKey];

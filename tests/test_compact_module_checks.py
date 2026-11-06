@@ -57,13 +57,15 @@ def assert_failure(fn):
 
 def main():
     c = load_output()
-    from definition_order import xlsx_permute, xlsx_signature, reorder_html, reorder_r, reorder_flat_tree
+    from definition_order import xlsx_signature, reorder_html, reorder_r, reorder_flat_tree
     with tempfile.TemporaryDirectory() as tmp:
         from openpyxl import Workbook, load_workbook
         path=Path(tmp);book=Workbook();sheet=book.active
         sheet.append(['ID','B','A']);sheet.append(['001',3.25,None]);sheet.append(['002',0,'Never'])
         book.save(path/'before.xlsx');book.close()
-        xlsx_permute(path/'before.xlsx',path/'after.xlsx',['A','B'])
+        reordered=Workbook();sheet=reordered.active
+        sheet.append(['ID','A','B']);sheet.append(['001',None,3.25]);sheet.append(['002','Never',0])
+        reordered.save(path/'after.xlsx');reordered.close()
         assert xlsx_signature(path/'before.xlsx')==xlsx_signature(path/'after.xlsx')
         from io import BytesIO
         actual=load_workbook(BytesIO((path/'after.xlsx').read_bytes()));assert list(actual.active.values)[0]==('ID','A','B')

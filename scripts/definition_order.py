@@ -231,15 +231,6 @@ def reorder_r(text,order,groups):
         text=patch(text,edits)
     return text
 
-def column(n):
-    out=''
-    while n:n,r=divmod(n-1,26);out=chr(65+r)+out
-    return out
-
-def cell_key(cell):
-    return (cell.get('t'),cell.get('s'),ET.tostring(cell.find(NS+'v')),ET.tostring(cell.find(NS+'is'))) if cell.find(NS+'v') is not None and cell.find(NS+'is') is not None else (
-        cell.get('t'),cell.get('s'),cell.findtext(NS+'v'),''.join(cell.find(NS+'is').itertext()) if cell.find(NS+'is') is not None else None)
-
 def worksheet(path):
     with zipfile.ZipFile(path) as z:
         sheets=[n for n in z.namelist() if re.fullmatch(r'xl/worksheets/sheet\d+\.xml',n)]
@@ -259,49 +250,6 @@ def workbook_header(path):
                     n.clear();index+=1
                     if len(strings)==len(needed):break
         return [strings[int(c.findtext(NS+'v'))] if c.get('t')=='s' else ''.join(c.itertext()) for c in cells]
-
-def xlsx_permute(before,after,order,dictionary=False):
-    """Keep every cell type/value/style; move only result columns or dictionary rows."""
-    from openpyxl import load_workbook
-    header=workbook_header(before)
-    sheet=worksheet(before)
-    if dictionary:
-        b=load_workbook(before,read_only=True,data_only=False);b.active.reset_dimensions();entries=list(b.active.values);b.close()
-        vi=header.index('Variable');names=[row[vi] for row in entries[1:]]
-        slots=[i for i,n in enumerate(names) if n in order]
-        if {names[i] for i in slots}!=set(order):raise ValueError('Dictionary variable set differs')
-        target=[n for n in names if n not in order]+order
-        with zipfile.ZipFile(before) as zin:
-            root=ET.fromstring(zin.read(sheet));data=root.find(NS+'sheetData');rows=list(data)
-            mapping={row[vi]:node for row,node in zip(entries[1:],rows[1:])}
-            new=[rows[0]]+[mapping[n] for n in target]
-            for ri,row in enumerate(new,1):
-                row.set('r',str(ri))
-                for cell in row:cell.set('r',re.sub(r'\d+$',str(ri),cell.get('r')))
-            data[:]=new
-            with zipfile.ZipFile(after,'w',zipfile.ZIP_DEFLATED,compresslevel=1) as zout:
-                for info in zin.infolist():zout.writestr(info,ET.tostring(root,xml_declaration=True,encoding='UTF-8') if info.filename==sheet else zin.read(info.filename))
-        return
-    slots=[i for i,n in enumerate(header) if n in order]
-    if {header[i] for i in slots}!=set(order):raise ValueError('Data result columns differ')
-    target=[n for n in header if n not in order]+order
-    permutation=[header.index(n) for n in target];rank={old+1:new+1 for new,old in enumerate(permutation)}
-    with zipfile.ZipFile(before) as zin,zipfile.ZipFile(after,'w',zipfile.ZIP_DEFLATED,compresslevel=1) as zout:
-        for info in zin.infolist():
-            if info.filename!=sheet:zout.writestr(info,zin.read(info.filename));continue
-            info._compresslevel=1
-            with zin.open(sheet) as source,zout.open(info,'w',force_zip64=True) as dest:
-                for kind,raw in worksheet_chunks(source):
-                    if kind!='row':dest.write(raw);continue
-                    if b'<f' in raw:raise ValueError('Formula cells require a formula-aware update')
-                    matches=list(CELL.finditer(raw));cells=[]
-                    for m in matches:
-                        ref=REF.search(m[0]);letters=ref[1].decode();ci=0
-                        for c in letters:ci=ci*26+ord(c)-64
-                        ni=rank[ci]
-                        value=m[0][:ref.start(1)]+column(ni).encode()+m[0][ref.end(1):]
-                        cells.append((ni,value))
-                    dest.write(raw[:matches[0].start()]+b''.join(v for _,v in sorted(cells))+raw[matches[-1].end():] if matches else raw)
 
 CELL=re.compile(rb'<c\b[^>]*?(?:/>|>.*?</c>)',re.S)
 REF=re.compile(rb'\br="([A-Z]+)([0-9]+)"')

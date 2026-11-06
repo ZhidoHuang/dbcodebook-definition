@@ -115,7 +115,10 @@ let pages=[old,other];
 const context={pages:()=>pages,newPage:async()=>{
   created++;let address='about:blank';
   const p={name:'replacement',isClosed:()=>false,on:()=>{},off:()=>{},context:()=>context,
-    url:()=>address,setUrl:url=>{address=url;},goto:async url=>{gotos++;address=url;}};
+    url:()=>address,setUrl:url=>{address=url;},goto:async (url,options)=>{
+      gotos++;address=url;assert.equal(options.waitUntil,'commit');
+      throw Error('page.goto: Timeout exceeded');
+    }};
   pages.push(p);return p;
 },newCDPSession:async page=>({send:async()=>({targetInfo:{targetId:page.name==='replacement'?'new-target':page.name}}),detach:async()=>{}})};
 old.context=other.context=()=>context;

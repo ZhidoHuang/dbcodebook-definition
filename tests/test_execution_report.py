@@ -14,6 +14,42 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "execution_report.py"
 
 
+with tempfile.TemporaryDirectory() as temporary:
+    from execution_metrics import find_logs
+    root = Path(temporary)
+    script = root / "definition.R"
+    script.write_text("x <- 1\n# 输出\nrender()\n", encoding="utf-8")
+    full = execution_report.input_hashes([script])
+    script.write_text("x <- 1\n# 输出\nrender(color='green')\n", encoding="utf-8")
+    assert full != execution_report.input_hashes([script])
+    script.write_text("x <- 1\n# 输出\nrender()\n# 输出\n", encoding="utf-8")
+    try:
+        execution_report.input_hashes([script], "public")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Ambiguous public R boundary accepted")
+    log = root / "reviewer.jsonl"
+    events = [
+        {"type": "session_meta", "payload": {"id": "reviewer", "forked_from_id": "parent", "source": "exec", "timestamp": "2026-01-01T00:00:00Z"}},
+        {"timestamp": "2026-01-01T00:00:01Z", "type": "event_msg", "payload": {"type": "task_started", "turn_id": "one"}},
+        {"timestamp": "2026-01-01T00:00:03Z", "type": "event_msg", "payload": {"type": "task_complete", "turn_id": "one"}},
+    ]
+    log.write_text("\n".join(json.dumps(event) for event in events), encoding="utf-8")
+    review = execution_report.read_review_log(log, "logic")
+    assert review["parent_thread_id"] == "parent" and review["running_seconds"] == 2
+    assert find_logs(root, "reviewer", "parent") == [str(log.resolve())]
+    assert find_logs(root, "reviewer", "unrelated") == []
+    del events[0]["payload"]["forked_from_id"]
+    log.write_text("\n".join(json.dumps(event) for event in events), encoding="utf-8")
+    try:
+        execution_report.read_review_log(log, "logic")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Unrelated session accepted as reviewer")
+
+
 def expect_system_exit(action, contains: str) -> None:
     try:
         action()

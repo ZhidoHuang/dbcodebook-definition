@@ -30,13 +30,14 @@
 & $Python -X utf8 scripts/playwright_session_action.py --config $Config --mode website-prepare --action $WebsitePrepareAction --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $WebsitePrepareResult
 ```
 
-- 既有文章从实际“编辑”按钮取得编辑编号；返回 `WEBSITE_EDITOR_READY` 后，把返回的 `edit_id` 传给后面两次 verify-ready 的 `--edit-id`。
-- 已在本任务编辑页时，准备 JSON 也传入此前核实的 `edit_id`，不重新加载。
+- 既有文章从实际“编辑”按钮取得编辑编号；返回 `WEBSITE_EDITOR_READY` 后，后面两次 verify-ready 均传 `--website-prepare $WebsitePrepareResult`，复用已确认的标题、编辑编号和站点身份。`--topic-name` 保留本地主题名，不重新拼成网站标题。
+- 已在本任务编辑页时，准备 JSON 也传入此前核实的 `edit_id`；固定入口只读编辑器原有的文章接口，核实它对应目标文章，不重新加载或离开草稿。
 - 新建时 JSON 使用 `{"base_url":"http://localhost:8000","create":true,"open_login":true}`，不传文章编号；固定入口打开 `/nodes/edit/` 并确认空白表单，不创建占位文章。
 
 - `LOGIN_REQUIRED` 表示需要用户完成登录，之后重跑准备入口；其它失败先处理返回的具体原因。
 - 已打开其它编辑页或新建页有内容时，保留现场，不覆盖或绕过。
 - 网站准备只导航和读取，不填写、上传或提交。
+- 准备以目标地址、登录和页面控件实际就绪为准。导航等待超时但已到目标地址时，在原标签继续核对；不因加载事件未结束而重新导航。
 - 不要把查询页专用的 login-status/login-open 用于文章页。
 - 准备返回 `WEBSITE_PREPARE_PENDING` 时，沿用同一动作、绑定和 `--out` 重跑准备命令；程序取回原动作回执，不重复导航或点击。原动作未结束时，不换动作文件另起尝试。
 - 准备程序只对曾绑定且确认已关闭的本任务标签恢复页面；提交结果未明时不恢复。返回新的 `tab_id` 后，后续预检和提交沿用该绑定。无法确认标签状态时，保留现场并报告，不改用其他标签。
@@ -46,7 +47,7 @@
 - 两次verify-ready使用同一份确定的选择，按下文传入标签参数或taxonomy-plan。
 
 ```powershell
-& $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl --website-title $WebsiteTitle | Set-Content -Encoding utf8 $Preflight
+& $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl --website-prepare $WebsitePrepareResult | Set-Content -Encoding utf8 $Preflight
 ```
 
 准备计时从本地检查和登录核对前开始。网站准备成功后沿用同一 `$TabId`。以下预检只读，不导航、导入或提交：
@@ -60,7 +61,7 @@
 本地与浏览器预检均通过后，启动提交计时，并立即执行固定入口，不再补查或改选标签：
 
 ```powershell
-& $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --start-sync --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl --website-title $WebsiteTitle | Set-Content -Encoding utf8 $Action
+& $Python scripts/check_definition_readability.py verify-ready --formal-dir $Formal --process-dir $Process --topic-id $Topic --start-sync --database $Database --topic-name $TopicName --post-id $PostId --base-url $BaseUrl --website-prepare $WebsitePrepareResult | Set-Content -Encoding utf8 $Action
 & $Python -X utf8 scripts/playwright_session_action.py --config $Config --mode sync --action $Action --preflight $Preflight --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $SyncResult
 ```
 
@@ -95,14 +96,14 @@
 
 - 网站标题使用“数据库 — 中文（英文）”，例如“ELSA — 认知功能（Cognitive Function）”：数据库后用两侧各一个空格的长破折号，英文名称用中文全角括号，不带主题序号。
 - 中英文含义一致且覆盖实际定义范围，采用主题已确定的英文名称，不由程序猜译。
-- 新建和以后同步时，两次verify-ready（预检及--start-sync）均显式传入同一完整`--website-title`，不使用旧的仅中文默认标题。
+- 新建或明确改标题时，两次 verify-ready（预检及 --start-sync）均显式传入同一完整 `--website-title`。既有文章未改标题时直接沿用准备结果中的标题。
 - 序号只用于本地目录和内部记录；不因此批量改动未请求同步的旧文章。
-- 程序兼容识别旧标题，以文章地址、数据库和主题名称核对身份。
+- 既有文章以准备阶段核实的文章地址、数据库、原标题和编辑编号确认身份；改标题不改变这份原身份。
 - 新建文章在同一标签打开网站空白新建表单。
-- 两个verify-ready命令均将post-id参数替换为 `--create --directory-tag $DirectoryTag`，保留上述完整标题参数；不先建占位文章取得ID，不用新建绕过既有文章身份检查。
+- 新建时，两个 verify-ready 命令均将 post-id 参数替换为 `--create --directory-tag $DirectoryTag`，不传 `--website-prepare`，并传上述完整标题参数；不先建占位文章取得 ID，不用新建绕过既有文章身份检查。
 - 文章编号支持正整数及 `local-正整数`，传入实际文章地址中的完整编号；程序将 `local-N` 的编辑入口映射为 `/nodes/edit/N/`。
 - 更新返回允许同一编号的纯数字或 `local-` 地址，不接受另一编号；新建返回必须属于当前站点的文章路径。
-- 原文章与本地编辑编号不同时，从原文章点击“编辑”核实对应地址；两次 verify-ready 均用 `--post-id <原文章编号> --edit-id <实际编辑编号>`。
+- 原文章与本地编辑编号不同时，准备入口从原文章点击“编辑”核实对应地址，verify-ready 从准备结果取得编辑编号。未使用准备结果的旧调用仍须显式传入已核实的 `--edit-id`。
 - 编辑编号只指定操作页面，提交成功仍须返回原文章编号；不能猜测对应关系，也不能因此另建文章。
 - 改既有标题时，两个命令都加同一 `--website-title`；先确认旧文章身份，再与正文附件同次提交。
 - 目录标签与跨库主题（网页显示“主题标签”）均为单选：先读取当前下拉选项，优先选择含义匹配的已有项；检查同义、近义项后确无匹配才新建。
