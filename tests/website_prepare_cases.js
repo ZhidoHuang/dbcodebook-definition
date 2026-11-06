@@ -5,8 +5,8 @@ const origin = 'http://localhost:8000';
 const existing = {base_url:origin,create:false,post_id:'132',edit_id:null,identity_title_parts:['CHARLS','ADL']};
 function fake(options={}) {
   const s = {url:origin+'/nodes/post/132/',auth:true,title:'CHARLS — ADL',body:'saved body',
-    button:'发布文章', attachments:2, ready:true, clicks:[], clickOptions:[], navigations:[],
-    hitPoints:[], measurements:0, loadWaits:0, evaluations:0, clock:0, viewport:{width:1000,height:600},
+    button:'发布文章', disabled:false, busy:null, attachments:2, ready:true, clicks:[], clickOptions:[], navigations:[],
+    hitPoints:[], measurements:0, loadWaits:0, evaluations:0, identityReads:0, clock:0, viewport:{width:1000,height:600},
     rect:{left:10,top:10,right:110,bottom:50}, border:2, ...options};
   global.window = {__GUIDE_USER__:{authenticated:s.auth},innerWidth:s.viewport.width,innerHeight:s.viewport.height};
   const child = {};
@@ -14,8 +14,8 @@ function fake(options={}) {
   global.getComputedStyle = () => Object.fromEntries(
     ['borderLeftWidth','borderTopWidth','borderRightWidth','borderBottomWidth'].map(side=>[side,s.border+'px']));
   const nodes = () => ({'#title':{value:s.title},'#editor':{value:s.body},'#category':{value:'CHARLS'},
-    '.btn-publish':{textContent:s.button},'#directory-tag-trigger':{},'#cross-database-topic-trigger':{}});
-  global.document = {querySelector:sel=>nodes()[sel],querySelectorAll:()=>Array(s.attachments).fill({}),
+    '.btn-publish':{textContent:s.button,disabled:s.disabled,getAttribute:name=>name==='aria-busy'?s.busy:null},'#directory-tag-trigger':{},'#cross-database-topic-trigger':{}});
+  global.document = {readyState:'interactive',querySelector:sel=>s.missing?.includes(sel)?null:nodes()[sel],querySelectorAll:()=>Array(s.attachments).fill({}),
     elementFromPoint:(x,y)=>{s.hitPoints.push({x,y});return s.obscured?{}:s.hitChild?child:editElement;}};
   const page = {
     url:()=>s.url,
@@ -30,6 +30,7 @@ function fake(options={}) {
         throw new Error('Execution context was destroyed, most likely because of a navigation');
       if(s.expireOn==='auth' && s.evaluations===1) s.clock=25001;
       if(arg?.editId) {
+        s.identityReads++;
         if(s.identityReadError)throw new Error('Editor article identity could not be read');
         return {id:arg.editId,url:'/nodes/post/'+(s.actualPostId || '132')+'/'};
       }
@@ -59,11 +60,12 @@ function fake(options={}) {
     waitForFunction:async(fn,arg)=>{
       if(arg===null) {s.pendingNavigation=false;assert.ok(fn());return;}
       // Simulate delayed editor population; a visible input alone is insufficient.
-      if(!arg) assert.equal(fn(arg), false);
       if(s.ready) s.button=arg?'发布文章':'更新文章';
       if(!fn(arg))throw new Error('editor timeout');
     }
   };
+  if (options.targetId) page[Symbol.for('dbCodeBook.targetId')] = options.targetId;
+  page.context = () => ({[Symbol.for('dbCodeBook.syncReceipts')]:s.receipts});
   return {page,s};
 }
 let caseCount=0;
@@ -102,7 +104,29 @@ async function run(action,opts,status) {
   r=await run({...existing,edit_id:'335'},{url:origin+'/nodes/edit/335/',actualPostId:'999'},'EDITOR_IDENTITY_MISMATCH');
   assert.deepEqual(r.s.clicks,[]);assert.deepEqual(r.s.navigations,[]);
   r=await run({...existing,edit_id:'335'},{url:origin+'/nodes/edit/335/',identityReadError:true},'WEBSITE_PREPARE_INCOMPLETE');
-  assert.deepEqual(r.s.clicks,[]);assert.deepEqual(r.s.navigations,[]);
+  assert.equal(r.result.phase,'editor_identity');assert.deepEqual(r.s.clicks,[]);assert.deepEqual(r.s.navigations,[]);
+  const receipt = (post='132', edit='335', target='task') => ({scope:{kind:'website-prepare'},state:'completed',tab_id:target,
+    result:{ok:true,status:'WEBSITE_EDITOR_READY',authenticated:true,create:false,post_id:post,edit_id:edit,
+      url:origin+'/nodes/edit/'+edit+'/',title:'CHARLS — ADL',tab_id:target}});
+  const editorAction = {...existing,edit_id:'335'};
+  const receipts = new Map([['other',receipt('999','336')],['correct',receipt()]]);
+  r=await run(editorAction,{url:origin+'/nodes/edit/335/',targetId:'task',receipts,identityReadError:true},'WEBSITE_EDITOR_READY');
+  assert.equal(r.s.identityReads,0);
+  for (const candidate of [receipt('999'),receipt('132','335','another'),
+    {...receipt(),state:'running'}, {...receipt(),result:{...receipt().result,url:'http://other/nodes/edit/335/'}}]) {
+    r=await run(editorAction,{url:origin+'/nodes/edit/335/',targetId:'task',receipts:new Map([['prior',candidate]]),identityReadError:true},'WEBSITE_PREPARE_INCOMPLETE');
+    assert.equal(r.result.phase,'editor_identity');assert.equal(r.s.identityReads,1);
+  }
+  {
+    const {page,s}=fake({targetId:'task',ready:false});
+    const first=await prepareWebsite(page,existing);
+    assert.equal(first.status,'WEBSITE_PREPARE_INCOMPLETE');assert.equal(first.phase,'editor');
+    assert.equal(first.editor_state.ready_state,'interactive');assert.equal(first.editor_state.button_text,'发布文章');
+    assert.deepEqual(first.editor_state.missing_controls,[]);assert.equal(s.identityReads,0);
+    s.ready=true;s.identityReadError=true;
+    const resumed=await prepareWebsite(page,editorAction);
+    assert.equal(resumed.status,'WEBSITE_EDITOR_READY');assert.equal(s.identityReads,0);
+  }
   r=await run(existing,{destroyAuthOnce:true},'WEBSITE_EDITOR_READY');
   assert.equal(r.s.loadWaits,0);assert.equal(r.s.clicks.length,1);
   r=await run(existing,{destroyAuthAlways:true},'WEBSITE_PREPARE_INCOMPLETE');
@@ -135,7 +159,16 @@ async function run(action,opts,status) {
   r=await run(existing,{title:'Other article',rect:croppedCases[0][0]},'ARTICLE_IDENTITY_MISMATCH');
   assert.equal(r.s.measurements,0);assert.equal(r.s.clicks.length,0);
   await run({...existing,edit_id:'336'},{},'EDITOR_IDENTITY_MISMATCH');
-  await run(existing,{ready:false},'WEBSITE_PREPARE_INCOMPLETE');
+  r=await run(existing,{ready:false,missing:['#editor']},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.equal(r.result.phase,'editor');assert.deepEqual(r.result.editor_state.missing_controls,['#editor']);
+  for (const [disabled,busy] of [[true,'true'],[true,null],[false,'true']]) {
+    r=await run(editorAction,{url:origin+'/nodes/edit/335/',button:'更新文章',disabled,busy},'WEBSITE_PREPARE_INCOMPLETE');
+    assert.equal(r.result.phase,'editor');assert.equal(r.result.editor_state.button_text,'更新文章');
+    assert.equal(r.result.editor_state.button_disabled,disabled);assert.equal(r.result.editor_state.button_aria_busy,busy);
+    assert.deepEqual(r.s.clicks,[]);assert.deepEqual(r.s.navigations,[]);
+  }
+  r=await run(editorAction,{url:origin+'/nodes/edit/335/',button:'更新文章',disabled:false,busy:null},'WEBSITE_EDITOR_READY');
+  assert.deepEqual(r.s.clicks,[]);
   const create={base_url:origin,create:true};
   r=await run(create,{title:'',body:'',attachments:0},'WEBSITE_EDITOR_READY');
   assert.deepEqual(r.s.navigations,[origin+'/nodes/edit/']);assert.equal(r.s.clicks.length,0);

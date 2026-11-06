@@ -11,7 +11,28 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
   const sameSite = () => new URL(page.url()).origin === action.base_url;
   const editorPath = /^\/nodes\/edit\/(?:([1-9][0-9]*)\/)?$/;
   const matchesTitle = title => action.identity_title_parts.every(part => title.includes(part));
-  const isTimeout = error => error?.name === 'TimeoutError' || /timeout|timed out/i.test(String(error));
+  const isTimeout = error => error?.name === 'TimeoutError' || /timeout|timed out|deadline exceeded/i.test(String(error));
+  const identityKey = Symbol.for('dbCodeBook.websiteIdentity');
+  const targetKey = Symbol.for('dbCodeBook.targetId');
+  const matchesIdentity = (value, editId) => value && value.origin === action.base_url
+    && value.post_id === action.post_id && value.edit_id === editId
+    && value.edit_url === page.url();
+  function knownIdentity(editId) {
+    if (matchesIdentity(page[identityKey], editId)) return true;
+    const targetId = page[targetKey];
+    const receipts = page.context?.()[Symbol.for('dbCodeBook.syncReceipts')];
+    if (!targetId || !receipts) return false;
+    return [...receipts.values()].some(receipt => {
+      const result = receipt.result;
+      return receipt.scope?.kind === 'website-prepare' && receipt.state === 'completed'
+        && receipt.tab_id === targetId && result?.tab_id === targetId
+        && result.ok === true && result.status === 'WEBSITE_EDITOR_READY'
+        && result.authenticated === true && result.create === false
+        && typeof result.title === 'string' && result.title.length > 0
+        && matchesIdentity({origin:action.base_url, post_id:result.post_id,
+          edit_id:result.edit_id, edit_url:result.url}, editId);
+    });
+  }
   async function navigate(url) {
     try {
       await page.goto(url, {waitUntil: 'commit', timeout: Math.min(5000, remaining())});
@@ -63,18 +84,21 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
       if (action.create ? !!currentEditor[1] : (!editId || currentEditor[1] !== editId))
         return fail('EDITOR_ALREADY_OPEN', {message: 'Keep this editor; supply its verified edit_id or use the task article page.'});
       if (!action.create) {
+        phase = 'editor_identity';
         // Use the editor's existing read-only endpoint to verify its public article.
-        const post = await page.evaluate(async ({editId, timeout}) => {
-          const response = await fetch('/nodes/api/posts/' + editId + '/',
-            {signal: AbortSignal.timeout(timeout)});
-          if (!response.ok) throw new Error('Editor article identity could not be read');
-          const data = await response.json();
-          return {id: data.post?.id, url: data.post?.public_url};
-        }, {editId, timeout: Math.min(5000, remaining())});
-        remaining();
-        if (String(post.id) !== editId || typeof post.url !== 'string'
-            || new URL(post.url, action.base_url).href !== action.base_url + '/nodes/post/' + action.post_id + '/')
-          return fail('EDITOR_IDENTITY_MISMATCH');
+        if (!knownIdentity(editId)) {
+          const post = await page.evaluate(async ({editId, timeout}) => {
+            const response = await fetch('/nodes/api/posts/' + editId + '/',
+              {signal: AbortSignal.timeout(timeout)});
+            if (!response.ok) throw new Error('Editor article identity could not be read');
+            const data = await response.json();
+            return {id: data.post?.id, url: data.post?.public_url};
+          }, {editId, timeout: Math.min(5000, remaining())});
+          remaining();
+          if (String(post.id) !== editId || typeof post.url !== 'string'
+              || new URL(post.url, action.base_url).href !== action.base_url + '/nodes/post/' + action.post_id + '/')
+            return fail('EDITOR_IDENTITY_MISMATCH');
+        }
       }
     } else if (action.create) {
       phase = 'open_editor';
@@ -133,9 +157,12 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
       } catch (error) {
         if (!isTimeout(error) || !atEditor(new URL(page.url()))) throw error;
       }
-      remaining();
       editId = new URL(page.url()).pathname.match(editorPath)[1];
       if (action.edit_id && editId !== action.edit_id) return fail('EDITOR_IDENTITY_MISMATCH', {edit_id: editId});
+      if (page.url() !== action.base_url + '/nodes/edit/' + editId + '/') return fail('EDITOR_IDENTITY_MISMATCH');
+      page[identityKey] = {origin:action.base_url, post_id:action.post_id,
+        edit_id:editId, edit_url:page.url()};
+      remaining();
     }
     phase = 'editor';
     blocked = await login();
@@ -144,15 +171,35 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
     path = new URL(page.url()).pathname;
     if (path !== (action.create ? '/nodes/edit/' : '/nodes/edit/' + editId + '/'))
       return fail('EDITOR_IDENTITY_MISMATCH');
-    // Existing content is loaded asynchronously; the update label is set last.
-    await page.waitForFunction(create => {
-      const title = document.querySelector('#title'), body = document.querySelector('#editor');
-      const button = document.querySelector('.btn-publish');
-      return title && body && document.querySelector('#category') && button
-        && document.querySelector('#directory-tag-trigger')
-        && document.querySelector('#cross-database-topic-trigger')
-        && button.textContent.trim() === (create ? '发布文章' : '更新文章');
-    }, action.create, {timeout: remaining()});
+    // Editing starts disabled and becomes available only after article data loads.
+    try {
+      await page.waitForFunction(create => {
+        const title = document.querySelector('#title'), body = document.querySelector('#editor');
+        const button = document.querySelector('.btn-publish');
+        return title && body && document.querySelector('#category') && button
+          && document.querySelector('#directory-tag-trigger')
+          && document.querySelector('#cross-database-topic-trigger')
+          && !button.disabled && button.getAttribute('aria-busy') !== 'true'
+          && button.textContent.trim() === (create ? '发布文章' : '更新文章');
+      }, action.create, {timeout: remaining()});
+    } catch (error) {
+      if (!isTimeout(error)) throw error;
+      let state, timer;
+      try {
+        state = await Promise.race([page.evaluate(() => ({
+          ready_state: document.readyState,
+          missing_controls: ['#title', '#editor', '#category', '.btn-publish',
+            '#directory-tag-trigger', '#cross-database-topic-trigger']
+            .filter(selector => !document.querySelector(selector)),
+          button_text: document.querySelector('.btn-publish')?.textContent.trim() ?? null,
+          button_disabled: document.querySelector('.btn-publish')?.disabled ?? null,
+          button_aria_busy: document.querySelector('.btn-publish')?.getAttribute('aria-busy') ?? null
+        })), new Promise((_, reject) => {timer = setTimeout(() => reject(new Error('diagnostic timeout')), 1000);})]);
+      } catch { state = {unavailable:true}; }
+      finally { clearTimeout(timer); }
+      return fail('WEBSITE_PREPARE_INCOMPLETE', {error:String(error), editor_state:state,
+        message:'Editor readiness was not confirmed; keep the page. No submission was made.'});
+    }
     remaining();
     const state = await page.evaluate(() => ({
       title: document.querySelector('#title').value,
