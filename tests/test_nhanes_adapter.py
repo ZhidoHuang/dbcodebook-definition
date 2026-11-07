@@ -133,6 +133,28 @@ class NhanesAdapterTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 workbook_source_columns(self.root, raw, ['total'], [invalid])
 
+    def test_numeric_or_character_seqn_preserves_raw_identity(self):
+        from check_definition_output import check_identity_values
+        with tempfile.TemporaryDirectory() as temp:
+            raw = Path(temp) / "raw_data.csv"
+            header = ["SEQN", "YEAR", "age"]
+            with raw.open("w", encoding="utf-8", newline="") as stream:
+                csv.writer(stream).writerows([header, ["123", "2017-2018", "44"], ["001", "2017-2018", "20"], ["41475.0", "2017-2018", "30"]])
+            for seqn, year, expected in [
+                (123, "2017-2018", True), (123.0, "2017-2018", True),
+                (41475, "2017-2018", True), ("41475.000", "2017-2018", True),
+                ("123", "2017-2018", True), (124, "2017-2018", False),
+                (123, "2017-2020", False), (123.5, "2017-2018", False),
+                (None, "2017-2018", False), (1, "2017-2018", False),
+                ("001", "2017-2018", True), (123, 2017, False),
+            ]:
+                results = []
+                check_identity_values(raw, header, [header, [seqn, year, 44]], header, results, "nhanes")
+                self.assertEqual(all(item["ok"] for item in results), expected, (seqn, year, results))
+            results = []
+            check_identity_values(raw, header, [header, [123, "2017-2018", 44], [123, "2017-2018", 44]], header, results, "nhanes")
+            self.assertFalse(all(item["ok"] for item in results), results)
+
     def test_long_table_keys(self):
         header = expected_raw_header('nhanes', ['A_sex'])
         self.assertEqual(header, ['SEQN', 'YEAR', 'A_sex'])

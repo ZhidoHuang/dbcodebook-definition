@@ -24,7 +24,8 @@ description: Run, revise, audit, or publish variable-definition topics built fro
 | 检查历史阶段登记 | [历史报告检查](references/rules/scoped-tasks.md#historical-report) | 只读检查；不重跑生产、不改历史 |
 | 新建、重做或改变来源 | [1. 选题与来源方案](references/rules/stages/01-source-plan.md) | 按完整流程执行；来源或别名变化时重新全量下载 |
 | 调整组分概览、详情或其他生成显示 | [5. 成果生成](references/rules/stages/05-generate.md) | 按明确范围处理显示，核对受影响成果；不重定方案 |
-| 审核或修改文案 | [3. 文案写作](references/rules/stages/03-copy.md#执行与读取)，按完整新稿或指定栏目选择任务 | 读取完整文案；重新生成并检查受影响成果，继续已授权的网站同步 |
+| 修改指定文案栏目或只读文案审核 | [局部文案读取](references/rules/stages/03-copy.md#局部文案读取) | 按本次范围查看完整原稿和对应规则；只读审核不生成或同步 |
+| 写完整新稿或更新整篇文案 | [3. 文案写作](references/rules/stages/03-copy.md#执行与读取) | 按完整写作路径执行，检查受影响成果并继续已授权的网站同步 |
 | 修改 R 或计算 | [4. 公开 R](references/rules/stages/04-public-r.md) | 沿用未变来源；生成前同步修改受影响文案 |
 | 上传已检查成果 | 只读[8. 网站同步](references/rules/stages/08-website.md) | 不加载探索、问卷、R 或写作规则，不重建主题 |
 | 修改本 Skill | [规则归属](references/rules/index.md)及本次修改范围 | 不因维护 Skill 而运行主题或修改网站 |
@@ -33,7 +34,7 @@ description: Run, revise, audit, or publish variable-definition topics built fro
 提到某个来源或旧稿，不等于用户已确定采用它。
 明确任务直接执行；只有未决研究问题进入双路探索。
 
-局部任务只读取对应章节。遇到具体未决问题时，再读有关规则。
+局部任务先用标题定位，只读取链接指向的章节，到下一个同级或更高级标题前停止；代码围栏中的示例标题不作为边界。遇到明确触发条件或具体未决问题，再补读对应章节，不为选择任务先通读整份规则。
 局部任务不自动启动完整流程或新生产报告；按该入口汇报实际工作和耗时。
 
 ## 规则优先级与覆盖边界

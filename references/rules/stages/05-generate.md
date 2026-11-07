@@ -67,7 +67,7 @@
 
 - NHANES III主调查个人文件使用 `database="NHANESIII"` 及显式cycle_order；按已确认方案选择整体调查范围或两个抽样阶段。保留SEQN、原下载时期列和公开R中明确的YEAR；不将横断面抽样阶段当作随访波次。文件及范围见[NHANES III接口](../../databases/nhanesiii/profile.md)。
 
-- NHANES普通来源使用 `database="NHANES"` 和显式 `cycle_order`；保留字符型 `SEQN`、`YEAR`。接口及适用范围见[NHANES流程](../../databases/nhanes/workflow.md)。
+- NHANES普通来源使用 `database="NHANES"` 和显式 `cycle_order`；保留 `SEQN`、`YEAR` 的实际身份值，普通读取默认使用 `read.csv()`，确有保真或匹配需要时按实际问题指定类型。接口及适用范围见[NHANES流程](../../databases/nhanes/workflow.md)。
 
 - MHAS已接入的个人文件使用 `database="MHAS"` 及已核实的 `cycle_order`。逐文件保留原名及字符身份；适用文件和组合边界见[MHAS流程](../../databases/mhas/workflow.md)。
 

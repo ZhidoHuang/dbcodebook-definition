@@ -756,6 +756,10 @@ def check_analysis_workbook_contract(formal, analysis_db, analysis_codebook, raw
         for entry in entries:
             name = entry["Variable"]
             sources = split_csv(entry.get("processed_vars"))
+            if (database or "").lower() == "nhanes" and {"SEQN", "YEAR"} & (
+                set(sources) | set(split_csv(entry.get("original_vars")))
+            ):
+                raise ValueError("NHANES record identity cannot be a definition source: " + name)
             if not sources or len(sources) != len(set(sources)):
                 raise ValueError("Missing or duplicate source mapping: " + name)
             if set(sources) & set(join_keys):
@@ -1053,9 +1057,15 @@ def check_identity_values(
         if any(name not in raw_header or name not in analysis_header for name in identity_columns):
             fail(results, "analysis identity values", "NHANES requires SEQN,YEAR")
             return
-        if any(not isinstance(row[analysis_header.index(name)], str) for row in analysis_rows[1:] for name in identity_columns):
-            fail(results, "analysis identity values", "NHANES identities must remain character cells")
-            return
+        import math
+        for row in analysis_rows[1:]:
+            seqn, year = (row[analysis_header.index(name)] for name in identity_columns)
+            valid_seqn = (isinstance(seqn, str) and bool(re.fullmatch(r"[0-9]+(?:\.0+)?", seqn))) or (
+                isinstance(seqn, (int, float)) and not isinstance(seqn, bool)
+                and math.isfinite(seqn) and seqn >= 0 and seqn == int(seqn))
+            if not valid_seqn or not isinstance(year, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{4}", year):
+                fail(results, "analysis identity values", "NHANES requires valid numeric or character SEQN and period YEAR")
+                return
     elif db == "mhas":
         from mhas_export_contract import IDENTIFIERS
         identity_columns = [x for x in raw_header if x in IDENTIFIERS]
@@ -1098,6 +1108,11 @@ def check_identity_values(
             "" if index >= len(row) or row[index] is None else str(row[index])
             for index in indexes
         ]
+        if db == "nhanes":
+            value = row[indexes[0]] if indexes[0] < len(row) else None
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                values[0] = str(int(value))
+            values[0] = re.sub(r"\.0+$", "", values[0])
         if db == "chns":
             from chns_export_contract import normalize_year
             try:

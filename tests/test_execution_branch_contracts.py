@@ -511,8 +511,27 @@ def check_analysis_only_workbook_fixture():
             check_workbook_contract(folder,[csv_name,files[1]],csv_name,files[1],['shared','b'],
                                     ['shared','result'],checks,result_label_plan=plan)
         assert checks[-1]['ok'],checks
-        # NHANES defaults may be actual definition inputs only when present in source CSVs.
+        # Record identifiers remain in NHANES analysis data, not its result lineage.
         (folder/'raw_data.csv').write_text('SEQN,YEAR,shared,b\n1,2011-2012,1,2\n',encoding='utf-8')
+        clean_nhanes=deepcopy(tables)
+        clean_nhanes[files[0]]=[['SEQN','YEAR','shared','result'],[1,'2011-2012',1,2]]
+        checks=[]
+        with patch.object(output,'read_table_rows',side_effect=lambda path:clean_nhanes[path.name]):
+            check_workbook_contract(folder,files,files[0],files[1],['shared','b'],['shared','result'],checks,
+                                    result_label_plan=plan,database='nhanes')
+        assert checks[-1]['ok'],checks
+        assert clean_nhanes[files[0]][0][:2] == ['SEQN','YEAR']
+        for field in ('original_vars','processed_vars'):
+            for identity in ('SEQN','YEAR'):
+                polluted=deepcopy(clean_nhanes)
+                col=polluted[files[1]][0].index(field)
+                polluted[files[1]][2][col] += ', ' + identity
+                polluted[files[1]][2][4] += 1
+                checks=[]
+                with patch.object(output,'read_table_rows',side_effect=lambda path:polluted[path.name]):
+                    check_workbook_contract(folder,files,files[0],files[1],['shared','b'],['shared','result'],checks,
+                                            result_label_plan=plan,database='nhanes')
+                assert not checks[-1]['ok'] and 'record identity' in str(checks[-1]),checks
         default_sources=deepcopy(tables)
         default_sources[files[1]][2][1]='RAW_A (file), SEQN, YEAR'
         default_sources[files[1]][2][2]='shared, SEQN, YEAR'
@@ -520,19 +539,8 @@ def check_analysis_only_workbook_fixture():
         checks=[]
         with patch.object(output,'read_table_rows',side_effect=lambda path:default_sources[path.name]):
             check_workbook_contract(folder,files,files[0],files[1],['shared','b'],['shared','result'],checks,
-                                    result_label_plan=plan,database='nhanes')
-        assert checks[-1]['ok'],checks
-        checks=[]
-        with patch.object(output,'read_table_rows',side_effect=lambda path:default_sources[path.name]):
-            check_workbook_contract(folder,files,files[0],files[1],['shared','b'],['shared','result'],checks,
                                     result_label_plan=plan,database='charls')
         assert checks[-1]['ok'] and checks[-1]['detail']['intermediate_inputs_not_checked']['result']==['SEQN','YEAR']
-        (folder/'raw_data.csv').write_text('SEQN,shared,b\n1,1,2\n',encoding='utf-8')
-        checks=[]
-        with patch.object(output,'read_table_rows',side_effect=lambda path:default_sources[path.name]):
-            check_workbook_contract(folder,files,files[0],files[1],['shared','b'],['shared','result'],checks,
-                                    result_label_plan=plan,database='nhanes')
-        assert checks[-1]['ok'] and checks[-1]['detail']['intermediate_inputs_not_checked']['result']==['YEAR']
         for db, defaults in [('charls',['year']), ('elsa',['Wave_id']),
                              ('nhanesiii',['SEQN','_survey_period','_period'])]:
             (folder/'raw_data.csv').write_text(','.join([*defaults,'shared','b'])+'\n',encoding='utf-8')
@@ -552,7 +560,7 @@ def check_analysis_only_workbook_fixture():
         checks=[]
         with patch.object(output,'read_table_rows',side_effect=lambda path:default_sources[path.name]):
             check_workbook_contract(folder,files,files[0],files[1],['shared','b'],['shared','result'],checks,
-                                    result_label_plan=plan,database='nhanes')
+                                    result_label_plan=plan,database='charls')
         assert not checks[-1]['ok'],'selected source identity must not silently become a bare default'
 
 

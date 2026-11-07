@@ -94,7 +94,9 @@ validate_nhanes_render_inputs <- function(frames, cycle_order) {
   if (any(substr(cycle_order, 1, 4) >= substr(cycle_order, 6, 9))) stop("Invalid NHANES period bounds.")
   for (frame in frames) {
     keys <- c("SEQN", "YEAR")
-    if (!all(keys %in% names(frame)) || !all(vapply(frame[keys], is.character, logical(1)))) stop("NHANES requires character SEQN and YEAR.")
+    if (!all(keys %in% names(frame)) || !is.character(frame$YEAR) ||
+        !(is.character(frame$SEQN) || is.numeric(frame$SEQN))) stop("NHANES requires numeric or character SEQN and character YEAR.")
+    if (is.numeric(frame$SEQN) && any(!is.finite(frame$SEQN) | frame$SEQN < 0 | frame$SEQN != floor(frame$SEQN))) stop("Invalid NHANES SEQN.")
     if (anyNA(frame[keys]) || any(!grepl("^[0-9]+(\\.0+)?$", frame$SEQN)) ||
         any(!frame$YEAR %in% cycle_order)) stop("Invalid NHANES person-period identity.")
     normalized <- sub("\\.0+$", "", frame$SEQN)

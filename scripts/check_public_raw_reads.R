@@ -187,7 +187,7 @@ check_public_raw_reads <- function(lines, database = "CHARLS", source_dir = ".",
     }
     if (length(args) == 1L) {
       if (household && target != "name_z") stop("Household raw read must preserve householdid and year as character")
-      if (target != "name_z" && toupper(database) == "NHANES") stop("NHANES must preserve SEQN and YEAR as character")
+      if (target != "name_z" && toupper(database) == "NHANES" && !targets[[target]] %in% c("raw_data.csv", "raw_drug.csv")) stop("NHANES detail must preserve SEQN as character")
       if (target != "name_z" && toupper(database) == "NHANESIII") stop("NHANES III must preserve SEQN as character")
       if (target != "name_z" && toupper(database) == "NHIS") stop("NHIS must preserve ID, Wave_id and Survey_year as character")
       if (target != "name_z" && toupper(database) == "MHAS") stop("MHAS must preserve ID and Wave_id as character")
@@ -208,9 +208,8 @@ check_public_raw_reads <- function(lines, database = "CHARLS", source_dir = ".",
     if (household && target != "name_z" && !all(c("householdid", "year") %in% ids)) stop("Household raw read must preserve both keys as character")
     if (toupper(database) == "NHANESIII" && !"SEQN" %in% ids) stop("NHANES III must preserve SEQN as character at read time")
     if (toupper(database) == "NHIS" && !all(c("ID","Wave_id","Survey_year") %in% ids)) stop("NHIS must preserve all three default keys as character at read time")
-    if (toupper(database) == "NHANES") {
-      required <- if (target == "dt") c("SEQN", "YEAR") else "SEQN"
-      if (!all(required %in% ids)) stop("NHANES must preserve source identity columns as character")
+    if (toupper(database) == "NHANES" && !targets[[target]] %in% c("raw_data.csv", "raw_drug.csv") && !"SEQN" %in% ids) {
+      stop("NHANES detail must preserve SEQN as character")
     }
     if (toupper(database) == "MHAS" && !all(c("ID", "Wave_id") %in% ids)) stop("MHAS must preserve ID and Wave_id as character")
     if (toupper(database) == "KNHANES" && !"id" %in% ids) stop("KNHANES must preserve id as character at read time")
