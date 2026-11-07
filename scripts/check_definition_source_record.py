@@ -14,7 +14,7 @@ from pathlib import Path, PureWindowsPath
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from questionnaire_display import requires_questionnaire_display, is_plain_paraphrase, validate_paraphrase, validate_uncoded_options
 from local_source_evidence import validate_local_evidence
-from definition_display import topic_kind
+from definition_display import topic_kind, confirmed_result_label
 
 
 READY_STATUS = "READY"
@@ -1512,8 +1512,10 @@ def validate_record(
         if any("display_name" in item for item in definition_plan):
             display_names = [nonempty_text(item.get("display_name"), "definition_plan.display_name")
                              for item in definition_plan]
-            if len(display_names) != len(set(display_names)):
-                fail("definition_plan.display_name must uniquely identify each result")
+            display_labels = [confirmed_result_label(item) or name
+                              for item, name in zip(definition_plan, display_names)]
+            if len(display_labels) != len(set(display_labels)):
+                fail("definition_plan display name and unit must uniquely identify each result")
         if any(item.get("display_group") for item in definition_plan):
             display_groups = [nonempty_text(item.get("display_group"), "definition_plan.display_group")
                               for item in definition_plan]

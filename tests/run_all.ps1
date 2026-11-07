@@ -15,10 +15,18 @@ if ([string]::IsNullOrWhiteSpace($Config)) {
 
 $configuredPython = ""
 $configuredRscript = ""
+$configuredAir = ""
 if (-not [string]::IsNullOrWhiteSpace($Config)) {
   $settings = Get-Content -LiteralPath $Config -Raw -Encoding UTF8 | ConvertFrom-Json
   $configuredPython = [string]$settings.executables.python
   $configuredRscript = [string]$settings.executables.rscript
+  $configuredAir = [string]$settings.executables.air
+  if ($configuredAir) {
+    $configuredAir = [Environment]::ExpandEnvironmentVariables($configuredAir)
+    if (-not [System.IO.Path]::IsPathRooted($configuredAir)) {
+      $configuredAir = Join-Path (Split-Path -Parent (Resolve-Path -LiteralPath $Config).Path) $configuredAir
+    }
+  }
 }
 
 $pythonArguments = @()
@@ -57,7 +65,12 @@ foreach ($test in $pythonTests) {
 }
 
 if (-not [string]::IsNullOrWhiteSpace($rscript)) {
-  & (Join-Path $PSScriptRoot "test_run_r_definition_no_install.ps1") -Rscript $rscript -Python $python
+  if (-not $configuredAir) {
+    $airCommand = Get-Command "air" -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($null -eq $airCommand) { throw "Air was not found on PATH and executables.air is not configured." }
+    $configuredAir = $airCommand.Source
+  }
+  & (Join-Path $PSScriptRoot "test_run_r_definition_no_install.ps1") -Rscript $rscript -Python $python -Air $configuredAir
   if ($LASTEXITCODE -ne 0) { throw "test_run_r_definition_no_install.ps1 failed." }
 
   Remove-Item Env:LC_ALL -ErrorAction SilentlyContinue

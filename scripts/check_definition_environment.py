@@ -68,6 +68,8 @@ def check_environment(config, mode, browser, explicit_browser=None):
           "Set executables.python in config.local.json to the actual Python executable.")
 
     if mode in ("full", "local"):
+        check("air", lambda: command_probe([executable("air"), "--version"]),
+              "Install Posit Air: https://posit-dev.github.io/air/installation.html and set executables.air or PATH.")
         def writable_root(name):
             root = configured_path(config, name)
             if root is None or not root.is_dir():

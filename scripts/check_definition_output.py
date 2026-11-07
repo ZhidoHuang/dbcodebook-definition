@@ -1691,38 +1691,44 @@ def check_public_code_outline(
         )
 
     public_lines = source_public.splitlines()
-    recode_comment = re.compile(
-        r"^\s*#\s*recode\.(chr|num)\(([^)]+)\)\s*$"
-    )
+    recode_comment = re.compile(r"recode\.(chr|num)\(([^)]+)\)")
     for index, line in enumerate(public_lines):
-        match = recode_comment.match(line)
-        if not match:
+        if not re.match(r"^\s*#\s*recode\.(?:chr|num)\(", line):
             continue
-        target = match.group(2).strip()
-        next_index = index + 1
-        while next_index < len(public_lines) and not public_lines[next_index].strip():
-            next_index += 1
-        if next_index >= len(public_lines):
-            structural_issues.append(
-                f"orphan recode.{match.group(1)} marker for {target}"
-            )
-            continue
-        assignment = public_lines[next_index].strip()
-        if not re.match(rf"^{re.escape(target)}\s*<-", assignment):
-            structural_issues.append(
-                f"recode.{match.group(1)} marker target differs from assignment: {target}"
-            )
-            continue
-        block_lines = [assignment]
-        for block_line in public_lines[next_index + 1:]:
-            block_lines.append(block_line)
-            if re.match(r"^\s*\)\)?\s*$", block_line):
-                break
-        block = "\n".join(block_lines)
-        if block.count(target) < 2:
-            structural_issues.append(
-                f"recode.{match.group(1)} marker does not recode its own target: {target}"
-            )
+        matches = list(recode_comment.finditer(line))
+        for match in matches:
+            kind, target = match.group(1), match.group(2).strip()
+            if len(matches) > 1:
+                structural_issues.append(f"multiple recode markers cannot each immediately precede their own assignment: {target}")
+                continue
+            next_index = index + 1
+            while next_index < len(public_lines) and not public_lines[next_index].strip():
+                next_index += 1
+            if next_index >= len(public_lines):
+                structural_issues.append(f"orphan recode.{kind} marker for {target}")
+                continue
+            assignment = re.match(rf"^\s*{re.escape(target)}\s*<-", public_lines[next_index])
+            if not assignment:
+                structural_issues.append(f"recode.{kind} marker target differs from assignment: {target}")
+                continue
+            block = []
+            depth = 0
+            has_expression = False
+            for block_index in range(next_index, len(public_lines)):
+                part = public_lines[block_index]
+                if block_index == next_index:
+                    part = part[assignment.end():]
+                elif re.match(r"^\s*[A-Za-z.][A-Za-z0-9._]*(?:\$[A-Za-z.][A-Za-z0-9._]*)?\s*<-", part):
+                    break
+                part = re.sub(r"\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'|#.*$", "", part)
+                block.append(part)
+                has_expression |= bool(part.strip())
+                depth += sum(part.count(c) for c in "([{") - sum(part.count(c) for c in ")]}")
+                if has_expression and depth <= 0:
+                    break
+            target_pattern = rf"(?<![A-Za-z0-9._$]){re.escape(target)}(?![A-Za-z0-9._])"
+            if not re.search(target_pattern, "\n".join(block)):
+                structural_issues.append(f"recode.{kind} marker does not recode its own target: {target}")
 
     if structural_issues:
         fail(results, "public R structural contract", structural_issues)

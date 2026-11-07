@@ -35,6 +35,12 @@ Windows 优先选择较短的安装路径。若 Git 报 `Filename too long`，�
 
 安装仅在显式 `-InstallMissing` 时联网；正式运行不会安装。TEMP/TMP/TMPDIR/R_LIBS_USER 的覆盖仅限本次进程调用，结束或失败后恢复；不设置全局 HOME/R_USER。报告原机故障不证明所有中文路径都失败，测试必须区分模拟环境与真实新设备。
 
+## R 代码格式化
+
+按 [Air 官方安装说明](https://posit-dev.github.io/air/installation.html)准备本机可执行文件，在 `executables.air` 配置实际路径，或放入 PATH。Air 使用独立程序，不需安装 R 包。环境预检的 local/full 模式检查它是否可用，browser 模式不检查。
+
+正式 runner 的 `-PreflightOnly` 使用 Air 排版，随后进行独立 R 复核；正式运行只核验排版。两步均使用 `--no-configuration` 沿用 Air 默认风格，不读取其他项目的格式配置。运行入口不安装 Air，缺失时先完成环境准备。
+
 ## 无 npm/npx 的浏览器工具
 
 1. 在有工具的机器准备已验证版本的完整 `@playwright/cli` 安装树（包括依赖）与兼容 Node；保留版本及来源。不要只复制一个 cli.js，也不要伪造 npx 包装器。

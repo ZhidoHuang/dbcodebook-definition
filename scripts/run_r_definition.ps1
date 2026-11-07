@@ -13,6 +13,8 @@ param(
 
   [string]$Python = "",
 
+  [string]$Air = "",
+
   [string]$Config = "",
 
   [string]$Database = "",
@@ -45,7 +47,7 @@ if (-not [string]::IsNullOrWhiteSpace($Config)) {
   $configPath = (Resolve-Path -LiteralPath $Config -ErrorAction Stop).Path
   $settings = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
   if ($settings.schema_version -ne 1) { throw "Configuration schema_version must be 1." }
-  foreach ($name in @("rscript", "python")) {
+  foreach ($name in @("rscript", "python", "air")) {
     $configured = [string]$settings.executables.$name
     if ([string]::IsNullOrWhiteSpace((Get-Variable -Name $name -ValueOnly)) -and $configured) {
       $configured = [Environment]::ExpandEnvironmentVariables($configured)
@@ -146,6 +148,14 @@ if ($scriptRelative -eq ".." -or $scriptRelative.StartsWith(".." + [System.IO.Pa
 }
 $resolvedRscript = Resolve-Executable -Configured $Rscript -Candidates @("Rscript") -Kind "Rscript"
 $env:DBCODEBOOK_DEFINITION_SKILL_ROOT = Split-Path -Parent $PSScriptRoot
+$resolvedAir = Resolve-Executable -Configured $Air -Candidates @("air") -Kind "Air (see https://posit-dev.github.io/air/installation.html)"
+if ($PreflightOnly) {
+  & $resolvedAir format --no-configuration $resolvedScript
+  if ($LASTEXITCODE -ne 0) { throw "Air could not format the R script." }
+} else {
+  & $resolvedAir format --check --no-configuration $resolvedScript
+  if ($LASTEXITCODE -ne 0) { throw "Air format check failed; format and review the R script before formal execution." }
+}
 
 $staticWatch = [System.Diagnostics.Stopwatch]::StartNew()
 $scriptText = [System.IO.File]::ReadAllText($resolvedScript, [System.Text.Encoding]::UTF8)
@@ -267,39 +277,35 @@ if ($publicSource -match '(?mi)^#\s*raw_data\.csv.*dbcodebook\.cn.*Go to.*$') {
 
 $publicLines = $publicSource -split "`r?`n"
 for ($lineIndex = 0; $lineIndex -lt $publicLines.Count; $lineIndex++) {
-  $recodeMatch = [regex]::Match(
-    $publicLines[$lineIndex],
-    '^\s*#\s*recode\.(chr|num)\(([^)]+)\)\s*$'
-  )
-  if (-not $recodeMatch.Success) {
-    continue
-  }
-  $recodeKind = $recodeMatch.Groups[1].Value
-  $recodeTarget = $recodeMatch.Groups[2].Value.Trim()
-  $nextIndex = $lineIndex + 1
-  while ($nextIndex -lt $publicLines.Count -and [string]::IsNullOrWhiteSpace($publicLines[$nextIndex])) {
-    $nextIndex++
-  }
-  if ($nextIndex -ge $publicLines.Count) {
-    $publicIssues.Add("Orphan recode.$recodeKind marker for $recodeTarget.")
-    continue
-  }
-  $assignmentPattern = '^\s*' + [regex]::Escape($recodeTarget) + '\s*<-'
-  if ($publicLines[$nextIndex] -notmatch $assignmentPattern) {
-    $publicIssues.Add("recode.$recodeKind marker target differs from assignment: $recodeTarget")
-    continue
-  }
-  $blockLines = [System.Collections.Generic.List[string]]::new()
-  for ($blockIndex = $nextIndex; $blockIndex -lt $publicLines.Count; $blockIndex++) {
-    $blockLines.Add($publicLines[$blockIndex])
-    if ($blockIndex -gt $nextIndex -and $publicLines[$blockIndex] -match '^\s*\)\)?\s*$') {
-      break
+  if ($publicLines[$lineIndex] -notmatch '^\s*#\s*recode\.(?:chr|num)\(') { continue }
+  $matchesOnLine = [regex]::Matches($publicLines[$lineIndex], 'recode\.(chr|num)\(([^)]+)\)')
+  foreach ($marker in $matchesOnLine) {
+    $kind = $marker.Groups[1].Value
+    $target = $marker.Groups[2].Value.Trim()
+    if ($matchesOnLine.Count -gt 1) {
+      $publicIssues.Add("Multiple recode markers cannot each immediately precede their own assignment: $target")
+      continue
     }
-  }
-  $blockText = $blockLines -join "`n"
-  $targetCount = [regex]::Matches($blockText, [regex]::Escape($recodeTarget)).Count
-  if ($targetCount -lt 2) {
-    $publicIssues.Add("recode.$recodeKind marker does not recode its own target: $recodeTarget")
+    $nextIndex = $lineIndex + 1
+    while ($nextIndex -lt $publicLines.Count -and [string]::IsNullOrWhiteSpace($publicLines[$nextIndex])) { $nextIndex++ }
+    if ($nextIndex -ge $publicLines.Count) { $publicIssues.Add("Orphan recode.$kind marker for $target."); continue }
+    $assignmentPattern = '^\s*' + [regex]::Escape($target) + '\s*<-'
+    if ($publicLines[$nextIndex] -notmatch $assignmentPattern) {
+      $publicIssues.Add("recode.$kind marker target differs from assignment: $target"); continue
+    }
+    $rhs = $publicLines[$nextIndex] -replace $assignmentPattern, ''
+    $block = ''; $depth = 0; $hasExpression = $false
+    for ($i = $nextIndex; $i -lt $publicLines.Count; $i++) {
+      $line = if ($i -eq $nextIndex) { $rhs } else { $publicLines[$i] }
+      if ($i -gt $nextIndex -and $line -match '^\s*[A-Za-z.][A-Za-z0-9._]*(?:\$[A-Za-z.][A-Za-z0-9._]*)?\s*<-') { break }
+      $masked = [regex]::Replace($line, '(?m)"(?:\\.|[^"\\])*"|''(?:\\.|[^''\\])*''|#.*$', '')
+      $block += "`n" + $masked
+      if (-not [string]::IsNullOrWhiteSpace($masked)) { $hasExpression = $true }
+      $depth += [regex]::Matches($masked, '[({\[]').Count - [regex]::Matches($masked, '[)}\]]').Count
+      if ($hasExpression -and $depth -le 0) { break }
+    }
+    $targetPattern = '(?<![A-Za-z0-9._$])' + [regex]::Escape($target) + '(?![A-Za-z0-9._])'
+    if ($block -notmatch $targetPattern) { $publicIssues.Add("recode.$kind marker does not recode its own target: $target") }
   }
 }
 

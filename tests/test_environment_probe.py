@@ -25,13 +25,14 @@ with patch.object(probe.subprocess, "run", return_value=subprocess.CompletedProc
 with tempfile.TemporaryDirectory(prefix="env space_") as temporary:
     root = Path(temporary)
     config = {"paths": {"formal_root": str(root), "process_root": str(root)},
-              "executables": {"python": sys.executable, "rscript": sys.executable}}
+              "executables": {"python": sys.executable, "rscript": sys.executable, "air": sys.executable}}
     with patch.object(probe, "command_probe", return_value="ready") as commands:
         result = probe.check_environment(config, "local", "chrome")
         assert result["ok"], result
-        assert [c["name"] for c in result["checks"]] == ["python", "formal_root", "process_root", "r_runtime"]
-        assert len(commands.call_args_list) == 2
-        r_command = commands.call_args_list[1].args[0]
+        assert [c["name"] for c in result["checks"]] == ["python", "air", "formal_root", "process_root", "r_runtime"]
+        assert len(commands.call_args_list) == 3
+        assert commands.call_args_list[1].args[0][-1] == "--version"
+        r_command = commands.call_args_list[2].args[0]
         assert "--encoding=UTF-8" in r_command
         assert not Path(r_command[-1]).exists()  # Temporary probe cleaned up.
 
@@ -53,7 +54,7 @@ with tempfile.TemporaryDirectory(prefix="env space_") as temporary:
 
     missing = {**config, "paths": {}, "executables": {"python": str(root / "absent"), "rscript": str(root / "absent-R")}}
     result = probe.check_environment(missing, "local", "chrome")
-    assert len([c for c in result["checks"] if not c["ok"]]) == 4, result
+    assert len([c for c in result["checks"] if not c["ok"]]) == 5, result
     portable = root / "portable browser.exe"
     portable.touch()
     assert probe.browser_path("msedge", portable) == str(portable.resolve())

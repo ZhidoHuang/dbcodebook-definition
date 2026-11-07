@@ -45,11 +45,11 @@ base = """# 示例 — 行动能力（Mobility）
 
 #### 定义逻辑
 
-① 保留当期回答，来源如下。
+① 胰岛素 <P75 记为 [0]，来源如下。
 
 | 波次 | 数据变量 | 备注 |
 | --- | :---: | ---: |
-| Wave 1 | `w01C205` | 原值 [1] |
+| Wave 1 | `w01C205` | <39 或 >178、>=2、≤3，原值 [1] 与 [<5]、[>=5] |
 | Wave 2 | `w02C205` | A\\|B |
 
 ② 条件公式为 `x<y`；按已定条件赋值。
@@ -126,9 +126,13 @@ for (path in paths) {
             assert len(list(tables[0].find(lambda e: e.tag == "td"))) == 6
             assert "<code>w01C205</code>" in rendered and "<code>x|y</code>" in rendered
             assert "<code>x&lt;y</code>" in rendered and "text-align:center" in rendered
+            assert "&lt;P75" in rendered and "&lt;39" in rendered and "&gt;178" in rendered
+            assert "&gt;=2" in rendered and "≤3" in rendered and "<u>[0]</u>" in rendered and "<u>[&lt;5]</u>" in rendered and "<u>[&gt;=5]</u>" in rendered
             markers = list(root.find(lambda e: e.attrs.get("class") == "summary-insight-number"))
             assert [m.text() for m in markers] == [f"{i}." for i in range(1, len(insight_items(read_copy(path)["insight"])) + 1)]
-            for changed in [rendered.replace("w02C205", "w09C205"),
+            for changed in [rendered.replace("&lt;P75", "&lt;P76"),
+                            rendered.replace("&lt;39", "&lt;40"),
+                            rendered.replace("w02C205", "w09C205"),
                             re.sub(r'<span class="summary-insight-number"[^>]*>1\.</span>', "", rendered, count=1),
                             rendered.replace('>1.</span>', '>2.</span>', 1),
                             rendered.replace('>A|B</td>', '>AB</td>', 1),

@@ -194,6 +194,25 @@ def main():
         assert exported_copy['result_labels'] == expected_labels
         assert 'Old_age' in exported_copy['result_labels_not_checked']
         assert 'Old_group' in exported_copy['result_labels_not_checked']
+        # Equal names with distinct units retain separate explicit result identities.
+        glucose_vars = ['Lab_glucose_mmol', 'Lab_glucose_mg']
+        glucose_plan = {'approved_analysis_vars': glucose_vars, 'definition_plan': [
+            {'analysis_var': glucose_vars[0], 'display_name': '血糖', 'value_type': 'numeric', 'unit': 'mmol/L'},
+            {'analysis_var': glucose_vars[1], 'display_name': '血糖', 'value_type': 'numeric', 'unit': 'mg/dL'},
+        ]}
+        glucose_copy = '## 摘要导读\n\n本主题定义①血糖、②血糖。\n\n```tree\n血糖\n' + \
+            '\n'.join(f'- [[result:{v}|血糖]] [[meta:{u}]]' for v, u in zip(glucose_vars, ['mmol/L', 'mg/dL'])) + \
+            '\n```\n\n## Criteria\n\n' + '\n\n'.join(
+                '### ' + v + '\n\n' + '\n\n'.join('#### ' + k + '\n\n' + t for k, t in fields.items())
+                for v in glucose_vars) + '\n\n## 小book提示\n\n' + '本主题没有需要单独提示的主题级边界\n'
+        path.write_text(glucose_copy, encoding='utf-8')
+        result = read_copy(path, glucose_vars, glucose_plan, require_result_identity=True)
+        assert result['result_labels'] == dict(zip(glucose_vars, ['血糖（mmol/L）', '血糖（mg/dL）']))
+        ambiguous = deepcopy(glucose_plan)
+        ambiguous['definition_plan'][1]['unit'] = 'mmol/L'
+        rejects(lambda: read_copy(path, glucose_vars, ambiguous, require_result_identity=True), '唯一区分')
+        path.write_text(glucose_copy.replace('result:Lab_glucose_mg|', 'result:Lab_glucose_mmol|'), encoding='utf-8')
+        rejects(lambda: read_copy(path, glucose_vars, glucose_plan, require_result_identity=True), '最终变量或顺序不一致')
     from definition_display import display_periods, expand_period_tables
     periods = display_periods('SHARE', ['Wave 6'])
     cell = "<td class='dbcb-var-cycle-cell' style='background-color:purple;' title='Wave 6: 14,899'><span class='dbcb-var-cycle-label'>Wave 6</span><span class='dbcb-var-cycle-count'>14,899</span></td>"

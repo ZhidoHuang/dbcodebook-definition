@@ -158,7 +158,7 @@ with tempfile.TemporaryDirectory() as temporary:
     suite.write_text((ROOT / 'tests/run_all.ps1').read_text(encoding='utf-8'), encoding='utf-8')
     leaf = tests / 'test_fixture.py'
     leaf.write_text('print("FIXTURE_PASS")', encoding='utf-8')
-    (tests / 'test_run_r_definition_no_install.ps1').write_text('$global:LASTEXITCODE = 0', encoding='utf-8')
+    (tests / 'test_run_r_definition_no_install.ps1').write_text('param($Rscript, $Python, $Air)\nWrite-Output "FIXTURE_AIR=$Air"\n$global:LASTEXITCODE = 0', encoding='utf-8')
     stub_r = root / 'stub_r.ps1'
     stub_r.write_text('$global:LASTEXITCODE = 0', encoding='utf-8')
     validator = root / 'validator.py'
@@ -168,7 +168,7 @@ with tempfile.TemporaryDirectory() as temporary:
     assert pwsh, 'PowerShell is needed to verify the suite runner'
     def runner(has_r, validate, require=False):
         config.write_text(json.dumps({'executables': {'python': sys.executable,
-                         'rscript': str(stub_r) if has_r else ''}}), encoding='utf-8')
+                         'rscript': str(stub_r) if has_r else '', 'air': 'air.exe'}}), encoding='utf-8')
         driver = root / 'driver.ps1'
         # Deterministic no-R scenario, even if the host has Rscript on PATH.
         command = "function Get-Command { param($Name) if ($Name -eq 'Rscript') { return } Microsoft.PowerShell.Core\\Get-Command $Name }\n"
@@ -186,6 +186,7 @@ with tempfile.TemporaryDirectory() as temporary:
     assert result.returncode != 0 and 'ALL_SKILL_TESTS_PASS' not in result.stdout
     result = runner(True, True, True)
     assert result.returncode == 0 and 'ALL_SKILL_TESTS_PASS' in result.stdout, result.stdout + result.stderr
+    assert f'FIXTURE_AIR={root / "air.exe"}' in result.stdout, result.stdout
     leaf.write_text('raise SystemExit(1)', encoding='utf-8')
     result = runner(True, True, True)
     assert result.returncode != 0 and 'ALL_SKILL_TESTS_PASS' not in result.stdout

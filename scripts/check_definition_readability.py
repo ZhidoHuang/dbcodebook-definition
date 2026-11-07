@@ -324,8 +324,8 @@ def validate_questionnaire_rendering(
         display_text, display_instructions = display_question(item, record)
         question_text = normalized_evidence_text(display_text)
         periods = item.get("periods")
-        if not question_id or not question_text or not isinstance(periods, list):
-            fail(f"{field} lacks question id, question text, or periods")
+        if not (question_id or item.get("question_variable")) or not question_text or not isinstance(periods, list):
+            fail(f"{field} lacks question id or variable, question text, or periods")
         expected_options, expected_jumps = display_answers(item, record)
 
         for period in periods:
@@ -446,7 +446,7 @@ def validate_questionnaire_rendering(
                                          allow_topic_exit=jump.get('presentation') == 'topic_exit')
                            for text in descriptions):
                     fail(f"final note period {period} route differs for {question_id}: {jump['when']} -> {jump['destination']}")
-            rendered_pairs.add((question_id, str(period)))
+            rendered_pairs.add((question_id or item.get("question_variable"), str(period)))
 
     return {
         "status": "QUESTIONNAIRE_RENDERING_PASS",

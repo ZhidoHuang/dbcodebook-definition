@@ -8,7 +8,7 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
-from definition_display import resolve_display_policy
+from definition_display import resolve_display_policy, confirmed_result_label
 from reference_format import reference_items, render_references
 from questionnaire_groups import period_keys, original_options, question_matches, question_identifiers, unverified_question_periods
 from questionnaire_groups import validate_shared_option_rows
@@ -607,11 +607,13 @@ def read_copy(path, expected_vars=None, record=None, *, require_result_identity=
         labels = [item.get("display_name") for item in plan]
         if any(not isinstance(label, str) or not label.strip() for label in labels):
             raise ValueError("definition_plan 每个最终变量都须填写已确认的 display_name")
-        if len({label.strip() for label in labels}) != len(labels):
-            raise ValueError("definition_plan.display_name 须能唯一区分最终结果")
+        display_labels = [confirmed_result_label(item) or label.strip()
+                          for item, label in zip(plan, labels)]
+        if len(set(display_labels)) != len(display_labels):
+            raise ValueError("definition_plan 的名称和单位须能唯一区分最终结果")
     if require_result_identity or any("display_name" in item for item in plan) or any(
             'data-tree-variable=' in block.get("role_html", "") for block in result["summary_blocks"]):
-        from definition_display import result_specs, confirmed_result_label
+        from definition_display import result_specs
         specs, missing_facts = result_specs(record)
         result["result_facts_not_checked"] = missing_facts
         result["result_labels"] = {}
@@ -1039,8 +1041,8 @@ def questionnaire_copy_errors(copy, record):
             errors.append(str(error))
             continue
         text = normalized_evidence_text(display_text)
-        if not question_id or not text or not isinstance(item.get("periods"), list):
-            errors.append(f"{question_id or '?'}: missing question id/text/periods")
+        if not (question_id or item.get("question_variable")) or not text or not isinstance(item.get("periods"), list):
+            errors.append(f"{question_id or '?'}: missing question id or variable/text/periods")
             continue
         for period in item["periods"]:
             label = f"{period}/{question_id}"
