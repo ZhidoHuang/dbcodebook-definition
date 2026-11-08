@@ -5,7 +5,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 
-def browser_code(action, deadline_ms=None):
+def browser_code(action):
     base = action.get('base_url', '')
     url = urlsplit(base)
     if (url.scheme not in ('http', 'https') or not url.netloc or url.username
@@ -30,5 +30,4 @@ def browser_code(action, deadline_ms=None):
     helper = (root / 'website_taxonomy.js').read_text(encoding='utf-8')
     prepare = (root / 'website_prepare.js').read_text(encoding='utf-8')
     return ('async page => {\n' + helper + '\n' + prepare
-            + '\nreturn prepareWebsite(page, ' + json.dumps(action, ensure_ascii=False)
-            + (', ' + str(int(deadline_ms)) if deadline_ms is not None else '') + ');\n}')
+            + '\nreturn prepareWebsite(page, ' + json.dumps(action, ensure_ascii=False) + ');\n}')

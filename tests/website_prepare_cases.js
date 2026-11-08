@@ -6,9 +6,22 @@ const existing = {base_url:origin,create:false,post_id:'132',edit_id:null,identi
 function fake(options={}) {
   const s = {url:origin+'/nodes/post/132/',auth:true,title:'CHARLS — ADL',body:'saved body',
     button:'发布文章', disabled:false, busy:null, attachments:2, ready:true, clicks:[], clickOptions:[], navigations:[],
-    hitPoints:[], measurements:0, loadWaits:0, evaluations:0, identityReads:0, clock:0, viewport:{width:1000,height:600},
+    hitPoints:[], measurements:0, loadWaits:0, evaluations:0, identityReads:0, readyWaits:0,
+    clock:0, viewport:{width:1000,height:600},
     rect:{left:10,top:10,right:110,bottom:50}, border:2, ...options};
   global.window = {__GUIDE_USER__:{authenticated:s.auth},innerWidth:s.viewport.width,innerHeight:s.viewport.height};
+  if (s.articleData !== false) window.post = s.articleData || {id:335,public_url:'/nodes/post/132/',title:s.title};
+  global.AbortSignal = {timeout:ms=>({timeout:ms})};
+  global.fetch = async (url, {signal}) => {
+    s.identityReads++;
+    assert.equal(url,'/nodes/api/posts/335/');
+    assert.ok(s.readyWaits>0,'wait for the editor own load before the fallback read');
+    s.identityTimeout=signal.timeout;
+    s.clock += s.identityDelay || 0;
+    if(s.identityReadError || (s.identityDelay || 0)>=signal.timeout)
+      throw new Error('Editor article identity could not be read: signal timed out');
+    return {ok:true,json:async()=>({post:{id:335,public_url:'/nodes/post/'+(s.actualPostId || '132')+'/'}})};
+  };
   const child = {};
   const editElement = {getBoundingClientRect:()=>s.rect,contains:element=>element===child};
   global.getComputedStyle = () => Object.fromEntries(
@@ -16,6 +29,7 @@ function fake(options={}) {
   const nodes = () => ({'#title':{value:s.title},'#editor':{value:s.body},'#category':{value:'CHARLS'},
     '.btn-publish':{textContent:s.button,disabled:s.disabled,getAttribute:name=>name==='aria-busy'?s.busy:null},'#directory-tag-trigger':{},'#cross-database-topic-trigger':{}});
   global.document = {readyState:'interactive',querySelector:sel=>s.missing?.includes(sel)?null:nodes()[sel],querySelectorAll:()=>Array(s.attachments).fill({}),
+    getElementById:()=>({dataset:{value:'CHARLS'},querySelectorAll:()=>[{dataset:{value:'CHARLS'}}]}),
     elementFromPoint:(x,y)=>{s.hitPoints.push({x,y});return s.obscured?{}:s.hitChild?child:editElement;}};
   const page = {
     url:()=>s.url,
@@ -29,37 +43,43 @@ function fake(options={}) {
       if((s.destroyAuthOnce && s.evaluations===1) || s.pendingNavigation || s.destroyAuthAlways)
         throw new Error('Execution context was destroyed, most likely because of a navigation');
       if(s.expireOn==='auth' && s.evaluations===1) s.clock=25001;
-      if(arg?.editId) {
-        s.identityReads++;
-        if(s.identityReadError)throw new Error('Editor article identity could not be read');
-        return {id:arg.editId,url:'/nodes/post/'+(s.actualPostId || '132')+'/'};
-      }
-      return fn();
+      return fn(arg);
     },
     goto:async (url,options)=>{
       s.navigations.push(url);
       assert.equal(options.waitUntil,'commit');
+      if (s.navigationDelay) {
+        s.clock+=Math.min(s.navigationDelay,options.timeout);
+        if(s.navigationDelay>=options.timeout)throw new Error('page.goto: Timeout exceeded');
+      }
       if(!s.navigationStuck) s.url=url;
       if(s.navigationTimeout || s.navigationStuck) throw new Error('page.goto: Timeout exceeded');
       if(s.navigationError) throw new Error(s.navigationError);
     },
-    locator:sel=>({count:async()=>{if(s.expireOn==='login-count')s.clock=25001;return 1;},waitFor:async()=>{},innerText:async()=>s.title,
+    locator:sel=>({count:async()=>{if(s.expireOn==='login-count')s.clock=25001;return 1;},waitFor:async()=>{},innerText:async()=>s.heading || s.title,
       evaluate:async fn=>{assert.equal(sel,'.edit-post-btn:visible');s.measurements++;const value=fn(editElement);if(s.expireOn==='measurement')s.clock=25001;return value;},
       click:async options=>{
         assert.equal(options.force,undefined);s.clicks.push(sel);s.clickOptions.push(options);
         if(sel==='.edit-post-btn:visible') {
           assert.equal(options.noWaitAfter,true);
-          if(!s.editorNavigationStuck)s.url=origin+'/nodes/edit/335/';
+          if(!s.editorNavigationStuck && !s.editorNavigationDelay)s.url=origin+'/nodes/edit/'+(s.navigationEditId || '335')+'/';
         }
       }}),
     waitForURL:async (fn,options)=>{
       assert.equal(options.waitUntil,'commit');
+      if (s.editorNavigationDelay) {
+        s.clock+=Math.min(s.editorNavigationDelay,options.timeout);
+        if(s.editorNavigationDelay>=options.timeout)throw new Error('page.waitForURL: Timeout exceeded');
+        s.url=origin+'/nodes/edit/335/';
+      }
       if(s.editorNavigationTimeout || s.editorNavigationStuck)throw new Error('page.waitForURL: Timeout exceeded');
       assert.ok(fn(new URL(s.url)));
     },
-    waitForFunction:async(fn,arg)=>{
+    waitForFunction:async(fn,arg,options)=>{
       if(arg===null) {s.pendingNavigation=false;assert.ok(fn());return;}
       // Simulate delayed editor population; a visible input alone is insufficient.
+      s.readyWaits++;
+      if(s.readyDelay) {s.clock+=s.readyDelay;if(s.readyDelay>=options.timeout)throw new Error('editor timeout');}
       if(s.ready) s.button=arg?'发布文章':'更新文章';
       if(!fn(arg))throw new Error('editor timeout');
     }
@@ -74,7 +94,7 @@ async function run(action,opts,status) {
   let result;try {result=await prepareWebsite(page,action);} finally {Date.now=clock;}
   assert.equal(result.status,status,JSON.stringify(result));caseCount++;return {result,s};
 }
-(async()=>{
+if (require.main === module) (async()=>{
   let r=await run(existing,{},'WEBSITE_EDITOR_READY');
   assert.equal(r.result.edit_id,'335');assert.deepEqual(r.s.clicks,['.edit-post-btn:visible']);
   assert.equal(r.result.body_length,10);
@@ -105,6 +125,41 @@ async function run(action,opts,status) {
   assert.deepEqual(r.s.clicks,[]);assert.deepEqual(r.s.navigations,[]);
   r=await run({...existing,edit_id:'335'},{url:origin+'/nodes/edit/335/',identityReadError:true},'WEBSITE_PREPARE_INCOMPLETE');
   assert.equal(r.result.phase,'editor_identity');assert.deepEqual(r.s.clicks,[]);assert.deepEqual(r.s.navigations,[]);
+  r=await run({...existing,edit_id:'335'},{url:origin+'/nodes/edit/335/',identityDelay:6500},'WEBSITE_EDITOR_READY');
+  assert.equal(r.s.identityReads,1);assert.equal(r.result.phase_timings_ms.editor_identity,6500);
+  r=await run({...existing,edit_id:'335'},{url:origin+'/nodes/edit/335/',readyDelay:6000,identityDelay:6500},'WEBSITE_EDITOR_READY');
+  assert.equal(r.s.identityTimeout,54000);assert.equal(r.result.preparation_elapsed_ms,12500);
+  r=await run({...existing,edit_id:'335'},{url:origin+'/nodes/edit/335/',identityDelay:61000},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.equal(r.result.phase,'editor_identity');assert.deepEqual(r.s.navigations,[]);
+  r=await run({...existing,edit_id:'335'},{url:origin+'/nodes/edit/335/',ready:false},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.equal(r.result.phase,'editor');assert.equal(r.s.identityReads,0);
+  r=await run(existing,{articleData:{id:335,public_url:'/nodes/post/999/',title:'CHARLS — ADL'}},'ARTICLE_IDENTITY_MISMATCH');
+  assert.deepEqual(r.s.clicks,[]);
+  r=await run(existing,{heading:'CHARLS — ADL35\n2 变量'},'WEBSITE_EDITOR_READY');
+  assert.equal(r.s.identityReads,0);
+  r=await run(existing,{articleData:{id:335,public_url:'/nodes/post/132/',title:'CHARLS — ADL incorrect'}},'ARTICLE_IDENTITY_MISMATCH');
+  assert.deepEqual(r.s.clicks,[]);
+  r=await run(existing,{navigationEditId:'336'},'EDITOR_IDENTITY_MISMATCH');
+  assert.equal(r.s.clicks.length,1);
+  r=await run(existing,{articleData:false},'WEBSITE_EDITOR_READY');
+  assert.equal(r.s.clicks.length,1);
+  r=await run(existing,{url:origin+'/',navigationDelay:6500},'WEBSITE_EDITOR_READY');
+  assert.equal(r.result.phase_timings_ms.article,6500);
+  r=await run(existing,{editorNavigationDelay:6500},'WEBSITE_EDITOR_READY');
+  assert.equal(r.result.phase_timings_ms.open_editor,6500);
+  r=await run(existing,{editorNavigationDelay:6500,readyDelay:38000},'WEBSITE_EDITOR_READY');
+  assert.equal(r.result.phase_timings_ms.editor,38000);assert.equal(r.s.identityReads,0);
+  {
+    const {page,s}=fake({editorNavigationStuck:true});
+    const first=await prepareWebsite(page,existing);
+    assert.equal(first.status,'WEBSITE_PREPARE_INCOMPLETE');
+    assert.equal(first.phase,'open_editor');
+    s.url=origin+'/nodes/edit/335/';s.identityReadError=true;
+    const resumed=await prepareWebsite(page,{...existing,edit_id:'335'});
+    assert.equal(resumed.status,'WEBSITE_EDITOR_READY');
+    assert.equal(s.identityReads,0,'late navigation retains the verified detail-page identity');
+    assert.equal(s.clicks.length,1,'resuming must not click Edit again');
+  }
   const receipt = (post='132', edit='335', target='task') => ({scope:{kind:'website-prepare'},state:'completed',tab_id:target,
     result:{ok:true,status:'WEBSITE_EDITOR_READY',authenticated:true,create:false,post_id:post,edit_id:edit,
       url:origin+'/nodes/edit/'+edit+'/',title:'CHARLS — ADL',tab_id:target}});
@@ -176,3 +231,4 @@ async function run(action,opts,status) {
   await run(create,{url:origin+'/nodes/edit/',title:'',body:'',attachments:1},'NONEMPTY_DRAFT');
   console.log('website preparation: '+caseCount+' browser-state cases passed; no write methods available');
 })().catch(e=>{console.error(e);process.exitCode=1;});
+module.exports = {fake};

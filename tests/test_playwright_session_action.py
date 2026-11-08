@@ -182,6 +182,7 @@ def exercise_prepare_python_receipt(root):
         code_path = root / 'prepare-result.browser.js'
         calls = []
         def code(self, code, *, receipt_id, expires_at_ms, recovery_url):
+            assert self.operation_timeout == 125, 'binding, navigation and editor loading have separate bounded budgets'
             self.calls.append((receipt_id, expires_at_ms, recovery_url))
             self.code_path.with_suffix('.receipt.json').write_text(json.dumps({
                 'receipt_id':receipt_id, 'tab_id':self.tab_id, 'scope':self.receipt_scope,
@@ -210,6 +211,26 @@ def exercise_prepare_python_receipt(root):
     later = run_website_prepare(session, action, output)
     assert later['operation_completed'] and session.calls[2][0]!=session.calls[0][0]
     assert session.calls[0][2]=='http://localhost:8000/nodes/post/132/'
+
+    # Execute the actual generated page helper after binding used almost all
+    # its dispatch allowance. The editor still gets its own preparation budget.
+    class SlowBindingSession(FakeSession):
+        def code(self, code, *, receipt_id, expires_at_ms, recovery_url):
+            assert self.operation_timeout == 125
+            script = root / 'prepare-after-slow-binding.cjs'
+            script.write_text("const assert=require('node:assert/strict');\n"
+                + "const {fake}=require(" + json.dumps(str(Path(__file__).with_name('website_prepare_cases.js'))) + ");\n"
+                + "const {page,s}=fake({clock:" + str(expires_at_ms-300) + ",readyDelay:6000});\n"
+                + "Date.now=()=>s.clock;\n(async()=>{const result=await (" + code + ")(page);"
+                + "assert.equal(result.status,'WEBSITE_EDITOR_READY',JSON.stringify(result));"
+                + "assert.equal(result.preparation_elapsed_ms,6000);"
+                + "assert.equal(s.identityReads,0);"
+                + "})().catch(e=>{console.error(e);process.exitCode=1;});", encoding='utf-8')
+            subprocess.run(['node', str(script)], check=True)
+            return {'ok':True,'status':'WEBSITE_EDITOR_READY'}
+    slow = SlowBindingSession()
+    slow.code_path = root / 'slow-binding.browser.js'
+    assert run_website_prepare(slow, action, root/'slow-binding-result.json')['ok']
 
 
 def exercise_sync_receipts(root):
@@ -680,6 +701,243 @@ function fixture(failLazy, reuse=false) {
             pass
 
 
+def exercise_website_workflow(root):
+    """One entry point preserves the existing gate, receipts and closure boundaries."""
+    import execution_report
+    from types import SimpleNamespace
+    from playwright_session_action import run_website_workflow
+
+    def scenario(name, *, gate_error=False, prepare_result=None, preflight_result=None,
+                 sync_result=None, fail_closure_once=False):
+        case = root / name
+        case.mkdir()
+        intent = case / 'intent.json'
+        intent_data = {'base_url': 'http://localhost:8000', 'post_id': '167', 'create': False}
+        if name not in ('preflight-reentry', 'preflight-wrong-tab'):
+            intent_data['edit_id'] = '366'
+        intent.write_text(json.dumps(intent_data), encoding='utf-8')
+        args = SimpleNamespace(action=intent, out=case / 'workflow.json',
+            formal_dir=case / 'formal', process_dir=case, topic_id='068',
+            topic_name='fixture', database='charls', website_title=None,
+            directory_tag=None, cross_database_topic=None, taxonomy_plan=None,
+            without_data_attachment=False, session='fixture',
+            session_workdir=case, tab_id='fixture-target')
+        calls = []
+        report = {'run_id': 'fixture-run', 'status': 'running', 'stages': []}
+        report_path = case / 'execution_report.json'
+        closure_failures = [fail_closure_once]
+        version = {'permit': 'permit-v1', 'content': 'content-v1', 'attachment': 'attachment-v1'}
+        prepare_observations = []
+        failed_start = [False]
+        run_number = [1]
+        preflight_calls = [0]
+
+        def verify(arguments):
+            if '--start-sync' in arguments:
+                calls.append('start-sync')
+                if name == 'stale-sync-result' and failed_start[0]:
+                    failed_start[0] = False
+                    raise ValueError('fixture failed before start-sync')
+                for stage in report['stages']:
+                    if stage['stage_id'] == 'website_preparation' and stage['status'] == 'running':
+                        stage['status'] = 'completed'
+                report['stages'].append({'stage_id':'website_sync', 'status':'running',
+                                         'attempt':run_number[0], 'started_at':f'fixture-time-{run_number[0]}'})
+                return {'ok': True, 'browser_action': {'kind':'sync-action'}}
+            if '--base-url' in arguments:
+                calls.append('preflight-action')
+                return {'ok': True, 'browser_action': {'kind':'preflight-action'}}
+            calls.append('readiness')
+            if gate_error:
+                raise ValueError('readiness refused')
+            return {'ok': True, 'report_sha256': version['permit'],
+                    'artifacts': {'note': version['content'], 'attachment': version['attachment']}}
+
+        def begin(*unused):
+            calls.append('begin-preparation')
+            if report['status'] == 'completed':
+                run_number[0] += 1
+                report['run_id'] = f'fixture-run-{run_number[0]}'
+            report['status'] = 'running'
+            if not any(s['stage_id'] == 'website_preparation' and s['status'] == 'running'
+                       for s in report['stages']):
+                report['stages'].append({'stage_id':'website_preparation', 'status':'running'})
+            report_path.write_text('{}', encoding='utf-8')
+
+        class FakeWorkflowSession:
+            def __init__(self, session, workdir, code_path, config, tab_id):
+                self.tab_id = tab_id
+                self.code_path = code_path
+            def code(self, code):
+                calls.append('browser-preflight')
+                preflight_calls[0] += 1
+                if name in ('preflight-reentry', 'preflight-wrong-tab') and preflight_calls[0] == 1:
+                    return {'ok':False, 'status':'FAILED'}
+                return preflight_result or {'ok': True, 'status':'SYNC_TAB_READY'}
+
+        def prepare(session, action, path):
+            calls.append('prepare-editor')
+            prepare_observations.append((path, session.tab_id, action['post_id']))
+            if name in ('preflight-reentry', 'preflight-wrong-tab') and len(prepare_observations) > 1:
+                return {'ok':False, 'status':'EDITOR_ALREADY_OPEN'}
+            if name in ('preflight-reentry', 'preflight-wrong-tab'):
+                scope = {'kind':'website-prepare', 'action_sha256':hashlib.sha256(
+                    json.dumps(action, sort_keys=True, ensure_ascii=False).encode('utf-8')).hexdigest()}
+                receipt = {'receipt_id':'a' * 32, 'tab_id':session.tab_id, 'scope':scope}
+                path.with_suffix('.browser.receipt.json').write_text(json.dumps(receipt), encoding='utf-8')
+                ready_tab = 'recovered-target' if name == 'preflight-reentry' else session.tab_id
+                return {'ok':True, 'status':'WEBSITE_EDITOR_READY', 'tab_id':ready_tab,
+                        'authenticated':True, 'create':False, 'post_id':'167', 'edit_id':'366',
+                        'title':'fixture', 'url':'http://localhost:8000/nodes/edit/366/',
+                        'receipt_id':'a' * 32, 'operation_completed':True}
+            if name == 'login-retry' and len(prepare_observations) > 1:
+                return {'ok':True, 'status':'WEBSITE_EDITOR_READY', 'tab_id':'fixture-target'}
+            return prepare_result or {'ok':True, 'status':'WEBSITE_EDITOR_READY', 'tab_id':'fixture-target',
+                                      'post_id':'167', 'edit_id':'366',
+                                      'url':'http://localhost:8000/nodes/edit/366/',
+                                      'receipt_id':'original-prepare-receipt'}
+
+        def sync(session, action, preflight):
+            calls.append('run-sync')
+            assert session.tab_id == ('recovered-target' if name == 'preflight-reentry' else 'fixture-target')
+            assert action['kind'] == 'sync-action'
+            assert preflight['kind'] == 'preflight-action'
+            stage = report['stages'][-1]
+            return sync_result or {'ok':True, 'status':'ARTICLE_PAGE_RETURNED',
+                'sync_run_id':report['run_id'], 'sync_attempt':stage['attempt'],
+                'sync_started_at':stage['started_at']}
+
+        def finish_website(namespace):
+            calls.append('finish-website')
+            if closure_failures[0]:
+                closure_failures[0] = False
+                raise ValueError('fixture closure failure')
+            report['stages'][-1]['status'] = 'completed'
+
+        def finish_report(namespace):
+            calls.append('finish-report')
+            report['status'] = 'completed'
+
+        patches = [patch('prepare_website.browser_code', return_value='fixture'),
+                   patch('playwright_session_action.website_verify_ready', side_effect=verify),
+                   patch('playwright_session_action.Session', FakeWorkflowSession),
+                   patch('playwright_session_action.run_website_prepare', side_effect=prepare),
+                   patch('playwright_session_action.build_code', return_value='fixture'),
+                   patch('playwright_session_action.run_sync', side_effect=sync),
+                   patch.object(execution_report, 'paths', return_value=(report_path, case / 'other')),
+                   patch.object(execution_report, 'load', side_effect=lambda path: report),
+                   patch.object(execution_report, 'begin_website_preparation', side_effect=begin),
+                   patch.object(execution_report, 'command_website_finish', side_effect=finish_website),
+                   patch.object(execution_report, 'command_finish', side_effect=finish_report)]
+        from contextlib import ExitStack
+        with ExitStack() as stack:
+            for p in patches:
+                stack.enter_context(p)
+            first = run_website_workflow(args, {})
+            first_calls = list(calls)
+            if name == 'preflight-wrong-tab':
+                receipt_path = case / 'current_website_prepare.browser.receipt.json'
+                receipt = json.loads(receipt_path.read_text(encoding='utf-8'))
+                receipt['tab_id'] = 'different-original-target'
+                receipt_path.write_text(json.dumps(receipt), encoding='utf-8')
+            second = run_website_workflow(args, {})
+            after_second = list(calls)
+            if not gate_error and name == 'success':
+                assert first['status'] == second['status'] == 'WEBSITE_RUN_COMPLETED', (first, second, calls)
+                assert first_calls == ['readiness', 'begin-preparation', 'prepare-editor',
+                    'preflight-action', 'browser-preflight', 'start-sync', 'run-sync',
+                    'finish-website', 'finish-report']
+                assert after_second == first_calls + ['readiness'], 'completed reentry must not repeat any write'
+                assert report['status'] == 'completed'
+                for changed in ('content', 'attachment', 'permit'):
+                    prior_calls = list(calls)
+                    version[changed] += '-new'
+                    fresh = run_website_workflow(args, {})
+                    assert fresh['status'] == 'WEBSITE_RUN_COMPLETED'
+                    assert calls[len(prior_calls):] == ['readiness', 'begin-preparation',
+                        'prepare-editor', 'preflight-action', 'browser-preflight', 'start-sync',
+                        'run-sync', 'finish-website', 'finish-report'], changed
+            elif gate_error:
+                assert first['phase'] == 'readiness' and not first['ok']
+                assert calls == ['readiness', 'readiness'], 'failed gate must stop before browser work'
+            elif name == 'login-retry':
+                assert first['phase'] == 'prepare' and first['result']['status'] == 'LOGIN_REQUIRED'
+                assert second['status'] == 'WEBSITE_RUN_COMPLETED'
+                assert prepare_observations[0] == prepare_observations[1]
+                assert calls.count('start-sync') == calls.count('run-sync') == 1
+            elif name == 'preflight-reentry':
+                assert first['phase'] == 'preflight' and not first['ok']
+                assert second['status'] == 'WEBSITE_RUN_COMPLETED', (first, second, calls)
+                assert len(prepare_observations) == 1, 'verified editor receipt must be reused'
+                assert calls.count('browser-preflight') == 2
+                assert calls.count('start-sync') == calls.count('run-sync') == 1
+            elif name == 'preflight-wrong-tab':
+                assert first['phase'] == 'preflight' and not first['ok']
+                assert second['phase'] == 'prepare' and not second['ok']
+                assert second['result']['status'] == 'EDITOR_ALREADY_OPEN'
+                assert calls.count('browser-preflight') == 1
+                assert 'start-sync' not in calls and 'run-sync' not in calls
+            elif name == 'stale-sync-result':
+                assert first['status'] == second['status'] == 'WEBSITE_RUN_COMPLETED'
+                previous = (case / 'current_website_sync_result.json').read_bytes()
+                version['content'] += '-new'
+                failed_start[0] = True
+                interrupted = run_website_workflow(args, {})
+                assert not interrupted['ok'] and calls.count('run-sync') == 1
+                assert (case / 'current_website_sync_result.json').read_bytes() == previous
+                resumed = run_website_workflow(args, {})
+                assert resumed['status'] == 'WEBSITE_RUN_COMPLETED', (interrupted, resumed, calls)
+                assert calls.count('run-sync') == 2
+                new_result = json.loads((case / 'current_website_sync_result.json').read_text(encoding='utf-8'))
+                old_result = json.loads(previous)
+                assert (new_result['sync_run_id'], new_result['sync_attempt'], new_result['sync_started_at']) != (
+                    old_result['sync_run_id'], old_result['sync_attempt'], old_result['sync_started_at'])
+            elif prepare_result:
+                assert first['phase'] == 'prepare' and not first['ok']
+                assert first_calls == ['readiness', 'begin-preparation', 'prepare-editor']
+                assert after_second == first_calls + ['readiness', 'begin-preparation', 'prepare-editor']
+                assert prepare_observations[0] == prepare_observations[1], 'pending preparation must reuse its receipt path and tab'
+                assert first['result']['receipt_id'] == second['result']['receipt_id']
+                assert 'start-sync' not in calls and 'run-sync' not in calls
+            elif preflight_result:
+                assert first['phase'] == 'preflight' and not first['ok']
+                assert 'start-sync' not in calls and 'run-sync' not in calls
+            elif sync_result:
+                assert first['status'] == second['status'] == 'WEBSITE_RUN_OBSERVATION_REQUIRED'
+                assert after_second == first_calls + ['readiness'] and calls.count('run-sync') == 1
+                assert 'finish-website' not in calls and 'finish-report' not in calls
+                original_output = args.out.read_bytes()
+                original_receipt = (case / 'current_website_sync_result.json').read_bytes()
+                version['content'] += '-new'
+                changed = run_website_workflow(args, {})
+                assert changed['status'] == 'WEBSITE_RUN_OBSERVATION_REQUIRED'
+                assert args.out.read_bytes() == original_output
+                assert (case / 'current_website_sync_result.json').read_bytes() == original_receipt
+                args.out = case / 'different-output.json'
+                other = run_website_workflow(args, {})
+                assert other['status'] == 'WEBSITE_RUN_OBSERVATION_REQUIRED'
+                assert calls.count('run-sync') == calls.count('start-sync') == 1
+                assert (case / 'current_website_sync_result.json').read_bytes() == original_receipt
+            elif fail_closure_once:
+                assert first['status'] == 'WEBSITE_RUN_CLOSURE_REQUIRED'
+                assert second['status'] == 'WEBSITE_RUN_COMPLETED'
+                assert after_second == first_calls + ['readiness', 'finish-website', 'finish-report']
+                assert calls.count('start-sync') == calls.count('run-sync') == 1
+                assert report['status'] == 'completed'
+
+    scenario('success')
+    scenario('gate-denied', gate_error=True)
+    scenario('prepare-pending', prepare_result={'ok':False, 'status':'WEBSITE_PREPARE_PENDING',
+                                                'receipt_id':'original-prepare-receipt'})
+    scenario('login-retry', prepare_result={'ok':False, 'status':'LOGIN_REQUIRED'})
+    scenario('preflight-reentry')
+    scenario('preflight-wrong-tab')
+    scenario('stale-sync-result')
+    scenario('preflight-failed', preflight_result={'ok':False, 'status':'FAILED'})
+    scenario('uncertain-save', sync_result={'ok':False, 'status':'SUBMISSION_UNCERTAIN'})
+    scenario('closure-retry', fail_closure_once=True)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--live-session")
@@ -723,6 +981,7 @@ def main():
         return
     with tempfile.TemporaryDirectory() as folder:
         root = Path(folder)
+        exercise_website_workflow(root)
         action = build_download_browser_action("http://localhost:8000", "charls", "test", 2, root / "attempt.json")
         code = build_code(action, "download", None, root / "download.zip")
         fixture = r'''

@@ -1,8 +1,18 @@
 // Navigate and inspect only. Never fill, upload, delete, or submit.
-async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
-  const deadline = Math.min(Date.now() + 25000, dispatchDeadline);
+async function prepareWebsite(page, action) {
+  const startedAt = Date.now();
+  let deadline = startedAt + 25000;
   let phase = 'login';
-  const fail = (status, extra = {}) => ({ok: false, status, phase, url: page.url(), ...extra});
+  let phaseStartedAt = startedAt;
+  const timings = {};
+  const enter = next => {
+    timings[phase] = (timings[phase] || 0) + Date.now() - phaseStartedAt;
+    phase = next;
+    phaseStartedAt = Date.now();
+  };
+  const timing = () => ({preparation_elapsed_ms: Date.now() - startedAt,
+    phase_timings_ms: {...timings, [phase]: (timings[phase] || 0) + Date.now() - phaseStartedAt}});
+  const fail = (status, extra = {}) => ({ok: false, status, phase, url: page.url(), ...timing(), ...extra});
   const remaining = () => {
     const ms = deadline - Date.now();
     if (ms <= 0) throw new Error('Website preparation deadline exceeded');
@@ -35,7 +45,7 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
   }
   async function navigate(url) {
     try {
-      await page.goto(url, {waitUntil: 'commit', timeout: Math.min(5000, remaining())});
+      await page.goto(url, {waitUntil: 'commit', timeout: remaining()});
     } catch (error) {
       // Navigation may have reached the target even when its event wait timed out.
       // Continue only on that URL; login and page controls are checked below.
@@ -79,32 +89,17 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
     let path = new URL(page.url()).pathname;
     const currentEditor = path.match(editorPath);
     let editId = action.edit_id;
+    let needsEditorIdentity = false;
     if (currentEditor) {
       // Do not leave an editor: it may contain unsaved user work.
       if (action.create ? !!currentEditor[1] : (!editId || currentEditor[1] !== editId))
         return fail('EDITOR_ALREADY_OPEN', {message: 'Keep this editor; supply its verified edit_id or use the task article page.'});
-      if (!action.create) {
-        phase = 'editor_identity';
-        // Use the editor's existing read-only endpoint to verify its public article.
-        if (!knownIdentity(editId)) {
-          const post = await page.evaluate(async ({editId, timeout}) => {
-            const response = await fetch('/nodes/api/posts/' + editId + '/',
-              {signal: AbortSignal.timeout(timeout)});
-            if (!response.ok) throw new Error('Editor article identity could not be read');
-            const data = await response.json();
-            return {id: data.post?.id, url: data.post?.public_url};
-          }, {editId, timeout: Math.min(5000, remaining())});
-          remaining();
-          if (String(post.id) !== editId || typeof post.url !== 'string'
-              || new URL(post.url, action.base_url).href !== action.base_url + '/nodes/post/' + action.post_id + '/')
-            return fail('EDITOR_IDENTITY_MISMATCH');
-        }
-      }
+      needsEditorIdentity = !action.create && !knownIdentity(editId);
     } else if (action.create) {
-      phase = 'open_editor';
+      enter('open_editor');
       await navigate(action.base_url + '/nodes/edit/');
     } else {
-      phase = 'article';
+      enter('article');
       const articlePath = '/nodes/post/' + action.post_id + '/';
       if (path !== articlePath) {
         await navigate(action.base_url + articlePath);
@@ -122,7 +117,24 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
       const edit = page.locator('.edit-post-btn:visible');
       await edit.waitFor({state: 'visible', timeout: remaining()});
       remaining();
-      phase = 'open_editor';
+      // The detail page's server data identifies the button's destination.
+      // Retain the verified mapping even if navigation completes after our wait.
+      const article = await page.evaluate(() => window.post
+        ? {id: window.post.id, url: window.post.public_url, title: window.post.title} : null);
+      remaining();
+      let observedEditId = null;
+      if (article) {
+        observedEditId = String(article.id);
+        if (!/^[1-9][0-9]*$/.test(observedEditId) || typeof article.url !== 'string'
+            || new URL(article.url, action.base_url).href !== action.base_url + articlePath
+            || typeof article.title !== 'string' || !matchesTitle(article.title)
+            || !title.startsWith(article.title.trim()))
+          return fail('ARTICLE_IDENTITY_MISMATCH');
+        if (action.edit_id && observedEditId !== action.edit_id) return fail('EDITOR_IDENTITY_MISMATCH');
+        page[identityKey] = {origin:action.base_url, post_id:action.post_id,
+          edit_id:observedEditId, edit_url:action.base_url + '/nodes/edit/' + observedEditId + '/'};
+      }
+      enter('open_editor');
       const visiblePosition = await edit.evaluate(element => {
         const rect = element.getBoundingClientRect();
         const width = window.innerWidth, height = window.innerHeight;
@@ -153,18 +165,22 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
       const atEditor = url => url.origin === action.base_url && editorPath.test(url.pathname)
         && !!url.pathname.match(editorPath)[1];
       try {
-        await page.waitForURL(atEditor, {timeout: Math.min(5000, remaining()), waitUntil: 'commit'});
+        await page.waitForURL(atEditor, {timeout: remaining(), waitUntil: 'commit'});
       } catch (error) {
         if (!isTimeout(error) || !atEditor(new URL(page.url()))) throw error;
       }
       editId = new URL(page.url()).pathname.match(editorPath)[1];
+      if (observedEditId && editId !== observedEditId) return fail('EDITOR_IDENTITY_MISMATCH');
       if (action.edit_id && editId !== action.edit_id) return fail('EDITOR_IDENTITY_MISMATCH', {edit_id: editId});
       if (page.url() !== action.base_url + '/nodes/edit/' + editId + '/') return fail('EDITOR_IDENTITY_MISMATCH');
       page[identityKey] = {origin:action.base_url, post_id:action.post_id,
         edit_id:editId, edit_url:page.url()};
       remaining();
     }
-    phase = 'editor';
+    // The editor's own article request can take longer than navigation.
+    // Give that load a separate bound instead of retrying a still-loading page.
+    deadline = Date.now() + 60000;
+    enter('editor');
     blocked = await login();
     remaining();
     if (blocked) return blocked;
@@ -201,6 +217,25 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
         message:'Editor readiness was not confirmed; keep the page. No submission was made.'});
     }
     remaining();
+    if (needsEditorIdentity) {
+      // Let the editor finish its own load before a fallback identity request.
+      // Normal article -> editor navigation already has a verified mapping.
+      enter('editor_identity');
+      const post = await page.evaluate(async ({editId, timeout}) => {
+        const response = await fetch('/nodes/api/posts/' + editId + '/',
+          {signal: AbortSignal.timeout(timeout)});
+        if (!response.ok) throw new Error('Editor article identity could not be read');
+        const data = await response.json();
+        return {id: data.post?.id, url: data.post?.public_url};
+      }, {editId, timeout: remaining()});
+      remaining();
+      if (String(post.id) !== editId || typeof post.url !== 'string'
+          || new URL(post.url, action.base_url).href !== action.base_url + '/nodes/post/' + action.post_id + '/')
+        return fail('EDITOR_IDENTITY_MISMATCH');
+      page[identityKey] = {origin:action.base_url, post_id:action.post_id,
+        edit_id:editId, edit_url:page.url()};
+      enter('editor');
+    }
     const state = await page.evaluate(() => ({
       title: document.querySelector('#title').value,
       body_length: document.querySelector('#editor').value.trim().length,
@@ -214,7 +249,7 @@ async function prepareWebsite(page, action, dispatchDeadline = Infinity) {
     const fields = await readWebsiteTaxonomy({playwright: page});
     remaining();
     return {ok: true, status: 'WEBSITE_EDITOR_READY', url: page.url(), authenticated: true,
-      create: action.create, post_id: action.post_id || null, edit_id: editId || null, ...state, fields};
+      create: action.create, post_id: action.post_id || null, edit_id: editId || null, ...state, fields, ...timing()};
   } catch (error) {
     return fail('WEBSITE_PREPARE_INCOMPLETE', {error: String(error), message: 'Keep the page and inspect this failure; no submission was made.'});
   }

@@ -9,9 +9,22 @@
 - 先检查文章身份、正文和附件，提交一次后以返回地址确认结果，随即停止浏览器工作，不再次审页或重开编辑器。
 - 输出为原始同步结果和执行报告，完成后待用户检查。
 
-## Website-Only Commands
+## 完整同步入口
 
-在Skill根目录运行；路径、数据库、文章编号、标题、目录标签及会话参数均来自本任务记录。只保存完整命令结果，不修改其中的载荷。以下为既有文章；新建及改标题的差异见下一节。
+已验收稿的普通同步使用现有浏览器脚本一次完成准备、预检、提交和报告收口。先按本任务填写网站准备动作 JSON；既有文章写 `base_url`、`post_id`、`identity_title_parts`，已在本任务编辑页时再提供已核实的 `edit_id`。新建写 `base_url` 和 `create: true`，不传文章编号。可按原入口提供 `open_login`。
+
+```powershell
+& $Python -X utf8 scripts/playwright_session_action.py --mode website-run --action $WebsitePrepareAction --formal-dir $Formal --process-dir $Process --topic-id $Topic --topic-name $TopicName --database $Database --config $Config --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $WebsiteRunResult
+```
+
+- 更新沿用准备时核实的原题名；明确改标题时加 `--website-title`。新建必须提供已确定的完整 `--website-title`、`--directory-tag` 和 `--cross-database-topic`；已有明确新建或选择计划时可传 `--taxonomy-plan`。标签必须由本任务已核实的当前选项和语义判断确定，不由程序猜选。若必须先读取选项，再按下方单步准备入口处理。
+- 用户明确要求不上传数据表时加 `--without-data-attachment`。流程先核验当前许可，再准备、预检、启动一次同步、保存原始结果并按报告门禁收口；不重新研究、审核或生成成果。
+- 过程目录保留 `current_website_prepare.json`、`current_website_preflight.json`、`current_website_preflight_result.json`、`current_website_action.json` 和 `current_website_sync_result.json`；`--out` 使用独立路径并保留编排状态。成功返回 `WEBSITE_RUN_COMPLETED`。登录、准备、预检或提交不确定时立即停止；查看结果并使用下方固定单步入口观察或恢复，不换输出路径重放提交。已有同次成功回执但尚未收口时，同参数和同一 `--out` 可只完成收口。
+- 尚未进入提交时，解决登录或预检问题后可用同一 `--out` 重新运行；准备动作仍沿用原回执观察未结束的操作。进入提交后先按原回执处理，不自动重放。
+
+## 异常恢复与单步入口
+
+以下入口供异常观察、恢复或需先人工判断标签时使用。在Skill根目录运行；路径、数据库、文章编号、标题、目录标签及会话参数均来自本任务记录。只保存完整命令结果，不修改其中的载荷。以下为既有文章；新建及改标题的差异见下一节。
 
 ### 1. 准备与预检
 

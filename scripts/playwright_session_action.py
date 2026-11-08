@@ -13,6 +13,7 @@ import time
 import uuid
 import zipfile
 import tempfile
+import sys
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from skill_config import load_config, playwright_command, database_url
@@ -186,7 +187,7 @@ def bind_code(code, tab_id, receipt_id=None, expires_at_ms=None, retain_receipt=
       const operation = (async () => { try {
         if (recovered && selected.url() === 'about:blank') {
           try {
-            await selected.goto(recoveryUrl, {waitUntil:'commit', timeout:Math.min(5000, Math.max(1, expiresAt-Date.now()))});
+            await selected.goto(recoveryUrl, {waitUntil:'commit', timeout:Math.max(1, expiresAt-Date.now())});
           } catch (error) {
             if (!/timeout|timed out/i.test(String(error)) || selected.url() !== recoveryUrl) throw error;
           }
@@ -420,14 +421,16 @@ def run_website_prepare(session, action, output_path):
                 'receipt_id': prior['receipt_id'], 'tab_id': prior.get('tab_id'),
                 'message': 'Resume the original preparation action and binding before changing inputs.'}
     receipt_id = prior['receipt_id'] if pending else uuid.uuid4().hex
-    # 35 seconds includes dispatch/binding; the CLI has 5 more seconds to return.
+    # Dispatch/binding expires after 35 seconds. Page preparation has its own
+    # 25 seconds to navigate and 60 for editor loading after binding/recovery;
+    # allow 5 seconds for the CLI to return.
     deadline = prior['expires_at_ms'] if pending else int((time.time() + 35) * 1000)
     session.retain_receipts = True
     session.receipt_scope = scope
-    session.operation_timeout = 40
+    session.operation_timeout = 125
     recovery_url = None if action.get('create') else action['base_url'].rstrip('/') + '/nodes/post/' + str(action['post_id']) + '/'
     try:
-        payload = session.code(browser_code(action, deadline), receipt_id=receipt_id,
+        payload = session.code(browser_code(action), receipt_id=receipt_id,
                                expires_at_ms=deadline, recovery_url=recovery_url)
         payload.update(receipt_id=receipt_id, operation_completed=True)
         return payload
@@ -448,6 +451,189 @@ def run_website_prepare(session, action, output_path):
         return {'ok': False, 'status': 'WEBSITE_PREPARE_PENDING', 'receipt_id': receipt_id,
                 'tab_id': session.tab_id, 'operation_completed': False,
                 'next_action': 'repeat_same_prepare_to_observe', 'error': str(exc)}
+
+
+def website_verify_ready(arguments):
+    """Use the existing publication gate for both verification and action construction."""
+    result = subprocess.run(
+        [sys.executable, '-X', 'utf8', str(Path(__file__).with_name('check_definition_readability.py')),
+         'verify-ready', *arguments], capture_output=True, encoding='utf-8', stdin=subprocess.DEVNULL)
+    if result.returncode:
+        raise ValueError('verify-ready failed: ' + (result.stderr or result.stdout).strip())
+    data = json.loads(result.stdout)
+    if not isinstance(data, dict) or data.get('ok') is not True:
+        raise ValueError('verify-ready did not return a successful result')
+    return data
+
+
+def run_website_workflow(args, config):
+    """Orchestrate the existing website entry points once; preserve every receipt."""
+    import execution_report
+    from prepare_website import browser_code
+
+    process = Path(args.process_dir)
+    output = Path(args.out)
+    intent = read_action(Path(args.action))
+    browser_code(intent)  # Validate the same action used by the existing entry point.
+    create = intent.get('create', False)
+    taxonomy = json.loads(args.taxonomy_plan.read_text(encoding='utf-8-sig')) if args.taxonomy_plan else {}
+    if create and (not args.website_title or not (args.directory_tag or taxonomy.get('directory_tag'))
+                   or not (args.cross_database_topic or taxonomy.get('cross_database_topic'))):
+        raise ValueError('New articles require an explicit title and both confirmed taxonomy choices')
+    files = {name: process / ('current_website_' + filename + '.json') for name, filename in (
+        ('prepare', 'prepare'), ('preflight', 'preflight'), ('preflight_result', 'preflight_result'),
+        ('action', 'action'), ('sync_result', 'sync_result'))}
+    if output.resolve() in {p.resolve() for p in files.values()}:
+        raise ValueError('--out must be separate from the current website receipts')
+    common = ['--formal-dir', str(args.formal_dir), '--process-dir', str(process), '--topic-id', args.topic_id]
+    try:
+        readiness = website_verify_ready(common + (['--without-data-attachment'] if args.without_data_attachment else []))
+        if not readiness.get('report_sha256') or not isinstance(readiness.get('artifacts'), dict):
+            raise ValueError('Current publication permit has no artifact identity')
+    except (ValueError, OSError, RuntimeError, subprocess.TimeoutExpired, SystemExit) as error:
+        failure = {'ok': False, 'status': 'WEBSITE_RUN_STOPPED', 'phase': 'readiness', 'error': str(error)}
+        if not output.exists():
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(failure, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+        return failure
+    choices = {key: str(getattr(args, key) or '') for key in
+               ('formal_dir', 'process_dir', 'topic_id', 'topic_name', 'database', 'website_title',
+                'directory_tag', 'cross_database_topic', 'session', 'session_workdir', 'tab_id')}
+    choices.update(intent=intent, taxonomy=taxonomy, without_data_attachment=args.without_data_attachment,
+                   readiness_report_sha256=readiness['report_sha256'], artifacts=readiness['artifacts'])
+    fingerprint = hashlib.sha256(json.dumps(choices, sort_keys=True, ensure_ascii=False).encode('utf-8')).hexdigest()
+
+    def save(path, value):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+    def summary(status, phase, **extra):
+        value = {'ok': status == 'WEBSITE_RUN_COMPLETED', 'status': status, 'phase': phase,
+                 'fingerprint': fingerprint, 'files': {k: str(v) for k, v in files.items()}, **extra}
+        save(output, value)
+        return value
+
+    def close_success():
+        report_path, _ = execution_report.paths(str(process))
+        report = execution_report.load(report_path)
+        stages = report.get('stages', [])
+        sync_stage = next((s for s in reversed(stages) if s.get('stage_id') == 'website_sync'), None)
+        if not sync_stage or not files['sync_result'].is_file():
+            raise ValueError('Original sync result or matching report stage is unavailable')
+        result = json.loads(files['sync_result'].read_text(encoding='utf-8-sig'))
+        if (result.get('ok') is not True or result.get('status') != 'ARTICLE_PAGE_RETURNED'
+                or result.get('sync_run_id') != report.get('run_id')
+                or result.get('sync_attempt') != sync_stage.get('attempt')
+                or result.get('sync_started_at') != sync_stage.get('started_at')):
+            raise ValueError('Original sync result is not a confirmed success for this report')
+        if sync_stage.get('status') == 'running':
+            execution_report.command_website_finish(argparse.Namespace(process_dir=str(process),
+                result=files['sync_result'], result_json=None))
+            report = execution_report.load(report_path)
+        elif sync_stage.get('status') not in ('completed', 'completed_with_issues'):
+            raise ValueError('The matching sync stage has not completed')
+        if report.get('status') == 'running':
+            status = 'completed_with_issues' if report.get('issues') else 'completed'
+            execution_report.command_finish(argparse.Namespace(process_dir=str(process), status=status,
+                summary=['网站已同步，待用户检查。']))
+        elif report.get('status') not in ('completed', 'completed_with_issues'):
+            raise ValueError('Report is not ready for successful closure')
+        return summary('WEBSITE_RUN_COMPLETED', 'complete', sync_result=str(files['sync_result']))
+
+    report_path, _ = execution_report.paths(str(process))
+    report = execution_report.load(report_path) if report_path.exists() else {}
+    stages = report.get('stages', [])
+    running = {s.get('stage_id') for s in stages if s.get('status') == 'running'} if report.get('status') == 'running' else set()
+    prior = json.loads(output.read_text(encoding='utf-8-sig')) if output.exists() else None
+    resume_preparation = (prior and prior.get('phase') == 'sync' and
+                          'website_preparation' in running and not running.intersection({'website_sync', 'website_closure'}))
+    if prior and prior.get('status') == 'WEBSITE_RUN_COMPLETED' and prior.get('fingerprint') == fingerprint:
+        return prior
+    if prior and prior.get('status') != 'WEBSITE_RUN_COMPLETED' and prior.get('phase') in ('sync', 'closure') and not resume_preparation:
+        sync_stage = next((s for s in reversed(stages) if s.get('stage_id') == 'website_sync'), None)
+        saved = json.loads(files['sync_result'].read_text(encoding='utf-8-sig')) if files['sync_result'].is_file() else {}
+        matches = (sync_stage and saved.get('ok') is True and saved.get('status') == 'ARTICLE_PAGE_RETURNED'
+                   and saved.get('sync_run_id') == report.get('run_id')
+                   and saved.get('sync_attempt') == sync_stage.get('attempt')
+                   and saved.get('sync_started_at') == sync_stage.get('started_at'))
+        if matches and prior.get('fingerprint') == fingerprint:
+            try:
+                return close_success()
+            except (ValueError, OSError, SystemExit) as error:
+                return summary('WEBSITE_RUN_CLOSURE_REQUIRED', 'closure', error=str(error))
+        return {'ok': False, 'status': 'WEBSITE_RUN_OBSERVATION_REQUIRED', 'phase': prior.get('phase'),
+                'message': 'The current submission must be observed; an older result cannot establish its outcome.',
+                'previous_output': str(output)}
+    if running.intersection({'website_sync', 'website_closure'}):
+        return {'ok': False, 'status': 'WEBSITE_RUN_OBSERVATION_REQUIRED', 'phase': 'sync',
+                'message': 'An existing submission or closure must be observed; do not replay it.',
+                'files': {k: str(v) for k, v in files.items()}}
+    try:
+        summary('WEBSITE_RUN_IN_PROGRESS', 'readiness')
+        execution_report.begin_website_preparation(process, args.database, args.topic_id, args.topic_name)
+        summary('WEBSITE_RUN_IN_PROGRESS', 'prepare')
+        session = Session(args.session, args.session_workdir, files['prepare'].with_suffix('.browser.js'), config, args.tab_id)
+        prepared = None
+        receipt_path = session.code_path.with_suffix('.receipt.json')
+        if prior and prior.get('phase') in ('readiness', 'prepare', 'preflight', 'sync') and files['prepare'].is_file() and receipt_path.is_file():
+            candidate = json.loads(files['prepare'].read_text(encoding='utf-8-sig'))
+            receipt = json.loads(receipt_path.read_text(encoding='utf-8-sig'))
+            scope_hash = hashlib.sha256(json.dumps(intent, sort_keys=True, ensure_ascii=False).encode('utf-8')).hexdigest()
+            if (candidate.get('ok') is True and candidate.get('status') == 'WEBSITE_EDITOR_READY'
+                    and candidate.get('operation_completed') is True and candidate.get('receipt_id')
+                    and candidate.get('receipt_id') == receipt.get('receipt_id')
+                    and receipt.get('tab_id') == args.tab_id and candidate.get('tab_id')
+                    and receipt.get('scope') == {'kind': 'website-prepare', 'action_sha256': scope_hash}):
+                prepared = candidate
+        if prepared is None:
+            prepared = run_website_prepare(session, intent, files['prepare'])
+            save(files['prepare'], prepared)
+        if prepared.get('ok') is not True or prepared.get('status') != 'WEBSITE_EDITOR_READY':
+            return summary('WEBSITE_RUN_STOPPED', 'prepare', result=prepared)
+        tab_id = prepared.get('tab_id')
+        if not tab_id:
+            raise ValueError('Website preparation did not return the bound tab identity')
+        verify_args = common + ['--database', args.database, '--topic-name', args.topic_name,
+                                '--base-url', intent['base_url']]
+        if create:
+            verify_args += ['--create']
+        else:
+            verify_args += ['--post-id', str(intent['post_id']), '--website-prepare', str(files['prepare'])]
+        for name, option in (('website_title', '--website-title'), ('directory_tag', '--directory-tag'),
+                             ('cross_database_topic', '--cross-database-topic'), ('taxonomy_plan', '--taxonomy-plan')):
+            if getattr(args, name):
+                verify_args += [option, str(getattr(args, name))]
+        if args.without_data_attachment:
+            verify_args.append('--without-data-attachment')
+        preflight = website_verify_ready(verify_args)
+        save(files['preflight'], preflight)
+        summary('WEBSITE_RUN_IN_PROGRESS', 'preflight', tab_id=tab_id)
+        session = Session(args.session, args.session_workdir, files['preflight_result'].with_suffix('.browser.js'), config, tab_id)
+        session.operation_timeout = 120
+        preflight_result = session.code(build_code(read_action(files['preflight']), 'preflight', None, process / 'unused'))
+        save(files['preflight_result'], preflight_result)
+        if preflight_result.get('ok') is not True or preflight_result.get('status') != 'SYNC_TAB_READY':
+            return summary('WEBSITE_RUN_STOPPED', 'preflight', result=preflight_result, tab_id=tab_id)
+        if args.taxonomy_plan and json.loads(args.taxonomy_plan.read_text(encoding='utf-8-sig')) != taxonomy:
+            raise ValueError('Taxonomy choices changed after preflight')
+        summary('WEBSITE_RUN_IN_PROGRESS', 'sync', tab_id=tab_id)
+        action = website_verify_ready(verify_args + ['--start-sync'])
+        save(files['action'], action)
+        session = Session(args.session, args.session_workdir, files['sync_result'].with_suffix('.browser.js'), config, tab_id)
+        result = run_sync(session, read_action(files['action']), read_action(files['preflight']))
+        save(files['sync_result'], result)
+        if result.get('ok') is not True or result.get('status') != 'ARTICLE_PAGE_RETURNED':
+            return summary('WEBSITE_RUN_OBSERVATION_REQUIRED', 'sync', result=result, tab_id=tab_id)
+        summary('WEBSITE_RUN_IN_PROGRESS', 'closure', tab_id=tab_id)
+        return close_success()
+    except (ValueError, OSError, RuntimeError, subprocess.TimeoutExpired, SystemExit) as error:
+        phase = 'unknown'
+        if output.exists():
+            phase = json.loads(output.read_text(encoding='utf-8-sig')).get('phase', phase)
+        status = 'WEBSITE_RUN_OBSERVATION_REQUIRED' if phase == 'sync' else 'WEBSITE_RUN_STOPPED'
+        if phase == 'closure':
+            status = 'WEBSITE_RUN_CLOSURE_REQUIRED'
+        return summary(status, phase, error=str(error))
 
 
 def validate_sync_files(payload):
@@ -825,7 +1011,7 @@ def main() -> None:
     actions = parser.add_mutually_exclusive_group()
     actions.add_argument("--action", type=Path)
     actions.add_argument("--action-json", help="source-read: inline action JSON without an action file")
-    parser.add_argument("--mode", choices=["bind", "tab-code", "source-read", "website-prepare", "taxonomy-options", "login-status", "login-open", "select", "download", "download-observe", "preflight", "sync", "sync-observe", "sync-confirm"], required=True)
+    parser.add_argument("--mode", choices=["bind", "tab-code", "source-read", "website-prepare", "website-run", "taxonomy-options", "login-status", "login-open", "select", "download", "download-observe", "preflight", "sync", "sync-observe", "sync-confirm"], required=True)
     parser.add_argument("--database", choices=['charls', 'elsa', 'hrs', 'share', 'chns', 'knhanes', 'klosa', 'mhas', 'nhanes', 'nhanesiii', 'nhis'])
     parser.add_argument('--dataset-id')
     parser.add_argument("--script", type=Path, help="tab-code: async page function restricted to the bound page")
@@ -838,6 +1024,15 @@ def main() -> None:
     parser.add_argument("--session-workdir", required=True, type=Path)
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--config", type=Path)
+    parser.add_argument('--formal-dir', type=Path)
+    parser.add_argument('--process-dir', type=Path)
+    parser.add_argument('--topic-id')
+    parser.add_argument('--topic-name')
+    parser.add_argument('--website-title')
+    parser.add_argument('--directory-tag')
+    parser.add_argument('--cross-database-topic')
+    parser.add_argument('--taxonomy-plan', type=Path)
+    parser.add_argument('--without-data-attachment', action='store_true')
     parser.add_argument('--language', choices=['en', 'ko'])
     args = parser.parse_args()
     if args.action_json is not None and args.mode != 'source-read':
@@ -845,6 +1040,16 @@ def main() -> None:
     config = load_config(args.config)
     command = playwright_command(config)
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    if args.mode == 'website-run':
+        if not all((args.action, args.tab_id, args.database, args.formal_dir, args.process_dir,
+                    args.topic_id, args.topic_name)):
+            parser.error('website-run requires --action, --tab-id, --database, --formal-dir, --process-dir, --topic-id and --topic-name')
+        try:
+            payload = run_website_workflow(args, config)
+        except (ValueError, OSError, json.JSONDecodeError, SystemExit) as error:
+            payload = {'ok': False, 'status': 'WEBSITE_RUN_STOPPED', 'error': str(error)}
+        print(json.dumps(payload, ensure_ascii=False))
+        raise SystemExit(0 if payload.get('ok') else 1)
     if args.mode == 'download-observe':
         if not args.tab_id or not args.action:
             parser.error('download-observe requires the original --action and --tab-id')

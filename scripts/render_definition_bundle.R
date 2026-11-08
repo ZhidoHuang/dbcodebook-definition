@@ -97,9 +97,10 @@ validate_nhanes_render_inputs <- function(frames, cycle_order) {
     if (!all(keys %in% names(frame)) || !is.character(frame$YEAR) ||
         !(is.character(frame$SEQN) || is.numeric(frame$SEQN))) stop("NHANES requires numeric or character SEQN and character YEAR.")
     if (is.numeric(frame$SEQN) && any(!is.finite(frame$SEQN) | frame$SEQN < 0 | frame$SEQN != floor(frame$SEQN))) stop("Invalid NHANES SEQN.")
-    if (anyNA(frame[keys]) || any(!grepl("^[0-9]+(\\.0+)?$", frame$SEQN)) ||
+    if (anyNA(frame[keys]) ||
+        (is.character(frame$SEQN) && any(!grepl("^[0-9]+(\\.0+)?$", frame$SEQN))) ||
         any(!frame$YEAR %in% cycle_order)) stop("Invalid NHANES person-period identity.")
-    normalized <- sub("\\.0+$", "", frame$SEQN)
+    normalized <- if (is.numeric(frame$SEQN)) sprintf("%.0f", frame$SEQN) else sub("\\.0+$", "", frame$SEQN)
     normalized <- sub("^0+", "", normalized)
     if (anyDuplicated(data.frame(SEQN=normalized, YEAR=frame$YEAR))) stop("Duplicate NHANES person-period.")
   }
