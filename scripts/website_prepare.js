@@ -45,11 +45,13 @@ async function prepareWebsite(page, action) {
   }
   async function navigate(url) {
     try {
-      await page.goto(url, {waitUntil: 'commit', timeout: remaining()});
+      await page.goto(url, {waitUntil: 'commit', timeout: Math.min(25000, remaining())});
     } catch (error) {
-      // Navigation may have reached the target even when its event wait timed out.
-      // Continue only on that URL; login and page controls are checked below.
-      if (!isTimeout(error) || page.url() !== url) throw error;
+      if (!isTimeout(error)) throw error;
+      // The original navigation can finish after Playwright's first wait.
+      // Observe it on the same page; never dispatch a second navigation.
+      if (page.url() !== url)
+        await page.waitForURL(actual => actual.href === url, {timeout: remaining(), waitUntil: 'commit'});
     }
     remaining();
   }
@@ -97,9 +99,11 @@ async function prepareWebsite(page, action) {
       needsEditorIdentity = !action.create && !knownIdentity(editId);
     } else if (action.create) {
       enter('open_editor');
+      deadline = Date.now() + 60000;
       await navigate(action.base_url + '/nodes/edit/');
     } else {
       enter('article');
+      deadline = Date.now() + 60000;
       const articlePath = '/nodes/post/' + action.post_id + '/';
       if (path !== articlePath) {
         await navigate(action.base_url + articlePath);
@@ -135,6 +139,7 @@ async function prepareWebsite(page, action) {
           edit_id:observedEditId, edit_url:action.base_url + '/nodes/edit/' + observedEditId + '/'};
       }
       enter('open_editor');
+      deadline = Date.now() + 60000;
       const visiblePosition = await edit.evaluate(element => {
         const rect = element.getBoundingClientRect();
         const width = window.innerWidth, height = window.innerHeight;
@@ -165,9 +170,11 @@ async function prepareWebsite(page, action) {
       const atEditor = url => url.origin === action.base_url && editorPath.test(url.pathname)
         && !!url.pathname.match(editorPath)[1];
       try {
-        await page.waitForURL(atEditor, {timeout: remaining(), waitUntil: 'commit'});
+        await page.waitForURL(atEditor, {timeout: Math.min(25000, remaining()), waitUntil: 'commit'});
       } catch (error) {
-        if (!isTimeout(error) || !atEditor(new URL(page.url()))) throw error;
+        if (!isTimeout(error)) throw error;
+        if (!atEditor(new URL(page.url())))
+          await page.waitForURL(atEditor, {timeout: remaining(), waitUntil: 'commit'});
       }
       editId = new URL(page.url()).pathname.match(editorPath)[1];
       if (observedEditId && editId !== observedEditId) return fail('EDITOR_IDENTITY_MISMATCH');

@@ -182,7 +182,7 @@ def exercise_prepare_python_receipt(root):
         code_path = root / 'prepare-result.browser.js'
         calls = []
         def code(self, code, *, receipt_id, expires_at_ms, recovery_url):
-            assert self.operation_timeout == 125, 'binding, navigation and editor loading have separate bounded budgets'
+            assert self.operation_timeout == 245, 'binding, navigation and editor loading have separate bounded budgets'
             self.calls.append((receipt_id, expires_at_ms, recovery_url))
             self.code_path.with_suffix('.receipt.json').write_text(json.dumps({
                 'receipt_id':receipt_id, 'tab_id':self.tab_id, 'scope':self.receipt_scope,
@@ -216,7 +216,7 @@ def exercise_prepare_python_receipt(root):
     # its dispatch allowance. The editor still gets its own preparation budget.
     class SlowBindingSession(FakeSession):
         def code(self, code, *, receipt_id, expires_at_ms, recovery_url):
-            assert self.operation_timeout == 125
+            assert self.operation_timeout == 245
             script = root / 'prepare-after-slow-binding.cjs'
             script.write_text("const assert=require('node:assert/strict');\n"
                 + "const {fake}=require(" + json.dumps(str(Path(__file__).with_name('website_prepare_cases.js'))) + ");\n"
@@ -299,6 +299,8 @@ const page = {context:() => context, isClosed:() => false, imports:0,
 
 
 def exercise_sync_observation(root, action, failed_result):
+    action = copy.deepcopy(action)
+    action['payload'].update(edit_url='http://localhost/nodes/edit/', create=True)
     scripts = []
     class Observer:
         tab_id = "fixture-target"
@@ -426,7 +428,8 @@ def exercise_sync_observation(root, action, failed_result):
 const assert = require('node:assert/strict');
 const timers = [];
 const realTimer = globalThis.setTimeout;
-globalThis.setTimeout = (fn, ms) => {timers.push(ms);return realTimer(fn, ms===10000 ? 1 : ms);};
+globalThis.setTimeout = (fn, ms) => {timers.push(ms);return realTimer(fn, ms<=10000 ? 1 : ms);};
+let fakeNow=0; Date.now=()=>fakeNow;
 const receipts = new Map();
 const context = {[Symbol.for('dbCodeBook.syncReceipts')]:receipts};
 const forbidden = () => {throw Error('Observation attempted a browser mutation');};
@@ -453,7 +456,7 @@ const observe = OBSERVER;
   assert.equal((await observe(page)).error, 'late import failed');
   receipt.submission_requested=true;
   page.url=()=> 'http://localhost/nodes/post/local-123/';
-  page.locator=selector=>{assert.equal(selector,'#post-data');return {count:async()=>1,evaluate:async read=>read({textContent:JSON.stringify({id:123,title:'Late fixture',documents:[{name:'fixture.xlsx'}]})})};};
+  page.locator=selector=>{assert.equal(selector,'#post-data');return {waitFor:async()=>{},count:async()=>1,evaluate:async read=>read({textContent:JSON.stringify({id:123,title:'Late fixture',documents:[{name:'fixture.xlsx'}]})})};};
   const late=await observe(page);assert.equal(late.returned_post.id,123);assert.equal(late.url,page.url());
   assert.deepEqual(late.returned_post.documents,['fixture.xlsx']);
   receipt.tab_id='another-target';
@@ -465,6 +468,44 @@ const observe = OBSERVER;
        .replace("RECEIPT", json.dumps(failed_result['observation']['receipt_id']))
        .replace("SCOPE", json.dumps(failed_result['observation']['scope'])), encoding="utf-8")
     subprocess.run(["node", str(script)], check=True)
+
+    # Exercise the generated observer itself against the observed failure mode:
+    # the original submit receipt failed, with no response, and its navigation
+    # arrives 35 s later. The fake clock avoids real waiting and forbids writes.
+    class LateNavigationObserver:
+        tab_id = 'fixture-target'
+        def code(self, code):
+            js = root / 'late-observation.cjs'
+            source = r"""
+const assert=require('node:assert/strict');
+let clock=0, address='http://localhost/nodes/edit/', waits=0, reads=0;
+Date.now=()=>clock;
+const forbidden=()=>{throw Error('Observation attempted a browser mutation');};
+const receipt={tab_id:'fixture-target',scope:SCOPE,state:'failed',error:'waitForURL timeout',
+  submission_requested:true,verified:{edit_url_verified:true,title_verified:true,
+    body_verified:true,attachment_order_verified:true}};
+const context={[Symbol.for('dbCodeBook.syncReceipts')]:new Map([[RECEIPT,receipt]])};
+const page={context:()=>context,url:()=>address,goto:forbidden,reload:forbidden,
+  waitForURL:async (predicate,options)=>{waits++;assert.equal(options.waitUntil,'commit');
+    assert.ok(options.timeout>=35000);clock+=35000;address='http://localhost/nodes/post/local-123/';
+    assert.ok(predicate(new URL(address)));},
+  locator:selector=>{assert.equal(selector,'#post-data');return {
+    waitFor:async options=>{assert.equal(options.state,'attached');},count:async()=>1,
+    evaluate:async read=>{reads++;return read({textContent:JSON.stringify({id:123,title:'Late fixture',
+      documents:[{name:'fixture.xlsx'}]})});}};}};
+(async()=>{const result=await (OBSERVE)(page);assert.equal(waits,1);assert.equal(reads,1);
+  assert.equal(clock,35000);assert.equal(receipt.state,'failed');assert.equal(receipt.result,undefined);
+  process.stdout.write(JSON.stringify(result));})().catch(e=>{console.error(e);process.exitCode=1;});
+"""
+            js.write_text(source.replace('OBSERVE', code)
+                .replace('RECEIPT',json.dumps(late_failed['observation']['receipt_id']))
+                .replace('SCOPE',json.dumps(late_failed['observation']['scope'])), encoding='utf-8')
+            completed = subprocess.run(['node', str(js)], check=True, capture_output=True, text=True)
+            return json.loads(completed.stdout)
+    with patch('playwright_session_action.validate_sync_files'):
+        late = observe_sync(LateNavigationObserver(), late_action, late_failed, wait_ms=60000)
+    assert late['ok'] and late['status'] == 'ARTICLE_PAGE_RETURNED'
+    assert late['original_operation_state'] == 'failed' and late['late_navigation_observed']
 
 
 def exercise_body_import(root):
@@ -803,9 +844,27 @@ def exercise_website_workflow(root):
             assert action['kind'] == 'sync-action'
             assert preflight['kind'] == 'preflight-action'
             stage = report['stages'][-1]
-            return sync_result or {'ok':True, 'status':'ARTICLE_PAGE_RETURNED',
+            if name in ('late-save', 'uncertain-save', 'rejected-save', 'manual-closure', 'manual-closure-changed') and not (
+                    name.startswith('manual-closure') and calls.count('run-sync') > 1):
+                return {'ok':False, 'status':'SUBMISSION_UNCERTAIN',
+                        'sync_run_id':report['run_id'], 'sync_attempt':stage['attempt'],
+                        'sync_started_at':stage['started_at'],
+                        'observation':{'receipt_id':'a' * 32, 'tab_id':session.tab_id}}
+            return (None if name.startswith('manual-closure') else sync_result) or {'ok':True, 'status':'ARTICLE_PAGE_RETURNED',
                 'sync_run_id':report['run_id'], 'sync_attempt':stage['attempt'],
                 'sync_started_at':stage['started_at']}
+
+        def observe(session, action, failed, wait_ms=0):
+            calls.append('observe-original')
+            assert wait_ms > 0
+            assert failed['status'] == 'SUBMISSION_UNCERTAIN'
+            assert failed['observation']['receipt_id'] == 'a' * 32
+            if name == 'late-save':
+                return {**failed, 'ok':True, 'status':'ARTICLE_PAGE_RETURNED',
+                        'recovered_original_result':True}
+            if name == 'rejected-save':
+                return {**failed, 'ok':False, 'status':'SYNC_SAVE_REJECTED', 'http_status':400}
+            return {**failed, 'ok':False, 'status':'SYNC_STILL_RUNNING', 'read_only':True}
 
         def finish_website(namespace):
             calls.append('finish-website')
@@ -824,6 +883,8 @@ def exercise_website_workflow(root):
                    patch('playwright_session_action.run_website_prepare', side_effect=prepare),
                    patch('playwright_session_action.build_code', return_value='fixture'),
                    patch('playwright_session_action.run_sync', side_effect=sync),
+                   patch('playwright_session_action.observe_sync', side_effect=observe),
+                   patch('playwright_session_action.record_sync_resolution'),
                    patch.object(execution_report, 'paths', return_value=(report_path, case / 'other')),
                    patch.object(execution_report, 'load', side_effect=lambda path: report),
                    patch.object(execution_report, 'begin_website_preparation', side_effect=begin),
@@ -892,6 +953,42 @@ def exercise_website_workflow(root):
                 old_result = json.loads(previous)
                 assert (new_result['sync_run_id'], new_result['sync_attempt'], new_result['sync_started_at']) != (
                     old_result['sync_run_id'], old_result['sync_attempt'], old_result['sync_started_at'])
+            elif name == 'late-save':
+                assert first['status'] == second['status'] == 'WEBSITE_RUN_COMPLETED', (first, second, calls)
+                assert calls.count('run-sync') == calls.count('observe-original') == 1
+                assert calls.count('finish-website') == calls.count('finish-report') == 1
+                assert first_calls.index('run-sync') < first_calls.index('observe-original') < first_calls.index('finish-website')
+                original = json.loads((case / 'current_website_sync_result.json').read_text(encoding='utf-8'))
+                observed = json.loads((case / 'current_website_observation.json').read_text(encoding='utf-8'))
+                assert original['status'] == 'SUBMISSION_UNCERTAIN'
+                assert observed['status'] == 'ARTICLE_PAGE_RETURNED'
+            elif name in ('manual-closure', 'manual-closure-changed'):
+                assert first['status'] == second['status'] == 'WEBSITE_RUN_OBSERVATION_REQUIRED'
+                assert calls.count('run-sync') == 1
+                # A manual, independently verified standard result for this exact attempt
+                # closes the report; the workflow must recover without resubmission.
+                stage = report['stages'][-1]
+                manual = {'ok':True, 'status':'ARTICLE_PAGE_RETURNED',
+                          'sync_run_id':report['run_id'], 'sync_attempt':stage['attempt'],
+                          'sync_started_at':stage['started_at']}
+                standard = case / 'website_sync_result.json'
+                standard.write_text(json.dumps({**manual, 'sync_attempt':999}), encoding='utf-8')
+                stage['status'] = 'completed'
+                report['status'] = 'completed'
+                mismatch = run_website_workflow(args, {})
+                assert mismatch['status'] == 'WEBSITE_RUN_OBSERVATION_REQUIRED'
+                assert calls.count('run-sync') == 1, 'an older successful attempt cannot close this attempt'
+                standard.write_text(json.dumps(manual), encoding='utf-8')
+                if name == 'manual-closure-changed':
+                    version['content'] += '-new'
+                recovered = run_website_workflow(args, {})
+                assert recovered['status'] == 'WEBSITE_RUN_COMPLETED', recovered
+                if name == 'manual-closure':
+                    assert calls.count('run-sync') == 1
+                    version['content'] += '-new'
+                    fresh = run_website_workflow(args, {})
+                    assert fresh['status'] == 'WEBSITE_RUN_COMPLETED'
+                assert calls.count('run-sync') == 2
             elif prepare_result:
                 assert first['phase'] == 'prepare' and not first['ok']
                 assert first_calls == ['readiness', 'begin-preparation', 'prepare-editor']
@@ -904,7 +1001,7 @@ def exercise_website_workflow(root):
                 assert 'start-sync' not in calls and 'run-sync' not in calls
             elif sync_result:
                 assert first['status'] == second['status'] == 'WEBSITE_RUN_OBSERVATION_REQUIRED'
-                assert after_second == first_calls + ['readiness'] and calls.count('run-sync') == 1
+                assert calls.count('run-sync') == 1 and calls.count('observe-original') == 2
                 assert 'finish-website' not in calls and 'finish-report' not in calls
                 original_output = args.out.read_bytes()
                 original_receipt = (case / 'current_website_sync_result.json').read_bytes()
@@ -935,6 +1032,10 @@ def exercise_website_workflow(root):
     scenario('stale-sync-result')
     scenario('preflight-failed', preflight_result={'ok':False, 'status':'FAILED'})
     scenario('uncertain-save', sync_result={'ok':False, 'status':'SUBMISSION_UNCERTAIN'})
+    scenario('rejected-save', sync_result={'ok':False, 'status':'SUBMISSION_UNCERTAIN'})
+    scenario('late-save', sync_result={'ok':False, 'status':'SUBMISSION_UNCERTAIN'})
+    scenario('manual-closure', sync_result={'ok':False, 'status':'SUBMISSION_UNCERTAIN'})
+    scenario('manual-closure-changed', sync_result={'ok':False, 'status':'SUBMISSION_UNCERTAIN'})
     scenario('closure-retry', fail_closure_once=True)
 
 

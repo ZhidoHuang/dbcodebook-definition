@@ -48,6 +48,12 @@ function fake(options={}) {
     goto:async (url,options)=>{
       s.navigations.push(url);
       assert.equal(options.waitUntil,'commit');
+      if (s.articleLateDelay) {
+        s.pendingUrl={url,at:s.clock+s.articleLateDelay};
+        s.clock+=Math.min(s.articleLateDelay,options.timeout);
+        if (s.clock < s.pendingUrl.at) throw new Error('page.goto: Timeout exceeded');
+        s.url=url;s.pendingUrl=null;
+      }
       if (s.navigationDelay) {
         s.clock+=Math.min(s.navigationDelay,options.timeout);
         if(s.navigationDelay>=options.timeout)throw new Error('page.goto: Timeout exceeded');
@@ -57,16 +63,22 @@ function fake(options={}) {
       if(s.navigationError) throw new Error(s.navigationError);
     },
     locator:sel=>({count:async()=>{if(s.expireOn==='login-count')s.clock=25001;return 1;},waitFor:async()=>{},innerText:async()=>s.heading || s.title,
-      evaluate:async fn=>{assert.equal(sel,'.edit-post-btn:visible');s.measurements++;const value=fn(editElement);if(s.expireOn==='measurement')s.clock=25001;return value;},
+      evaluate:async fn=>{assert.equal(sel,'.edit-post-btn:visible');s.measurements++;const value=fn(editElement);if(s.expireOn==='measurement')s.clock=60001;return value;},
       click:async options=>{
         assert.equal(options.force,undefined);s.clicks.push(sel);s.clickOptions.push(options);
         if(sel==='.edit-post-btn:visible') {
           assert.equal(options.noWaitAfter,true);
-          if(!s.editorNavigationStuck && !s.editorNavigationDelay)s.url=origin+'/nodes/edit/'+(s.navigationEditId || '335')+'/';
+          if(s.editorLateDelay) s.pendingUrl={url:origin+'/nodes/edit/335/',at:s.clock+s.editorLateDelay};
+          else if(!s.editorNavigationStuck && !s.editorNavigationDelay)s.url=origin+'/nodes/edit/'+(s.navigationEditId || '335')+'/';
         }
       }}),
     waitForURL:async (fn,options)=>{
       assert.equal(options.waitUntil,'commit');
+      if(s.pendingUrl) {
+        s.clock+=Math.min(s.pendingUrl.at-s.clock,options.timeout);
+        if(s.clock<s.pendingUrl.at) throw new Error('page.waitForURL: Timeout exceeded');
+        s.url=s.pendingUrl.url;s.pendingUrl=null;
+      }
       if (s.editorNavigationDelay) {
         s.clock+=Math.min(s.editorNavigationDelay,options.timeout);
         if(s.editorNavigationDelay>=options.timeout)throw new Error('page.waitForURL: Timeout exceeded');
@@ -145,6 +157,14 @@ if (require.main === module) (async()=>{
   assert.equal(r.s.clicks.length,1);
   r=await run(existing,{url:origin+'/',navigationDelay:6500},'WEBSITE_EDITOR_READY');
   assert.equal(r.result.phase_timings_ms.article,6500);
+  r=await run(existing,{url:origin+'/',articleLateDelay:35000},'WEBSITE_EDITOR_READY');
+  assert.equal(r.s.clock,35000);assert.equal(r.s.navigations.length,1);assert.equal(r.s.clicks.length,1);
+  r=await run(existing,{editorLateDelay:35000},'WEBSITE_EDITOR_READY');
+  assert.equal(r.s.clock,35000);assert.equal(r.s.navigations.length,0);assert.equal(r.s.clicks.length,1);
+  r=await run(existing,{url:origin+'/',articleLateDelay:75000},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.equal(r.s.clock,60000);assert.equal(r.s.navigations.length,1);assert.equal(r.s.clicks.length,0);
+  r=await run(existing,{editorLateDelay:75000},'WEBSITE_PREPARE_INCOMPLETE');
+  assert.equal(r.s.clock,60000);assert.equal(r.s.navigations.length,0);assert.equal(r.s.clicks.length,1);
   r=await run(existing,{editorNavigationDelay:6500},'WEBSITE_EDITOR_READY');
   assert.equal(r.result.phase_timings_ms.open_editor,6500);
   r=await run(existing,{editorNavigationDelay:6500,readyDelay:38000},'WEBSITE_EDITOR_READY');

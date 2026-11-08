@@ -16,6 +16,7 @@ import tempfile
 import sys
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from urllib.parse import urlsplit
 from skill_config import load_config, playwright_command, database_url
 
 
@@ -421,13 +422,12 @@ def run_website_prepare(session, action, output_path):
                 'receipt_id': prior['receipt_id'], 'tab_id': prior.get('tab_id'),
                 'message': 'Resume the original preparation action and binding before changing inputs.'}
     receipt_id = prior['receipt_id'] if pending else uuid.uuid4().hex
-    # Dispatch/binding expires after 35 seconds. Page preparation has its own
-    # 25 seconds to navigate and 60 for editor loading after binding/recovery;
-    # allow 5 seconds for the CLI to return.
+    # Allow binding, initial login, each original navigation and editor loading
+    # their separate budgets, plus five seconds for the CLI to return.
     deadline = prior['expires_at_ms'] if pending else int((time.time() + 35) * 1000)
     session.retain_receipts = True
     session.receipt_scope = scope
-    session.operation_timeout = 125
+    session.operation_timeout = 245
     recovery_url = None if action.get('create') else action['base_url'].rstrip('/') + '/nodes/post/' + str(action['post_id']) + '/'
     try:
         payload = session.code(browser_code(action), receipt_id=receipt_id,
@@ -482,7 +482,7 @@ def run_website_workflow(args, config):
         raise ValueError('New articles require an explicit title and both confirmed taxonomy choices')
     files = {name: process / ('current_website_' + filename + '.json') for name, filename in (
         ('prepare', 'prepare'), ('preflight', 'preflight'), ('preflight_result', 'preflight_result'),
-        ('action', 'action'), ('sync_result', 'sync_result'))}
+        ('action', 'action'), ('sync_result', 'sync_result'), ('observation', 'observation'))}
     if output.resolve() in {p.resolve() for p in files.values()}:
         raise ValueError('--out must be separate from the current website receipts')
     common = ['--formal-dir', str(args.formal_dir), '--process-dir', str(process), '--topic-id', args.topic_id]
@@ -513,32 +513,46 @@ def run_website_workflow(args, config):
         save(output, value)
         return value
 
-    def close_success():
+    def close_success(source=None):
         report_path, _ = execution_report.paths(str(process))
         report = execution_report.load(report_path)
         stages = report.get('stages', [])
         sync_stage = next((s for s in reversed(stages) if s.get('stage_id') == 'website_sync'), None)
-        if not sync_stage or not files['sync_result'].is_file():
+        source = source or files['sync_result']
+        if not sync_stage or not source.is_file():
             raise ValueError('Original sync result or matching report stage is unavailable')
-        result = json.loads(files['sync_result'].read_text(encoding='utf-8-sig'))
-        if (result.get('ok') is not True or result.get('status') != 'ARTICLE_PAGE_RETURNED'
+        result = json.loads(source.read_text(encoding='utf-8-sig'))
+        if (result.get('ok') is not True or result.get('status') not in ('ARTICLE_PAGE_RETURNED', 'ARTICLE_SAVED_CONFIRMED')
                 or result.get('sync_run_id') != report.get('run_id')
                 or result.get('sync_attempt') != sync_stage.get('attempt')
                 or result.get('sync_started_at') != sync_stage.get('started_at')):
             raise ValueError('Original sync result is not a confirmed success for this report')
         if sync_stage.get('status') == 'running':
             execution_report.command_website_finish(argparse.Namespace(process_dir=str(process),
-                result=files['sync_result'], result_json=None))
+                result=source, result_json=None))
             report = execution_report.load(report_path)
+            sync_stage = next(s for s in reversed(report['stages']) if s.get('stage_id') == 'website_sync')
         elif sync_stage.get('status') not in ('completed', 'completed_with_issues'):
             raise ValueError('The matching sync stage has not completed')
         if report.get('status') == 'running':
-            status = 'completed_with_issues' if report.get('issues') else 'completed'
+            status = 'completed_with_issues' if report.get('issues') or sync_stage.get('status') == 'completed_with_issues' else 'completed'
             execution_report.command_finish(argparse.Namespace(process_dir=str(process), status=status,
                 summary=['网站已同步，待用户检查。']))
         elif report.get('status') not in ('completed', 'completed_with_issues'):
             raise ValueError('Report is not ready for successful closure')
-        return summary('WEBSITE_RUN_COMPLETED', 'complete', sync_result=str(files['sync_result']))
+        return summary('WEBSITE_RUN_COMPLETED', 'complete', sync_result=str(source))
+
+    def observe_original(failed, action, tab_id):
+        session = Session(args.session, args.session_workdir, files['observation'].with_suffix('.browser.js'), config, tab_id)
+        observed = observe_sync(session, action, failed, wait_ms=60000)
+        if observed.get('late_navigation_observed'):
+            observed['original_result_path'] = str(files['sync_result'].resolve())
+        record_sync_resolution(session, failed, observed)
+        save(files['observation'], observed)
+        if observed.get('ok') is True and observed.get('status') == 'ARTICLE_PAGE_RETURNED':
+            summary('WEBSITE_RUN_IN_PROGRESS', 'closure', tab_id=tab_id)
+            return close_success(files['observation'])
+        return summary('WEBSITE_RUN_OBSERVATION_REQUIRED', 'sync', result=observed, tab_id=tab_id)
 
     report_path, _ = execution_report.paths(str(process))
     report = execution_report.load(report_path) if report_path.exists() else {}
@@ -551,6 +565,34 @@ def run_website_workflow(args, config):
         return prior
     if prior and prior.get('status') != 'WEBSITE_RUN_COMPLETED' and prior.get('phase') in ('sync', 'closure') and not resume_preparation:
         sync_stage = next((s for s in reversed(stages) if s.get('stage_id') == 'website_sync'), None)
+        standard_path = process / 'website_sync_result.json'
+        standard = json.loads(standard_path.read_text(encoding='utf-8-sig')) if standard_path.is_file() else {}
+        standard_matches = (sync_stage and sync_stage.get('status') in ('completed', 'completed_with_issues')
+                            and standard.get('ok') is True and standard.get('status') in ('ARTICLE_PAGE_RETURNED', 'ARTICLE_SAVED_CONFIRMED')
+                            and standard.get('sync_run_id') == report.get('run_id')
+                            and standard.get('sync_attempt') == sync_stage.get('attempt')
+                            and standard.get('sync_started_at') == sync_stage.get('started_at'))
+        if standard_matches and report.get('status') in ('completed', 'completed_with_issues'):
+            if prior.get('fingerprint') == fingerprint:
+                return summary('WEBSITE_RUN_COMPLETED', 'complete', sync_result=str(standard_path))
+            prior = {**prior, 'ok':True, 'status':'WEBSITE_RUN_COMPLETED', 'phase':'complete', 'sync_result':str(standard_path)}
+            save(output, prior)
+        elif standard_matches and prior.get('fingerprint') == fingerprint:
+            try:
+                return close_success(standard_path)
+            except (ValueError, OSError, SystemExit) as error:
+                return summary('WEBSITE_RUN_CLOSURE_REQUIRED', 'closure', error=str(error))
+        else:
+            observed = json.loads(files['observation'].read_text(encoding='utf-8-sig')) if files['observation'].is_file() else {}
+            observed_matches = (sync_stage and observed.get('ok') is True and observed.get('status') == 'ARTICLE_PAGE_RETURNED'
+                                and observed.get('sync_run_id') == report.get('run_id')
+                                and observed.get('sync_attempt') == sync_stage.get('attempt')
+                                and observed.get('sync_started_at') == sync_stage.get('started_at'))
+            if observed_matches and prior.get('fingerprint') == fingerprint:
+                try:
+                    return close_success(files['observation'])
+                except (ValueError, OSError, SystemExit) as error:
+                    return summary('WEBSITE_RUN_CLOSURE_REQUIRED', 'closure', error=str(error))
         saved = json.loads(files['sync_result'].read_text(encoding='utf-8-sig')) if files['sync_result'].is_file() else {}
         matches = (sync_stage and saved.get('ok') is True and saved.get('status') == 'ARTICLE_PAGE_RETURNED'
                    and saved.get('sync_run_id') == report.get('run_id')
@@ -561,9 +603,20 @@ def run_website_workflow(args, config):
                 return close_success()
             except (ValueError, OSError, SystemExit) as error:
                 return summary('WEBSITE_RUN_CLOSURE_REQUIRED', 'closure', error=str(error))
-        return {'ok': False, 'status': 'WEBSITE_RUN_OBSERVATION_REQUIRED', 'phase': prior.get('phase'),
-                'message': 'The current submission must be observed; an older result cannot establish its outcome.',
-                'previous_output': str(output)}
+        if (not standard_matches and prior.get('fingerprint') == fingerprint and sync_stage
+                and sync_stage.get('status') == 'running' and files['action'].is_file()
+                and saved.get('status') in ('SUBMISSION_UNCERTAIN', 'SYNC_FAILED')
+                and saved.get('sync_run_id') == report.get('run_id')
+                and saved.get('sync_attempt') == sync_stage.get('attempt')
+                and saved.get('sync_started_at') == sync_stage.get('started_at')):
+            try:
+                return observe_original(saved, read_action(files['action']), (saved.get('observation') or {}).get('tab_id'))
+            except (ValueError, RuntimeError, OSError, subprocess.TimeoutExpired, SystemExit) as error:
+                return summary('WEBSITE_RUN_OBSERVATION_REQUIRED', 'sync', error=str(error))
+        if not standard_matches or report.get('status') not in ('completed', 'completed_with_issues'):
+            return {'ok': False, 'status': 'WEBSITE_RUN_OBSERVATION_REQUIRED', 'phase': prior.get('phase'),
+                    'message': 'The current submission must be observed; an older result cannot establish its outcome.',
+                    'previous_output': str(output)}
     if running.intersection({'website_sync', 'website_closure'}):
         return {'ok': False, 'status': 'WEBSITE_RUN_OBSERVATION_REQUIRED', 'phase': 'sync',
                 'message': 'An existing submission or closure must be observed; do not replay it.',
@@ -623,6 +676,8 @@ def run_website_workflow(args, config):
         result = run_sync(session, read_action(files['action']), read_action(files['preflight']))
         save(files['sync_result'], result)
         if result.get('ok') is not True or result.get('status') != 'ARTICLE_PAGE_RETURNED':
+            if result.get('status') in ('SUBMISSION_UNCERTAIN', 'SYNC_FAILED') and result.get('observation', {}).get('receipt_id'):
+                return observe_original(result, read_action(files['action']), result['observation'].get('tab_id'))
             return summary('WEBSITE_RUN_OBSERVATION_REQUIRED', 'sync', result=result, tab_id=tab_id)
         summary('WEBSITE_RUN_IN_PROGRESS', 'closure', tab_id=tab_id)
         return close_success()
@@ -735,7 +790,7 @@ def run_sync(session, action, preflight):
         session.operation_timeout = 40
 
 
-def observe_sync(session, action, failed_result):
+def observe_sync(session, action, failed_result, wait_ms=10000):
     """Read the original operation; never upload, submit, discard, or reload."""
     payload = action['payload']
     observation = failed_result.get('observation') or {}
@@ -755,10 +810,17 @@ def observe_sync(session, action, failed_result):
     expected_scope = dict(expected_scope)
     if any(expected_scope.get(key) != payload.get(key) for key in (*keys,'preload_sha256')):
         raise ValueError('Observation scope does not match the prepared synchronization')
-    observed = session.code('''async page => {
+    if not isinstance(wait_ms, int) or wait_ms < 0 or wait_ms > 60000:
+        raise ValueError('Observation wait must be between 0 and 60000 milliseconds')
+    old_timeout = getattr(session, 'operation_timeout', 40)
+    session.operation_timeout = max(old_timeout, (wait_ms + 999) // 1000 + 10)
+    try:
+        observed = session.code(r'''async page => {
       const receipt = page.context()[Symbol.for('dbCodeBook.syncReceipts')]?.get(RECEIPT);
       if (!receipt) return {state:'unavailable'};
       const expectedScope = SCOPE;
+      const target = TARGET;
+      const deadline = Date.now() + WAIT_MS;
       if (receipt.tab_id !== TAB || !receipt.scope ||
           Object.keys(receipt.scope).length !== Object.keys(expectedScope).length ||
           !Object.keys(expectedScope).every(key => receipt.scope[key] === expectedScope[key]))
@@ -766,7 +828,7 @@ def observe_sync(session, action, failed_result):
       let timer;
       if (receipt.state === 'running') {
         try { await Promise.race([receipt.operation.catch(() => {}), new Promise(resolve => {
-          timer = setTimeout(resolve, 10000);
+          timer = setTimeout(resolve, Math.max(0, deadline - Date.now()));
         })]); } finally {clearTimeout(timer);}
       }
       let returnedPost=null, returnedUrl=null;
@@ -774,7 +836,18 @@ def observe_sync(session, action, failed_result):
       const endedWithResponse = receipt.state==='completed' && receipt.result?.status==='SUBMISSION_UNCERTAIN'
         && save?.http_status>=200 && save?.http_status<300 && save?.status!=='error';
       if ((receipt.state==='failed' || endedWithResponse) && receipt.submission_requested===true && expectedScope.step==='submit') {
+        const atArticle = url => url.origin === target.origin &&
+          /^\/nodes\/post\/(?:local-)?[1-9][0-9]*\/$/.test(url.pathname) &&
+          (target.create || url.pathname.replace('/local-','/') === target.path.replace('/local-','/'));
+        if (!atArticle(new URL(page.url())) && Date.now() < deadline) {
+          try { await page.waitForURL(atArticle, {timeout: Math.max(1, deadline-Date.now()), waitUntil:'commit'}); }
+          catch (error) { if (!/timeout|timed out/i.test(String(error))) throw error; }
+        }
         returnedUrl=page.url();
+        if (atArticle(new URL(returnedUrl)) && Date.now() < deadline) {
+          try { await page.locator('#post-data').waitFor({state:'attached', timeout: Math.max(1, deadline-Date.now())}); }
+          catch (error) { if (!/timeout|timed out/i.test(String(error))) throw error; }
+        }
         const element=await page.locator('#post-data').count();
         if (element) returnedPost=await page.locator('#post-data').evaluate(el=>{
           const p=JSON.parse(el.textContent);return {id:p.id,title:p.title,
@@ -785,7 +858,12 @@ def observe_sync(session, action, failed_result):
         submission_requested:receipt.submission_requested, url:returnedUrl, returned_post:returnedPost,
         verified:receipt.verified, finished_at:receipt.finished_at};
     }'''.replace('RECEIPT',json.dumps(receipt_id)).replace('TAB',json.dumps(session.tab_id))
-        .replace('SCOPE',json.dumps(expected_scope)))
+            .replace('SCOPE',json.dumps(expected_scope)).replace('WAIT_MS',str(wait_ms))
+            .replace('TARGET',json.dumps({'origin': urlsplit(payload['edit_url']).scheme + '://' + urlsplit(payload['edit_url']).netloc,
+                                           'path': urlsplit(payload.get('post_url') or '').path,
+                                           'create': bool(payload.get('create'))})))
+    finally:
+        session.operation_timeout = old_timeout
     common = {key:payload.get(key) for key in keys}
     common.update(observation=observation, observed_at=time.time(), read_only=True,
                   original_status=failed_result.get('status'))
@@ -811,7 +889,6 @@ def observe_sync(session, action, failed_result):
             and observed.get('submission_requested') is True
             and all((observed.get('verified') or {}).get(k) is True for k in
                     ('edit_url_verified','title_verified','body_verified','attachment_order_verified'))):
-        from urllib.parse import urlsplit
         current=urlsplit(observed.get('url') or ''); expected=urlsplit(payload['edit_url'])
         match=re.fullmatch(r'/nodes/post/(?:local-)?([1-9][0-9]*)/',current.path)
         post=observed.get('returned_post') or {}
