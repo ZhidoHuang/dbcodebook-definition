@@ -21,6 +21,7 @@
 - 用户明确要求不上传数据表时加 `--without-data-attachment`。流程先核验当前许可，再准备、预检、启动一次同步、保存原始结果并按报告门禁收口；不重新研究、审核或生成成果。
 - 过程目录保留 `current_website_prepare.json`、`current_website_preflight.json`、`current_website_preflight_result.json`、`current_website_action.json` 和原始 `current_website_sync_result.json`；有提交不明时另存 `current_website_observation.json`。`--out` 使用独立路径并保留编排状态。成功返回 `WEBSITE_RUN_COMPLETED`。提交结果不明时，入口在有界时间内只观察原回执和原页，不重复上传、提交或导航；核实晚到成功后直接收口。确实失败、观察时间耗尽或身份未明时停止，查看结果并使用下方固定单步入口处理。
 - 尚未进入提交时，解决登录或预检问题后可用同一 `--out` 重新运行；准备动作仍沿用原回执观察未结束的操作。未决提交重入只观察同次回执，不自动重放；人工确认并收口后沿用标准结果恢复状态。
+- `WEBSITE_RUN_SAVE_REJECTED` 表示服务器返回保存错误：入口登记本次失败并保留现场。沿用同一入口重试时，若原标签已返回目标文章，先只读核对文章身份、当前正文和附件哈希；全部一致便收口，不再提交，原错误响应保留。仍在原编辑页时可重试；当前文章不一致或无法核实时停止。读取旧错误回执不表示又发生了一次保存失败。
 
 ## 异常恢复与单步入口
 
@@ -197,7 +198,7 @@
 & $Python -X utf8 scripts/playwright_session_action.py --config $Config --mode sync-confirm --action $Action --result $SyncResult --session $Session --session-workdir $SessionWorkdir --tab-id $TabId --out $Confirmation
 ```
 
-- 原绑定标签已在本次目标文章地址时，确认入口直接读取该页，不重新导航或关闭它；否则使用临时只读标签核实原文章后关闭临时标签，保留原草稿。需要时正常展开延迟加载内容，并正常下载现有附件，与当前正式文件比较。
+- 原绑定标签已在本次目标文章地址、且延迟组分尚未展开或加载时，确认入口复用该页；否则使用临时只读标签核实原文章后关闭临时标签，保留原页和草稿。通过页面实际入口核对独立定义页、展开延迟组分并下载现有附件，与当前正式文件比较。
 - `ARTICLE_SAVED_CONFIRMED`表示实际保存内容已核实；它不是补造的原提交成功回执。用该确认文件执行website-finish，按completed_with_issues收口。
 - 确认失败时，按返回的身份、正文、附件或证据缺口处理。保留原失败和确认结果，不通过重新发布验证旧提交，不围绕同一未变条件反复排查。
 - 接口、会话或网页结构确需修复时，结束本次同步诊断，转入已授权的独立维护；未受影响成果继续沿用。

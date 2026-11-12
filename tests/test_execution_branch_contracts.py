@@ -379,7 +379,7 @@ facts <- build_summary_facts(analysis_data,analysis_codebook,c(defined_value="�
 stopifnot(facts$coverage_period_count==0, facts$object=="无有效值",
           facts$min_coverage==0, facts$max_coverage==0)
 copy <- read_definition_copy(analysis_vars)
-render_definition_bundle(data=data,db_data=db_data,codebook=codebook,analysis_data=analysis_data,
+render_call <- quote(render_definition_bundle(data=data,db_data=db_data,codebook=codebook,analysis_data=analysis_data,
   analysis_codebook=analysis_codebook,analysis_vars=analysis_vars,raw_vars=raw_vars,raw_codebook=name_z,
   criteria=copy$criteria,criteria_intro=copy$criteria_intro,
   summary_meanings=c(defined_value="合计分数"),summary_groups=c(defined_value="测试结果"),
@@ -387,7 +387,14 @@ render_definition_bundle(data=data,db_data=db_data,codebook=codebook,analysis_da
   summary_entry=copy$summary_entry,summary_selection=copy$summary_selection,
   summary_insight_items=copy$summary_insight_items,reference_lines=copy$reference_lines,
   summary_source=NULL,file_stem="fixture",note_name="note.md",qa_title="Offline fixture",
-  transaction_id="offline-fixture",script_file="fixture.R",database="CHARLS")
+  transaction_id="offline-fixture",script_file="fixture.R",database="CHARLS"))
+eval(render_call) # Existing five-year data remains accepted with the full default display.
+render_call$cycle_order <- c(2011L,2013L,2015L,2018L,2020L,2021L,2022L,2023L)
+eval(render_call) # Explicit numeric full order is accepted.
+render_call$cycle_order <- years
+stopifnot(grepl("cannot redefine full-cycle", as.character(try(eval(render_call), silent=TRUE)), fixed=TRUE))
+render_call$cycle_order <- c(2011L,2013L,2015L,2018L,2020L,2021L,2022L,2023L,2024L)
+stopifnot(grepl("cannot redefine full-cycle", as.character(try(eval(render_call), silent=TRUE)), fixed=TRUE))
 # CHNS optional main-table identity strings are preserved; business columns remain forbidden.
 writeLines(c("ID,IDind,WAVE,hhid,age", "opaque,001,1989,0002,30"),"identities.csv")
 reader <- c('dt <- read.csv("raw_data.csv", colClasses=c(ID="character",IDind="character",hhid="character"))',

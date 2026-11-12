@@ -10,6 +10,7 @@ import shutil
 import hashlib
 import copy
 import zipfile
+import re
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from playwright_session_action import (
@@ -18,6 +19,39 @@ from playwright_session_action import (
 )
 from unittest.mock import patch
 from recover_dbcodebook_export import build_download_browser_action
+
+
+def exercise_session_budget(root):
+    """A blank CLI response may be recovered, but cannot reset its time budget."""
+    session = Session('fixture', root, root / 'budget.js', tab_id='target')
+    clock = {'time': 100}
+    timeouts = []
+    responses = [(30, ''), (3, '{"ok":true}'), (2, '{"ok":true}')]
+
+    def run(*args, **kwargs):
+        timeouts.append(kwargs['timeout'])
+        elapsed, output = responses.pop(0)
+        clock['time'] += elapsed
+        return argparse.Namespace(returncode=0, stdout=output, stderr='')
+
+    with patch('playwright_session_action.time.monotonic', lambda: clock['time']), patch(
+            'playwright_session_action.subprocess.run', side_effect=run):
+        assert session.code('async page => ({ok:true})') == {'ok': True}
+        assert timeouts == [40, 10], timeouts
+        assert session.cli_call_timings_ms == [30000, 3000]
+        assert session.deadline is None
+        assert session.code('async page => ({ok:true})')['ok']
+        assert timeouts == [40, 10, 40], 'A later independent operation gets its own budget'
+        session.deadline = clock['time'] + 5
+        responses[:] = [(5, '')]
+        try:
+            session.code('async page => ({ok:true})')
+            raise AssertionError('Recovery restarted an exhausted operation')
+        except TimeoutError:
+            pass
+        assert timeouts == [40, 10, 40, 5], 'No second subprocess after exhaustion'
+        assert session.deadline == clock['time'], 'Restore the caller deadline after failure'
+        assert session.cli_call_timings_ms == [5000]
 
 
 def exercise_current_target_first(root):
@@ -324,6 +358,12 @@ def exercise_sync_observation(root, action, failed_result):
     assert pending['read_only'] and pending['next_action'] == 'observe_same_receipt_later'
     assert failed_result == original_failure
     assert scripts[0] == scripts[1], 'A second observation must read the same receipt'
+    known_rejection = {**failed_result, 'status':'SYNC_SAVE_REJECTED', 'error':'database is locked'}
+    before_calls = len(scripts)
+    rejected = observe_sync(observer, action, known_rejection)
+    record_sync_resolution(observer, known_rejection, rejected)
+    assert rejected['status'] == 'SYNC_SAVE_REJECTED' and rejected['result_source'] == 'original_save_response'
+    assert len(scripts) == before_calls, 'A known rejection must not poll the browser again'
     original_result = {"ok": True, "status": "ARTICLE_PAGE_RETURNED",
                        **{key: action['payload'][key] for key in
                           ('sync_run_id', 'sync_attempt', 'sync_started_at')}}
@@ -590,7 +630,8 @@ Fixture reference.
     note_path = root / 'confirmation-note.md'
     note_path.write_text(note, encoding='utf-8')
     payload.update(note=str(note_path), note_sha256=hashlib.sha256(note_path.read_bytes()).hexdigest().upper(),
-                   create=False, desired_title='Fixture title', post_url='http://localhost/nodes/post/123/')
+                   create=False, desired_title='Fixture title', post_url='http://localhost/nodes/post/123/',
+                   edit_url='http://localhost/nodes/edit/123/', database_category='CHARLS')
     for item in payload['attachments']:
         item['name'] = Path(item['path']).name
     normalized, sections = saved_note_sections(note.strip())
@@ -598,10 +639,11 @@ Fixture reference.
     assert '<summary>概览</summary>' not in sections['定义的组分概览']
     assert '<details><summary>Nested evidence</summary>Nested text.</details>' in sections['定义的组分详情']
     assert normalized.count('__LAZY_SECTION__') == 2 and 'Fixture reference.' in normalized
-    snapshot = {'url':payload['post_url'], 'title':payload['desired_title'],
+    snapshot = {'url':payload['post_url'], 'id':123, 'category':'CHARLS', 'title':payload['desired_title'],
                 'content':note.replace(sections['定义的组分概览'], 'Lazy overview placeholder.')
                               .replace(sections['定义的组分详情'], 'Lazy details placeholder.'),
-                'documents':[{'name':item['name']} for item in payload['attachments']],
+                'documents':[{'name':item['name'], 'url':f'/media/uploads/123/doc_{index}.xlsx'}
+                             for index,item in enumerate(payload['attachments'])],
                 'sections':[{'url':'/components/123/overview', 'markdown':sections['定义的组分概览']},
                             {'url':'/components/123/details', 'markdown':sections['定义的组分详情']}]}
     verified = {key:True for key in ('edit_url_verified', 'title_verified', 'body_verified', 'attachment_order_verified')}
@@ -615,17 +657,20 @@ Fixture reference.
         def __init__(self):
             self.scripts = []
             self.snapshot = copy.deepcopy(snapshot)
+            self.current_url = snapshot['url']
             self.observed = {'state':'failed', 'submission_requested':True, 'verified':verified}
             self.corrupt_attachment = False
         def code(self, code):
             self.scripts.append(code)
+            if code == 'async page => ({url: page.url()})':
+                return {'url': self.current_url}
             if len(self.scripts) == 1:
                 return self.observed
             assert self.operation_timeout == 120
-            with zipfile.ZipFile(out.with_suffix('.attachments.zip'), 'w') as archive:
-                for index, item in enumerate(payload['attachments']):
-                    content = b'wrong remote bytes' if self.corrupt_attachment and index == 0 else Path(item['path']).read_bytes()
-                    archive.writestr('saved/' + item['name'], content)
+            generated_payload = json.loads(re.search(r'const payload=(.*?);', code).group(1))
+            for index, (item, target) in enumerate(zip(payload['attachments'], generated_payload['confirmation_downloads'], strict=True)):
+                content = b'wrong remote bytes' if self.corrupt_attachment and index == 0 else Path(item['path']).read_bytes()
+                Path(target['path']).write_bytes(content)
             return self.snapshot
         def upload(self, *args):
             raise AssertionError('Saved confirmation cannot upload or submit')
@@ -645,20 +690,25 @@ Fixture reference.
     generated.write_text(r"""
 const assert = require('node:assert/strict');
 const saved = SNAPSHOT;
+const library = null;
 const confirm = GENERATED;
-function fixture(failLazy, reuse=false) {
+function fixture(failLazy, reuse=false, loaded=false, failNavigation=false) {
   const events=[];
   let current='about:blank', responseHandler, downloadHandler, closed=0, originalMutations=0, controlsReady=false;
+  let articleOpened=reuse && !loaded, downloadOpened=false;
   const originalMutation=()=>{originalMutations++;throw Error('Original bound page was modified');};
   const temporary={
     url:()=>current,
-    goto:async(url,options)=>{assert.equal(url,saved.url);assert.equal(options.waitUntil,'commit');assert.equal(options.timeout,20000);current=url;events.push('goto');},
+    goto:async(url,options)=>{assert.ok(url===saved.url || (library && url===library.url));assert.equal(options.waitUntil,'commit');assert.equal(options.timeout,20000);current=url;events.push(url===saved.url?'goto':'goto-definitions');},
     locator:selector=>{
+      if(selector==='details[data-component-details-url]:not([data-definition-library]):is([data-loaded="true"],[data-loading="true"],[open])')
+        return {count:async()=>loaded ? 1 : 0};
       if(selector==='#post-data') return {textContent:async options=>{
-        assert.equal(options.timeout,15000);events.push('post');return JSON.stringify({...saved,lazy_component_sections:['overview','details']});
+        assert.equal(options.timeout,15000);events.push('post');
+        return JSON.stringify(library && current===library.url ? library : {...saved,lazy_component_sections:library?['definitions','overview','details']:['overview','details']});
       }};
       assert.equal(controlsReady,true,'Wait for asynchronous article controls before reading them');
-      assert.equal(selector,'details[data-component-details-url]');
+      assert.equal(selector,'details[data-component-details-url]:not([data-definition-library])');
       return {count:async()=>saved.sections.length,nth:index=>({
         getAttribute:async name=>{assert.equal(name,'data-component-details-url');return saved.sections[index].url;},
         locator:summary=>{assert.equal(summary,':scope > summary');return {click:async options=>{
@@ -673,23 +723,41 @@ function fixture(failLazy, reuse=false) {
     waitForFunction:async(fn,n,options)=>{assert.equal(n,2);assert.equal(options.timeout,15000);controlsReady=true;events.push('wait-controls');},
     waitForResponse:(predicate,options)=>{assert.equal(options.timeout,20000);events.push('wait-response');
       return new Promise(resolve=>{responseHandler=response=>{assert.ok(predicate(response));resolve(response);};});},
-    waitForEvent:(name,options)=>{assert.equal(name,'download');assert.equal(options.timeout,30000);events.push('wait-download');
-      return new Promise(resolve=>{downloadHandler=resolve;});},
-    getByRole:(role,options)=>{assert.equal(role,'button');assert.equal(options.name,'下载全部');assert.equal(options.exact,true);
-      return {click:async clickOptions=>{assert.equal(clickOptions.noWaitAfter,true);assert.ok(downloadHandler);events.push('download-click');
-        downloadHandler({saveAs:async path=>{assert.equal(path,ARCHIVE);events.push('save');},failure:async()=>null});}};},
+    getByRole:(role,options)=>{if(role==='link') {assert.equal(options.name,'查看全部定义');assert.equal(options.exact,true);return {getAttribute:async name=>{assert.equal(name,'href');return saved.definitions_url;}};}
+      throw Error('Unexpected article control');},
     close:async options=>{assert.deepEqual(options,{runBeforeUnload:false});closed++;events.push('close');}
   };
+  const downloadPage={
+    waitForEvent:(name,options)=>{assert.equal(name,'download');assert.equal(options.timeout,30000);events.push('wait-download');
+      return new Promise(resolve=>{downloadHandler=resolve;});},
+    goto:async(url,options)=>{
+      assert.equal(options.waitUntil,'commit');assert.equal(options.timeout,30000);assert.ok(downloadHandler);
+      const index=saved.documents.findIndex(doc=>new URL(doc.url,saved.url).href===url);assert.ok(index>=0);
+      events.push('download-'+index);
+      if(failNavigation) throw Error('net::ERR_CONNECTION_REFUSED');
+      const deliver=downloadHandler;downloadHandler=null;
+      deliver({saveAs:async path=>{assert.equal(path,DOWNLOAD_PATHS[index]);events.push('save-'+index);},failure:async()=>null});
+      throw Error('net::ERR_ABORTED');
+    },
+    close:async options=>{assert.deepEqual(options,{runBeforeUnload:false});events.push('close-download');}
+  };
+  const context={newPage:async()=>{
+    if(!articleOpened) {articleOpened=true;events.push('new-page');return temporary;}
+    if(!downloadOpened) {downloadOpened=true;events.push('new-download');return downloadPage;}
+    events.push('new-page');return temporary;
+  }};
+  temporary.context=()=>context;
   const bound={url:()=> 'http://localhost/nodes/edit/123/',goto:originalMutation,close:originalMutation,
-    locator:originalMutation,context:()=>({newPage:async()=>{events.push('new-page');return temporary;}})};
+    locator:originalMutation,context:()=>context};
   if(reuse) Object.assign(bound,temporary,{url:()=>saved.url,goto:originalMutation,close:originalMutation});
   return {bound,events,closed:()=>closed,originalMutations:()=>originalMutations};
 }
 (async()=>{
+  const downloads=['new-download','wait-download','download-0','save-0','wait-download','download-1','save-1','close-download'];
   const success=fixture(false);
   assert.deepEqual(await confirm(success.bound),saved);
   assert.deepEqual(success.events,['new-page','goto','post','wait-controls','wait-response','summary-0','wait-response','summary-1',
-    'wait-download','download-click','save','close']);
+    ...downloads,'close']);
   assert.equal(success.closed(),1);assert.equal(success.originalMutations(),0);
   const failure=fixture(true);
   await assert.rejects(()=>confirm(failure.bound),/fixture lazy read failed/);
@@ -697,15 +765,167 @@ function fixture(failLazy, reuse=false) {
   assert.equal(failure.closed(),1);assert.equal(failure.originalMutations(),0);
   const reused=fixture(false,true);
   assert.deepEqual(await confirm(reused.bound),saved);
-  assert.deepEqual(reused.events,['post','wait-controls','wait-response','summary-0','wait-response','summary-1','wait-download','download-click','save']);
+  assert.deepEqual(reused.events,['post','wait-controls','wait-response','summary-0','wait-response','summary-1',...downloads]);
   assert.equal(reused.closed(),0);assert.equal(reused.originalMutations(),0);
   const reusedFailure=fixture(true,true);
   await assert.rejects(()=>confirm(reusedFailure.bound),/fixture lazy read failed/);
   assert.equal(reusedFailure.closed(),0);assert.equal(reusedFailure.originalMutations(),0);
+  await assert.rejects(()=>confirm(fixture(false,true,false,true).bound),/ERR_CONNECTION_REFUSED/);
+  const url=saved.documents[0].url; saved.documents[0].url='https://foreign.example/file.xlsx';
+  await assert.rejects(()=>confirm(fixture(false,true).bound),/Saved attachment link differs/);
+  saved.documents[0].url=url;
 })().catch(error=>{console.error(error);process.exitCode=1;});
 """.replace('GENERATED',saved_session.scripts[1]).replace('SNAPSHOT',json.dumps(snapshot,ensure_ascii=False))
-       .replace('ARCHIVE',json.dumps(str(out.with_suffix('.attachments.zip').resolve()))),encoding='utf-8')
+       .replace('DOWNLOAD_PATHS',json.dumps([x['path'] for x in json.loads(re.search(r'const payload=(.*?);', saved_session.scripts[1]).group(1))['confirmation_downloads']])),encoding='utf-8')
     subprocess.run(['node',str(generated)],check=True)
+    fixture_js = generated.read_text(encoding='utf-8')
+
+    # Use the actual generated confirmation script to exercise the prepared
+    # category, including strict rejection of a differently cased saved value.
+    def check_category_variant(create):
+        variant_action = copy.deepcopy(action)
+        variant_action['payload'].update(
+            create=create, database_category='share',
+            identity_title_exact='Fixture title', identity_category='SHARE',
+        )
+        variant_session = SavedSession()
+        confirm_saved_sync(variant_session, variant_action, failed_result, original, out)
+        variant = fixture_js.replace(saved_session.scripts[1], variant_session.scripts[1])
+        variant = variant.split('(async()=>{', 1)[0] + r"""
+(async()=>{
+  saved.category=EXPECTED;
+  assert.deepEqual(await confirm(fixture(false,true).bound),saved);
+  saved.category=OTHER_CASE;
+  await assert.rejects(()=>confirm(fixture(false,true).bound),/Saved database differs/);
+  saved.category='ELSA';
+  await assert.rejects(()=>confirm(fixture(false,true).bound),/Saved database differs/);
+})().catch(error=>{console.error(error);process.exitCode=1;});
+""".replace('EXPECTED', json.dumps('share' if create else 'SHARE')) \
+    .replace('OTHER_CASE', json.dumps('SHARE' if create else 'share'))
+        generated.write_text(variant, encoding='utf-8')
+        subprocess.run(['node',str(generated)],check=True)
+
+    check_category_variant(False)
+    check_category_variant(True)
+
+    # The definition page supplies the exact extracted body; the main page
+    # retains only the hidden placeholder and the de-duplicated styles.
+    definition = '<style>.definition { color: navy; }</style>\n<table><tr><td>Fixture definition</td></tr></table>'
+    with_definition = note.replace('## 定义的组分概览', '## 定义\n\n' + definition + '\n\n## 定义的组分概览')
+    placeholder = ('<h2 data-definition-library hidden>定义</h2>\n\n'
+                   '<details data-definition-library hidden class="custom-details lazy-component-details" data-toggle-details '
+                   'data-component-details-url="/nodes/api/posts/123/component-section/definitions/">\n'
+                   '<summary data-toggle-summary>\n  <span class="icon">+</span>\n  <span class="text">\n'
+                   '    <span class="open-text">点击收起详情</span>\n    <span class="close-text">点击查看详情</span>\n'
+                   '  </span>\n</summary>\n<div class="lazy-component-details-status">点击后加载这一部分。</div>\n'
+                   '<div class="lazy-component-details-body" hidden></div>\n</details>\n\n<style>.definition { color: navy; }</style>')
+    extracted = snapshot['content'].replace('## 定义的组分概览', placeholder + '\n\n## 定义的组分概览')
+    definition_library = {
+        'url': 'http://localhost/nodes/post/123/definitions/', 'id': 123,
+        'category': 'CHARLS', 'title': 'Fixture title', 'definitions_page': True,
+        'public_url': '/nodes/post/123/',
+        'content': '<a href="/nodes/post/123/">返回笔记</a>\n\n## 全部定义\n\n' + definition,
+    }
+    note_path.write_text(with_definition, encoding='utf-8')
+    definition_action = copy.deepcopy(action)
+    definition_action['payload']['note_sha256'] = hashlib.sha256(note_path.read_bytes()).hexdigest().upper()
+    definition_session = SavedSession()
+    definition_session.snapshot.update(content=extracted, definition_library=definition_library)
+    assert confirm_saved_sync(definition_session, definition_action, failed_result, original, out)['ok']
+
+    def reject_definition_change(change, expected_error):
+        session = SavedSession()
+        session.snapshot.update(content=extracted, definition_library=copy.deepcopy(definition_library))
+        change(session.snapshot)
+        try:
+            confirm_saved_sync(session, definition_action, failed_result, original, out)
+            raise AssertionError('Invalid definition library accepted')
+        except ValueError as error:
+            assert expected_error in str(error), error
+
+    reject_definition_change(lambda s: s['definition_library'].update(content=s['definition_library']['content']+' changed'),
+                             'Saved definition library content differs')
+    reject_definition_change(lambda s: s.update(content=s['content'].replace('color: navy; }</style>\n\n## 定义的组分概览',
+                                                                           'color: red; }</style>\n\n## 定义的组分概览')),
+                             'Saved definition library styles or placement differ')
+    reject_definition_change(lambda s: s.update(content=s['content'].replace('</details>\n\n<style>.definition',
+                                                                           '</details>\n\n<p>unexpected</p>\n<style>.definition', 1)),
+                             'Saved definition library has unexpected content')
+    reject_definition_change(lambda s: s['definition_library'].update(content=s['definition_library']['content'].replace('/nodes/post/123/', '/nodes/post/999/', 1)),
+                             'Saved definition library return link differs')
+    reject_definition_change(lambda s: s.update(content=s['content'].replace('</summary>', '</summary><p>injected</p>', 1)),
+                             'Saved definition library placeholder content differs')
+    reject_definition_change(lambda s: s.update(content=s['content'].replace('/nodes/api/posts/123/component-section/definitions/',
+                                                                           '/nodes/api/posts/999/component-section/definitions/', 1)),
+                             'Saved definition library placeholder identity differs')
+
+    definition_js = fixture_js.replace(saved_session.scripts[1], definition_session.scripts[1])
+    definition_js = definition_js.replace('const library = null;', 'const library = ' + json.dumps(definition_library, ensure_ascii=False) + ';')
+    definition_js = definition_js.split('(async()=>{', 1)[0] + r"""
+(async()=>{
+  saved.definitions_url='/nodes/post/123/definitions/';
+  const downloads=['new-download','wait-download','download-0','save-0','wait-download','download-1','save-1','close-download'];
+  const unloaded=fixture(false,true);
+  const result=await confirm(unloaded.bound);
+  assert.equal(result.definition_library.content,library.content);
+  assert.deepEqual(unloaded.events,['post','wait-controls','wait-response','summary-0','wait-response','summary-1',
+    ...downloads,'new-page','goto-definitions','post','close']);
+  for (const state of ['loaded','loading','open']) {
+    const inUse=fixture(false,true,state);
+    assert.equal((await confirm(inUse.bound)).definition_library.content,library.content);
+    assert.deepEqual(inUse.events,['new-page','goto','post','wait-controls','wait-response','summary-0','wait-response','summary-1',
+      ...downloads,'goto-definitions','post','close']);
+  }
+  const id=library.id; library.id=999;
+  await assert.rejects(()=>confirm(fixture(false,true).bound),/Saved definition library identity differs/);
+  library.id=id;
+  const href=saved.definitions_url; saved.definitions_url='/nodes/post/999/definitions/';
+  await assert.rejects(()=>confirm(fixture(false,true).bound),/Saved definition library link differs/);
+  saved.definitions_url=href;
+})().catch(error=>{console.error(error);process.exitCode=1;});
+"""
+    generated.write_text(definition_js, encoding='utf-8')
+    subprocess.run(['node',str(generated)],check=True)
+    note_path.write_text(note, encoding='utf-8')
+    generated.write_text(fixture_js, encoding='utf-8')
+
+    rejected_result = {**failed_result, 'status':'SYNC_SAVE_REJECTED', 'error':'database is locked',
+                       'save_response':{'http_status':500, 'status':'error', 'message':'database is locked'}}
+    rejected_path = root / 'original-rejected-save.json'
+    rejected_path.write_text(json.dumps(rejected_result), encoding='utf-8')
+    rejected_bytes = rejected_path.read_bytes()
+    manual = SavedSession()
+    result = confirm_saved_sync(manual, action, rejected_result, rejected_path, out)
+    assert result['status'] == 'ARTICLE_SAVED_CONFIRMED' and result['read_only']
+    assert result['saved_content_verified'] and result['saved_attachment_hashes_verified']
+    assert manual.scripts[0] == 'async page => ({url: page.url()})'
+    assert len(manual.scripts) == 2 and rejected_path.read_bytes() == rejected_bytes
+    # The same read-only browser implementation must reuse a saved article page
+    # and reject an article with another local identity or database category.
+    manual_js = generated.read_text(encoding='utf-8')
+    manual_js = manual_js.replace(saved_session.scripts[1], manual.scripts[1])
+    manual_js = manual_js.replace('const success=fixture(false);', 'const success=fixture(false,true);')
+    manual_js = manual_js.replace("['new-page','goto','post','wait-controls'", "['post','wait-controls'")
+    manual_js = manual_js.replace("...downloads,'close']", "...downloads]")
+    manual_js = manual_js.replace('assert.equal(success.closed(),1)', 'assert.equal(success.closed(),0)')
+    manual_js = manual_js.replace('const failure=fixture(true);', 'const failure=fixture(true,true);')
+    manual_js = manual_js.replace("'summary-0','close']", "'summary-0']")
+    manual_js = manual_js.replace('assert.equal(failure.closed(),1)', 'assert.equal(failure.closed(),0)')
+    manual_js = manual_js.replace('const reused=fixture(false,true);', """
+   const id=saved.id; saved.id=999;
+   await assert.rejects(()=>confirm(fixture(false,true).bound),/Saved article identity differs/);
+   saved.id=id;
+   const category=saved.category; saved.category='ELSA';
+   await assert.rejects(()=>confirm(fixture(false,true).bound),/Saved database differs/);
+   saved.category=category;
+   const reused=fixture(false,true);""")
+    generated.write_text(manual_js, encoding='utf-8')
+    subprocess.run(['node',str(generated)],check=True)
+    editor = SavedSession()
+    editor.current_url = payload['edit_url']
+    result = confirm_saved_sync(editor, action, rejected_result, rejected_path, out)
+    assert result['status'] == 'SYNC_SAVE_REJECTED' and len(editor.scripts) == 1
+    assert rejected_path.read_bytes() == rejected_bytes
 
     missing = SavedSession()
     missing.snapshot['sections'] = missing.snapshot['sections'][:1]
@@ -783,7 +1003,7 @@ def exercise_website_workflow(root):
                     if stage['stage_id'] == 'website_preparation' and stage['status'] == 'running':
                         stage['status'] = 'completed'
                 report['stages'].append({'stage_id':'website_sync', 'status':'running',
-                                         'attempt':run_number[0], 'started_at':f'fixture-time-{run_number[0]}'})
+                                         'attempt':run_number[0], 'started_at':f'2026-01-01T00:00:{run_number[0]:02d}+00:00'})
                 return {'ok': True, 'browser_action': {'kind':'sync-action'}}
             if '--base-url' in arguments:
                 calls.append('preflight-action')
@@ -799,6 +1019,8 @@ def exercise_website_workflow(root):
             if report['status'] == 'completed':
                 run_number[0] += 1
                 report['run_id'] = f'fixture-run-{run_number[0]}'
+            elif report['stages'] and report['stages'][-1].get('status') == 'failed':
+                run_number[0] += 1
             report['status'] = 'running'
             if not any(s['stage_id'] == 'website_preparation' and s['status'] == 'running'
                        for s in report['stages']):
@@ -821,7 +1043,7 @@ def exercise_website_workflow(root):
             prepare_observations.append((path, session.tab_id, action['post_id']))
             if name in ('preflight-reentry', 'preflight-wrong-tab') and len(prepare_observations) > 1:
                 return {'ok':False, 'status':'EDITOR_ALREADY_OPEN'}
-            if name in ('preflight-reentry', 'preflight-wrong-tab'):
+            if name in ('preflight-reentry', 'preflight-wrong-tab', 'direct-rejected', 'rejected-save', 'manual-saved-after-rejection', 'manual-saved-after-observed-rejection'):
                 scope = {'kind':'website-prepare', 'action_sha256':hashlib.sha256(
                     json.dumps(action, sort_keys=True, ensure_ascii=False).encode('utf-8')).hexdigest()}
                 receipt = {'receipt_id':'a' * 32, 'tab_id':session.tab_id, 'scope':scope}
@@ -844,13 +1066,18 @@ def exercise_website_workflow(root):
             assert action['kind'] == 'sync-action'
             assert preflight['kind'] == 'preflight-action'
             stage = report['stages'][-1]
-            if name in ('late-save', 'uncertain-save', 'rejected-save', 'manual-closure', 'manual-closure-changed') and not (
-                    name.startswith('manual-closure') and calls.count('run-sync') > 1):
+            if name in ('direct-rejected', 'manual-saved-after-rejection') and calls.count('run-sync') == 1:
+                return {'ok':False, 'status':'SYNC_SAVE_REJECTED', 'error':'database is locked',
+                        'save_response':{'http_status':400,'status':'error','message':'database is locked'},
+                        'sync_run_id':report['run_id'], 'sync_attempt':stage['attempt'],
+                        'sync_started_at':stage['started_at']}
+            if name in ('late-save', 'uncertain-save', 'rejected-save', 'manual-saved-after-observed-rejection', 'manual-closure', 'manual-closure-changed') and not (
+                    (name.startswith('manual-closure') or name == 'rejected-save') and calls.count('run-sync') > 1):
                 return {'ok':False, 'status':'SUBMISSION_UNCERTAIN',
                         'sync_run_id':report['run_id'], 'sync_attempt':stage['attempt'],
                         'sync_started_at':stage['started_at'],
                         'observation':{'receipt_id':'a' * 32, 'tab_id':session.tab_id}}
-            return (None if name.startswith('manual-closure') else sync_result) or {'ok':True, 'status':'ARTICLE_PAGE_RETURNED',
+            return (None if name.startswith('manual-closure') or name in ('direct-rejected','rejected-save') else sync_result) or {'ok':True, 'status':'ARTICLE_PAGE_RETURNED',
                 'sync_run_id':report['run_id'], 'sync_attempt':stage['attempt'],
                 'sync_started_at':stage['started_at']}
 
@@ -862,20 +1089,38 @@ def exercise_website_workflow(root):
             if name == 'late-save':
                 return {**failed, 'ok':True, 'status':'ARTICLE_PAGE_RETURNED',
                         'recovered_original_result':True}
-            if name == 'rejected-save':
-                return {**failed, 'ok':False, 'status':'SYNC_SAVE_REJECTED', 'http_status':400}
+            if name in ('rejected-save', 'manual-saved-after-observed-rejection'):
+                return {**failed, 'ok':False, 'status':'SYNC_SAVE_REJECTED', 'error':'database is locked',
+                        'save_response':{'http_status':400,'status':'error','message':'database is locked'}}
             return {**failed, 'ok':False, 'status':'SYNC_STILL_RUNNING', 'read_only':True}
 
         def finish_website(namespace):
             calls.append('finish-website')
+            if name.startswith('manual-saved-after-'):
+                confirmation = json.loads(namespace.result.read_text(encoding='utf-8'))
+                original = Path(confirmation['original_result_path'])
+                assert original.resolve() != namespace.result.resolve()
+                assert json.loads(original.read_text(encoding='utf-8'))['status'] == 'SYNC_SAVE_REJECTED'
             if closure_failures[0]:
                 closure_failures[0] = False
                 raise ValueError('fixture closure failure')
             report['stages'][-1]['status'] = 'completed'
 
+        def confirm_saved(session, action, failed, source, output):
+            calls.append('confirm-saved')
+            assert failed['status'] == 'SYNC_SAVE_REJECTED'
+            if name.startswith('manual-saved-after-'):
+                return {**failed, 'ok':True, 'status':'ARTICLE_SAVED_CONFIRMED', 'original_result_path':str(source.resolve())}
+            return failed
+
         def finish_report(namespace):
             calls.append('finish-report')
             report['status'] = 'completed'
+
+        def save_rejected(path, markdown_path, data):
+            calls.append('finish-rejected')
+            assert data is report and data['stages'][-1]['status'] == 'failed'
+            report_path.write_text(json.dumps(data), encoding='utf-8')
 
         patches = [patch('prepare_website.browser_code', return_value='fixture'),
                    patch('playwright_session_action.website_verify_ready', side_effect=verify),
@@ -884,9 +1129,11 @@ def exercise_website_workflow(root):
                    patch('playwright_session_action.build_code', return_value='fixture'),
                    patch('playwright_session_action.run_sync', side_effect=sync),
                    patch('playwright_session_action.observe_sync', side_effect=observe),
+                   patch('playwright_session_action.confirm_saved_sync', side_effect=confirm_saved),
                    patch('playwright_session_action.record_sync_resolution'),
                    patch.object(execution_report, 'paths', return_value=(report_path, case / 'other')),
                    patch.object(execution_report, 'load', side_effect=lambda path: report),
+                   patch.object(execution_report, 'save', side_effect=save_rejected),
                    patch.object(execution_report, 'begin_website_preparation', side_effect=begin),
                    patch.object(execution_report, 'command_website_finish', side_effect=finish_website),
                    patch.object(execution_report, 'command_finish', side_effect=finish_report)]
@@ -896,6 +1143,15 @@ def exercise_website_workflow(root):
                 stack.enter_context(p)
             first = run_website_workflow(args, {})
             first_calls = list(calls)
+            if name == 'direct-rejected':
+                # Earlier versions left a known rejection labelled as pending.
+                previous = json.loads(args.out.read_text(encoding='utf-8'))
+                previous.update(status='WEBSITE_RUN_OBSERVATION_REQUIRED', phase='sync')
+                args.out.write_text(json.dumps(previous), encoding='utf-8')
+                report['stages'][-1]['status'] = 'running'
+                recovered = run_website_workflow(args, {})
+                assert recovered['status'] == 'WEBSITE_RUN_SAVE_REJECTED'
+                assert calls.count('run-sync') == 1 and 'observe-original' not in calls
             if name == 'preflight-wrong-tab':
                 receipt_path = case / 'current_website_prepare.browser.receipt.json'
                 receipt = json.loads(receipt_path.read_text(encoding='utf-8'))
@@ -962,6 +1218,27 @@ def exercise_website_workflow(root):
                 observed = json.loads((case / 'current_website_observation.json').read_text(encoding='utf-8'))
                 assert original['status'] == 'SUBMISSION_UNCERTAIN'
                 assert observed['status'] == 'ARTICLE_PAGE_RETURNED'
+            elif name.startswith('manual-saved-after-'):
+                assert first['status'] == 'WEBSITE_RUN_SAVE_REJECTED'
+                if fail_closure_once:
+                    assert second['status'] == 'WEBSITE_RUN_CLOSURE_REQUIRED'
+                    second = run_website_workflow(args, {})
+                assert second['status'] == 'WEBSITE_RUN_COMPLETED', (second, calls)
+                assert calls.count('run-sync') == calls.count('start-sync') == 1
+                assert calls.count('confirm-saved') == 1 and len(prepare_observations) == 1
+                assert calls.count('observe-original') == (name == 'manual-saved-after-observed-rejection')
+            elif name in ('direct-rejected', 'rejected-save'):
+                assert first['status'] == 'WEBSITE_RUN_SAVE_REJECTED', (first, calls)
+                assert first['next_action'] == 'retry_same_workflow' and first_calls.count('run-sync') == 1
+                assert second['status'] == 'WEBSITE_RUN_COMPLETED', (second, calls)
+                assert calls.count('run-sync') == 2, 'A new invocation may retry a confirmed failure'
+                assert calls.count('observe-original') == (name == 'rejected-save')
+                assert calls.count('finish-rejected') == (2 if name == 'direct-rejected' else 1)
+                assert len(prepare_observations) == 1, 'Retry reuses the original editor preparation'
+                failed = next(s for s in report['stages'] if s.get('status') == 'failed')
+                assert failed['browser_result']['save_response']['message'] == 'database is locked'
+                assert failed['browser_result']['sync_attempt'] == 1
+                assert report['stages'][-1]['attempt'] == 2
             elif name in ('manual-closure', 'manual-closure-changed'):
                 assert first['status'] == second['status'] == 'WEBSITE_RUN_OBSERVATION_REQUIRED'
                 assert calls.count('run-sync') == 1
@@ -979,6 +1256,10 @@ def exercise_website_workflow(root):
                 assert mismatch['status'] == 'WEBSITE_RUN_OBSERVATION_REQUIRED'
                 assert calls.count('run-sync') == 1, 'an older successful attempt cannot close this attempt'
                 standard.write_text(json.dumps(manual), encoding='utf-8')
+                original_path = case / 'current_website_sync_result.json'
+                original = json.loads(original_path.read_text(encoding='utf-8'))
+                original.update(ok=False, status='SYNC_SAVE_REJECTED', error='database is locked')
+                original_path.write_text(json.dumps(original), encoding='utf-8')
                 if name == 'manual-closure-changed':
                     version['content'] += '-new'
                 recovered = run_website_workflow(args, {})
@@ -1023,6 +1304,8 @@ def exercise_website_workflow(root):
                 assert report['status'] == 'completed'
 
     scenario('success')
+    scenario('manual-saved-after-rejection')
+    scenario('manual-saved-after-observed-rejection', fail_closure_once=True)
     scenario('gate-denied', gate_error=True)
     scenario('prepare-pending', prepare_result={'ok':False, 'status':'WEBSITE_PREPARE_PENDING',
                                                 'receipt_id':'original-prepare-receipt'})
@@ -1033,6 +1316,7 @@ def exercise_website_workflow(root):
     scenario('preflight-failed', preflight_result={'ok':False, 'status':'FAILED'})
     scenario('uncertain-save', sync_result={'ok':False, 'status':'SUBMISSION_UNCERTAIN'})
     scenario('rejected-save', sync_result={'ok':False, 'status':'SUBMISSION_UNCERTAIN'})
+    scenario('direct-rejected')
     scenario('late-save', sync_result={'ok':False, 'status':'SUBMISSION_UNCERTAIN'})
     scenario('manual-closure', sync_result={'ok':False, 'status':'SUBMISSION_UNCERTAIN'})
     scenario('manual-closure-changed', sync_result={'ok':False, 'status':'SUBMISSION_UNCERTAIN'})
@@ -1044,42 +1328,7 @@ def main():
     parser.add_argument("--live-session")
     parser.add_argument("--session-workdir", type=Path)
     parser.add_argument("--out", type=Path)
-    parser.add_argument("--editor-action", type=Path, help="Exercise an authorized new-article draft; never publish")
     args = parser.parse_args()
-    if args.editor_action:
-        action = json.loads(args.editor_action.read_text(encoding="utf-8-sig"))["browser_action"]
-        payload = action["payload"]
-        assert payload["create"], "Live fixture must use a new-article draft"
-        args.out.mkdir(parents=True, exist_ok=True)
-        session = Session(args.live_session, args.session_workdir, args.out / "editor-test.browser.js")
-        result = {}
-        # The previous manual import belongs to this authorized test, not an unrelated draft.
-        session.call("goto", payload["edit_url"])
-        session.upload("#content-import-input", payload["note"])
-        for item in payload["attachments"]:
-            session.upload("#documents-sidebar-input", item["path"])
-        actual = session.code('''async page => ({body: await page.locator('#editor').inputValue(),
-          attachments: await page.locator('#documents-sidebar-list').innerText()})''')
-        assert actual["body"] == Path(payload["note"]).read_text(encoding="utf-8-sig")
-        names = [line.strip() for line in actual["attachments"].splitlines() if line.strip().endswith('.xlsx')]
-        assert names == [item["name"] for item in payload["attachments"]]
-        result["body_and_two_attachments"] = True
-        session.call("click", "#content-import-input")
-        try:
-            session.call("upload", str(args.out / "intentionally-missing.md"))
-            raise AssertionError("Missing upload file was accepted")
-        except RuntimeError:
-            result["failed_upload_detected"] = True
-        restored = session.discard(payload["edit_url"])
-        assert restored == {"url": payload["edit_url"], "editor": 1}
-        blank = session.code('''async page => ({title: await page.locator('#title').inputValue(),
-          body: await page.locator('#editor').inputValue(),
-          attachments: await page.locator('#documents-sidebar-list').innerText()})''')
-        assert all(not value.strip() for value in blank.values()), blank
-        result.update(cancellation_and_blank_form_verified=True, login_preserved=True, submitted=False)
-        (args.out / "editor-test-result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
-        print(json.dumps(result))
-        return
     with tempfile.TemporaryDirectory() as folder:
         root = Path(folder)
         exercise_website_workflow(root)
@@ -1149,6 +1398,7 @@ const page = {
         except ValueError:
             pass
         exercise_current_target_first(root)
+        exercise_session_budget(root)
         exercise_prepare_reentry(root)
         exercise_prepare_closed_target(root)
         exercise_prepare_python_receipt(root)
@@ -1200,14 +1450,13 @@ const page = {
                 self.tab_id = "fixture-target"
                 self.last_receipt_id = None
                 self.code_calls = 0
+                self.submit_ok = True
             def record(self, name):
                 calls.append(name)
                 self.last_receipt_id = format(len(operations) + 1, '032x')
                 operations.append((name, self.operation_timeout, self.deadline,
                                    self.retain_receipts, dict(self.receipt_scope)))
                 fake_clock["time"] += 25
-            def select_target(self, urls):
-                self.record('select')
             def code(self, code):
                 self.record('code')
                 self.code_calls += 1
@@ -1215,7 +1464,7 @@ const page = {
                     return {"phase": "body"}
                 if self.code_calls == 2:
                     return {"phase": "submit", "keep": 0}
-                return {"ok": True, "status": "ARTICLE_PAGE_RETURNED",
+                return {"ok": self.submit_ok, "status": "ARTICLE_PAGE_RETURNED" if self.submit_ok else "SYNC_SAVE_REJECTED",
                         "sync_run_id": "fixture-run", "sync_attempt": 1,
                         "sync_started_at": "fixture-time"}
             def upload(self, selector, path):
@@ -1237,11 +1486,21 @@ const page = {
             successful = FakeSession()
             result = run_sync(successful, website, {"preload_script": ""})
             assert result["ok"]
-            assert calls == ['select', 'code', '#content-import-input', 'code', '#documents-sidebar-input', '#documents-sidebar-input', 'code']
-            assert [item[1] for item in operations] == [40, 40, 40, 40, 65, 65, 40]
+            assert calls == ['code', '#content-import-input', 'code', '#documents-sidebar-input', '#documents-sidebar-input', 'code']
+            assert [item[1] for item in operations] == [40, 40, 40, 65, 65, 40]
             assert all(item[2] is None and item[3] for item in operations)
             assert fake_clock['time'] > 60, 'Independent phase budgets must survive a total over 60 seconds'
             assert not successful.retain_receipts and successful.operation_timeout == 40
+            calls.clear()
+            rejected = FakeSession()
+            rejected.submit_ok = False
+            result = run_sync(rejected, website, {"preload_script": ""})
+            assert result['status'] == 'SYNC_SAVE_REJECTED'
+            assert result['observation']['receipt_id'] == rejected.last_receipt_id
+            assert result['observation']['step'] == 'submit'
+            assert result['phase_timings_ms']['submit'] == 25000
+            assert set(result['phase_cli_calls_ms']) == set(result['phase_timings_ms'])
+            assert not rejected.retain_receipts and rejected.operation_timeout == 40
             calls.clear()
             failed = FakeSession()
             def fail_upload(selector, path):
@@ -1249,7 +1508,7 @@ const page = {
                 raise RuntimeError('fixture failure')
             failed.upload = fail_upload
             result = run_sync(failed, website, {"preload_script": ""})
-            assert calls == ['select', 'code', '#content-import-input']
+            assert calls == ['code', '#content-import-input']
             assert not result["recovery_attempted"] and not result["recovery_confirmed"]
             assert not result["editor_page_restored"] and result["recovery_scope"] == 'editor_page_only'
             assert result["content_rollback_status"] == 'NOT_VERIFIED' and not result['ok']
@@ -1257,7 +1516,7 @@ const page = {
             assert result['observation']['tab_id'] == failed.tab_id
             assert result['observation']['step'] == 'body_import'
             assert result['observation']['scope']['step'] == 'body_import'
-            assert result['phase_timings_ms'] == {'identity': 25000, 'prepare': 25000, 'body_import': 25000}
+            assert result['phase_timings_ms'] == {'prepare': 25000, 'body_import': 25000}
             assert result['next_action'] == 'sync-observe'
             calls.clear()
             uncertain = FakeSession()
@@ -1312,6 +1571,15 @@ const page = {
             assert result["status"] == "SYNC_FAILED" and not result["recovery_attempted"]
             assert calls.count('code') == 2 and 'discard' not in calls
             files[2].write_bytes(b"stable fixture")
+            calls.clear()
+            unbound = FakeSession()
+            unbound.tab_id = None
+            try:
+                run_sync(unbound, website, {"preload_script": ""})
+                raise AssertionError('Unbound synchronization started')
+            except ValueError as exc:
+                assert 'bound tab' in str(exc)
+            assert calls == [], 'Missing binding must stop before browser access'
         exercise_sync_observation(root, website, submission_failure)
         exercise_saved_confirmation(root, website, submission_failure)
     if args.live_session:

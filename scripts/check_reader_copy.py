@@ -23,6 +23,8 @@ from questionnaire_display import (requires_questionnaire_display, display_quest
 NO_INSIGHT = "本主题没有需要单独提示的主题级边界"
 REQUIRED_FIELDS = ("定义", "定义逻辑", "分类")
 FIELDS = (*REQUIRED_FIELDS, "注意点")
+CIRCLED_NUMBERS = "".join(chr(n) for start, end in ((0x2460, 0x2473), (0x3251, 0x325f), (0x32b1, 0x32bf))
+                          for n in range(start, end + 1))
 
 
 class Element:
@@ -84,9 +86,8 @@ def visible_markup(text):
 
 def summary_number_tokens(text):
     """Compare the same ordinal across native circles and rendered badges."""
-    circles = "".join(chr(n) for a, b in ((0x2460, 0x2473), (0x3251, 0x325f),
-                                        (0x32b1, 0x32bf)) for n in range(a, b + 1))
-    text = re.sub("[" + circles + "]", lambda m: f"[[序号:{circles.index(m[0]) + 1}]]", text)
+    text = re.sub("[" + CIRCLED_NUMBERS + "]",
+                  lambda m: f"[[序号:{CIRCLED_NUMBERS.index(m[0]) + 1}]]", text)
     return re.sub(r"([0-9]+)\u20dd", lambda m: f"[[序号:{m[1]}]]", text)
 
 
@@ -126,7 +127,19 @@ def table_cells(line):
     return [value.replace(r"\|", "|") for value in cells]
 
 
-def criteria_blocks(text):
+def number_criteria_cell_items(cell):
+    # Only explicit list items are numbered. A literal <br> inside code is not a break.
+    parts = re.split(r"<br>(?=(?:[^`]*`[^`]*`)*[^`]*$)", cell)
+    items = [re.fullmatch(r"\s*-\s+(.+\S|\S)\s*", part) for part in parts]
+    if len(items) < 2 or not all(items):
+        return cell
+    return "<br>".join(
+        f"{CIRCLED_NUMBERS[i] if i < len(CIRCLED_NUMBERS) else str(i + 1) + '.'} {item[1]}"
+        for i, item in enumerate(items)
+    )
+
+
+def criteria_blocks(text, *, number_cell_items=False):
     """Keep table cells structured; ordinary lines retain their existing format."""
     lines = text.splitlines()
     result, i = [], 0
@@ -148,7 +161,7 @@ def criteria_blocks(text):
                 row = table_cells(lines[i])
                 if len(row) != len(header):
                     raise ValueError("Criteria 表格数据行与表头列数不同")
-                rows.append(row)
+                rows.append([number_criteria_cell_items(cell) for cell in row] if number_cell_items else row)
                 i += 1
             result.append(dict(type="table", header=header, rows=rows, align=align))
         else:
@@ -157,13 +170,18 @@ def criteria_blocks(text):
     return result
 
 
-def criteria_comparable(text):
-    blocks = criteria_blocks(text)
+def criteria_cell_comparable(text):
+    text = re.sub(r"`([^`]+)`", lambda m: m[1].replace("<br>", "&lt;br&gt;"), text)
+    return normalized(text)
+
+
+def criteria_comparable(text, *, number_cell_items=False):
+    blocks = criteria_blocks(text, number_cell_items=number_cell_items)
     for block in blocks:
         if block["type"] == "table":
             block.pop("align")  # Alignment is presentation, not source content.
-            block["header"] = [normalized(c) for c in block["header"]]
-            block["rows"] = [[normalized(c) for c in row] for row in block["rows"]]
+            block["header"] = [criteria_cell_comparable(c) for c in block["header"]]
+            block["rows"] = [[criteria_cell_comparable(c) for c in row] for row in block["rows"]]
         else:
             block["text"] = normalized(block["text"])
     # Preserve old whitespace tolerance for prose, but keep table boundaries.
@@ -549,6 +567,61 @@ def format_copy_categories(criteria, summary):
     return summary
 
 
+def format_copy_abbreviations(result, terms):
+    """Project confirmed abbreviations into the assembled article's reading order."""
+    labels = {}
+    for line in terms.splitlines():
+        if not line.strip():
+            continue
+        entry = re.fullmatch(r"- ([^|`\n]+?)（([A-Za-z0-9][A-Za-z0-9/-]*)）", line.strip())
+        if not entry or entry[2] in labels or entry[1] in labels.values():
+            raise ValueError("术语每行填写一个唯一对应：- 中文名（缩写）")
+        labels[entry[2]] = entry[1]
+    if not labels:
+        return
+
+    ordered = sorted(labels, key=len, reverse=True)
+    abbreviations = "|".join(map(re.escape, ordered))
+    pairs = "|".join(
+        re.escape(labels[short]) + r"[ \t]*[（(][ \t]*" + re.escape(short) + r"[ \t]*[）)]"
+        for short in ordered
+    )
+    literals = (
+        r"(?m:^[ \t]{0,3}(?:`{3,}|~{3,})[^\n]*)|"
+        r"`+[^`\n]+`+|\[\[result:[A-Za-z][A-Za-z0-9_.]*\||"
+        r"\[\[(?:meta|period):[^\n]+?\]\]|\[\[(?:component|relation):|\[[^\]\n]+\]\([^\n]*?\)|https?://[^\s<>]+"
+    )
+    token = re.compile(
+        rf"(?P<literal>{literals})|(?:{pairs})|"
+        rf"(?<![A-Za-z0-9_.-])(?:{abbreviations})(?![A-Za-z0-9_-]|\.[A-Za-z0-9_])"
+    )
+    seen = set()
+
+    def replace(match):
+        text = match[0]
+        if match["literal"]:
+            return text
+        short = text if text in labels else re.split(r"[（(]", text)[-1][:-1].strip()
+        if short in seen:
+            return short
+        seen.add(short)
+        return f"{labels[short]}（{short}）"
+
+    for field in ("summary", "definition_basis"):
+        result[field] = token.sub(replace, result[field])
+    for period in result.get("questionnaire", {}).values():
+        design = period["design"]
+        if not re.search(r"(?:题意概括|未取得完整原题的原因)\s*[:：]", design):
+            period["design"] = token.sub(replace, design)
+    for field in ("insight", "criteria_intro"):
+        result[field] = token.sub(replace, result[field])
+    for fields in result["criteria"].values():
+        for field, text in fields.items():
+            if field != "分类":
+                fields[field] = token.sub(replace, text)
+    result["references"] = token.sub(replace, result["references"])
+
+
 def read_copy(path, expected_vars=None, record=None, *, require_result_identity=False):
     text = Path(path).read_text(encoding="utf-8-sig")
     policy = resolve_display_policy(text, expected_vars, record)
@@ -591,8 +664,6 @@ def read_copy(path, expected_vars=None, record=None, *, require_result_identity=
               "insight": insight, "references": render_references(parts.get("参考资料说明", ""))}
     result["display_policy"] = policy
     result["definition_basis"] = parts.get("定义依据", "")
-    result["criteria_blocks"] = {v: {f: criteria_blocks(t) for f, t in fields.items()}
-                                 for v, fields in criteria.items()}
     result["summary_blocks"] = summary_blocks(result["summary"])
     plan = (record or {}).get("definition_plan", [])
     if record is not None:
@@ -631,6 +702,16 @@ def read_copy(path, expected_vars=None, record=None, *, require_result_identity=
             tree_omission_reason=(record or {}).get("tree_omission_reason"), result_spec=specs)
     if "问卷" in parts:
         result["questionnaire"] = read_questionnaire_copy(parts["问卷"])
+    if parts.get("术语"):
+        # Validate the plan's full result names before projecting reader-facing text.
+        result["canonical_summary"] = result["summary"]
+        format_copy_abbreviations(result, parts["术语"])
+        result["summary_blocks"] = summary_blocks(result["summary"])
+    result["criteria_blocks"] = {
+        variable: {field: criteria_blocks(text, number_cell_items=field == "定义逻辑")
+                   for field, text in fields.items()}
+        for variable, fields in criteria.items()
+    }
     return result
 
 
@@ -786,6 +867,15 @@ def require_equal(expected, actual, location):
         raise ValueError(f"{location} 与文案不一致（字符 {pos}）：文案={left[max(0,pos-15):pos+65]!r}；成品={right[max(0,pos-15):pos+65]!r}")
 
 
+def criteria_cell_text(element):
+    if element.tag == "br":
+        return "<br>"
+    return "".join(
+        child.replace("<br>", "&lt;br&gt;") if isinstance(child, str) else criteria_cell_text(child)
+        for child in element.children
+    )
+
+
 def criteria_fields(markup):
     root = Document(markup).root if isinstance(markup, str) else markup
     fields = {}
@@ -811,7 +901,7 @@ def criteria_fields(markup):
                     if not elements or any(c.tag != expected_tag for c in elements):
                         raise ValueError("Criteria 表格的表头或数据行结构不正确")
                     accounted_cells.extend(c.text() for c in elements)
-                    cells = [c.text().replace("|", r"\|") for c in elements]
+                    cells = [criteria_cell_text(c).replace("|", r"\|") for c in elements]
                     rows.append("| " + " | ".join(cells) + " |")
                 if normalized(tables[0].text()) != normalized("".join(accounted_cells)):
                     raise ValueError("Criteria 表格包含未归入单元格的文字")
@@ -879,7 +969,8 @@ def compare_content(copy, actual, *, source=False):
         if list(fields) != list(rendered):
             raise ValueError(f"Criteria/{variable} 栏目丢失或增加：应为{list(fields)}，实际{list(rendered)}")
         for field, text in fields.items():
-            if criteria_comparable(text) != criteria_comparable(rendered[field]):
+            expected = criteria_comparable(text, number_cell_items=field == "定义逻辑")
+            if expected != criteria_comparable(rendered[field]):
                 raise ValueError(f"Criteria/{variable}/{field} 的正文或表格单元格与文案不一致")
     if "questionnaire" in copy:
         rendered = actual.get("questionnaire", {})
@@ -1163,7 +1254,8 @@ def main():
             result = compare_content(copy, actual, source=True)
             if actual.get("result_display_names") is not None:
                 result["result_order_check"] = check_tree_result_order(
-                    copy["summary"], copy["display_policy"]["analysis_vars"], actual["result_display_names"])
+                    copy.get("canonical_summary", copy["summary"]),
+                    copy["display_policy"]["analysis_vars"], actual["result_display_names"])
         if args.note:
             result = validate_note(args.copy, args.note, args.analysis_codebook, record, expected)
         if args.export:

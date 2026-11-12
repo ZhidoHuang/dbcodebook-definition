@@ -56,6 +56,7 @@ console.log('BOUND_DIALOG_PASS');
         session.retain_receipts=False
         session.receipt_scope=None
         session.operation_timeout=40
+        session.deadline=None
         session.code_path=Path(folder)/'action.js'
         emitted=[]
         scripts=[]

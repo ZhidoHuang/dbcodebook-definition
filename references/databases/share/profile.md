@@ -10,6 +10,7 @@
 - 同一mergeid可跨期出现，ID及当期个人键都须非空且唯一。国家、家庭和访员标识按实际包保留字符身份。
 - 所选个人文件合并为 `raw_data.csv`。
 - 新版字典列为 `Variable,Label,File type,newname`，时期、官方文件及连接键在同包 `连接说明.html` 中核对。个人来源仍须为 `uniqID`，按 `Wave_id + mergeid` 唯一；原样保留说明文件及 CSV。
+- 新版包可保留来源期外的全空身份行。逐变量核对连接说明中该变量的来源时期；期外出现任何非空业务值仍拒绝，不以整表时期或无关文件的时期代替变量来源期。
 - 旧版含 `Period` 和 `Match key` 时，继续核对两列；不能只缺一列后按新版跳过检查。新版说明缺失、时期或个人连接关系不符时不安装。
 - 自动标识列可包含ID、Wave_id、Record_id、mergeid、hhid、country、intid、intidwX。
 - 多个来源同时有intid时保留 `intid (实际来源文件名)`；不将它误判为漏选业务变量，也不重命名原CSV表头。

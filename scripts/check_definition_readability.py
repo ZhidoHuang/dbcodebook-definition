@@ -2115,10 +2115,15 @@ async function syncDbCodeBookPost(tab, payload, checkpoint = null) {{
         content_rollback_status:'NOT_VERIFIED'}};
     }}
     const navigation = await returned;
-    if (navigation.error) throw new Error(navigation.error);
     const postUrl = await tab.url();
     if (!validDbCodeBookPostUrl(postUrl, payload)) {{
-      throw new Error(`提交后未返回文章地址：${{postUrl}}`);
+      return {{ok:false, status:'SUBMISSION_UNCERTAIN', phase:'submit',
+        sync_started_at:payload.sync_started_at, sync_run_id:payload.sync_run_id,
+        sync_attempt:payload.sync_attempt, preload_sha256:payload.preload_sha256,
+        save_request_seen:receipt.save_request_seen, save_response:saved.evidence,
+        error:navigation.error || `提交后未返回文章地址：${{postUrl}}`,
+        browser_elapsed_ms:Date.now()-startedAt, next_action:'sync-observe',
+        content_rollback_status:'NOT_VERIFIED'}};
     }}
     timings.submit_and_return_ms = Date.now() - stepStarted;
     const finishedAt = Date.now();

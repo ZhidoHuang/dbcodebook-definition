@@ -275,7 +275,7 @@ def expected_raw_header(db: str, raw_vars: list[str]) -> list[str]:
     if db == "klosa":
         return ["ID", "Harmonized_id", "Wave_id", *raw_vars]
     if db == "elsa":
-        return ["ID", "idauniq", *raw_vars]
+        return ["ID", "idauniq", "Wave_id", *raw_vars]
     if db == "share":
         return ["ID", "Wave_id", "mergeid", *raw_vars]
     if db == "hrs":
@@ -560,6 +560,8 @@ def check_long_table(rows, header, results, db="", source_record=None):
         "klosa": ["Harmonized_id", "Wave_id"], "chns": ["IDind", "WAVE"],
         "knhanes": ["id", "year"], "mhas": ["ID", "Wave_id"], "nhanes": ["SEQN", "YEAR"], "nhanesiii": ["SEQN", "YEAR"], "nhis": ['ID','Wave_id'],
     }[(db or "charls").lower()]
+    if db.lower() == "elsa" and "Wave_id" in header:
+        keys = ["idauniq", "Wave_id"]
     if contract.get("identity_keys"):
         keys = contract["identity_keys"]
     if db.lower() == "mhas" and "source_module" in header and "source_module" not in keys:
@@ -660,9 +662,7 @@ def verified_default_sources(formal, database):
     defaults = (set(expected_raw_header(db, [])) if db in {
         'charls', 'elsa', 'hrs', 'share', 'klosa', 'chns', 'knhanes', 'nhanes', 'nhanesiii', 'nhis'
     } else set())
-    if db == 'elsa':
-        defaults.add('Wave_id')
-    elif db == 'charls':
+    if db == 'charls':
         defaults.update(('householdid', 'respondent_id'))
     elif db == 'nhanesiii':
         defaults.update(('_survey_period', '_period'))
@@ -1023,7 +1023,12 @@ def check_identity_values(
             else:
                 ok(results, "analysis identity values", {"sample_scoped_rows": sum(actual.values()), "scope": "subset of each original sample; no cross-sample join"})
             return
-    if db == "chns":
+    if db == "elsa" and "Wave_id" in raw_header:
+        identity_columns = ["ID", "idauniq", "Wave_id"]
+        if not all(name in analysis_header for name in identity_columns) or "Wave" in analysis_header:
+            fail(results, "analysis identity values", "ELSA requires ID, idauniq and Wave_id without an extra Wave alias")
+            return
+    elif db == "chns":
         identity_columns = ["ID", "IDind", "WAVE"]
         if not all(name in raw_header and name in analysis_header for name in identity_columns):
             fail(results, "analysis identity values", "CHNS requires ID, IDind and WAVE in raw and analysis")

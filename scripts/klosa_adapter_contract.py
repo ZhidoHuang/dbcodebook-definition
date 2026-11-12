@@ -84,7 +84,7 @@ def validate_package(staging, members, expected, lang):
     if header not in (DICT_HEADER, CURRENT_DICT_HEADER):
         raise ValueError('KLoSA dictionary header differs from website contract')
     current_dictionary = header == CURRENT_DICT_HEADER
-    aliases, owners, source_waves = [], {}, {}
+    aliases, owners = [], {}
     for row in dictionary:
         alias = row['newname']; source = re.fullmatch(r'(.+) \(([^()]+)\)', row['Variable'])
         if not source or source[2] not in FILES or not row['Base_Variable'] or not alias:
@@ -94,7 +94,6 @@ def validate_package(staging, members, expected, lang):
             if not actual:
                 raise ValueError('current dictionary requires actual wave field identity')
             waves = ['Wave ' + str(int(actual[1]))]
-            source_waves[alias] = _wave(waves[0], lang)
         else:
             waves = row['Wave'].split(', ')
         if any(not re.fullmatch(r'Wave ([1-9]|10)', x) for x in waves):
@@ -126,8 +125,8 @@ def validate_package(staging, members, expected, lang):
             if any(not row[x] or row[x].strip() != row[x] for x in identities):
                 raise ValueError('blank or whitespace identity')
             wave = _wave(row['Wave_id'], lang)
-            if current_dictionary and any(row[v] and source_waves[v] != wave for v in variables):
-                raise ValueError('nonempty source field outside its actual wave identity')
+            # A source field can be carried into later records. Its wNN identity
+            # does not require values to be blank outside that record wave.
             meta = (row['Harmonized_id'], wave)
             if row['ID'] in id_metadata and id_metadata[row['ID']] != meta:
                 raise ValueError('same ID has conflicting person/wave metadata')

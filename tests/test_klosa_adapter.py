@@ -47,13 +47,13 @@ class ContractTests(unittest.TestCase):
  def test_package_regular_and_imputation(self):
   result=self.runvalid();self.assertEqual(result['language'],'ko');self.assertEqual(result['data'][k.REPEAT_MEMBER]['rows'],2)
   self.assertEqual((self.root/'raw_data.csv').read_text(encoding='utf-8-sig').splitlines()[1],'00001_10,00001,10,1')
-  # Current website omits Wave; actual wNN identity still determines scope.
+  # Current website omits Wave; actual wNN still determines source coverage.
   rows=[row[:2]+row[3:] for row in self.dictrows]
   self.csv('raw_codebook.csv',k.CURRENT_DICT_HEADER,rows)
   self.assertEqual(self.runvalid()['codebook']['rows'],2)
   with self.assertRaises(ValueError):self.runvalid('en')
   self.csv('raw_data.csv',k.IDENTIFIERS+['sex10'],[['00001_9','00001','9','1']])
-  with self.assertRaises(ValueError):self.runvalid()
+  self.assertEqual(self.runvalid()['data']['raw_data.csv']['rows'],1)
   self.csv('raw_data.csv',k.IDENTIFIERS+['sex10'],self.reg)
   rows[0][2]='gender1 (KLoSA_str)'
   self.csv('raw_codebook.csv',k.CURRENT_DICT_HEADER,rows)
@@ -68,18 +68,29 @@ class ContractTests(unittest.TestCase):
    self.csv(k.EXIT_MEMBER,k.IDENTIFIERS+['exit'],[['2_001','001','2','1']])
   def validate():return k.validate_package(self.root,['raw_data.csv',k.EXIT_MEMBER],['core','exit'],'ko')
   setup();self.assertEqual(validate()['data'][k.EXIT_MEMBER]['rows'],1)
-  for case in ['misplaced_source','duplicate_exit','wrong_wave','missing_exit']:
+  for case in ['misplaced_source','duplicate_exit','invalid_wave','missing_exit']:
    with self.subTest(case=case):
     setup()
     if case=='misplaced_source':self.csv(k.EXIT_MEMBER,k.IDENTIFIERS+['core'],[['2_001','001','2','1']])
     elif case=='duplicate_exit':self.csv(k.EXIT_MEMBER,k.IDENTIFIERS+['exit'],[['2_001','001','2','1']]*2)
-    elif case=='wrong_wave':self.csv(k.EXIT_MEMBER,k.IDENTIFIERS+['exit'],[['3_001','001','3','1']])
+    elif case=='invalid_wave':self.csv(k.EXIT_MEMBER,k.IDENTIFIERS+['exit'],[['11_001','001','11','1']])
     with self.assertRaises(ValueError):
      if case=='missing_exit':k.validate_package(self.root,['raw_data.csv'],['core','exit'],'ko')
      else:validate()
   setup()
   self.csv('raw_data.csv',k.IDENTIFIERS+['core','exit'],[['1_001','001','1','1',''],['2_001','001','2','','1']])
   self.assertEqual(k.validate_package(self.root,['raw_data.csv'],['core','exit'],'ko')['data']['raw_data.csv']['rows'],2)
+ def test_current_dictionary_retains_carried_source_values(self):
+  self.csv('raw_codebook.csv',k.CURRENT_DICT_HEADER,[['education','edu','w01edu (KLoSA_str)','uniqID','education_1']])
+  header=k.IDENTIFIERS+['education_1']
+  rows=[['00001_1','00001','1','Middle school'],['00001_2','00001','2','Middle school']]
+  self.csv('raw_data.csv',header,rows)
+  before=(self.root/'raw_data.csv').read_bytes()
+  result=k.validate_package(self.root,['raw_data.csv'],['education_1'],'ko')
+  self.assertEqual(result['data']['raw_data.csv']['rows'],2)
+  self.assertEqual((self.root/'raw_data.csv').read_bytes(),before)
+  self.csv('raw_data.csv',header,[['00001_11','00001','11','Middle school']])
+  with self.assertRaises(ValueError):k.validate_package(self.root,['raw_data.csv'],['education_1'],'ko')
  def test_default_pid_preserved(self):
   header=k.IDENTIFIERS+['pid','sex10']
   self.csv('raw_data.csv',header,[['00001_10','00001','10','00001.0','1']])

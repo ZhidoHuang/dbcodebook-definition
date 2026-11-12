@@ -71,7 +71,7 @@
 
 - MHAS已接入的个人文件使用 `database="MHAS"` 及已核实的 `cycle_order`。逐文件保留原名及字符身份；适用文件和组合边界见[MHAS流程](../../databases/mhas/workflow.md)。
 
-- ELSA调用公共render_definition_bundle并设置database="ELSA"、cycle_order为已核实时期顺序，输入保留ID/idauniq/Wave。
+- ELSA调用公共render_definition_bundle并设置database="ELSA"、cycle_order为已核实时期顺序，新输入保留ID/idauniq/Wave_id；旧Wave成果按[ELSA身份约定](../../databases/elsa/profile.md#1-基本身份)兼容读取。
 - Full HRS用database="HRS"及本轮核实年份，保留字符型HHID/PN和year；不在主题复制渲染器。
 - 顺序取自证据，不从非缺失行反推；概览和文件前缀随参数生成。
 
@@ -101,7 +101,7 @@ summary_groups <- c(defined_a = "研究概念一", defined_b = "研究概念二"
 # 不同变量使用不同宽度时，传按变量命名的向量。
 ```
 
-- CHARLS 五期是当前共同覆盖契约，不能依据本主题恰好出现的年份缩减。
+- CHARLS 八个年份（2011、2013、2015、2018、2020、2021、2022、2023）是当前共同覆盖契约，不能依据本主题恰好出现的年份缩减。
 - Full HRS 的年份覆盖由本轮实际选择的 Tracker、Core 与跨波次文件共同确定；地理等文件落后于 Tracker 时按结构性缺失处理，不把 RAND Wave 契约套到原始库。
 - 升级新波次时先核实正式来源，再同步 renderer 契约与对应测试，运行完整回归后发布。各库文件族、产品路线及时期边界见对应数据库说明；本次验证只证明实际覆盖的范围。
 
@@ -140,7 +140,7 @@ summary_groups <- c(defined_a = "研究概念一", defined_b = "研究概念二"
 - 例如 `component_groups <- c(deficit_a="Frailty Index·Components", deficit_b="Frailty Index·Components", FI="Frailty Index")`。成分须在计算数据与字典中存在，按已确认方案提供；不因展示需要新增分析输出。
 - `component_card_labels` 用于已明确要求保留旧卡片说明的更新：逐项采用已核实的旧说明，不改统计、分析字典或摘要。新稿的名称仍按当前方案生成。
 - `summary_groups` 仅服务摘要事实核对，不控制概览或详情分组。`component_groups` 须显式提供，生成器不猜模块名。旧的原始变量分组映射须改为本接口后再生成。
-- 分组后的最终结果相对顺序必须与 `analysis_vars` 一致；成分及分组顺序由方案确定。内部工作对象和字典用于生成时，最终结果的相对顺序也须一致。
+- 同一分类的成分组紧接在定义组前，例如“肺部疾病·Components”后紧接“肺部疾病”。生成器按同名配对，最终结果的相对顺序按 `analysis_vars`。多个定义共用的成分在同组展示一次。内部工作对象和字典用于生成时，最终结果也按 `analysis_vars`。
 - 程序核对展示变量、单层分组、两处归属及顺序；组分的业务含义由来源方案核实。所有主题均生成 Criteria；原始变量不进入组分概览和详情。
 - detail 片段自行提供 `## 定义的组分概览` 和 `## 定义的组分详情`；笔记拼装器不得再额外添加“定义的组分详情”。
 - 最终笔记各保留一个标题，不能形成“详情 → 概览 → 详情”的重复结构。

@@ -39,6 +39,41 @@ def render_note(content):
             + "".join(rows) + f'</table>\n## 参考资料说明\n{content["references"]}\n## 材料\n')
 
 
+def test_abbreviation_order(folder):
+    path = folder / "abbreviations.md"
+    path.write_text("""## 摘要导读
+定义①“**SBP**”。
+
+```tree
+血压
+- [[result:SBP|收缩压（SBP）]] [[meta:mmHg]]
+```
+
+## Criteria
+### SBP
+#### 定义
+收缩压（SBP）与 MAP。保留字段 `SBP` 和 SBP_source。
+#### 定义逻辑
+取有效读数。
+#### 分类
+- [SBP] 原值。
+
+## 小book提示
+MAP 由设备记录。
+
+## 术语
+- 收缩压（SBP）
+- 平均动脉压（MAP）
+""".replace("`", chr(96)), encoding="utf-8")
+    record = {"definition_plan": [{"analysis_var": "SBP", "display_name": "收缩压（SBP）", "unit": "mmHg"}]}
+    content = read_copy(path, ["SBP"], record, require_result_identity=True)
+    assert content["summary"].count("收缩压（SBP）") == 1
+    assert 'data-tree-variable="SBP">SBP<' in content["summary_blocks"][1]["role_html"]
+    assert content["insight"] == "平均动脉压（MAP） 由设备记录。"
+    assert content["criteria"]["SBP"]["定义"] == "SBP与 MAP。保留字段 `SBP` 和 SBP_source。"
+    assert content["criteria"]["SBP"]["分类"] == "- [SBP] 原值。"
+
+
 def main():
     from check_reader_copy import format_category_label, format_copy_categories, summary_markup_errors, validate_summary_marks
     assert summary_markup_errors('只有数量，得到 **5** 个结果。')
@@ -104,6 +139,7 @@ stopifnot(identical(format_category_values(c(NA_character_)), NA_character_))
     rejects(lambda: read_questionnaire_copy(grouped + "\n- 1 好\n"), "引用选项与单题选项重复")
     with tempfile.TemporaryDirectory() as directory:
         folder = Path(directory)
+        test_abbreviation_order(folder)
         path = folder / "文案.md"
         original = (ROOT / "tests/fixtures/writing-inputs" / "reader-copy.md").read_text(encoding="utf-8")
         legacy = original.replace('①“**是否发生跌倒**”和②“**跌倒次数**”两个变量',

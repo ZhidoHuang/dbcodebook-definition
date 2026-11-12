@@ -615,7 +615,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
     from unittest.mock import patch
 
     t0 = datetime(2026, 9, 7, tzinfo=timezone.utc)
-    for original_status in ("SUBMISSION_UNCERTAIN", "SYNC_FAILED"):
+    for original_status in ("SUBMISSION_UNCERTAIN", "SYNC_FAILED", "SYNC_SAVE_REJECTED"):
         process = Path(temp_dir) / original_status
         with patch.object(execution_report, "now", return_value=t0):
             execution_report.begin_website_preparation(process, "CHARLS", "043", "fixture")
@@ -636,6 +636,17 @@ with tempfile.TemporaryDirectory() as temp_dir:
             "browser_elapsed_ms": 30000,
             "observation": {"receipt_id": "a" * 32, "tab_id": "fixture-tab"},
         }
+        if original_status == "SYNC_SAVE_REJECTED":
+            original.update(error="database is locked", save_response={
+                "http_status": 500, "status": "error", "message": "database is locked"})
+            with patch.object(execution_report, "now", return_value=t0 + timedelta(seconds=40)):
+                execution_report.command_stage_finish(execution_report.argparse.Namespace(
+                    process_dir=str(process), stage_id="website_sync", status="failed",
+                    summary=["服务器返回保存错误"], output=[]))
+            current = execution_report.load(report_path)
+            stage = execution_report.latest_stage(current, "website_sync")
+            stage["browser_result"] = copy.deepcopy(original)
+            execution_report.save(report_path, markdown_path, current)
         path = process / "saved-confirmation.json"
         good = {
             "ok": True, "status": "ARTICLE_SAVED_CONFIRMED", "sync_run_id": current["run_id"],
@@ -667,6 +678,11 @@ with tempfile.TemporaryDirectory() as temp_dir:
             assert markdown_path.read_bytes() == before_markdown
             assert path.read_bytes() == source_before and original_path.read_bytes() == failure_before
             assert not standard_path.exists()
+
+        if original_status == "SYNC_SAVE_REJECTED":
+            rejected(dict(good, status="ARTICLE_PAGE_RETURNED"), "不属于本次")
+            rejected(good, "已结束的失败尝试", dict(original, status="SYNC_FAILED"))
+            rejected(dict(good, saved_content_verified=False), "正文、附件哈希或只读")
 
         if original_status == "SUBMISSION_UNCERTAIN":
             for invalid in (
@@ -735,7 +751,12 @@ with tempfile.TemporaryDirectory() as temp_dir:
         saved = execution_report.latest_stage(final, "website_sync")
         assert saved["status"] == "completed_with_issues" and saved["browser_result"] == good
         assert saved["elapsed_seconds"] == imported["submission_seconds"] == 110
-        assert "只读确认" in saved["summary"][0] and "直接返回回执" in saved["summary"][0]
+        assert "只读确认" in saved["summary"][0]
+        if original_status == "SYNC_SAVE_REJECTED":
+            assert saved["save_error_result"] == original
+            assert "未再次提交" in saved["summary"][0] and "原错误响应保留" in saved["summary"][0]
+        else:
+            assert "直接返回回执" in saved["summary"][0]
         assert [s["elapsed_seconds"] for s in final["stages"]] == [10, 110, 10]
         assert final["issues"] == current["issues"]
         assert json.loads(standard_path.read_text(encoding="utf-8")) == good

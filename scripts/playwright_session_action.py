@@ -11,12 +11,11 @@ import subprocess
 import re
 import time
 import uuid
-import zipfile
 import tempfile
 import sys
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 from skill_config import load_config, playwright_command, database_url
 
 
@@ -295,6 +294,7 @@ class Session:
         self.receipt_scope = None
         self.last_receipt_id = None
         self.body_check = None
+        self.cli_call_timings_ms = []
 
     def call(self, *args, timeout=None):
         timeout = self.operation_timeout if timeout is None else timeout
@@ -302,46 +302,60 @@ class Session:
             timeout = min(timeout, self.deadline - time.monotonic())
             if timeout <= 0:
                 raise TimeoutError("Website phase exceeded its execution limit")
-        result = subprocess.run(self.command + list(args), cwd=self.workdir,
-                                capture_output=True, encoding="utf-8", timeout=timeout,
-                                stdin=subprocess.DEVNULL)
+        started = time.monotonic()
+        try:
+            result = subprocess.run(self.command + list(args), cwd=self.workdir,
+                                    capture_output=True, encoding="utf-8", timeout=timeout,
+                                    stdin=subprocess.DEVNULL)
+        finally:
+            self.cli_call_timings_ms.append(round((time.monotonic() - started) * 1000))
         if result.returncode or "### Error" in result.stdout:
             raise RuntimeError(result.stdout + result.stderr)
         return result.stdout
 
     def code(self, code, *, receipt_id=None, expires_at_ms=None, recovery_url=None):
-        receipt_id = receipt_id or uuid.uuid4().hex
-        expires_at_ms = expires_at_ms or int((time.time() + self.operation_timeout) * 1000)
-        self.last_receipt_id = receipt_id
-        if self.retain_receipts and self.tab_id:
-            self.code_path.with_suffix('.receipt.json').write_text(json.dumps({
-                'receipt_id':receipt_id, 'tab_id':self.tab_id, 'scope':self.receipt_scope,
-                'recorded_at':time.time(), 'phase_timeout_seconds':self.operation_timeout,
-                'expires_at_ms':expires_at_ms,
-            }, ensure_ascii=False, indent=2), encoding='utf-8')
-        with temporary_browser_script(bind_code(code, self.tab_id, receipt_id,
-                                               expires_at_ms,
-                                               self.retain_receipts, self.receipt_scope, recovery_url)) as path:
-            output = self.call("--raw", "run-code", "--filename", str(path))
-        # The CLI returns early when its selected tab opens a dialog, even if
-        # our bound handler dismisses it. Retrieve that same operation only;
-        # never replay the click/upload/submit to obtain a result.
-        if not output.strip() and self.tab_id:
-            recovery = '''async page => {
-              const receipt = page.context()[Symbol.for('dbCodeBook.syncReceipts')]?.get(%s)
-                || page[Symbol.for('dbCodeBook.boundAction')];
-              if (!receipt || receipt.id !== %s) throw new Error('Bound action receipt unavailable; do not replay');
-              return await receipt.operation;
-            }''' % (json.dumps(receipt_id), json.dumps(receipt_id))
-            with temporary_browser_script(bind_code(recovery, self.tab_id)) as path:
-                output = self.call("--raw", "run-code", "--filename", str(path))
+        previous_deadline = self.deadline
+        self.deadline = time.monotonic() + self.operation_timeout
+        if previous_deadline is not None:
+            self.deadline = min(previous_deadline, self.deadline)
+        self.cli_call_timings_ms = []
         try:
-            return json.loads(output)
-        except json.JSONDecodeError as exc:
-            raise RuntimeError("CLI did not return JSON: " + output) from exc
+            receipt_id = receipt_id or uuid.uuid4().hex
+            expires_at_ms = expires_at_ms or int((time.time() + self.operation_timeout) * 1000)
+            self.last_receipt_id = receipt_id
+            if self.retain_receipts and self.tab_id:
+                self.code_path.with_suffix('.receipt.json').write_text(json.dumps({
+                    'receipt_id':receipt_id, 'tab_id':self.tab_id, 'scope':self.receipt_scope,
+                    'recorded_at':time.time(), 'phase_timeout_seconds':self.operation_timeout,
+                    'expires_at_ms':expires_at_ms,
+                }, ensure_ascii=False, indent=2), encoding='utf-8')
+            with temporary_browser_script(bind_code(code, self.tab_id, receipt_id,
+                                                   expires_at_ms,
+                                                   self.retain_receipts, self.receipt_scope, recovery_url)) as path:
+                output = self.call("--raw", "run-code", "--filename", str(path))
+            # The CLI returns early when its selected tab opens a dialog, even if
+            # our bound handler dismisses it. Retrieve that same operation only;
+            # never replay the click/upload/submit to obtain a result.
+            if not output.strip() and self.tab_id:
+                recovery = '''async page => {
+                  const receipt = page.context()[Symbol.for('dbCodeBook.syncReceipts')]?.get(%s)
+                    || page[Symbol.for('dbCodeBook.boundAction')];
+                  if (!receipt || receipt.id !== %s) throw new Error('Bound action receipt unavailable; do not replay');
+                  return await receipt.operation;
+                }''' % (json.dumps(receipt_id), json.dumps(receipt_id))
+                with temporary_browser_script(bind_code(recovery, self.tab_id)) as path:
+                    output = self.call("--raw", "run-code", "--filename", str(path))
+            try:
+                return json.loads(output)
+            except json.JSONDecodeError as exc:
+                raise RuntimeError("CLI did not return JSON: " + output) from exc
+        finally:
+            self.deadline = previous_deadline
 
     def upload(self, selector, path):
         # Wait for each asynchronous attachment import before starting the next.
+        if not self.tab_id:
+            raise ValueError('Upload requires a bound tab')
         if not Path(path).is_file():
             raise FileNotFoundError(path)
         file_path = str(Path(path).resolve())
@@ -349,61 +363,19 @@ class Session:
         read_names = """() => document.querySelector('#documents-sidebar-list').innerText
           .split(/\\r?\\n/).map(line => line.trim())
           .filter(line => /\\.(xlsx|xls|csv|docx?|txt|pdf)$/i.test(line))"""
-        wait_ms = 60000
-        wait_code = """async page => {
-          await page.waitForFunction(expected => {
+        wait_code = """await page.waitForFunction(expected => {
             const actual = document.querySelector('#documents-sidebar-list').innerText
               .split(/\\r?\\n/).map(line => line.trim())
               .filter(line => /\\.(xlsx|xls|csv|docx?|txt|pdf)$/i.test(line));
             return JSON.stringify(actual) === JSON.stringify(expected);
-          }, EXPECTED, {timeout: ATTACHMENT_WAIT_MS});
+          }, expected, {timeout: 60000});
           return {ok:true};
-        }"""
-        wait_code = wait_code.replace('ATTACHMENT_WAIT_MS', str(wait_ms))
-        if self.tab_id:
-            prefix = ('const expected = await page.evaluate(' + read_names + ');'
-                      + ' expected.push(' + json.dumps(Path(path).name) + ');') if attachment else ''
-            wait = wait_code.split('async page => {', 1)[1].rsplit('}', 1)[0].replace('EXPECTED', 'expected') if attachment else '''await page.waitForFunction(expected => {const text=document.querySelector('#editor').value; return expected ? text.length===expected.length_utf16 && text.slice(0,160)===expected.head && text.slice(-150)===expected.tail : text.length>0;}, BODY_CHECK, {timeout:30000}); return {ok:true};'''.replace('BODY_CHECK',json.dumps(self.body_check))
-            self.code('async page => {' + prefix + ' await page.locator(' + json.dumps(selector)
-                      + ').setInputFiles(' + json.dumps(file_path) + ');' + wait + '}')
-            return
-        expected = self.code('async page => page.evaluate(' + read_names + ')') if attachment else None
-        output = self.call("click", selector)
-        if "[File chooser]" not in output:
-            raise RuntimeError("Upload click did not open a CLI file chooser")
-        self.call("upload", file_path)
-        if attachment:
-            self.code(wait_code.replace('EXPECTED', json.dumps(expected + [Path(path).name])))
-
-    def select_target(self, urls):
-        if self.tab_id:
-            actual = self.code('async page => ({url: page.url()})')
-            if actual['url'].rstrip('/') not in {url.rstrip('/') for url in urls}:
-                raise RuntimeError('Bound tab URL does not match the prepared action')
-            return
-        listing = self.call("tab-list")
-        tabs = re.findall(r"^- (\d+): (.*?)\((https?://[^\s)]+)\)\s*$", listing, re.M)
-        matches = [tab for tab in tabs if tab[2].rstrip('/') in {url.rstrip('/') for url in urls}]
-        if any('(current)' in tab[1] for tab in matches):
-            return
-        if len(matches) != 1:
-            raise RuntimeError("No unique matching website tab")
-        self.call("tab-select", matches[0][0])
-
-    def discard(self, edit_url):
-        if self.tab_id:
-            return self.code('async page => { if (page.url() !== ' + json.dumps(edit_url)
-                             + ') throw new Error("Unexpected editor URL");'
-                             + ' await page.goto(' + json.dumps(edit_url)
-                             + '); return {url:page.url(),editor:await page.locator("#editor").count()}; }')
-        listing = self.call("tab-list")
-        current = re.search(r"^- (\d+): \(current\).*\((https?://[^\s)]+)\)", listing, re.M)
-        if not current or current[2] != edit_url:
-            raise RuntimeError("Cannot discard: current tab is not the expected editor")
-        # Keep the browser and its session cookies alive when cancelling the only tab.
-        self.call("tab-new", edit_url)
-        self.call("tab-close", current[1])
-        return self.code('async page => ({url: page.url(), editor: await page.locator("#editor").count()})')
+        """
+        prefix = ('const expected = await page.evaluate(' + read_names + ');'
+                  + ' expected.push(' + json.dumps(Path(path).name) + ');') if attachment else ''
+        wait = wait_code if attachment else '''await page.waitForFunction(expected => {const text=document.querySelector('#editor').value; return expected ? text.length===expected.length_utf16 && text.slice(0,160)===expected.head && text.slice(-150)===expected.tail : text.length>0;}, BODY_CHECK, {timeout:30000}); return {ok:true};'''.replace('BODY_CHECK',json.dumps(self.body_check))
+        self.code('async page => {' + prefix + ' await page.locator(' + json.dumps(selector)
+                  + ').setInputFiles(' + json.dumps(file_path) + ');' + wait + '}')
 
 
 def run_website_prepare(session, action, output_path):
@@ -432,6 +404,7 @@ def run_website_prepare(session, action, output_path):
     try:
         payload = session.code(browser_code(action), receipt_id=receipt_id,
                                expires_at_ms=deadline, recovery_url=recovery_url)
+        payload['cli_call_timings_ms'] = getattr(session, 'cli_call_timings_ms', [])
         payload.update(receipt_id=receipt_id, operation_completed=True)
         return payload
     except subprocess.TimeoutExpired as exc:
@@ -513,8 +486,15 @@ def run_website_workflow(args, config):
         save(output, value)
         return value
 
-    def close_success(source=None):
-        report_path, _ = execution_report.paths(str(process))
+    def confirmed_result(result, report, stage, statuses=('ARTICLE_PAGE_RETURNED', 'ARTICLE_SAVED_CONFIRMED')):
+        status = result.get('status')
+        return bool(stage and result.get('ok') is (status != 'SYNC_SAVE_REJECTED') and status in statuses
+                    and result.get('sync_run_id') == report.get('run_id')
+                    and result.get('sync_attempt') == stage.get('attempt')
+                    and result.get('sync_started_at') == stage.get('started_at'))
+
+    def close_result(source=None):
+        report_path, markdown_path = execution_report.paths(str(process))
         report = execution_report.load(report_path)
         stages = report.get('stages', [])
         sync_stage = next((s for s in reversed(stages) if s.get('stage_id') == 'website_sync'), None)
@@ -522,12 +502,23 @@ def run_website_workflow(args, config):
         if not sync_stage or not source.is_file():
             raise ValueError('Original sync result or matching report stage is unavailable')
         result = json.loads(source.read_text(encoding='utf-8-sig'))
-        if (result.get('ok') is not True or result.get('status') not in ('ARTICLE_PAGE_RETURNED', 'ARTICLE_SAVED_CONFIRMED')
-                or result.get('sync_run_id') != report.get('run_id')
-                or result.get('sync_attempt') != sync_stage.get('attempt')
-                or result.get('sync_started_at') != sync_stage.get('started_at')):
-            raise ValueError('Original sync result is not a confirmed success for this report')
-        if sync_stage.get('status') == 'running':
+        if not confirmed_result(result, report, sync_stage,
+                ('ARTICLE_PAGE_RETURNED', 'ARTICLE_SAVED_CONFIRMED', 'SYNC_SAVE_REJECTED')):
+            raise ValueError('Original sync result does not confirm this report attempt')
+        if result.get('status') == 'SYNC_SAVE_REJECTED':
+            if sync_stage.get('status') == 'running':
+                finished = execution_report.now().isoformat(timespec='milliseconds')
+                sync_stage.update(status='failed', finished_at=finished,
+                    elapsed_seconds=execution_report.elapsed_seconds(sync_stage['started_at'], finished),
+                    summary=['服务器明确拒绝保存：' + str(result.get('error') or result.get('save_response'))],
+                    outputs=[str(source.resolve())], browser_result=result)
+                execution_report.save(report_path, markdown_path, report)
+            elif sync_stage.get('status') != 'failed':
+                raise ValueError('A rejected response cannot replace a completed submission')
+            return summary('WEBSITE_RUN_SAVE_REJECTED', 'save_rejected', result=result,
+                           next_action='retry_same_workflow')
+        if sync_stage.get('status') == 'running' or (
+                sync_stage.get('status') == 'failed' and result.get('status') == 'ARTICLE_SAVED_CONFIRMED'):
             execution_report.command_website_finish(argparse.Namespace(process_dir=str(process),
                 result=source, result_json=None))
             report = execution_report.load(report_path)
@@ -551,7 +542,9 @@ def run_website_workflow(args, config):
         save(files['observation'], observed)
         if observed.get('ok') is True and observed.get('status') == 'ARTICLE_PAGE_RETURNED':
             summary('WEBSITE_RUN_IN_PROGRESS', 'closure', tab_id=tab_id)
-            return close_success(files['observation'])
+            return close_result(files['observation'])
+        if observed.get('status') == 'SYNC_SAVE_REJECTED':
+            return close_result(files['observation'])
         return summary('WEBSITE_RUN_OBSERVATION_REQUIRED', 'sync', result=observed, tab_id=tab_id)
 
     report_path, _ = execution_report.paths(str(process))
@@ -559,48 +552,56 @@ def run_website_workflow(args, config):
     stages = report.get('stages', [])
     running = {s.get('stage_id') for s in stages if s.get('status') == 'running'} if report.get('status') == 'running' else set()
     prior = json.loads(output.read_text(encoding='utf-8-sig')) if output.exists() else None
+    same_version = bool(prior and prior.get('fingerprint') == fingerprint)
     resume_preparation = (prior and prior.get('phase') == 'sync' and
                           'website_preparation' in running and not running.intersection({'website_sync', 'website_closure'}))
     if prior and prior.get('status') == 'WEBSITE_RUN_COMPLETED' and prior.get('fingerprint') == fingerprint:
         return prior
+    if prior and prior.get('phase') == 'save_rejected' and same_version:
+        stage = next((s for s in reversed(stages) if s.get('stage_id') == 'website_sync'), None)
+        source = Path(stage['outputs'][0]) if stage and stage.get('outputs') else files['sync_result']
+        failed = json.loads(source.read_text(encoding='utf-8-sig')) if source.is_file() else {}
+        if stage and stage.get('status') == 'failed' and confirmed_result(failed, report, stage, ('SYNC_SAVE_REJECTED',)):
+            binding = failed.get('observation') or failed.get('recovery', {}).get('observation') or {}
+            session = Session(args.session, args.session_workdir, files['observation'].with_suffix('.browser.js'), config, binding.get('tab_id'))
+            try:
+                confirmation_path = process / 'website_sync_result.json'
+                confirmed = confirm_saved_sync(session, read_action(files['action']), failed, source, confirmation_path)
+            except (ValueError, RuntimeError, OSError, subprocess.TimeoutExpired, SystemExit) as error:
+                return summary('WEBSITE_RUN_OBSERVATION_REQUIRED', 'save_rejected', error=str(error))
+            if confirmed.get('ok') is True and confirmed.get('status') == 'ARTICLE_SAVED_CONFIRMED':
+                save(confirmation_path, confirmed)
+                summary('WEBSITE_RUN_IN_PROGRESS', 'closure')
+                try:
+                    return close_result(confirmation_path)
+                except (ValueError, OSError, SystemExit) as error:
+                    return summary('WEBSITE_RUN_CLOSURE_REQUIRED', 'closure', error=str(error))
     if prior and prior.get('status') != 'WEBSITE_RUN_COMPLETED' and prior.get('phase') in ('sync', 'closure') and not resume_preparation:
         sync_stage = next((s for s in reversed(stages) if s.get('stage_id') == 'website_sync'), None)
         standard_path = process / 'website_sync_result.json'
         standard = json.loads(standard_path.read_text(encoding='utf-8-sig')) if standard_path.is_file() else {}
         standard_matches = (sync_stage and sync_stage.get('status') in ('completed', 'completed_with_issues')
-                            and standard.get('ok') is True and standard.get('status') in ('ARTICLE_PAGE_RETURNED', 'ARTICLE_SAVED_CONFIRMED')
-                            and standard.get('sync_run_id') == report.get('run_id')
-                            and standard.get('sync_attempt') == sync_stage.get('attempt')
-                            and standard.get('sync_started_at') == sync_stage.get('started_at'))
-        if standard_matches and report.get('status') in ('completed', 'completed_with_issues'):
-            if prior.get('fingerprint') == fingerprint:
-                return summary('WEBSITE_RUN_COMPLETED', 'complete', sync_result=str(standard_path))
+                            and confirmed_result(standard, report, sync_stage))
+        closure_source = None
+        if same_version and (standard_matches or confirmed_result(standard, report, sync_stage, ('ARTICLE_SAVED_CONFIRMED',))):
+            closure_source = standard_path
+        elif standard_matches and report.get('status') in ('completed', 'completed_with_issues'):
             prior = {**prior, 'ok':True, 'status':'WEBSITE_RUN_COMPLETED', 'phase':'complete', 'sync_result':str(standard_path)}
             save(output, prior)
-        elif standard_matches and prior.get('fingerprint') == fingerprint:
-            try:
-                return close_success(standard_path)
-            except (ValueError, OSError, SystemExit) as error:
-                return summary('WEBSITE_RUN_CLOSURE_REQUIRED', 'closure', error=str(error))
         else:
             observed = json.loads(files['observation'].read_text(encoding='utf-8-sig')) if files['observation'].is_file() else {}
-            observed_matches = (sync_stage and observed.get('ok') is True and observed.get('status') == 'ARTICLE_PAGE_RETURNED'
-                                and observed.get('sync_run_id') == report.get('run_id')
-                                and observed.get('sync_attempt') == sync_stage.get('attempt')
-                                and observed.get('sync_started_at') == sync_stage.get('started_at'))
-            if observed_matches and prior.get('fingerprint') == fingerprint:
-                try:
-                    return close_success(files['observation'])
-                except (ValueError, OSError, SystemExit) as error:
-                    return summary('WEBSITE_RUN_CLOSURE_REQUIRED', 'closure', error=str(error))
-        saved = json.loads(files['sync_result'].read_text(encoding='utf-8-sig')) if files['sync_result'].is_file() else {}
-        matches = (sync_stage and saved.get('ok') is True and saved.get('status') == 'ARTICLE_PAGE_RETURNED'
-                   and saved.get('sync_run_id') == report.get('run_id')
-                   and saved.get('sync_attempt') == sync_stage.get('attempt')
-                   and saved.get('sync_started_at') == sync_stage.get('started_at'))
-        if matches and prior.get('fingerprint') == fingerprint:
+            if (confirmed_result(observed, report, sync_stage, ('SYNC_SAVE_REJECTED',))
+                    or same_version and confirmed_result(observed, report, sync_stage)):
+                closure_source = files['observation']
+        saved = {}
+        if closure_source is None:
+            saved = json.loads(files['sync_result'].read_text(encoding='utf-8-sig')) if files['sync_result'].is_file() else {}
+            if (not standard_matches and confirmed_result(saved, report, sync_stage, ('SYNC_SAVE_REJECTED',))
+                    or same_version and confirmed_result(saved, report, sync_stage, ('ARTICLE_PAGE_RETURNED',))):
+                closure_source = files['sync_result']
+        if closure_source is not None:
             try:
-                return close_success()
+                return close_result(closure_source)
             except (ValueError, OSError, SystemExit) as error:
                 return summary('WEBSITE_RUN_CLOSURE_REQUIRED', 'closure', error=str(error))
         if (not standard_matches and prior.get('fingerprint') == fingerprint and sync_stage
@@ -628,7 +629,9 @@ def run_website_workflow(args, config):
         session = Session(args.session, args.session_workdir, files['prepare'].with_suffix('.browser.js'), config, args.tab_id)
         prepared = None
         receipt_path = session.code_path.with_suffix('.receipt.json')
-        if prior and prior.get('phase') in ('readiness', 'prepare', 'preflight', 'sync') and files['prepare'].is_file() and receipt_path.is_file():
+        if (prior and prior.get('phase') in ('readiness', 'prepare', 'preflight', 'sync', 'save_rejected')
+                and (prior.get('phase') != 'save_rejected' or same_version)
+                and files['prepare'].is_file() and receipt_path.is_file()):
             candidate = json.loads(files['prepare'].read_text(encoding='utf-8-sig'))
             receipt = json.loads(receipt_path.read_text(encoding='utf-8-sig'))
             scope_hash = hashlib.sha256(json.dumps(intent, sort_keys=True, ensure_ascii=False).encode('utf-8')).hexdigest()
@@ -675,12 +678,14 @@ def run_website_workflow(args, config):
         session = Session(args.session, args.session_workdir, files['sync_result'].with_suffix('.browser.js'), config, tab_id)
         result = run_sync(session, read_action(files['action']), read_action(files['preflight']))
         save(files['sync_result'], result)
+        if result.get('status') == 'SYNC_SAVE_REJECTED':
+            return close_result()
         if result.get('ok') is not True or result.get('status') != 'ARTICLE_PAGE_RETURNED':
             if result.get('status') in ('SUBMISSION_UNCERTAIN', 'SYNC_FAILED') and result.get('observation', {}).get('receipt_id'):
                 return observe_original(result, read_action(files['action']), result['observation'].get('tab_id'))
             return summary('WEBSITE_RUN_OBSERVATION_REQUIRED', 'sync', result=result, tab_id=tab_id)
         summary('WEBSITE_RUN_IN_PROGRESS', 'closure', tab_id=tab_id)
-        return close_success()
+        return close_result()
     except (ValueError, OSError, RuntimeError, subprocess.TimeoutExpired, SystemExit) as error:
         phase = 'unknown'
         if output.exists():
@@ -706,6 +711,8 @@ def validate_sync_files(payload):
 
 
 def run_sync(session, action, preflight):
+    if not session.tab_id:
+        raise ValueError('Synchronization requires a bound tab')
     build_code(action, "sync", preflight, Path("unused"))  # Validate the prepared helper hash.
     helper = preflight["preload_script"].split("\nvar dbCodeBookSyncPreflightTab =", 1)[0]
     payload = action["payload"]
@@ -717,8 +724,9 @@ def run_sync(session, action, preflight):
     session.body_check = payload.get('body_check')
     session.receipt_scope = {key:payload.get(key) for key in
                              ('sync_run_id','sync_attempt','sync_started_at','preload_sha256')}
-    active_step = 'identity'
+    active_step = 'prepare'
     phase_timings = {}
+    phase_calls = {}
 
     def perform(name, operation, timeout=40):
         nonlocal active_step
@@ -726,10 +734,12 @@ def run_sync(session, action, preflight):
         session.receipt_scope['step'] = name
         session.operation_timeout = timeout
         phase_started = time.monotonic()
+        session.cli_call_timings_ms = []
         try:
             return operation()
         finally:
             phase_timings[name] = round((time.monotonic() - phase_started) * 1000)
+            phase_calls[name] = list(session.cli_call_timings_ms)
 
     def step():
         script = ("async page => { const downloadTarget = null;\n" + ADAPTER + helper
@@ -740,7 +750,6 @@ def run_sync(session, action, preflight):
 
     try:
         validate_sync_files(payload)
-        perform('identity', lambda: session.select_target(action["existing_tab_match"]))
         state = perform('prepare', step)
         validate_sync_files(payload)
         perform('body_import', lambda: session.upload("#content-import-input", payload["note"]))
@@ -753,15 +762,7 @@ def run_sync(session, action, preflight):
         # A timeout does not say whether the save request reached the server.
         submitted = True
         result = perform('submit', step)
-        if not result.get('ok'):
-            result['observation'] = {
-                'receipt_id':getattr(session, 'last_receipt_id', None),
-                'tab_id':getattr(session, 'tab_id', None), 'step':active_step,
-                'scope':dict(session.receipt_scope),
-            }
-        return result
     except Exception as exc:
-        session.deadline = None  # Recovery is disclosed separately, not a second submission.
         result = {"ok": False, "status": "SUBMISSION_UNCERTAIN" if submitted else "SYNC_FAILED",
                   "sync_run_id": payload.get("sync_run_id"),
                   "sync_attempt": payload.get("sync_attempt"),
@@ -772,22 +773,23 @@ def run_sync(session, action, preflight):
                   "recovery_scope": "editor_page_only",
                   "editor_page_restored": False,
                   "content_rollback_status": "NOT_VERIFIED"}
-        # The CLI may time out while the original browser operation is still running.
-        # Observe the original operation before considering another submission.
         result['preload_sha256'] = payload.get('preload_sha256')
-        result['phase_timings_ms'] = phase_timings
+        result['next_action'] = 'sync-observe'
+        result['save_check_required_before_retry'] = submitted
+    finally:
+        session.deadline = None
+        session.retain_receipts = False
+        session.operation_timeout = 40
+    result['phase_timings_ms'] = phase_timings
+    result['phase_cli_calls_ms'] = phase_calls
+    if not result.get('ok'):
+        # Preserve the original operation for observation; never replay a write.
         result['observation'] = {
             'receipt_id':getattr(session, 'last_receipt_id', None),
             'tab_id':getattr(session, 'tab_id', None), 'step':active_step,
             'scope':dict(session.receipt_scope),
         }
-        result['next_action'] = 'sync-observe'
-        result['save_check_required_before_retry'] = submitted
-        return result
-    finally:
-        session.deadline = None
-        session.retain_receipts = False
-        session.operation_timeout = 40
+    return result
 
 
 def observe_sync(session, action, failed_result, wait_ms=10000):
@@ -797,6 +799,8 @@ def observe_sync(session, action, failed_result, wait_ms=10000):
     keys = ('sync_run_id','sync_attempt','sync_started_at')
     if any(failed_result.get(key) != payload.get(key) for key in keys):
         raise ValueError('Observation does not belong to the prepared synchronization')
+    if failed_result.get('status') == 'SYNC_SAVE_REJECTED':
+        return {**failed_result, 'read_only':True, 'result_source':'original_save_response'}
     if not observation.get('receipt_id'):
         return {**{key:payload.get(key) for key in keys}, 'ok':False,
                 'status':'SYNC_RECEIPT_UNAVAILABLE', 'read_only':True,
@@ -928,8 +932,9 @@ def observe_sync(session, action, failed_result, wait_ms=10000):
 
 def record_sync_resolution(session, failed_result, result):
     """Record an already verified conclusion without rewriting the original receipt."""
-    if result.get('status') not in {'ARTICLE_PAGE_RETURNED', 'ARTICLE_SAVED_CONFIRMED',
-                                   'SYNC_NOT_SUBMITTED', 'SYNC_SAVE_REJECTED'}:
+    if failed_result.get('status') == 'SYNC_SAVE_REJECTED':
+        return
+    if result.get('status') not in {'ARTICLE_PAGE_RETURNED', 'ARTICLE_SAVED_CONFIRMED', 'SYNC_NOT_SUBMITTED'}:
         return
     observation = failed_result.get('observation') or {}
     if not observation.get('receipt_id'):
@@ -984,25 +989,78 @@ def saved_note_sections(note):
     return note,sections
 
 
+def saved_definition_library(note, article_id=None):
+    """Normalize only the identified definition-library section, preserving its evidence."""
+    headings=list(re.finditer(r'^##[ \t]+定义[ \t]*\n|^<h2\b(?=[^>]*\bdata-definition-library\b)(?=[^>]*\bhidden\b)[^>]*>定义</h2>[ \t]*\n',note,re.M))
+    if len(headings)!=1:
+        raise ValueError('Saved definition library heading is missing or ambiguous')
+    heading=headings[0]
+    following=re.search(r'^##[ \t]+',note[heading.end():],re.M)
+    end=heading.end()+following.start() if following else len(note)
+    body=note[heading.end():end].strip()
+    styles=lambda text: set(re.findall(r'<style\b[^>]*>.*?</style>',text,re.I|re.S))
+    if heading.group().startswith('<h2'):
+        placeholder=re.match(r'^<details\b(?=[^>]*\bdata-definition-library\b)(?=[^>]*\bhidden\b)(?=[^>]*\bdata-component-details-url="[^"]*/definitions/")[^>]*>.*?</details>',body,re.S)
+        if not placeholder:
+            raise ValueError('Saved definition library placeholder differs')
+        opening=re.match(r'^<details\b[^>]*>',placeholder[0])
+        path=re.search(r'data-component-details-url="([^"]+)"',opening[0])[1]
+        if article_id is not None and path!=f'/nodes/api/posts/{article_id}/component-section/definitions/':
+            raise ValueError('Saved definition library placeholder identity differs')
+        inner=placeholder[0][opening.end():-len('</details>')].strip()
+        canonical=re.sub(r'>\s+<','><',inner)
+        expected_placeholder=('<summary data-toggle-summary><span class="icon">+</span><span class="text">'
+            '<span class="open-text">点击收起详情</span><span class="close-text">点击查看详情</span>'
+            '</span></summary><div class="lazy-component-details-status">点击后加载这一部分。</div>'
+            '<div class="lazy-component-details-body" hidden></div>')
+        if canonical!=expected_placeholder:
+            raise ValueError('Saved definition library placeholder content differs')
+        remainder=body[placeholder.end():].strip()
+        if re.sub(r'<style\b[^>]*>.*?</style>','',remainder,flags=re.I|re.S).strip():
+            raise ValueError('Saved definition library has unexpected content')
+        definition=None
+        style_set=styles(remainder)
+    else:
+        definition=body
+        style_set=styles(body)
+    normalized=note[:heading.start()]+'## 定义\n\n__DEFINITION_LIBRARY__\n\n'+note[end:]
+    return normalized,definition,style_set
+
+
 def confirm_saved_sync(session, action, failed_result, original_result_path, out):
     """Confirm an ended uncertain submission through normal read-only page controls."""
     observed=observe_sync(session,action,failed_result)
-    if observed.get('status')!='SYNC_SAVE_CHECK_REQUIRED':
+    payload=action['payload']
+    rejected = observed.get('status') == 'SYNC_SAVE_REJECTED' and not payload.get('create')
+    observation = failed_result.get('observation') or failed_result.get('recovery', {}).get('observation') or {}
+    if rejected:
+        if not session.tab_id or observation.get('tab_id') != session.tab_id:
+            raise ValueError('Saved confirmation requires the original bound tab')
+        current = urlsplit(session.code('async page => ({url: page.url()})')['url'])
+        expected = urlsplit(payload['post_url'])
+        if (current.scheme, current.netloc, current.path.replace('/local-', '/').rstrip('/')) != (
+                expected.scheme, expected.netloc, expected.path.replace('/local-', '/').rstrip('/')):
+            return observed
+    elif observed.get('status')!='SYNC_SAVE_CHECK_REQUIRED':
         return observed
-    if not all((observed.get('verified') or {}).get(k) is True for k in
+    if not rejected and not all((observed.get('verified') or {}).get(k) is True for k in
                ('edit_url_verified','title_verified','body_verified','attachment_order_verified')):
         raise ValueError('Original submission has no complete pre-submit checks')
-    payload=action['payload'];validate_sync_files(payload)
+    validate_sync_files(payload)
     started=datetime.now(timezone.utc).isoformat(timespec='milliseconds')
     evidence_path=out.with_suffix('.saved-page.json')
-    archive=out.with_suffix('.attachments.zip')
+    download_targets=[{'name':item['name'],'path':str(out.with_suffix(f'.attachment-{index+1}.xlsx').resolve())}
+                      for index,item in enumerate(payload['attachments'])]
     code=r"""async boundPage => {
       const payload=PAYLOAD;
-      const target=payload.create ? boundPage.url() : payload.post_url;
+      const target=payload.confirm_current_page || payload.create ? boundPage.url() : payload.post_url;
       const targetUrl=new URL(target), expected=new URL(payload.post_url || payload.edit_url);
       if (targetUrl.origin!==expected.origin || !/^\/nodes\/post\/(?:local-)?[1-9][0-9]*\/$/.test(targetUrl.pathname))
         throw new Error('No confirmed article URL is available; keep the original page');
-      const reuseBoundPage=boundPage.url()===target;
+      const publicSelector='details[data-component-details-url]:not([data-definition-library])';
+      const atTarget=boundPage.url()===target;
+      const alreadyLoaded=atTarget && await boundPage.locator(publicSelector+':is([data-loaded="true"],[data-loading="true"],[open])').count()>0;
+      const reuseBoundPage=atTarget && !alreadyLoaded;
       const page=reuseBoundPage ? boundPage : await boundPage.context().newPage();
       try {
       if (!reuseBoundPage) await page.goto(target,{waitUntil:'commit',timeout:20000});
@@ -1013,14 +1071,24 @@ def confirm_saved_sync(session, action, failed_result, original_result_path, out
         throw new Error('Read-only confirmation article identity mismatch');
       const post=JSON.parse(await page.locator('#post-data').textContent({timeout:15000}));
       if (post.title!==payload.desired_title) throw new Error('Saved title differs');
+      const hasPreparedIdentity=!payload.create &&
+        typeof payload.identity_title_exact==='string' && payload.identity_title_exact.trim() &&
+        typeof payload.identity_category==='string' && payload.identity_category.trim();
+      const expectedCategory=hasPreparedIdentity ? payload.identity_category : payload.database_category;
+      if (post.category!==expectedCategory) throw new Error('Saved database differs');
+      if (!payload.create) {
+        const editId=new URL(payload.edit_url).pathname.match(/^\/nodes\/edit\/([1-9][0-9]*)\/$/);
+        if (!editId || String(post.id)!==editId[1]) throw new Error('Saved article identity differs');
+      }
       const documents=(post.documents || []).filter(d=>(d.displayIn || 'sidebar')==='sidebar');
       if (JSON.stringify(documents.map(d=>d.name))!==JSON.stringify(payload.attachments.map(d=>d.name)))
         throw new Error('Saved attachment order differs');
       const sections=[];
-      if (post.lazy_component_sections?.length)
-        await page.waitForFunction(n => document.querySelectorAll('details[data-component-details-url]').length === n,
-          post.lazy_component_sections.length, {timeout:15000});
-      const nodes=page.locator('details[data-component-details-url]');
+      const publicSections=(post.lazy_component_sections || []).filter(key=>key!=='definitions');
+      if (publicSections.length)
+        await page.waitForFunction(n => document.querySelectorAll('details[data-component-details-url]:not([data-definition-library])').length === n,
+          publicSections.length, {timeout:15000});
+      const nodes=page.locator(publicSelector);
       for(let i=0;i<await nodes.count();i++) {
         const node=nodes.nth(i), path=await node.getAttribute('data-component-details-url');
         const responsePromise=page.waitForResponse(r=>new URL(r.url()).pathname===path,{timeout:20000});
@@ -1030,15 +1098,56 @@ def confirm_saved_sync(session, action, failed_result, original_result_path, out
         if (!response.ok() || part.status!=='success') throw new Error('Saved lazy section could not load');
         sections.push({url:path,markdown:part.markdown});
       }
-      const downloadPromise=page.waitForEvent('download',{timeout:30000});
-      await page.getByRole('button',{name:'下载全部',exact:true}).click({noWaitAfter:true});
-      const download=await downloadPromise;await download.saveAs(payload.confirmation_archive);
-      if (await download.failure()) throw new Error('Saved attachment download failed');
-      return {url:page.url(),title:post.title,content:post.content,documents,sections};
+      const articleUrl=page.url();
+      const downloadPage=await page.context().newPage();
+      try {
+        for(let i=0;i<documents.length;i++) {
+          const target=payload.confirmation_downloads[i];
+          const fileUrl=new URL(documents[i].url,articleUrl);
+          if (!documents[i].url || fileUrl.origin!==new URL(articleUrl).origin || target.name!==documents[i].name)
+            throw new Error('Saved attachment link differs');
+          const downloadPromise=downloadPage.waitForEvent('download',{timeout:30000});
+          downloadPromise.catch(()=>{});
+          try { await downloadPage.goto(fileUrl.href,{waitUntil:'commit',timeout:30000}); }
+          catch(error) { if (!/net::ERR_ABORTED/.test(String(error))) throw error; }
+          const download=await downloadPromise;
+          await download.saveAs(target.path);
+          if (await download.failure()) throw new Error('Saved attachment download failed');
+        }
+      } finally { await downloadPage.close({runBeforeUnload:false}); }
+      let definitionLibrary;
+      if (post.lazy_component_sections?.includes('definitions')) {
+        const link=page.getByRole('link',{name:'查看全部定义',exact:true});
+        const href=await link.getAttribute('href');
+        const definitionsUrl=new URL(href,articleUrl), articleIdentity=new URL(articleUrl);
+        const id=articleIdentity.pathname.match(/^\/nodes\/post\/(?:local-)?([1-9][0-9]*)\/$/);
+        if (!href || definitionsUrl.origin!==articleIdentity.origin ||
+            definitionsUrl.pathname.replace('/local-','/')!==`/nodes/post/${id?.[1]}/definitions/` ||
+            href!==post.definitions_url) throw new Error('Saved definition library link differs');
+        const definitionsPage=reuseBoundPage ? await page.context().newPage() : page;
+        try {
+          await definitionsPage.goto(definitionsUrl.href,{waitUntil:'commit',timeout:20000});
+          const loadedUrl=new URL(definitionsPage.url());
+          if (loadedUrl.origin!==definitionsUrl.origin || loadedUrl.pathname.replace('/local-','/')!==definitionsUrl.pathname.replace('/local-','/'))
+            throw new Error('Saved definition library URL differs');
+          const library=JSON.parse(await definitionsPage.locator('#post-data').textContent({timeout:15000}));
+          const publicUrl=new URL(library.public_url,articleUrl);
+          if (String(library.id)!==String(post.id) || library.title!==post.title || library.category!==post.category ||
+              library.definitions_page!==true || publicUrl.origin!==articleIdentity.origin ||
+              publicUrl.pathname.replace('/local-','/')!==articleIdentity.pathname.replace('/local-','/'))
+            throw new Error('Saved definition library identity differs');
+          definitionLibrary={url:definitionsPage.url(),id:library.id,category:library.category,title:library.title,
+            definitions_page:library.definitions_page,public_url:library.public_url,content:library.content};
+        } finally { if (reuseBoundPage) await definitionsPage.close({runBeforeUnload:false}); }
+      }
+      return {url:articleUrl,id:post.id,category:post.category,title:post.title,content:post.content,documents,sections,
+        ...(definitionLibrary ? {definition_library:definitionLibrary} : {})};
       } finally { if (!reuseBoundPage) await page.close({runBeforeUnload:false}); }
     }""".replace('PAYLOAD',json.dumps({
-        **{k:payload.get(k) for k in ('create','post_url','edit_url','desired_title','attachments')},
-        'confirmation_archive':str(archive.resolve())},ensure_ascii=False))
+        **{k:payload.get(k) for k in ('create','post_url','edit_url','desired_title','attachments','database_category',
+                                    'identity_title_exact','identity_category')},
+        'confirm_current_page':rejected,
+        'confirmation_downloads':download_targets},ensure_ascii=False))
     previous_timeout=session.operation_timeout;session.operation_timeout=120
     try:
         saved=session.code(code)
@@ -1046,11 +1155,26 @@ def confirm_saved_sync(session, action, failed_result, original_result_path, out
         session.operation_timeout=previous_timeout
     evidence_path.write_text(json.dumps(saved,ensure_ascii=False,indent=2),encoding='utf-8')
     expected=Path(payload['note']).read_text(encoding='utf-8-sig').strip()
+    actual_content=saved['content'].strip()
+    if saved.get('definition_library'):
+        expected,definition,expected_styles=saved_definition_library(expected)
+        actual_content,placeholder,actual_styles=saved_definition_library(actual_content,saved['id'])
+        if definition is None or placeholder is not None or expected_styles!=actual_styles:
+            raise ValueError('Saved definition library styles or placement differ')
+        library=saved['definition_library']
+        wrapper=re.fullmatch(r'\s*<a href="([^"]+)">返回笔记</a>\s*##[ \t]+全部定义[ \t]*\n(.*)',library['content'],re.S)
+        if not wrapper:
+            raise ValueError('Saved definition library page differs')
+        back=urlsplit(urljoin(saved['url'],wrapper[1])); article=urlsplit(saved['url'])
+        if (back.scheme,back.netloc,back.path.replace('/local-','/'))!=(article.scheme,article.netloc,article.path.replace('/local-','/')):
+            raise ValueError('Saved definition library return link differs')
+        if wrapper[2].strip()!=definition:
+            raise ValueError('Saved definition library content differs')
     expected_outside,expected_sections=saved_note_sections(expected)
     styles=lambda text: {style for style in re.findall(r'<style\b[^>]*>.*?</style>',text,re.I|re.S) if '.custom-details' in style}
-    if styles(expected)!=styles(saved['content']):
+    if styles(expected)!=styles(actual_content):
         raise ValueError('Saved component styles differ')
-    actual_outside,actual_sections=saved_note_sections(saved['content'].strip())
+    actual_outside,actual_sections=saved_note_sections(actual_content)
     if expected_outside!=actual_outside or set(expected_sections)!=set(actual_sections):
         raise ValueError('Saved article content differs outside lazy sections')
     for heading,key in (('定义的组分概览','overview'),('定义的组分详情','details')):
@@ -1063,13 +1187,14 @@ def confirm_saved_sync(session, action, failed_result, original_result_path, out
         elif actual_sections[heading]!=expected_sections[heading]:
             raise ValueError('Saved component section differs: '+heading)
     attachment_checks=[]
-    with zipfile.ZipFile(archive) as z:
-        for item in payload['attachments']:
-            names=[name for name in z.namelist() if Path(name).name==item['name']]
-            if len(names)!=1 or hashlib.sha256(z.read(names[0])).hexdigest().upper()!=item['sha256'].upper():
-                raise ValueError('Saved attachment bytes differ: '+item['name'])
-            attachment_checks.append({'name':item['name'],'sha256':item['sha256']})
+    for item,target in zip(payload['attachments'],download_targets):
+        downloaded=Path(target['path'])
+        if not downloaded.is_file() or hashlib.sha256(downloaded.read_bytes()).hexdigest().upper()!=item['sha256'].upper():
+            raise ValueError('Saved attachment bytes differ: '+item['name'])
+        attachment_checks.append({'name':item['name'],'sha256':item['sha256']})
     validate_sync_files(payload)
+    for target in download_targets:
+        Path(target['path']).unlink()
     return {'ok':True,'status':'ARTICLE_SAVED_CONFIRMED',
         **{key:payload.get(key) for key in ('sync_run_id','sync_attempt','sync_started_at','preload_sha256')},
         'post_url':saved['url'],'confirmation_started_at':started,
@@ -1077,7 +1202,7 @@ def confirm_saved_sync(session, action, failed_result, original_result_path, out
         'original_result_path':str(original_result_path.resolve()),
         'original_browser_elapsed_ms':failed_result['browser_elapsed_ms'],
         'read_only':True,'saved_content_verified':True,'saved_attachment_hashes_verified':True,
-        'observation':failed_result['observation'], 'evidence_path':str(evidence_path.resolve()),
+        'observation':observation, 'evidence_path':str(evidence_path.resolve()),
         'quality_checks':{k:True for k in ('edit_url_verified','title_verified','body_verified',
                          'attachment_order_verified','article_page_returned')},
         'attachment_signatures':attachment_checks}
@@ -1278,6 +1403,8 @@ def main() -> None:
         print(json.dumps(payload, ensure_ascii=False))
         raise SystemExit(0 if payload.get('ok') else 1)
     if args.mode == "sync":
+        if not args.tab_id:
+            parser.error('sync requires --tab-id')
         payload = run_sync(Session(args.session, args.session_workdir, args.out.with_suffix(".browser.js"), config, args.tab_id),
                            action, preflight)
         args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

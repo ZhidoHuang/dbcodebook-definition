@@ -1040,7 +1040,10 @@ async function run(create, outcome) {
         json:async()=>{if(outcome==='unreadable') throw new Error('response body unavailable');
           return {status:['rejected','app-error'].includes(outcome)?'error':'success', message:'database is locked'};}});
       if (['rejected','app-error'].includes(outcome)) return;
-      if (outcome === "timeout") {fail(new Error("navigation timeout")); return;}
+      if (['timeout','late-return'].includes(outcome)) {
+        if (outcome==='late-return') state.url='/nodes/post/221/';
+        fail(new Error("navigation timeout")); return;
+      }
       state.url = outcome === "wrong" ? "/nodes/post/999/" : "/nodes/post/221/";
       // The destination commits, but its load event never fires.
       if (waitOptions.waitUntil === "commit") complete();
@@ -1057,6 +1060,15 @@ async function run(create, outcome) {
       assert.equal(result.content_rollback_status,'NOT_VERIFIED');
     }
     if (outcome==='no-response') assert.equal(result.status,'SUBMISSION_UNCERTAIN');
+    if (outcome==='late-return') assert.equal(result,undefined,'A verified current article URL completes normally');
+    if (['wrong','timeout'].includes(outcome)) {
+      assert.equal(result.ok,false);
+      assert.equal(result.status,'SUBMISSION_UNCERTAIN');
+      assert.equal(result.save_response.http_status,200);
+      assert.equal(result.save_response.status,'success');
+      assert.equal(result.next_action,'sync-observe');
+      assert.match(result.error,outcome==='timeout'?/navigation timeout/:/未返回文章地址/);
+    }
     if (outcome==='unreadable') assert.match(dbCodeBookOperationReceipt.save_response.body_error,/unavailable/);
   } finally {
     assert.equal(state.clicks, 1);
@@ -1067,8 +1079,9 @@ async function run(create, outcome) {
   await run(false, "saved");
   await run(true, "saved");
   for (const outcome of ['rejected','app-error','no-response','unreadable']) await run(false,outcome);
-  await assert.rejects(run(false, "wrong"), /未返回文章地址/);
-  await assert.rejects(run(false, "timeout"), /navigation timeout/);
+  await run(false, "wrong");
+  await run(false, "timeout");
+  await run(false, "late-return");
 })().catch(error => {console.error(error); process.exitCode = 1;});
 '''.replace("SUBMIT_CODE", submit_code)
             subprocess.run([node, "-e", submit_test], check=True)

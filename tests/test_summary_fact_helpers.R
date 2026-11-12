@@ -54,9 +54,10 @@ expect_error_contains("real ISCED field still requires code span",
 expect_error_contains("uppercase numeric variable is not generally exempt",
   summary_validate_insight_inline_code("CF018 是原始变量。"), "CF018")
 
-charls_periods <- c(2011L, 2013L, 2015L, 2018L, 2020L)
+charls_periods <- c(2011L, 2013L, 2015L, 2018L, 2020L, 2021L, 2022L, 2023L)
+stopifnot(identical(definition_display_periods("CHARLS", character()), as.character(charls_periods)))
 mixed_charls <- data.frame(
-  period = charls_periods,
+  period = charls_periods[1:5],
   nonmissing = c(90L, 80L, 90L, 80L, 80L),
   total = rep(100L, 5),
   rate = c(0.90, 0.80, 0.90, 0.80, 0.80)
@@ -423,7 +424,7 @@ checks <- list(
     TRUE
   ),
   expect_identical(
-    "CHARLS five-year full coverage",
+    "CHARLS eight-year full coverage",
     summary_period_text(charls_periods, "", charls_periods),
     "全周期"
   ),
@@ -990,4 +991,43 @@ stopifnot(identical(head(wrapped,length(original)),original), length(wrapped)>le
   identical(definition_wrap_source_cards(wrapped),wrapped),
   identical(definition_wrap_source_cards('plain unchanged HTML'),'plain unchanged HTML'))
 cat("SOURCE_CARD_LAYOUT_WRAP_FIXTURE_PASS\n")
+})
+
+local({
+  fresh <- data.frame(ID=c("opaque-a", "opaque-b"), idauniq=c("001", "001"),
+    Wave_id=c("Wave 1", "Wave 11"), value=c(1, NA))
+  legacy <- fresh; names(legacy)[names(legacy) == "Wave_id"] <- "Wave"
+  both <- fresh; both$Wave <- both$Wave_id
+  expected_period <- c("Wave 1", "Wave 11")
+  old_check <- definition_copy_check
+  assign("definition_copy_check", function(...) {
+    env <- parent.frame()
+    stopifnot(identical(env$period_col, elsa_period_column(env$analysis_data)),
+      identical(as.character(env$db_data$year), expected_period),
+      identical(as.character(env$analysis_data$year), expected_period))
+    stop("ELSA_PERIOD_ACCEPTED")
+  }, envir=.GlobalEnv)
+  on.exit(assign("definition_copy_check", old_check, envir=.GlobalEnv))
+  render <- function(data, db=data, analysis=data, cycles=expected_period) render_definition_bundle(
+    data=data, db_data=db, analysis_data=analysis, database="ELSA", cycle_order=cycles)
+  expect <- function(expr, fragment) {
+    actual <- tryCatch({force(expr); ""}, error=function(e) conditionMessage(e))
+    if (!grepl(fragment, actual, fixed=TRUE)) stop("Expected ", fragment, "; got ", actual)
+  }
+  expect(render(fresh), "ELSA_PERIOD_ACCEPTED")
+  expect(render(legacy), "ELSA_PERIOD_ACCEPTED")
+  expect(render(both), "ELSA_PERIOD_ACCEPTED")
+  expect(render(fresh, legacy, fresh), "ELSA_PERIOD_ACCEPTED")
+  bad <- both; bad$Wave[2] <- "Wave 1"
+  expect(render(bad), "Wave_id and Wave disagree")
+  bad <- fresh; bad$Wave_id[2] <- "Wave 2"
+  expect(render(bad), "outside declared cycle_order")
+  validate_person_period_outputs(list(fresh, legacy), "ELSA")
+  bad <- fresh; bad$Wave_id[2] <- bad$Wave_id[1]
+  expect(validate_person_period_outputs(list(bad), "ELSA"), "one row per person per period")
+  book <- data.frame(Variable="value", original_vars="raw_value", Label="值")
+  facts <- function(frame, period) build_summary_facts(frame, book, c(value="值"),
+    c(value="定义"), c(value=TRUE), period_col=period, expected_periods=expected_period)
+  stopifnot(identical(facts(fresh, "Wave_id"), facts(legacy, "Wave")))
+  cat("ELSA_WAVE_ID_AND_LEGACY_RENDER_TARGETS_PASS\n")
 })

@@ -19,14 +19,13 @@
 使用[第2步固定入口](../../rules/stages/02-download.md)，数据库参数为 `elsa`。
 
 - 预览核对 File/Wave 覆盖、记录数和文件分组。
-- 普通个人来源 raw header 按 `ID, idauniq, <selected variables...>` 核实；允许在 `idauniq` 后包含默认时期列 `Wave_id`。该列不计入选取的来源变量，出现时须逐行与 `ID` 的 Wave 前缀一致。raw 保持原样，不套用 CHARLS 的 `id/year`。
+- 普通个人来源按 [profile 的默认身份列](profile.md#1-基本身份)核对下载表头及 `Wave_id`，不把默认列重复放入手选清单，raw 保持原样。
 - codebook 同时保留 `Variable (File)` 与 `newname`；恢复结果保留 variable、file、transaction 和文件列表，不去掉 File 后用裸变量对账。
 - Nutrition detail、Pension Grid 等重复明细不能套用普通个人表的 header 或唯一键，先按实际文件结构及支持范围确认。
 
 ## R 与生成
 
-- 正式个人—Wave对象保留 `ID, idauniq, Wave`；`Wave` 从平台 `ID` 提取，使用 `Wave 1`、`Wave 2` 等文本，raw 不变。
-- 无法解析的 ID 不猜写时期。
+- 正式个人—Wave对象直接保留下载的 `ID, idauniq, Wave_id`；旧成果兼容边界见 [profile](profile.md#1-基本身份)。
 - `idauniq` 跨 Wave 重复属于纵向记录；同一时期多行时核实附加键和每行对象。household id 可能随 Wave 变化，不能当稳定家庭键。
 - 每个来源的负值按 File、Wave 和官方材料解释，不套用全库统一负值字典。
 - mapping 保留完整 `Variable (File)`。

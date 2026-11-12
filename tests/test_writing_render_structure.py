@@ -50,7 +50,9 @@ base = """# 示例 — 行动能力（Mobility）
 | 波次 | 数据变量 | 备注 |
 | --- | :---: | ---: |
 | Wave 1 | `w01C205` | <39 或 >178、>=2、≤3，原值 [1] 与 [<5]、[>=5] |
-| Wave 2 | `w02C205` | A\\|B |
+| Wave 2 | `w02C205` | A\\|B<br>`<br>` |
+| Wave 3 | `w03C205` | - 三次读数取均值<br>- 保留 `x<br>y` 的记录<br>- 超过阈值记 1 分 |
+| Wave 4 | `w04C205` | ① 有效时取均值<br>② 超过阈值记 1 分 |
 
 ② 条件公式为 `x<y`；按已定条件赋值。
 
@@ -123,7 +125,10 @@ for (path in paths) {
             root = Document(rendered).root
             tables = list(root.find(lambda e: e.attrs.get("data-criteria-table") == "true"))
             assert len(tables) == 2
-            assert len(list(tables[0].find(lambda e: e.tag == "td"))) == 6
+            assert len(list(tables[0].find(lambda e: e.tag == "td"))) == 12
+            assert "A|B<br><code>&lt;br&gt;</code></td>" in rendered
+            assert "① 三次读数取均值<br>② 保留 <code>x&lt;br&gt;y</code> 的记录<br>③ 超过阈值记 1 分</td>" in rendered
+            assert "① 有效时取均值<br>② 超过阈值记 1 分</td>" in rendered
             assert "<code>w01C205</code>" in rendered and "<code>x|y</code>" in rendered
             assert "<code>x&lt;y</code>" in rendered and "text-align:center" in rendered
             assert "&lt;P75" in rendered and "&lt;39" in rendered and "&gt;178" in rendered
@@ -135,7 +140,10 @@ for (path in paths) {
                             rendered.replace("w02C205", "w09C205"),
                             re.sub(r'<span class="summary-insight-number"[^>]*>1\.</span>', "", rendered, count=1),
                             rendered.replace('>1.</span>', '>2.</span>', 1),
-                            rendered.replace('>A|B</td>', '>AB</td>', 1),
+                            rendered.replace('>① 三次读数', '>三次读数', 1),
+                            rendered.replace('<br>③ 超过阈值', '<br>② 超过阈值', 1),
+                            rendered.replace('>A|B<br>', '>AB<br>', 1),
+                            rendered.replace('>A|B<br>', '>A|B&lt;br&gt;', 1),
                             rendered.replace('</tbody>', '<tr><td>多余内容</td></tr></tbody>', 1),
                             rendered.replace('<thead>', '<thead>表格外文字', 1),
                             rendered.replace('text-indent:0;display:flex', 'text-indent:0;display:block', 1)]:

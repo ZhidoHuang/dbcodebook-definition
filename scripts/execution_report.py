@@ -1203,11 +1203,13 @@ def validate_saved_confirmation(
     except (OSError, json.JSONDecodeError) as error:
         raise SystemExit(f"无法读取原始失败结果：{error}") from error
     if (not isinstance(original, dict) or
-        original.get("status") not in ("SUBMISSION_UNCERTAIN", "SYNC_FAILED") or
+        original.get("status") not in ("SUBMISSION_UNCERTAIN", "SYNC_FAILED", "SYNC_SAVE_REJECTED") or
         original.get("sync_run_id") != report["run_id"] or
         original.get("sync_attempt") != stage["attempt"] or
         original.get("sync_started_at") != stage["started_at"]):
         raise SystemExit("原始结果不是本次提交的失败或返回不明记录。")
+    if stage["status"] == "failed" and original.get("status") != "SYNC_SAVE_REJECTED":
+        raise SystemExit("已结束的失败尝试只允许凭原保存错误和当前只读确认收口。")
     if ("preload_sha256" in original and
         original["preload_sha256"] != result["preload_sha256"]):
         raise SystemExit("只读确认与原始失败结果的程序哈希不一致。")
@@ -1233,7 +1235,8 @@ def validate_saved_confirmation(
         for item in signatures
     ):
         raise SystemExit("只读确认缺少有效的附件哈希记录。")
-    observation, original_observation = result.get("observation"), original.get("observation")
+    observation = result.get("observation")
+    original_observation = original.get("observation") or original.get("recovery", {}).get("observation")
     if (not isinstance(observation, dict) or not isinstance(original_observation, dict) or
         not isinstance(observation.get("receipt_id"), str) or
         not re.fullmatch(r"[0-9a-f]{32}", observation["receipt_id"]) or
@@ -1269,7 +1272,9 @@ def command_website_finish(args: argparse.Namespace) -> dict[str, Any]:
         raise SystemExit(f"无法读取浏览器同步结果：{error}") from error
     if not isinstance(result, dict):
         raise SystemExit("浏览器结果必须是原始 JSON 对象。")
-    if (report["status"] != "running" or stage["status"] != "running" or
+    confirmation = result.get("status") == "ARTICLE_SAVED_CONFIRMED"
+    if (report["status"] != "running" or not (stage["status"] == "running" or
+        confirmation and stage["status"] == "failed") or
         result.get("sync_run_id") != report["run_id"] or
         result.get("sync_attempt") != stage["attempt"] or
         result.get("sync_started_at") != stage["started_at"]):
@@ -1285,11 +1290,14 @@ def command_website_finish(args: argparse.Namespace) -> dict[str, Any]:
     if not re.fullmatch(r"[0-9a-f]{64}", str(result.get("preload_sha256", ""))):
         raise SystemExit("缺少固定提交程序的哈希记录。")
     result_path = report_path.parent / "website_sync_result.json"
-    confirmation = result["status"] == "ARTICLE_SAVED_CONFIRMED"
     if confirmation:
         finished, evidence_outputs = validate_saved_confirmation(result, args, report, stage, result_path)
         stage_status = "completed_with_issues"
         summary = ["原同步返回不明；已通过只读确认正文和附件保存，未取得原同步直接返回回执。"]
+        if stage["status"] == "failed":
+            stage['save_error_result'] = stage.get('browser_result') or json.loads(
+                Path(result['original_result_path']).read_text(encoding='utf-8-sig'))
+            summary = ["原请求返回错误；后续只读确认当前正文和附件已保存，未再次提交；原错误响应保留。"]
         duration = elapsed_seconds(stage["started_at"], finished.isoformat())
     elif result.get("late_navigation_observed") is True:
         response = result.get("save_response") or {}

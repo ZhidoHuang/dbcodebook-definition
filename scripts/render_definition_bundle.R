@@ -223,13 +223,20 @@ criteria_escape_prose <- function(x) {
   paste0(result, criteria_escape_code(substr(x, cursor, nchar(x))))
 }
 
-criteria_render_inline_code <- function(x) {
+criteria_render_inline_code <- function(x, table_cell = FALSE) {
   value <- as.character(x)
   if (anyNA(value)) {
     stop("Criteria 文案不能为空。")
   }
   if (any(grepl("<code\\b", value, ignore.case = TRUE, perl = TRUE))) {
     stop("Criteria 生成源不得手写 <code>；请使用成对反引号标记变量名和程序代码。")
+  }
+
+  escape_prose <- criteria_escape_prose
+  if (table_cell) {
+    escape_prose <- function(text) {
+      gsub("&lt;br&gt;", "<br>", criteria_escape_prose(text), fixed = TRUE)
+    }
   }
 
   vapply(value, function(item) {
@@ -243,7 +250,7 @@ criteria_render_inline_code <- function(x) {
       stop("Criteria 文案中的反引号必须成对出现。")
     }
     if (tick_count == 0L) {
-      return(criteria_escape_prose(item))
+      return(escape_prose(item))
     }
 
     rendered <- ""
@@ -257,12 +264,12 @@ criteria_render_inline_code <- function(x) {
       }
       rendered <- paste0(
         rendered,
-        criteria_escape_prose(substr(item, cursor, open_tick - 1L)),
+        escape_prose(substr(item, cursor, open_tick - 1L)),
         "<code>", criteria_escape_code(code_value), "</code>"
       )
       cursor <- close_tick + 1L
     }
-    paste0(rendered, criteria_escape_prose(substr(item, cursor, nchar(item))))
+    paste0(rendered, escape_prose(substr(item, cursor, nchar(item))))
   }, character(1), USE.NAMES = FALSE)
 }
 
@@ -291,7 +298,7 @@ criteria_table <- function(block, render_values) {
     paste0("<tr>", paste0(vapply(seq_along(cells), function(i) {
       paste0("<", tag, ' style="padding:4px 8px;border:1px solid #ddd;text-align:',
              block$align[[i]], ';">',
-             criteria_render_inline_code(render_values(cells[[i]])), "</", tag, ">")
+             criteria_render_inline_code(render_values(cells[[i]]), table_cell = TRUE), "</", tag, ">")
     }, character(1)), collapse = ""), "</tr>")
   }
   paste0('<div data-criteria-item="true" style="margin:6px 0 6px 1.8em;overflow-x:auto;">',
@@ -652,6 +659,10 @@ definition_analysis_identity_contract <- function(database, analysis_unit = "per
   contract
 }
 
+elsa_period_column <- function(frame) {
+  if ("Wave_id" %in% names(frame)) "Wave_id" else "Wave"
+}
+
 validate_person_period_outputs <- function(frames, database, contract = list(analysis_unit = "person_period")) {
   household <- identical(contract$analysis_unit, "household_period")
   keys <- switch(toupper(database), CHARLS=c("id", "year"), ELSA=c("idauniq", "Wave"),
@@ -660,6 +671,7 @@ validate_person_period_outputs <- function(frames, database, contract = list(ana
   if (!is.null(contract$identity_keys)) keys <- contract$identity_keys
   original_keys <- NULL
   for (frame in frames) {
+    if (toupper(database) == "ELSA" && is.null(contract$identity_keys)) keys <- c("idauniq", elsa_period_column(frame))
     key_names <- if (toupper(database) == "KNHANES" && "sample_source" %in% names(frame)) c("sample_source", keys) else keys
     if (!all(key_names %in% names(frame))) stop(if (household) "Final data requires household-year rows: " else "Final data requires person-period long rows: ", paste(key_names, collapse=", "))
     if (toupper(database) == "MHAS" && "source_module" %in% names(frame) && !"source_module" %in% keys) key_names <- c("source_module", keys)
@@ -716,6 +728,13 @@ definition_component_categories <- function(wide_data, analysis_vars, component_
   }
   groups <- if (is.factor(component_groups)) levels(component_groups) else unique(assigned)
   groups <- groups[groups %in% assigned]
+  is_component <- endsWith(groups, "·Components")
+  defined_group <- sub("·Components$", "", groups)
+  defined_position <- match(defined_group, groups)
+  paired <- is_component & !is.na(defined_position)
+  group_position <- seq_along(groups)
+  group_position[paired] <- defined_position[paired]
+  groups <- groups[order(group_position, !is_component)]
   wide_data$category <- factor(assigned, levels = groups)
   wide_data <- wide_data[order(wide_data$category, seq_along(variables)), , drop = FALSE]
   if (!identical(as.character(wide_data$Variable[wide_data$Variable %in% analysis_vars]), analysis_vars)) {
@@ -761,7 +780,7 @@ render_definition_bundle <- function(
     transaction_id,
     script_file,
     theme_color = "#A33842",
-    cycle_order = c("2011", "2013", "2015", "2018", "2020"),
+    cycle_order = definition_display_periods("CHARLS", character()),
     raw_source_years = NULL,
     raw_row_count = nrow(data),
     hist_binwidth = NULL,
@@ -848,7 +867,7 @@ render_definition_bundle <- function(
     if (missing(cycle_order)) stop("KNHANES requires explicit, evidence-based cycle_order.")
     validate_knhanes_render_inputs(list(data, db_data, analysis_data), cycle_order)
   }
-  period_col <- if (database %in% c("NHANES", "NHANESIII")) "YEAR" else if (database %in% c("ELSA", "KLOSA")) "Wave" else if (database %in% c("SHARE", "MHAS")) "Wave_id" else "year"
+  period_col <- if (database %in% c("NHANES", "NHANESIII")) "YEAR" else if (database == "KLOSA") "Wave" else if (database == "ELSA") elsa_period_column(analysis_data) else if (database %in% c("SHARE", "MHAS")) "Wave_id" else "year"
   if (database == "NHIS") period_col <- "Survey_period"
   if (database == "KLOSA") {
     if (is.null(language) || length(language) != 1L || !language %in% c("en", "ko")) stop("KLoSA requires language=en or ko.")
@@ -881,12 +900,15 @@ render_definition_bundle <- function(
         !identical(as.character(cycle_order), paste("Wave", wave_numbers)) ||
         anyDuplicated(wave_numbers) || is.unsorted(wave_numbers)) stop("Invalid ELSA Wave order.")
     for (frame in list(data, db_data, analysis_data)) {
-      if (!all(c("ID", "idauniq", "Wave") %in% names(frame))) stop("ELSA requires ID, idauniq and Wave.")
-      if (any(!is.na(frame$Wave) & !frame$Wave %in% cycle_order)) stop("Observed Wave outside declared cycle_order.")
+      period_key <- elsa_period_column(frame)
+      if (!all(c("ID", "idauniq", period_key) %in% names(frame))) stop("ELSA requires ID, idauniq and Wave_id (or legacy Wave).")
+      if (all(c("Wave_id", "Wave") %in% names(frame)) &&
+          !identical(as.character(frame$Wave_id), as.character(frame$Wave))) stop("ELSA Wave_id and Wave disagree.")
+      if (any(!is.na(frame[[period_key]]) & !frame[[period_key]] %in% cycle_order)) stop("Observed Wave outside declared cycle_order.")
     }
     # Local rendering copies only; formal input and exported identities remain unchanged.
-    db_data$year <- db_data$Wave
-    analysis_data$year <- analysis_data$Wave
+    db_data$year <- db_data[[elsa_period_column(db_data)]]
+    analysis_data$year <- analysis_data[[elsa_period_column(analysis_data)]]
   }
   if (database == "SHARE") {
     if (missing(cycle_order)) stop("SHARE requires explicit, evidence-based cycle_order.")
@@ -937,10 +959,10 @@ render_definition_bundle <- function(
   library("dplyr")
   library("tidyr")
   library("dbCodeBookr")
-  expected_charls_cycles <- c("2011", "2013", "2015", "2018", "2020")
+  expected_charls_cycles <- definition_display_periods("CHARLS", character())
   if (database == "CHARLS" && !identical(as.character(cycle_order), expected_charls_cycles)) {
     stop(
-      "CHARLS target cycles must be 2011, 2013, 2015, 2018, and 2020; ",
+      "CHARLS target cycles must be ", paste(expected_charls_cycles, collapse = ", "), "; ",
       "a topic cannot redefine full-cycle coverage from its observed rows."
     )
   }
@@ -1024,6 +1046,9 @@ render_definition_bundle <- function(
   if (is.null(display_vars) || anyDuplicated(display_vars) || !all(analysis_vars %in% display_vars)) {
     stop("component_groups must include every final result exactly once")
   }
+  if (database == "ELSA" && length(intersect(c("ID", "idauniq", "Wave_id", "Wave"), display_vars))) {
+    stop("ELSA identity columns cannot be displayed as components or results.")
+  }
   if (length(intersect(setdiff(raw_vars, analysis_vars), display_vars))) {
     stop("原始变量不得进入组分概览或详情；component_groups 只列计算成分和最终定义变量")
   }
@@ -1079,6 +1104,7 @@ render_definition_bundle <- function(
     c("ID", "id", "idauniq", "HHID", "PN", "HHIDPN", "RAHHIDPN", "Wave", "householdid", "communityid"),
     names(detail_data)
   )
+  if (database == "ELSA") identity_columns <- union(identity_columns, intersect("Wave_id", names(detail_data)))
   if (database == "SHARE") {
     identity_columns <- union(identity_columns, intersect(
       c("Wave_id", "mergeid", "hhid", "country", "intid", "intidwX", "Record_id",

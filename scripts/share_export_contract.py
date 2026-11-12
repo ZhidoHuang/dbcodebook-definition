@@ -34,7 +34,7 @@ class _NoteText(HTMLParser):
             self.parts.append(data)
 
 
-def read_connection_scope(path: Path, variables: set[tuple[str, str]]) -> set[str]:
+def read_connection_provenance(path: Path, variables: set[tuple[str, str]]) -> dict[tuple[str, str], set[str]]:
     """Read the downloaded note without executing HTML or inferring keys from IDs."""
     if not path.is_file():
         raise ValueError("SHARE four-column codebook requires 连接说明.html")
@@ -65,7 +65,11 @@ def read_connection_scope(path: Path, variables: set[tuple[str, str]]) -> set[st
                 found[variable].add(current_wave)
     if not periods or any(not item for item in found.values()):
         raise ValueError("SHARE connection note lacks selected variable/period provenance")
-    return periods
+    return found
+
+
+def read_connection_scope(path: Path, variables: set[tuple[str, str]]) -> set[str]:
+    return set().union(*read_connection_provenance(path, variables).values())
 
 
 def read_unique_codebook(path: Path) -> tuple[list[str], set[str]]:
@@ -138,8 +142,14 @@ def validate_unique_package(directory: Path, members: list[str], expected: list[
             variables = {(re.fullmatch(r"([^()\s]+) \((.+)\)", row["Variable"])[1],
                           row["newname"].strip()) for row in reader}
             noted_periods = read_connection_scope(directory / "连接说明.html", variables)
-            if not set(result["periods"]).issubset(noted_periods):
-                raise ValueError("SHARE raw periods differ from connection note provenance")
+            source_periods = read_connection_provenance(directory / "连接说明.html", variables)
+            periods_by_alias = {alias: periods for (_, alias), periods in source_periods.items()}
+            with (directory / "raw_data.csv").open(encoding="utf-8-sig", newline="") as raw:
+                for row in csv.DictReader(raw):
+                    if any(row[name] != "" and row["Wave_id"] not in periods_by_alias[name] for name in expected):
+                        raise ValueError("SHARE raw periods differ from connection note provenance: business value outside its source periods")
+            result["empty_record_periods"] = sorted(set(result["periods"]) - noted_periods)
+            result["source_periods"] = sorted(noted_periods)
     return result
 
 

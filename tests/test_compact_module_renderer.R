@@ -65,6 +65,16 @@ local({
   names(reverse_levels) <- vars
   reject(definition_component_categories(sample_wide, vars, reverse_levels))
 
+  display <- c("a", "b", "c", "calc_b", "calc_a", "calc_extra")
+  groups <- setNames(c("First", "First", "Second", "Second·Components",
+    "First·Components", "Extra·Components"), display)
+  expected <- c("First·Components", "First", "Second·Components", "Second", "Extra·Components")
+  for (mapping in list(groups, setNames(factor(groups, levels = unique(groups)), display))) {
+    prepared <- definition_component_categories(data.frame(Variable = display), display[1:3], mapping)
+    stopifnot(identical(prepared$groups, expected),
+      identical(prepared$data$Variable, c("calc_a", "a", "b", "calc_b", "c", "calc_extra")))
+  }
+
   # Observe the real renderer inputs without replacing chart or HTML generation.
   detail_calls <- list(); long_inputs <- NULL; compact_test <- TRUE
   real_details <- dbCodeBookr::generate_var_details
@@ -153,7 +163,7 @@ local({
     analysis_data=analysis[c("SEQN", "YEAR", single)], analysis_codebook=analysis_book[1,,drop=FALSE],
     analysis_vars=single, raw_vars=raw, raw_codebook=raw_book, criteria=legacy_copy$criteria,
     summary_meanings=setNames(analysis_book$Label[1], single), summary_groups=setNames("检测", single),
-    component_groups=setNames(c("FI·Components", "FI"), c("deficit", single)),
+    component_groups=setNames(c("FI", "FI·Components"), c(single, "deficit")),
     summary_entry=legacy_copy$summary_entry, summary_selection=NULL,
     summary_insight_items=legacy_copy$summary_insight_items, file_stem="components", note_name="components.md",
     qa_title="fixture QA", transaction_id="fixture", script_file="define_fixture.R",

@@ -9,6 +9,7 @@ check_public_raw_reads <- function(lines, database = "CHARLS", source_dir = ".",
         !identical(record$identity_keys, list("householdid", "year")))) stop("Invalid household identity contract.")
   }
   identity_names <- c("id", "householdid", "communityid", "HHID", "PN")
+  if (toupper(database) == "ELSA") identity_names <- c(identity_names, "ID", "idauniq", "Wave_id")
   if (toupper(database) == "SHARE") {
     identity_names <- c("ID", "Wave_id", "mergeid", "hhid", "country", "intid", "intidwX", "Record_id")
   }
